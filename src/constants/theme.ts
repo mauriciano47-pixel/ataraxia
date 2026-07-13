@@ -8,21 +8,21 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
-  light: { // Ivory & Bronze (elegant light mode)
-    text: '#1A1A1A',
-    background: '#FAFAFA',
-    backgroundElement: '#F0F0F0',
-    backgroundSelected: '#E5E5E5',
-    textSecondary: '#666666',
-    accent: '#C5832B', // Stoic Bronze
+  light: { 
+    text: '#E7ECF7', // ink
+    background: '#0A0E17', // bg
+    backgroundElement: '#121826', // card
+    backgroundSelected: '#1E2A3F', // cardBorder
+    textSecondary: '#6B7690', // inkDim
+    accent: '#3D6BFF', // electric
   },
-  dark: { // Bronze & Shadow (premium dark mode)
-    text: '#F5F5F5',
-    background: '#080808', // Deep Space Black
-    backgroundElement: '#141414', // Asphalt Gray
-    backgroundSelected: '#1E1E1E', // Lighter Gray
-    textSecondary: '#A0A0A0',
-    accent: '#C5832B', // Stoic Bronze
+  dark: { // Cosmos Theme
+    text: '#E7ECF7', // ink
+    background: '#0A0E17', // bg
+    backgroundElement: '#121826', // card
+    backgroundSelected: '#1E2A3F', // cardBorder
+    textSecondary: '#6B7690', // inkDim
+    accent: '#3D6BFF', // electric
   },
 } as const;
 

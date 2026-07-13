@@ -1,185 +1,237 @@
-import { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, View, useColorScheme } from 'react-native';
+import { View, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
-import { useDailyLog } from '@/hooks/useDailyLog';
+import { useState } from 'react';
 
-const GEMINI_API_KEY = "AQ.Ab8RN6IVqmi2Ws_xpnDTS-Hc4T7VaVnpQr0NsTRKW_LKfSz54Q";
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// Mock de la rutina (SesionEntreno)
+const RUTINA_MOCK = [
+  { id: '1', n: "Sentadilla", s: "4x8", done: false, rpe: null as number | null },
+  { id: '2', n: "Peso muerto", s: "3x6", done: false, rpe: null as number | null },
+  { id: '3', n: "Zancadas", s: "3x12", done: false, rpe: null as number | null },
+  { id: '4', n: "Prensa", s: "3x15", done: false, rpe: null as number | null },
+];
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'bot';
-}
+const CALISTENIA_MOCK = [
+  { id: 'c1', n: "Flexiones (Push-ups)", s: "4 al fallo", done: false, rpe: null as number | null },
+  { id: 'c2', n: "Sentadillas libres", s: "4x20", done: false, rpe: null as number | null },
+  { id: 'c3', n: "Plancha Abdominal", s: "3x1min", done: false, rpe: null as number | null },
+];
 
 export default function TrainerScreen() {
-  const { log } = useDailyLog();
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: '¡Hola! Soy tu entrenador personal. ¿Qué vas a entrenar hoy?', sender: 'bot' }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
+  
+  const [ejercicios, setEjercicios] = useState(RUTINA_MOCK);
+  const [isAmorFati, setIsAmorFati] = useState(false);
 
-  const sendMessage = async () => {
-    if (!inputText.trim()) return;
+  const toggleDone = (id: string) => {
+    setEjercicios(prev => prev.map(e => {
+      if (e.id === id) {
+        return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null }; // Default RPE 7 si se marca done sin elegir
+      }
+      return e;
+    }));
+  };
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      sender: 'user',
-    };
+  const setRPE = (id: string, value: number) => {
+    setEjercicios(prev => prev.map(e => e.id === id ? { ...e, rpe: value, done: true } : e));
+  };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-    setIsLoading(true);
-
-    try {
-      // Gemini AI call with user context
-      const contextStr = `Eres un entrenador personal amigable y directo en una app llamada Ataraxia.
-Tu objetivo es animar al usuario y guiarlo según su progreso diario. Responde de forma concisa.
-El estado actual del usuario hoy es:
-- Agua consumida: ${log.waterLitres.toFixed(1)}L de una meta de 2.5L
-- Calorías consumidas: ${log.totalCalories || 0} de una meta de 2000 kcal
-- Entrenamiento de fuerza: ${log.trainingCompleted ? 'Completado' : 'Pendiente'}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: inputText,
-        config: {
-          systemInstruction: contextStr,
-        }
-      });
-
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.text || 'No pude generar una respuesta.',
-        sender: 'bot',
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error(error);
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        text: "Hubo un error al conectar con Gemini. Revisa la consola.",
-        sender: 'bot'
-      }]);
-    } finally {
-      setIsLoading(false);
+  const checkDeload = () => {
+    const doneExercises = ejercicios.filter(e => e.done && e.rpe !== null);
+    if (doneExercises.length === 0) return;
+    
+    const avgRpe = doneExercises.reduce((acc, curr) => acc + (curr.rpe || 0), 0) / doneExercises.length;
+    if (avgRpe > 8.5) {
+      Alert.alert(
+        "Semana de Descarga",
+        "El arco que siempre está tenso termina por romperse. Tu esfuerzo (RPE) ha sido muy alto. Bajaremos la intensidad mañana. Lo que depende de ti es recuperar."
+      );
+    } else {
+      Alert.alert("Entreno Finalizado", "Buen trabajo manteniendo el control.");
     }
   };
 
+  const toggleAmorFati = () => {
+    setIsAmorFati(!isAmorFati);
+    setEjercicios(!isAmorFati ? CALISTENIA_MOCK : RUTINA_MOCK);
+    Alert.alert("Amor Fati", !isAmorFati ? "No controlas tu entorno, pero controlas tu reacción. Rutina adaptada a peso corporal." : "Volviendo a tu rutina de gimnasio.");
+  };
+
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.title}>
-          Entrenador
-        </ThemedText>
-
-        <ScrollView style={styles.chatArea} contentContainerStyle={{ paddingBottom: Spacing.four }}>
-          {messages.map((msg) => (
-            <ThemedView 
-              key={msg.id} 
-              type={msg.sender === 'bot' ? 'backgroundElement' : 'background'} 
-              style={[
-                styles.messageBubble, 
-                msg.sender === 'user' ? [styles.userMessage, { backgroundColor: colors.accent }] : styles.botMessage
-              ]}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        
+        <View style={styles.header}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+            <View>
+              <ThemedText style={styles.label}>HOY</ThemedText>
+              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia" : "Tren inferior"}</ThemedText>
+            </View>
+            <TouchableOpacity 
+              style={[styles.amorFatiBtn, { borderColor: colors.accent, backgroundColor: isAmorFati ? colors.accent : 'transparent' }]}
+              onPress={toggleAmorFati}
             >
-              <ThemedText style={msg.sender === 'user' ? { color: '#1A1A1A' } : undefined}>
-                {msg.text}
-              </ThemedText>
-            </ThemedView>
-          ))}
-          {isLoading && (
-            <ThemedView type="backgroundElement" style={[styles.messageBubble, styles.botMessage]}>
-              <ThemedText>Escribiendo...</ThemedText>
-            </ThemedView>
-          )}
-        </ScrollView>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.textSecondary }]}
-            placeholder="Escribe tu reporte..."
-            placeholderTextColor={colors.textSecondary}
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={sendMessage}
-          />
-          <TouchableOpacity 
-            style={[styles.sendButton, { backgroundColor: colors.accent }]} 
-            onPress={sendMessage}
-            disabled={isLoading}
-          >
-            <ThemedText style={{ color: '#1A1A1A', fontWeight: 'bold' }}>Enviar</ThemedText>
-          </TouchableOpacity>
+              <ThemedText style={[styles.amorFatiText, { color: isAmorFati ? '#FFF' : colors.accent }]}>Amor Fati</ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+
+        <View style={styles.list}>
+          {ejercicios.map((e) => (
+            <View key={e.id} style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+              <TouchableOpacity 
+                style={styles.cardHeader}
+                onPress={() => toggleDone(e.id)}
+                activeOpacity={0.7}
+              >
+                <View>
+                  <ThemedText style={styles.exerciseName}>{e.n}</ThemedText>
+                  <ThemedText style={[styles.exerciseSets, { color: colors.textSecondary }]}>{e.s}</ThemedText>
+                </View>
+                
+                <View style={[
+                  styles.checkbox,
+                  e.done ? { 
+                    backgroundColor: colors.accent, 
+                    borderColor: colors.accent,
+                    shadowColor: colors.accent,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.8,
+                    shadowRadius: 6,
+                    elevation: 4
+                  } : { 
+                    backgroundColor: 'transparent', 
+                    borderColor: colors.backgroundSelected 
+                  }
+                ]} />
+              </TouchableOpacity>
+              
+              <View style={styles.rpeContainer}>
+                <ThemedText style={{ fontSize: 10, color: colors.textSecondary, marginBottom: 6 }}>RPE (Esfuerzo 1-10):</ThemedText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+                  {[...Array(10)].map((_, i) => {
+                    const rpeValue = i + 1;
+                    const isSelected = e.rpe === rpeValue;
+                    return (
+                      <TouchableOpacity 
+                        key={rpeValue} 
+                        style={[
+                          styles.rpeButton, 
+                          { borderColor: colors.backgroundSelected },
+                          isSelected && { backgroundColor: colors.accent, borderColor: colors.accent }
+                        ]}
+                        onPress={() => setRPE(e.id, rpeValue)}
+                      >
+                        <ThemedText style={isSelected ? { color: '#FFF' } : {}}>{rpeValue}</ThemedText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.finishBtn, { backgroundColor: colors.accent }]}
+          onPress={checkDeload}
+        >
+          <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Entreno</ThemedText>
+        </TouchableOpacity>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
+  content: {
     paddingHorizontal: Spacing.four,
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     width: '100%',
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.four,
+  },
+  header: {
+    marginTop: Spacing.two,
+    marginBottom: Spacing.four,
+  },
+  label: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    color: '#3D6BFF',
+    letterSpacing: 2,
+    fontWeight: 'bold',
   },
   title: {
-    marginVertical: Spacing.three,
+    fontSize: 24,
+    fontFamily: 'serif',
+    marginTop: 4,
   },
-  chatArea: {
-    flex: 1,
+  list: {
+    gap: Spacing.three,
   },
-  messageBubble: {
-    padding: Spacing.four,
-    borderRadius: Spacing.one, // Menos redondeado
-    marginBottom: Spacing.three,
-    maxWidth: '85%',
-  },
-  botMessage: {
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 0,
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 0,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
+  card: {
+    padding: Spacing.three,
+    borderRadius: 8,
     borderWidth: 1,
-    borderRadius: Spacing.one,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    minHeight: 44,
   },
-  sendButton: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.one,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  exerciseName: {
+    fontSize: 14,
+  },
+  exerciseSets: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  rpeContainer: {
+    marginTop: Spacing.three,
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+    borderTopColor: '#1E2A3F',
+  },
+  rpeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
     justifyContent: 'center',
   },
+  amorFatiBtn: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  amorFatiText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  finishBtn: {
+    marginTop: Spacing.four,
+    padding: Spacing.four,
+    borderRadius: 8,
+    alignItems: 'center',
+  }
 });

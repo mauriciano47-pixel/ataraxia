@@ -1,116 +1,248 @@
-import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import { GoogleGenAI } from '@google/genai';
+import { useState } from 'react';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 
+const GEMINI_API_KEY = "AQ.Ab8RN6IVqmi2Ws_xpnDTS-Hc4T7VaVnpQr0NsTRKW_LKfSz54Q";
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
 export default function NutritionScreen() {
-  const { log, loading, addCalories } = useDailyLog();
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const { log, addCalories, addMacros } = useDailyLog();
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  const colors = Colors[scheme];
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  if (loading) {
-    return (
-      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Cargando datos...</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  const goal = 2000;
+  const macros = {
+    protein: { current: log.macros?.protein || 0, goal: 160 },
+    carbs: { current: log.macros?.carbs || 0, goal: 200 },
+    fats: { current: log.macros?.fats || 0, goal: 60 }
+  };
   const currentCalories = log.totalCalories || 0;
-  const percentage = Math.min((currentCalories / goal) * 100, 100);
+  const goalCalories = 2100;
+  const calPercent = Math.min((currentCalories / goalCalories) * 100, 100);
+
+  const handleTakePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert("Permiso denegado", "Necesitas dar permiso a la cámara.");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0].base64) {
+        analyzeImage(result.assets[0].base64);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "No se pudo abrir la cámara.");
+    }
+  };
+
+  const analyzeImage = async (base64String: string) => {
+    setIsAnalyzing(true);
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          { inlineData: { data: base64String, mimeType: 'image/jpeg' } },
+          "Estima los macros de esta comida. Responde SOLAMENTE con un objeto JSON (sin markdown) con estas claves exactas: protein, carbs, fats, calories. Usa números enteros.",
+        ]
+      });
+
+      const text = response.text || '';
+      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const data = JSON.parse(cleanJson);
+
+      addMacros(data.protein || 0, data.carbs || 0, data.fats || 0);
+      addCalories(data.calories || 0);
+      Alert.alert("Análisis Completado", `Calorías: ${data.calories}\nProteínas: ${data.protein}g\nCarbs: ${data.carbs}g\nGrasas: ${data.fats}g`);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "No se pudo analizar la foto.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.title}>
-          Nutrición
-        </ThemedText>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        
+        <View style={styles.header}>
+          <ThemedText style={styles.label}>COMBUSTIBLE</ThemedText>
+          <ThemedText style={styles.title}>Nutrición</ThemedText>
+        </View>
 
-        {/* Resumen de Calorías */}
-        <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="subtitle">Calorías de Hoy</ThemedText>
-          <ThemedText type="title">{currentCalories} / {goal} kcal</ThemedText>
+        {/* Calorías totales */}
+        <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View>
+              <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Calorías ingeridas</ThemedText>
+              <ThemedText style={{ fontSize: 24, fontFamily: 'serif' }}>{currentCalories} <ThemedText style={{ fontSize: 14, color: colors.textSecondary }}>/ {goalCalories}</ThemedText></ThemedText>
+            </View>
+            <ThemedText style={{ fontSize: 12, color: colors.accent }}>Restan {Math.max(goalCalories - currentCalories, 0)}</ThemedText>
+          </View>
+          <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
+            <View style={[styles.progressBar, { width: `${calPercent}%`, backgroundColor: colors.accent }]} />
+          </View>
+        </View>
+
+        {/* Macros */}
+        <View style={styles.macrosContainer}>
+          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+            <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Proteína</ThemedText>
+            <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.protein.current}g</ThemedText>
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.protein.current/macros.protein.goal)*100}%`, backgroundColor: '#3D6BFF' }]} />
+            </View>
+          </View>
           
-          <ThemedView style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
-            <ThemedView style={[styles.progressBar, { width: `${percentage}%`, backgroundColor: colors.accent }]} />
-          </ThemedView>
-        </ThemedView>
+          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+            <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Carbs</ThemedText>
+            <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.carbs.current}g</ThemedText>
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.carbs.current/macros.carbs.goal)*100}%`, backgroundColor: '#FF8A00' }]} />
+            </View>
+          </View>
+          
+          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+            <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Grasas</ThemedText>
+            <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.fats.current}g</ThemedText>
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.fats.current/macros.fats.goal)*100}%`, backgroundColor: '#FFD700' }]} />
+            </View>
+          </View>
+        </View>
+
+        {/* Micronutrientes Clave */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Micronutrientes Clave</ThemedText>
+          <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+            <ThemedText style={{ fontSize: 13, marginBottom: 8 }}>Fibra: <ThemedText style={{ color: colors.accent }}>18g / 30g</ThemedText></ThemedText>
+            <ThemedText style={{ fontSize: 13, marginBottom: 8 }}>Azúcares Añadidos: <ThemedText style={{ color: colors.textSecondary }}>12g (Óptimo)</ThemedText></ThemedText>
+            <ThemedText style={{ fontSize: 13 }}>Sodio: <ThemedText style={{ color: colors.textSecondary }}>1500mg</ThemedText></ThemedText>
+          </View>
+        </View>
 
         {/* Registro Rápido */}
-        <ThemedText type="subtitle" style={{ marginTop: Spacing.four }}>Registro Rápido</ThemedText>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Registro (Claude Vision)</ThemedText>
+          <View style={{ flexDirection: 'row', gap: Spacing.three }}>
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]} 
+              onPress={handleTakePhoto}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <ActivityIndicator color={colors.text} size="small" />
+              ) : (
+                <ThemedText style={styles.buttonText}>📷 Tomar Foto</ThemedText>
+              )}
+            </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.backgroundSelected }]} onPress={() => addCalories(400)}>
-          <ThemedText style={[styles.buttonText, { color: colors.text }]}>+ Desayuno (400 kcal)</ThemedText>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: colors.accent, borderColor: colors.accent }]} 
+              onPress={() => {
+                addCalories(400);
+                addMacros(35, 40, 12);
+              }}
+            >
+              <ThemedText style={[styles.buttonText, { color: '#FFFFFF' }]}>Escribir Texto</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.backgroundSelected }]} onPress={() => addCalories(600)}>
-          <ThemedText style={[styles.buttonText, { color: colors.text }]}>+ Almuerzo (600 kcal)</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.backgroundSelected }]} onPress={() => addCalories(500)}>
-          <ThemedText style={[styles.buttonText, { color: colors.text }]}>+ Cena (500 kcal)</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.backgroundSelected }]} onPress={() => addCalories(200)}>
-          <ThemedText style={[styles.buttonText, { color: colors.text }]}>+ Snack (200 kcal)</ThemedText>
-        </TouchableOpacity>
-
-        <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="subtitle">Tip del Día</ThemedText>
-          <ThemedText>Recuerda consumir proteínas dentro de la hora posterior a tu entrenamiento de fuerza para maximizar la recuperación muscular.</ThemedText>
-        </ThemedView>
-
-      </SafeAreaView>
-    </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-start',
-  },
   safeArea: {
     flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
     paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     width: '100%',
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.four,
+  },
+  header: {
+    marginTop: Spacing.two,
+    marginBottom: Spacing.four,
+  },
+  label: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    color: '#3D6BFF',
+    letterSpacing: 2,
+    fontWeight: 'bold',
   },
   title: {
-    marginVertical: Spacing.three,
+    fontSize: 24,
+    fontFamily: 'serif',
+    marginTop: 4,
   },
   card: {
     padding: Spacing.four,
-    borderRadius: Spacing.one,
-    gap: Spacing.two,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   progressContainer: {
-    height: 10,
-    borderRadius: 0, // Recto y estoico
-    marginTop: Spacing.two,
+    height: 8,
+    borderRadius: 4,
+    marginTop: Spacing.three,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 0,
+    borderRadius: 4,
+  },
+  macrosContainer: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+    marginTop: Spacing.three,
+  },
+  macroCard: {
+    flex: 1,
+    padding: Spacing.three,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  section: {
+    marginTop: Spacing.four,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: Spacing.three,
   },
   actionButton: {
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.half, // Recto
+    flex: 1,
+    paddingVertical: Spacing.three,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: Spacing.two,
+    borderWidth: 1,
   },
   buttonText: {
-    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   }
 });

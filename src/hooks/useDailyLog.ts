@@ -8,6 +8,14 @@ export interface DailyLog {
   trainingCompleted: boolean;
   mealsLogged: number;
   totalCalories: number;
+  energyLevel?: number;
+  sleepQuality?: number;
+  checkInDone?: boolean;
+  macros: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
 }
 
 const DEFAULT_LOG: DailyLog = {
@@ -15,6 +23,8 @@ const DEFAULT_LOG: DailyLog = {
   trainingCompleted: false,
   mealsLogged: 0,
   totalCalories: 0,
+  checkInDone: false,
+  macros: { protein: 0, carbs: 0, fats: 0 }
 };
 
 export function useDailyLog() {
@@ -111,6 +121,20 @@ export function useDailyLog() {
     updateLog({ totalCalories: (log.totalCalories || 0) + amount });
   };
 
+  const saveCheckIn = (energy: number, sleep: number) => {
+    updateLog({ energyLevel: energy, sleepQuality: sleep, checkInDone: true });
+  };
+
+  const addMacros = (p: number, c: number, f: number) => {
+    updateLog({ 
+      macros: {
+        protein: log.macros.protein + p,
+        carbs: log.macros.carbs + c,
+        fats: log.macros.fats + f
+      } 
+    });
+  };
+
   return {
     log,
     loading,
@@ -118,5 +142,7 @@ export function useDailyLog() {
     toggleTraining,
     addMeal,
     addCalories,
+    saveCheckIn,
+    addMacros,
   };
 }

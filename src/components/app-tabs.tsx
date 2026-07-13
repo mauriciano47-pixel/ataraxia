@@ -12,7 +12,8 @@ export default function AppTabs() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
-        tabBarStyle: { backgroundColor: colors.background },
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: { backgroundColor: colors.backgroundElement, borderTopColor: colors.backgroundSelected },
         headerShown: false,
       }}>
       <Tabs.Screen
@@ -25,7 +26,7 @@ export default function AppTabs() {
       <Tabs.Screen
         name="trainer"
         options={{
-          title: 'Entrenador',
+          title: 'Entreno',
           tabBarIcon: ({ color }) => <Ionicons name="barbell" size={24} color={color} />,
         }}
       />
@@ -37,9 +38,16 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
+        name="journal"
+        options={{
+          title: 'Diario',
+          tabBarIcon: ({ color }) => <Ionicons name="book" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
-          title: 'Progreso',
+          title: 'Historial',
           tabBarIcon: ({ color }) => <Ionicons name="trending-up" size={24} color={color} />,
         }}
       />

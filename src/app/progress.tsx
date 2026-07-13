@@ -1,73 +1,85 @@
-import { StyleSheet, ActivityIndicator, useColorScheme } from 'react-native';
+import { StyleSheet, ActivityIndicator, useColorScheme, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 
+// Helper: Generar mock de últimos 29 días
+const generateHistoryMock = () => {
+  const days = [];
+  for (let i = 0; i < 29; i++) {
+    // 70% chance de éxito para la visualización del mapa estelar
+    days.push(Math.random() > 0.3);
+  }
+  return days;
+};
 export default function ProgressScreen() {
   const { log, loading } = useDailyLog();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  
+  const [history] = useState<boolean[]>(() => generateHistoryMock());
 
-  if (loading) {
+  if (loading || history.length === 0) {
     return (
       <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Cargando progreso...</ThemedText>
+        <ThemedText style={{ marginTop: Spacing.three }}>Conectando con el Oráculo...</ThemedText>
       </ThemedView>
     );
   }
 
-  const calorieGoal = 2000;
-  const caloriePercentage = Math.min(((log.totalCalories || 0) / calorieGoal) * 100, 100);
-  
-  const waterGoal = 2.5;
-  const waterPercentage = Math.min((log.waterLitres / waterGoal) * 100, 100);
+  // El día 30 es HOY. Brilla si el check-in diario o el entrenamiento están hechos.
+  const isTodaySuccess = log.checkInDone || log.trainingCompleted;
+  const fullMap = [...history, isTodaySuccess];
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.title}>
-          Progreso de Hoy
+        
+        <View style={styles.header}>
+          <ThemedText style={styles.label}>CONSTELACIÓN</ThemedText>
+          <ThemedText style={styles.title}>Historial</ThemedText>
+        </View>
+
+        <ThemedText style={styles.description}>
+          Cada día de disciplina enciende una estrella. Un día perdido es espacio vacío en tu cosmos. Este es tu mapa estelar de los últimos 30 días.
         </ThemedText>
 
-        <ThemedView style={styles.grid}>
-          {/* Card Calorías */}
-          <ThemedView type="backgroundElement" style={styles.statCard}>
-            <ThemedText type="subtitle">Calorías</ThemedText>
-            <ThemedText style={styles.statValue}>{log.totalCalories || 0}</ThemedText>
-            <ThemedText style={styles.statLabel}>/ {calorieGoal} kcal</ThemedText>
-            <ThemedView style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
-              <ThemedView style={[styles.progressBar, { width: `${caloriePercentage}%`, backgroundColor: colors.accent }]} />
-            </ThemedView>
-          </ThemedView>
+        <View style={styles.starMap}>
+          {fullMap.map((success, index) => {
+            const isToday = index === 29;
+            return (
+              <View 
+                key={index} 
+                style={[
+                  styles.starContainer,
+                  isToday && styles.todayContainer
+                ]}
+              >
+                <View style={[
+                  styles.star,
+                  success ? {
+                    backgroundColor: colors.accent,
+                    shadowColor: colors.accent,
+                    shadowOpacity: 1,
+                    shadowRadius: 10,
+                    elevation: 5,
+                  } : {
+                    backgroundColor: colors.backgroundSelected,
+                  },
+                  isToday && { borderWidth: 1, borderColor: '#FFF' }
+                ]} />
+              </View>
+            );
+          })}
+        </View>
 
-          {/* Card Agua */}
-          <ThemedView type="backgroundElement" style={styles.statCard}>
-            <ThemedText type="subtitle">Agua</ThemedText>
-            <ThemedText style={styles.statValue}>{log.waterLitres.toFixed(1)}L</ThemedText>
-            <ThemedText style={styles.statLabel}>/ {waterGoal}L</ThemedText>
-            <ThemedView style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
-              <ThemedView style={[styles.progressBar, { width: `${waterPercentage}%`, backgroundColor: colors.accent }]} />
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
-
-        {/* Card Entrenamiento */}
-        <ThemedView type="backgroundElement" style={[styles.card, log.trainingCompleted ? { borderColor: colors.accent, borderWidth: 1 } : null]}>
-          <ThemedText type="subtitle">Entrenamiento Físico</ThemedText>
-          <ThemedText style={{ marginTop: Spacing.one, fontWeight: 'bold', color: log.trainingCompleted ? colors.accent : colors.textSecondary }}>
-            {log.trainingCompleted ? 'Disciplina cumplida.' : 'Aún pendiente.'}
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="subtitle">Resumen Semanal</ThemedText>
-          <ThemedText style={{ marginTop: Spacing.two }}>
-            Aquí mostraremos un gráfico con el resumen de los últimos 7 días. Por ahora, este es tu estado actual. ¡Sigue así!
-          </ThemedText>
+        <ThemedView style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+          <ThemedText style={{ fontFamily: 'serif', fontSize: 16 }}>&quot;No te lamentes por el espacio vacío. Alégrate por las estrellas que lograste encender hoy.&quot;</ThemedText>
         </ThemedView>
 
       </SafeAreaView>
@@ -88,43 +100,55 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
+  header: {
+    marginTop: Spacing.two,
+    marginBottom: Spacing.four,
+  },
+  label: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    color: '#3D6BFF',
+    letterSpacing: 2,
+    fontWeight: 'bold',
+  },
   title: {
-    marginVertical: Spacing.three,
+    fontSize: 24,
+    fontFamily: 'serif',
+    marginTop: 4,
+  },
+  description: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    lineHeight: 22,
+    marginBottom: Spacing.five,
+  },
+  starMap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    justifyContent: 'center',
+    marginBottom: Spacing.five,
+    paddingVertical: Spacing.four,
+  },
+  starContainer: {
+    width: '14%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  todayContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(61, 107, 255, 0.3)',
+    borderRadius: 8,
+  },
+  star: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   card: {
     padding: Spacing.four,
-    borderRadius: Spacing.one,
-    marginBottom: Spacing.three,
-  },
-  grid: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-    marginBottom: Spacing.three,
-  },
-  statCard: {
-    flex: 1,
-    padding: Spacing.three,
-    borderRadius: Spacing.one,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginVertical: Spacing.one,
-  },
-  statLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginBottom: Spacing.two,
-  },
-  progressContainer: {
-    height: 6,
-    width: '100%',
-    borderRadius: 0,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 0,
+    borderRadius: 8,
+    borderWidth: 1,
   },
 });
