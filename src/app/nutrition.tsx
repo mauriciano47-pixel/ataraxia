@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 
-const GEMINI_API_KEY = "AQ.Ab8RN6IVqmi2Ws_xpnDTS-Hc4T7VaVnpQr0NsTRKW_LKfSz54Q";
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export default function NutritionScreen() {
@@ -138,7 +138,7 @@ export default function NutritionScreen() {
 
         {/* Registro Rápido */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Registro (Claude Vision)</ThemedText>
+          <ThemedText style={styles.sectionTitle}>Registro (Gemini Vision)</ThemedText>
           <View style={{ flexDirection: 'row', gap: Spacing.three }}>
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]} 
