@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 
@@ -91,7 +90,7 @@ El estado actual del usuario hoy es:
               key={msg.id} 
               style={[
                 styles.messageBubble, 
-                msg.sender === 'user' ? [styles.userMessage, { backgroundColor: colors.backgroundSelected, borderColor: colors.backgroundSelected }] : styles.botMessage
+                msg.sender === 'user' ? [styles.userMessage, { backgroundColor: colors.backgroundSelected, borderColor: colors.backgroundSelected }] : [styles.botMessage, { borderColor: colors.backgroundSelected, backgroundColor: colors.backgroundElement }]
               ]}
             >
               <ThemedText style={msg.sender === 'user' ? { color: colors.text } : { color: colors.textSecondary, fontStyle: 'italic', fontFamily: 'serif' }}>
@@ -147,29 +146,32 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#3D6BFF',
-    letterSpacing: 2,
+    color: '#D32F2F',
+    letterSpacing: 3,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'serif',
     marginTop: 4,
+    textTransform: 'uppercase',
+    fontWeight: '900',
   },
   chatArea: {
     flex: 1,
   },
   messageBubble: {
     padding: Spacing.four,
-    borderRadius: 8,
+    borderRadius: 0,
     marginBottom: Spacing.three,
     maxWidth: '85%',
-    borderWidth: 1,
-    borderColor: '#1E2A3F',
-    backgroundColor: '#121826',
+    borderWidth: 2,
   },
   botMessage: {
     alignSelf: 'flex-start',
+    borderColor: '#333333',
+    backgroundColor: '#050505',
   },
   userMessage: {
     alignSelf: 'flex-end',
@@ -182,8 +184,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     minHeight: 44,
@@ -191,7 +193,9 @@ const styles = StyleSheet.create({
   sendButton: {
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
-    borderRadius: 8,
+    borderRadius: 0,
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#D32F2F',
   },
 });

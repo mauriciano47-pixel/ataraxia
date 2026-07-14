@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme, View, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme, View, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -8,18 +8,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
-import { useDailyLog } from '@/hooks/useDailyLog';
+import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 
-function Constellation({ points, size = 140 }: { points: boolean[], size?: number }) {
+const backgroundImages = [
+  require('../../assets/images/bg_workout_1.png'),
+  require('../../assets/images/bg_workout_2.png'),
+  require('../../assets/images/bg_workout_3.png'),
+];
+
+function Constellation({ points, size = 150 }: { points: boolean[], size?: number }) {
   const coords = [
-    [30, 100], [70, 40], [110, 60], [95, 110], [50, 125],
+    [35, 110], [75, 45], [115, 65], [100, 120], [55, 135],
   ].slice(0, points.length);
 
   return (
     <Svg width={size} height={size}>
       {coords.map((c, i) =>
         i < coords.length - 1 && points[i] && points[i + 1] ? (
-          <Line key={`l-${i}`} x1={c[0]} y1={c[1]} x2={coords[i + 1][0]} y2={coords[i + 1][1]} stroke="#3D6BFF" strokeWidth="1.5" opacity="0.6" />
+          <Line 
+            key={`l-${i}`} 
+            x1={c[0]} 
+            y1={c[1]} 
+            x2={coords[i + 1][0]} 
+            y2={coords[i + 1][1]} 
+            stroke="#D32F2F" 
+            strokeWidth="2" 
+            opacity="0.8" 
+          />
         ) : null
       )}
       {coords.map((c, i) => (
@@ -27,8 +42,10 @@ function Constellation({ points, size = 140 }: { points: boolean[], size?: numbe
           key={i}
           cx={c[0]}
           cy={c[1]}
-          r={points[i] ? 5 : 3}
-          fill={points[i] ? "#3D6BFF" : "#1E2A3F"}
+          r={points[i] ? 6 : 3}
+          fill={points[i] ? "#D32F2F" : "#555555"}
+          stroke={points[i] ? "#FFAAAA" : "transparent"}
+          strokeWidth={points[i] ? 1.5 : 0}
         />
       ))}
     </Svg>
@@ -37,6 +54,7 @@ function Constellation({ points, size = 140 }: { points: boolean[], size?: numbe
 
 export default function HoyScreen() {
   const { log, loading, addWater, toggleTraining, addMeal, saveCheckIn } = useDailyLog();
+  const { historyMap } = useHistoryLog();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const router = useRouter();
@@ -44,62 +62,171 @@ export default function HoyScreen() {
   const [energy, setEnergy] = useState<number | null>(null);
   const [sleep, setSleep] = useState<number | null>(null);
 
+  // Background carousel state and animation
+  const [bgIndex, setBgIndex] = useState(0);
+  const [fadeAnim] = useState(() => new Animated.Value(1));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [fadeAnim]);
+
   if (loading) {
     return (
-      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Cargando progreso...</ThemedText>
+        <ThemedText style={{ marginTop: Spacing.three }}>Cargando progreso estoico...</ThemedText>
       </ThemedView>
     );
   }
 
-  // Map habits to constellation points
   const habitos = [
     log.trainingCompleted,
     log.waterLitres >= 2,
     log.mealsLogged >= 3,
     log.checkInDone || false,
-    false
+    (log.trainingCompleted && log.waterLitres >= 2 && log.mealsLogged >= 3)
   ];
 
   const habitsDone = habitos.filter(Boolean).length;
 
+  // Calcular racha
+  const getStreak = () => {
+    let streak = 0;
+    for (let i = historyMap.length - 1; i >= 0; i--) {
+      if (historyMap[i]) streak++;
+      else break;
+    }
+    const completedToday = log.trainingCompleted && log.waterLitres >= 2 && log.mealsLogged >= 3;
+    if (completedToday) streak += 1;
+    return streak > 0 ? streak : 3; // Mostrar mínimo 3 para motivación inicial si es nuevo
+  };
+
+  const getStoicFocus = () => {
+    if (!log.trainingCompleted) {
+      return {
+        title: "ENFOQUE: TEMPLANZA Y ESFUERZO",
+        description: "El ejercicio físico es el yunque donde se forja la mente estoica. Soportar la incomodidad voluntaria de levantar peso o correr entrena tu voluntad para los golpes reales de la vida.",
+        tip: "⚠️ El entrenamiento físico sigue pendiente hoy. Elige la acción sobre la comodidad.",
+        icon: "fitness"
+      };
+    }
+    if (log.waterLitres < 2) {
+      return {
+        title: "ENFOQUE: PUREZA Y ENERGÍA",
+        description: "El agua purifica y revitaliza el cuerpo. Beber lo suficiente es una decisión consciente de autocuidado y disciplina. Mantén la mente alerta y el cuerpo listo para cualquier prueba.",
+        tip: "💧 Falta hidratación. Dale a tus músculos lo que necesitan para recuperarse.",
+        icon: "water"
+      };
+    }
+    if (log.mealsLogged < 3) {
+      return {
+        title: "ENFOQUE: NUTRICIÓN CONSCIENTE",
+        description: "Comer con propósito es un acto de respeto hacia tu cuerpo. Evita comer por impulso o placer descontrolado; aliméntate para dotar a tu organismo de la energía y fortaleza requeridas.",
+        tip: "🥩 Registra al menos 3 comidas para asegurar que estás nutriendo el templo.",
+        icon: "restaurant"
+      };
+    }
+    return {
+      title: "TEMPLO DE LA VIRTUD COMPLETADO",
+      description: "¡Excelente! Has cumplido con todos los pilares fundamentales del día. Tu mente y cuerpo están alineados. La consistencia es el único camino hacia el dominio propio.",
+      tip: "🏆 Todos los hábitos encendidos hoy. Sigue manteniendo encendido el fuego estoico.",
+      icon: "trophy"
+    };
+  };
+
+  const focus = getStoicFocus();
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Background dynamic carousel */}
+      <View style={StyleSheet.absoluteFill}>
+        <Animated.Image
+          source={backgroundImages[bgIndex]}
+          style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}
+          resizeMode="cover"
+        />
+        {/* Gritty overlay to ensure contrast */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.78)' }]} />
+      </View>
 
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Header con Racha */}
         <View style={styles.headerContainer}>
           <View style={styles.header}>
             <ThemedText style={styles.label}>ATARAXIA</ThemedText>
-            <ThemedText style={styles.title}>
-              Visto desde arriba, todo pesa menos
+            <ThemedText style={styles.title}>Visto desde arriba, todo pesa menos</ThemedText>
+          </View>
+          <View style={styles.headerRight}>
+            <View style={styles.streakBadge}>
+              <Ionicons name="flame" size={18} color="#D32F2F" />
+              <ThemedText style={styles.streakText}>{getStreak()} DÍAS</ThemedText>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
+              <Ionicons name="person-circle-outline" size={32} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Constellation Widget */}
+        <View style={styles.constellationCard}>
+          <Constellation points={habitos} />
+          <View style={styles.constellationInfo}>
+            <ThemedText style={styles.constellationTitle}>CONSTELACIÓN DIARIA</ThemedText>
+            <ThemedText style={styles.constellationSubtitle}>
+              {habitsDone} de 5 pilares estoicos encendidos hoy
+            </ThemedText>
+            <ThemedText style={styles.constellationTip}>
+              Completa hábitos abajo para encender las estrellas y conectar la constelación.
             </ThemedText>
           </View>
-          <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
-            <Ionicons name="person-circle-outline" size={32} color={colors.textSecondary} />
-          </TouchableOpacity>
         </View>
 
-        <View style={styles.constellationContainer}>
-          <Constellation points={habitos} />
-          <ThemedText style={styles.constellationText}>
-            {habitsDone} de 5 hábitos encendidos hoy
+        {/* Enfoque / Lección Stoic-Fitness (Didáctica) */}
+        <View style={styles.didacticCard}>
+          <View style={styles.didacticHeader}>
+            <Ionicons name={focus.icon as any} size={20} color="#D32F2F" style={{ marginRight: 8 }} />
+            <ThemedText style={styles.didacticTitle}>{focus.title}</ThemedText>
+          </View>
+          <ThemedText style={styles.didacticDescription}>
+            {focus.description}
           </ThemedText>
+          <View style={styles.didacticFooter}>
+            <ThemedText style={styles.didacticTipText}>{focus.tip}</ThemedText>
+          </View>
         </View>
 
+        {/* Check-In Diario */}
         {!log.checkInDone ? (
-          <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={{ fontSize: 16, fontFamily: 'serif', marginBottom: 12 }}>Señal de Recuperación</ThemedText>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="heart-half-outline" size={18} color="#D32F2F" style={{ marginRight: 6 }} />
+              <ThemedText style={styles.cardTitle}>Señal de Recuperación Estoica</ThemedText>
+            </View>
+            <ThemedText style={styles.cardSubtitle}>Evalúa tu estado mental y físico para calibrar tu día.</ThemedText>
 
             <ThemedText style={styles.checkInLabel}>Energía (1-5)</ThemedText>
             <View style={styles.checkInRow}>
               {[1, 2, 3, 4, 5].map(v => (
                 <TouchableOpacity
                   key={`e-${v}`}
-                  style={[styles.checkInBtn, { borderColor: colors.backgroundSelected }, energy === v && { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                  style={[styles.checkInBtn, energy === v && styles.checkInBtnActive]}
                   onPress={() => setEnergy(v)}
                 >
-                  <ThemedText style={energy === v ? { color: '#FFF' } : {}}>{v}</ThemedText>
+                  <ThemedText style={[styles.checkInBtnText, energy === v && styles.checkInBtnTextActive]}>{v}</ThemedText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -109,16 +236,16 @@ export default function HoyScreen() {
               {[1, 2, 3, 4, 5].map(v => (
                 <TouchableOpacity
                   key={`s-${v}`}
-                  style={[styles.checkInBtn, { borderColor: colors.backgroundSelected }, sleep === v && { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                  style={[styles.checkInBtn, sleep === v && styles.checkInBtnActive]}
                   onPress={() => setSleep(v)}
                 >
-                  <ThemedText style={sleep === v ? { color: '#FFF' } : {}}>{v}</ThemedText>
+                  <ThemedText style={[styles.checkInBtnText, sleep === v && styles.checkInBtnTextActive]}>{v}</ThemedText>
                 </TouchableOpacity>
               ))}
             </View>
 
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.accent, marginTop: 16 }, (!energy || !sleep) && { opacity: 0.5 }]}
+              style={[styles.actionBtn, (!energy || !sleep) && { opacity: 0.5 }]}
               onPress={() => {
                 if (energy && sleep) {
                   saveCheckIn(energy, sleep);
@@ -126,11 +253,15 @@ export default function HoyScreen() {
               }}
               disabled={!energy || !sleep}
             >
-              <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Guardar Check-in</ThemedText>
+              <ThemedText style={styles.actionBtnText}>Guardar Check-in</ThemedText>
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="bookmark-outline" size={18} color="#D32F2F" style={{ marginRight: 6 }} />
+              <ThemedText style={styles.cardTitle}>Máxima Stoica</ThemedText>
+            </View>
             <ThemedText style={styles.quoteText}>
               {'"Contempla a menudo el conjunto del tiempo y de la sustancia, y verás qué pequeño es cada cosa."'}
             </ThemedText>
@@ -138,32 +269,93 @@ export default function HoyScreen() {
           </View>
         )}
 
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={styles.statLabel}>ENTRENO</ThemedText>
-            <TouchableOpacity onPress={toggleTraining}>
-              <ThemedText style={[styles.statValue, { color: log.trainingCompleted ? colors.accent : colors.text }]}>
-                {log.trainingCompleted ? 'Completado' : 'Pendiente'}
+        {/* Panel de Hábitos Interactivos */}
+        <View style={styles.habitsContainer}>
+          {/* ENTRENAMIENTO */}
+          <View style={styles.habitCard}>
+            <View style={styles.habitHeader}>
+              <ThemedText style={styles.habitLabel}>TEMPLO (ENTRENO)</ThemedText>
+              <Ionicons 
+                name={log.trainingCompleted ? "checkmark-circle" : "ellipse-outline"} 
+                size={22} 
+                color={log.trainingCompleted ? "#D32F2F" : "#555"} 
+              />
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.habitMainBtn, log.trainingCompleted && styles.habitMainBtnActive]} 
+              onPress={toggleTraining}
+            >
+              <ThemedText style={styles.habitMainBtnText}>
+                {log.trainingCompleted ? 'Completado ✓' : 'Registrar Entreno'}
               </ThemedText>
             </TouchableOpacity>
+            
+            <ThemedText style={styles.habitFooterText}>
+              {log.trainingCompleted 
+                ? 'Has dominado la pereza hoy. Buen trabajo.' 
+                : 'Obliga a tu cuerpo a seguir las órdenes de tu mente.'}
+            </ThemedText>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={styles.statLabel}>AGUA</ThemedText>
-            <TouchableOpacity onPress={() => addWater(0.25)}>
-              <ThemedText style={[styles.statValue, { color: log.waterLitres >= 2 ? colors.accent : colors.text }]}>
-                {log.waterLitres.toFixed(1)} L
-              </ThemedText>
-            </TouchableOpacity>
+          {/* AGUA */}
+          <View style={styles.habitCard}>
+            <View style={styles.habitHeader}>
+              <ThemedText style={styles.habitLabel}>AGUA (MIN. 2L)</ThemedText>
+              <Ionicons 
+                name={log.waterLitres >= 2 ? "water" : "water-outline"} 
+                size={22} 
+                color={log.waterLitres >= 2 ? "#D32F2F" : "#555"} 
+              />
+            </View>
+            
+            <View style={styles.habitInteractiveRow}>
+              <TouchableOpacity style={styles.adjustBtn} onPress={() => addWater(-0.25)}>
+                <ThemedText style={styles.adjustBtnText}>-</ThemedText>
+              </TouchableOpacity>
+              
+              <View style={styles.habitValueContainer}>
+                <ThemedText style={styles.habitValue}>{log.waterLitres.toFixed(2)} L</ThemedText>
+                {/* Progress bar */}
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${Math.min((log.waterLitres / 2) * 100, 100)}%` }]} />
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.adjustBtn} onPress={() => addWater(0.25)}>
+                <ThemedText style={styles.adjustBtnText}>+</ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={styles.statLabel}>COMIDAS</ThemedText>
-            <TouchableOpacity onPress={addMeal}>
-              <ThemedText style={[styles.statValue, { color: log.mealsLogged >= 3 ? colors.accent : colors.text }]}>
-                {log.mealsLogged} / 3
-              </ThemedText>
-            </TouchableOpacity>
+          {/* COMIDAS */}
+          <View style={styles.habitCard}>
+            <View style={styles.habitHeader}>
+              <ThemedText style={styles.habitLabel}>COMIDAS (META 3)</ThemedText>
+              <Ionicons 
+                name={log.mealsLogged >= 3 ? "restaurant" : "restaurant-outline"} 
+                size={20} 
+                color={log.mealsLogged >= 3 ? "#D32F2F" : "#555"} 
+              />
+            </View>
+
+            <View style={styles.habitInteractiveRow}>
+              <TouchableOpacity style={styles.adjustBtn} onPress={() => addMeal()}>
+                <ThemedText style={styles.adjustBtnText}>+</ThemedText>
+              </TouchableOpacity>
+              
+              <View style={styles.habitValueContainer}>
+                <ThemedText style={styles.habitValue}>{log.mealsLogged} / 3</ThemedText>
+                {/* Progress bar */}
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${Math.min((log.mealsLogged / 3) * 100, 100)}%` }]} />
+                </View>
+              </View>
+              
+              <TouchableOpacity style={[styles.adjustBtn, {opacity: 0.5}]} disabled={true}>
+                <ThemedText style={styles.adjustBtnText}>...</ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -175,6 +367,7 @@ export default function HoyScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#000',
   },
   container: {
     flex: 1,
@@ -186,101 +379,296 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     paddingTop: Spacing.four,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.six,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: Spacing.two,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: Spacing.three,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   header: {
     flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   profileBtn: {
     padding: Spacing.one,
   },
   label: {
-    fontSize: 10,
+    fontSize: 9,
     textTransform: 'uppercase',
-    color: '#3D6BFF',
-    letterSpacing: 2,
+    color: '#D32F2F',
+    letterSpacing: 3,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'serif',
     marginTop: 4,
+    color: '#FFF',
+    textTransform: 'uppercase',
+    fontWeight: '900',
   },
-  constellationContainer: {
+  streakBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.two,
+    backgroundColor: 'rgba(211,47,47,0.15)',
+    borderWidth: 1.5,
+    borderColor: '#D32F2F',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  constellationText: {
+  streakText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    color: '#FFF',
+    marginLeft: 4,
+  },
+  constellationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(10, 10, 10, 0.85)',
+    borderWidth: 2,
+    borderColor: 'rgba(211, 47, 47, 0.3)',
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  constellationInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  constellationTitle: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    color: '#D32F2F',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    letterSpacing: 1.5,
+  },
+  constellationSubtitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  constellationTip: {
+    fontSize: 10,
+    color: '#777',
+    lineHeight: 14,
+  },
+  didacticCard: {
+    backgroundColor: 'rgba(15, 15, 15, 0.9)',
+    borderWidth: 2,
+    borderColor: '#D32F2F',
+    padding: Spacing.four,
+    gap: 8,
+  },
+  didacticHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  didacticTitle: {
     fontSize: 12,
-    color: '#6B7690',
-    marginTop: -8,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    color: '#FFF',
+    letterSpacing: 1.5,
+  },
+  didacticDescription: {
+    fontSize: 13.5,
+    color: '#DDD',
+    lineHeight: 20,
+    fontFamily: 'serif',
+  },
+  didacticFooter: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  didacticTipText: {
+    fontSize: 11,
+    color: '#D32F2F',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
   },
   card: {
+    backgroundColor: 'rgba(10, 10, 10, 0.85)',
     padding: Spacing.four,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cardTitle: {
+    fontSize: 13,
+    fontFamily: 'monospace',
+    color: '#FFF',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  cardSubtitle: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 12,
   },
   quoteText: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontFamily: 'serif',
     fontStyle: 'italic',
     lineHeight: 22,
+    color: '#EEE',
   },
   quoteAuthor: {
-    fontSize: 12,
-    color: '#3D6BFF',
-    marginTop: 8,
+    fontSize: 11,
+    color: '#D32F2F',
+    marginTop: 10,
+    fontFamily: 'monospace',
+    textTransform: 'uppercase',
   },
   checkInLabel: {
-    fontSize: 12,
-    color: '#6B7690',
+    fontSize: 10,
+    color: '#888',
     marginBottom: 6,
+    fontFamily: 'monospace',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   checkInRow: {
     flexDirection: 'row',
     gap: 8,
   },
   checkInBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+    width: 38,
+    height: 38,
+    borderWidth: 1.5,
+    borderColor: '#444',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  checkInBtnActive: {
+    borderColor: '#D32F2F',
+    backgroundColor: '#D32F2F',
+  },
+  checkInBtnText: {
+    color: '#888',
+    fontWeight: 'bold',
+  },
+  checkInBtnTextActive: {
+    color: '#FFF',
   },
   actionBtn: {
     paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#D32F2F',
+    borderWidth: 1.5,
+    borderColor: '#D32F2F',
     alignItems: 'center',
+    marginTop: 16,
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '30%',
-    padding: Spacing.three,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  statLabel: {
-    fontSize: 10,
+  actionBtnText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    fontSize: 12,
     textTransform: 'uppercase',
-    color: '#6B7690',
     letterSpacing: 1,
   },
-  statValue: {
+  habitsContainer: {
+    gap: Spacing.three,
+  },
+  habitCard: {
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: Spacing.four,
+    gap: 10,
+  },
+  habitHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  habitLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    color: '#FFF',
+    letterSpacing: 1.5,
+  },
+  habitMainBtn: {
+    paddingVertical: 14,
+    borderWidth: 2,
+    borderColor: '#D32F2F',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  habitMainBtnActive: {
+    backgroundColor: 'rgba(211,47,47,0.15)',
+  },
+  habitMainBtnText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  habitFooterText: {
+    fontSize: 10.5,
+    color: '#666',
+    fontStyle: 'italic',
+    lineHeight: 14,
+  },
+  habitInteractiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adjustBtn: {
+    width: 44,
+    height: 44,
+    borderWidth: 1.5,
+    borderColor: '#444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+  adjustBtnText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  habitValueContainer: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  habitValue: {
     fontSize: 16,
-    marginTop: 4,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    color: '#FFF',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#D32F2F',
   }
 });

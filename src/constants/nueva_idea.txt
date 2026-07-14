@@ -1,0 +1,104 @@
+# ATARAXIA — Especificación Funcional
+### Personal trainer estoico 24/7 — Entrenamiento + Nutrición
+
+Stack sugerido (consistente con tus otros proyectos): **Django + DRF** (backend) · **React Native / Expo** (frontend) · **Anthropic API** (coach conversacional + generación de rutinas).
+
+---
+
+## 1. Módulo: Motor Adaptativo de Rutinas
+
+**Objetivo:** que la rutina no sea fija — se ajusta según lo que el usuario realmente hizo, como Fitbod/Trainwell, pero corriendo sobre tu propio backend.
+
+**Modelos (Django):**
+- `Ejercicio` (nombre, grupo_muscular, equipo_requerido, video_demo_url, dificultad)
+- `Rutina` (usuario, objetivo, nivel, fecha_generada)
+- `SesionEntreno` (rutina, fecha, ejercicios_realizados[], completada)
+- `SerieRegistrada` (sesion, ejercicio, peso, reps, rpe_percibido)
+
+**Lógica de progresión (backend):**
+- Si el usuario completó todas las series con RPE bajo (≤6) en las últimas 2 sesiones → sube peso/reps automáticamente en la siguiente.
+- Si falló series o RPE ≥9 repetido → sugiere "semana de descarga" (deload), enmarcado como *"lo que depende de ti hoy es descansar bien"*.
+- Endpoint: `POST /api/rutina/siguiente-sesion/` → devuelve la sesión ajustada según historial.
+
+**Diferencial vs. competencia:** Fitbod/Jefit hacen esto pero sin contexto de lenguaje/filosofía — acá el ajuste viene acompañado de una frase del coach explicando la decisión.
+
+---
+
+## 2. Módulo: Coach Conversacional Estoico (Claude API)
+
+**Objetivo:** ser el "por qué" detrás de cada decisión — el gap que Noom cubre con psicología pop, pero con estoicismo real y sin colores buenos/malos.
+
+**Flujo:**
+1. Usuario pregunta o el sistema detecta un evento (ej. saltó el entreno 2 días seguidos, o comió fuera de sus macros).
+2. Se arma un prompt con contexto real: historial reciente + la pregunta.
+3. Claude responde en el tono de ATARAXIA: explica la razón fisiológica/nutricional Y la reencuadra estoicamente (control vs. no control).
+
+**Ejemplo de system prompt (backend):**
+```
+Eres el coach de ATARAXIA. Respondes con precisión técnica en nutrición/entrenamiento,
+sin juicios morales sobre la comida. Cierras cada respuesta relevante conectando con un
+principio estoico breve (control, virtud, aceptación), sin sonar a meme motivacional.
+Nunca usshort etiquetas de "bueno/malo" para alimentos.
+```
+
+**Endpoint:** `POST /api/coach/consultar/` → `{ mensaje, contexto_usuario }` → respuesta del coach.
+
+**Importante:** este chat NO reemplaza a un nutricionista/médico real — debe incluir un disclaimer discreto la primera vez que se usa.
+
+---
+
+## 3. Módulo: Nutrición Educativa (no solo conteo)
+
+**Qué evitar:** semáforos de "alimento bueno/malo" (limitación reportada de Noom), exceso de micronutrientes tipo Cronometer (84 es demasiado para uso diario, genera ruido).
+
+**Qué incluir:**
+- Macros (proteína, carbs, grasas) + 5-6 micronutrientes clave (fibra, sodio, azúcares añadidos, hierro, calcio) — suficiente para decisiones reales sin abrumar.
+- Registro rápido por foto/texto vía Claude Vision (ya lo tienes integrado en VitroDiag, mismo patrón aplicable acá).
+- Ajuste semanal automático de objetivo calórico según tendencia real de peso (no fórmula fija) — como hacen las apps líderes en 2026.
+- Cada comida registrada puede mostrar una micro-explicación educativa opcional ("por qué esta combinación ayuda a la síntesis proteica"), no obligatoria — para no interrumpir el flujo.
+
+**Modelos:**
+- `RegistroComida` (usuario, fecha, alimentos[], macros_calculados, foto_opcional)
+- `ObjetivoNutricional` (usuario, calorias_objetivo, macros_objetivo, actualizado_automaticamente=bool)
+
+---
+
+## 4. Módulo: Señal de Recuperación
+
+**Objetivo:** distinguir "lo que depende de ti" de lo que no — el cuerpo también manda señales.
+
+**MVP sin wearable:** check-in diario simple (energía 1-5, calidad de sueño 1-5, dolor muscular sí/no) antes de mostrar la rutina del día. Si la señal es baja, el sistema sugiere ajustar intensidad.
+
+**Futuro (con wearable):** integrar HR/sueño vía Apple Health / Google Fit para automatizar esto.
+
+---
+
+## 5. Módulo: Diario de Reflexión (tu diferencial real)
+
+Ninguna app investigada combina esto con datos de entreno/nutrición — es la ventaja competitiva de ATARAXIA.
+
+- Entrada de texto libre post-entreno o fin de día.
+- El coach (Claude) puede, opcionalmente, dar una breve devolución reflexiva (no terapéutica) conectando la entrada con una cita o principio estoico relevante — sin diagnosticar ni psicoanalizar al usuario.
+- Historial de entradas visible en la pantalla Diario ya diseñada.
+
+**Modelo:** `EntradaDiario` (usuario, fecha, texto, respuesta_coach_opcional)
+
+---
+
+## 6. Lo que deliberadamente NO se incluye
+
+- **Feed social / comparación con otros usuarios** — la evidencia muestra que genera ansiedad comparativa en una parte de los usuarios. ATARAXIA es una relación 1:1 con el coach, no una comunidad.
+- **Gamificación de puntos/insignias genéricas** — no encaja con el tono estoico ni con el objetivo de adherencia real por reflexión, no por dopamina.
+- **Etiquetas moralizantes de comida** ("bueno"/"malo", semáforos) — se reemplaza por información factual + contexto del coach.
+
+---
+
+## 7. Orden sugerido de construcción
+
+1. Backend: modelos de Ejercicio/Rutina/SesionEntreno + endpoint de progresión básica (sin IA aún, reglas simples).
+2. Frontend: pantallas Entreno + Historial conectadas a datos reales.
+3. Coach conversacional (Claude API) — versión mínima, sin contexto histórico todavía.
+4. Nutrición: registro + ajuste semanal automático.
+5. Diario + devolución del coach.
+6. Señal de recuperación (check-in diario).
+7. Iterar: contexto histórico enriquecido en el coach, integración wearable.

@@ -1,29 +1,17 @@
 import { StyleSheet, ActivityIndicator, useColorScheme, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
-import { useDailyLog } from '@/hooks/useDailyLog';
-
-// Helper: Generar mock de últimos 29 días
-const generateHistoryMock = () => {
-  const days = [];
-  for (let i = 0; i < 29; i++) {
-    // 70% chance de éxito para la visualización del mapa estelar
-    days.push(Math.random() > 0.3);
-  }
-  return days;
-};
+import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 export default function ProgressScreen() {
   const { log, loading } = useDailyLog();
+  const { historyMap, loadingHistory } = useHistoryLog();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   
-  const [history] = useState<boolean[]>(() => generateHistoryMock());
-
-  if (loading || history.length === 0) {
+  if (loading || loadingHistory) {
     return (
       <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -32,9 +20,12 @@ export default function ProgressScreen() {
     );
   }
 
-  // El día 30 es HOY. Brilla si el check-in diario o el entrenamiento están hechos.
+  // El día 30 es HOY. Sobrescribimos el último día de la base de datos con el estado en tiempo real.
   const isTodaySuccess = log.checkInDone || log.trainingCompleted;
-  const fullMap = [...history, isTodaySuccess];
+  const fullMap = [...historyMap];
+  if (fullMap.length > 0) {
+    fullMap[fullMap.length - 1] = isTodaySuccess;
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -107,14 +98,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#3D6BFF',
-    letterSpacing: 2,
+    color: '#D32F2F',
+    letterSpacing: 3,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'serif',
     marginTop: 4,
+    textTransform: 'uppercase',
+    fontWeight: '900',
   },
   description: {
     fontSize: 14,
@@ -137,18 +131,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   todayContainer: {
-    borderWidth: 1,
-    borderColor: 'rgba(61, 107, 255, 0.3)',
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#D32F2F',
+    borderRadius: 0,
   },
   star: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 0,
   },
   card: {
     padding: Spacing.four,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 2,
   },
 });

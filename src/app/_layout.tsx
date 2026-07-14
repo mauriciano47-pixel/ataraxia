@@ -1,6 +1,5 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 
@@ -50,14 +49,12 @@ async function scheduleMorningNotification() {
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   useEffect(() => {
     scheduleMorningNotification();
   }, []);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DarkTheme}>
       <AnimatedSplashOverlay />
       <AppTabs />
     </ThemeProvider>

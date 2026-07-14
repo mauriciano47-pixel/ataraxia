@@ -5,15 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  const colors = Colors[scheme];
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: { backgroundColor: colors.backgroundElement, borderTopColor: colors.backgroundSelected },
+        tabBarStyle: { backgroundColor: colors.background, borderTopWidth: 2, borderTopColor: colors.backgroundSelected, paddingBottom: 5, height: 60 },
         headerShown: false,
       }}>
       <Tabs.Screen

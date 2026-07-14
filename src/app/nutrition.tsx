@@ -104,24 +104,24 @@ export default function NutritionScreen() {
           <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
             <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Proteína</ThemedText>
             <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.protein.current}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
-              <View style={[styles.progressBar, { width: `${(macros.protein.current/macros.protein.goal)*100}%`, backgroundColor: '#3D6BFF' }]} />
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 8 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.protein.current/macros.protein.goal)*100}%`, backgroundColor: '#FFFFFF' }]} />
             </View>
           </View>
           
           <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
             <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Carbs</ThemedText>
             <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.carbs.current}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
-              <View style={[styles.progressBar, { width: `${(macros.carbs.current/macros.carbs.goal)*100}%`, backgroundColor: '#FF8A00' }]} />
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 8 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.carbs.current/macros.carbs.goal)*100}%`, backgroundColor: '#AAAAAA' }]} />
             </View>
           </View>
           
           <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
             <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Grasas</ThemedText>
             <ThemedText style={{ fontSize: 16, marginTop: 4 }}>{macros.fats.current}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 4 }]}>
-              <View style={[styles.progressBar, { width: `${(macros.fats.current/macros.fats.goal)*100}%`, backgroundColor: '#FFD700' }]} />
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 8 }]}>
+              <View style={[styles.progressBar, { width: `${(macros.fats.current/macros.fats.goal)*100}%`, backgroundColor: '#555555' }]} />
             </View>
           </View>
         </View>
@@ -191,29 +191,34 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#3D6BFF',
-    letterSpacing: 2,
+    color: '#D32F2F',
+    letterSpacing: 3,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'serif',
     marginTop: 4,
+    textTransform: 'uppercase',
+    fontWeight: '900',
   },
   card: {
     padding: Spacing.four,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 2,
   },
   progressContainer: {
-    height: 8,
-    borderRadius: 4,
+    height: 12,
+    borderRadius: 0,
     marginTop: Spacing.three,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 0,
   },
   macrosContainer: {
     flexDirection: 'row',
@@ -223,8 +228,8 @@ const styles = StyleSheet.create({
   macroCard: {
     flex: 1,
     padding: Spacing.three,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 2,
   },
   section: {
     marginTop: Spacing.four,
@@ -233,16 +238,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: Spacing.three,
+    textTransform: 'uppercase',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
   },
   actionButton: {
     flex: 1,
     paddingVertical: Spacing.three,
-    borderRadius: 8,
+    borderRadius: 0,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
   },
   buttonText: {
     fontWeight: 'bold',
     fontSize: 14,
+    textTransform: 'uppercase',
+    fontFamily: 'monospace',
   }
 });

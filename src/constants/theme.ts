@@ -9,20 +9,20 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: { 
-    text: '#E7ECF7', // ink
-    background: '#0A0E17', // bg
-    backgroundElement: '#121826', // card
-    backgroundSelected: '#1E2A3F', // cardBorder
-    textSecondary: '#6B7690', // inkDim
-    accent: '#3D6BFF', // electric
+    text: '#FFFFFF', 
+    background: '#000000', 
+    backgroundElement: '#0A0A0A', 
+    backgroundSelected: '#222222', 
+    textSecondary: '#666666', 
+    accent: '#D32F2F', 
   },
   dark: { // Cosmos Theme
-    text: '#E7ECF7', // ink
-    background: '#0A0E17', // bg
-    backgroundElement: '#121826', // card
-    backgroundSelected: '#1E2A3F', // cardBorder
-    textSecondary: '#6B7690', // inkDim
-    accent: '#3D6BFF', // electric
+    text: '#FFFFFF', // ink
+    background: '#000000', // bg negro puro
+    backgroundElement: '#0A0A0A', // card
+    backgroundSelected: '#222222', // cardBorder
+    textSecondary: '#666666', // inkDim
+    accent: '#D32F2F', // rojo militar
   },
 } as const;
 

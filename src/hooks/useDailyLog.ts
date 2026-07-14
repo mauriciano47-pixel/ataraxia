@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 export interface DailyLog {
@@ -145,4 +145,56 @@ export function useDailyLog() {
     saveCheckIn,
     addMacros,
   };
+}
+
+export function useHistoryLog() {
+  const [historyMap, setHistoryMap] = useState<boolean[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!auth.currentUser) {
+        setLoadingHistory(false);
+        return;
+      }
+
+      try {
+        // Document IDs are YYYY-MM-DD
+        const q = query(
+          collection(db, `users/${auth.currentUser.uid}/daily_logs`),
+          orderBy('__name__', 'desc'),
+          limit(30)
+        );
+        const snapshot = await getDocs(q);
+        const map: boolean[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as DailyLog;
+          const success = data.checkInDone || data.trainingCompleted || false;
+          map.push(success);
+        });
+        
+        // Reverse so the oldest is first, newest is last (index 29)
+        map.reverse();
+        
+        // If there are less than 30 days, fill the rest with empty space
+        while (map.length < 30) {
+          map.unshift(false);
+        }
+
+        setHistoryMap(map);
+      } catch (error) {
+        console.error("Error fetching history:", error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) fetchHistory();
+      else setLoadingHistory(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return { historyMap, loadingHistory };
 }

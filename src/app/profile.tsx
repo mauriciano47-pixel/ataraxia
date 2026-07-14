@@ -1,4 +1,4 @@
-import { StyleSheet, View, Switch, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Switch, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
-import { useColorScheme } from 'react-native';
 import { auth } from '@/lib/firebase';
 
 export default function ProfileScreen() {
@@ -37,7 +36,7 @@ export default function ProfileScreen() {
         </View>
 
         <ThemedText style={styles.description}>
-          "La felicidad de tu vida depende de la calidad de tus pensamientos." – Marco Aurelio
+          &ldquo;La felicidad de tu vida depende de la calidad de tus pensamientos.&rdquo; – Marco Aurelio
         </ThemedText>
 
         {/* Sección de Identidad */}
