@@ -138,6 +138,7 @@ export function useDailyLog() {
   return {
     log,
     loading,
+    user,
     addWater,
     toggleTraining,
     addMeal,
@@ -145,6 +146,52 @@ export function useDailyLog() {
     saveCheckIn,
     addMacros,
   };
+}
+
+/**
+ * Hook que retorna el historial de los últimos N días de daily_logs.
+ * Usado por el coach para construir contexto histórico.
+ */
+export function useWeekHistory(days: number = 7) {
+  const [weekLogs, setWeekLogs] = useState<(DailyLog & { date: string })[]>([]);
+  const [loadingWeek, setLoadingWeek] = useState(true);
+
+  useEffect(() => {
+    const fetchWeek = async () => {
+      if (!auth.currentUser) {
+        setLoadingWeek(false);
+        return;
+      }
+
+      try {
+        const q = query(
+          collection(db, `users/${auth.currentUser.uid}/daily_logs`),
+          orderBy('__name__', 'desc'),
+          limit(days)
+        );
+        const snapshot = await getDocs(q);
+        const logs: (DailyLog & { date: string })[] = [];
+        snapshot.forEach((docSnap) => {
+          logs.push({ ...(docSnap.data() as DailyLog), date: docSnap.id });
+        });
+        // Más antiguo primero
+        logs.reverse();
+        setWeekLogs(logs);
+      } catch (error) {
+        console.error("Error obteniendo historial semanal:", error);
+      } finally {
+        setLoadingWeek(false);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) fetchWeek();
+      else setLoadingWeek(false);
+    });
+    return () => unsubscribe();
+  }, [days]);
+
+  return { weekLogs, loadingWeek };
 }
 
 export function useHistoryLog() {

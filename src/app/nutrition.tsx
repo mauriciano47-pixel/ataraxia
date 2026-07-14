@@ -54,7 +54,7 @@ export default function NutritionScreen() {
     setIsAnalyzing(true);
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: [
           { inlineData: { data: base64String, mimeType: 'image/jpeg' } },
           "Estima los macros de esta comida. Responde SOLAMENTE con un objeto JSON (sin markdown) con estas claves exactas: protein, carbs, fats, calories. Usa números enteros.",

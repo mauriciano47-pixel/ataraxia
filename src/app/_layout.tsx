@@ -2,6 +2,8 @@ import { DarkTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
@@ -49,9 +51,17 @@ async function scheduleMorningNotification() {
 }
 
 export default function TabLayout() {
+  const [loaded, error] = useFonts({
+    ...Ionicons.font,
+  });
+
   useEffect(() => {
     scheduleMorningNotification();
   }, []);
+
+  if (!loaded && !error) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={DarkTheme}>
@@ -60,3 +70,4 @@ export default function TabLayout() {
     </ThemeProvider>
   );
 }
+

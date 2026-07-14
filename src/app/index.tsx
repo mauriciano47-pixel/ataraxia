@@ -160,7 +160,7 @@ export default function HoyScreen() {
           resizeMode="cover"
         />
         {/* Gritty overlay to ensure contrast */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.78)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.45)' }]} />
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
