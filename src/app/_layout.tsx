@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
@@ -28,6 +29,7 @@ const QUOTES = [
 ];
 
 async function scheduleMorningNotification() {
+  if (Platform.OS === 'web') return;
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') {
     await Notifications.requestPermissionsAsync();
