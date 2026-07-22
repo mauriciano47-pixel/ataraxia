@@ -8,8 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
+const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 export default function NutritionScreen() {
   const { log, addCalories, addMacros } = useDailyLog();
@@ -53,6 +53,11 @@ export default function NutritionScreen() {
   const analyzeImage = async (base64String: string) => {
     setIsAnalyzing(true);
     try {
+      if (!ai) {
+        Alert.alert('Configuración incompleta', 'La integración con Gemini no está disponible. Revisa las variables de entorno.');
+        return;
+      }
+
       const response = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
         contents: [
@@ -69,7 +74,7 @@ export default function NutritionScreen() {
       addCalories(data.calories || 0);
       Alert.alert("Análisis Completado", `Calorías: ${data.calories}\nProteínas: ${data.protein}g\nCarbs: ${data.carbs}g\nGrasas: ${data.fats}g`);
     } catch (error) {
-      console.error(error);
+      console.error('Error al analizar la foto.');
       Alert.alert("Error", "No se pudo analizar la foto.");
     } finally {
       setIsAnalyzing(false);

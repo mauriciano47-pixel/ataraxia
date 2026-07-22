@@ -10,8 +10,8 @@ import { useCoachContext } from '@/hooks/useCoachContext';
 import { useJournalHistory, JournalMessage } from '@/hooks/useJournalHistory';
 import { buildCoachSystemPrompt, generateWelcomeMessage } from '@/lib/coachPrompt';
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
+const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 const DISCLAIMER_TEXT = '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA. No reemplaza el consejo de un médico, nutricionista o profesional de salud certificado. Si tienes condiciones médicas, consulta siempre a un especialista.';
 
@@ -135,6 +135,18 @@ export default function JournalScreen() {
 
       const fullPrompt = conversationParts.join('\n\n');
 
+      if (!ai) {
+        const errorMsg: JournalMessage = {
+          text: 'La integración con Gemini no está configurada. Revisa las variables de entorno para habilitar el coach.',
+          sender: 'bot',
+          timestamp: Date.now(),
+        };
+        const updatedWithConfigError = [...updatedWithUser, errorMsg];
+        setMessages(updatedWithConfigError);
+        await saveMessages(updatedWithConfigError);
+        return;
+      }
+
       const response = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
         contents: fullPrompt,
@@ -155,7 +167,7 @@ export default function JournalScreen() {
       await saveMessages(updatedWithBot);
 
     } catch (error) {
-      console.error("Error del Coach:", error);
+      console.error('Error del Coach: unable to generate response.');
       const errorMsg: JournalMessage = {
         text: 'Error de conexión con el Oráculo. La sabiduría estoica no requiere conexión — reflexiona por ti mismo mientras tanto.',
         sender: 'bot',

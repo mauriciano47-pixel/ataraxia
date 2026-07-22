@@ -1,20 +1,26 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCXZG7kER46oBiYgDhBfwpB1OWfUIFcIGI",
-  authDomain: "ataraxia-dce06.firebaseapp.com",
-  projectId: "ataraxia-dce06",
-  storageBucket: "ataraxia-dce06.firebasestorage.app",
-  messagingSenderId: "850676796811",
-  appId: "1:850676796811:web:49b5c1d0abe4bd6a75b38e",
-  measurementId: "G-RHE3G9YJB9"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID ?? '',
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const hasFirebaseConfig = Object.values(firebaseConfig).every((value) => Boolean(value));
+
+const app = hasFirebaseConfig
+  ? getApps().length > 0
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null;
+
+const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : null;
 
 export { app, db, auth };
