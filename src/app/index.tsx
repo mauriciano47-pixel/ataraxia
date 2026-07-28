@@ -11,11 +11,24 @@ import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { StepCounterCard } from '@/components/StepCounterCard';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
+import { SmartDeviceCard } from '@/components/SmartDeviceCard';
 
 const backgroundImages = [
-  require('../../assets/images/bg_workout_1.png'),
-  require('../../assets/images/bg_workout_2.png'),
-  require('../../assets/images/bg_workout_3.png'),
+  { 
+    src: require('../../assets/images/bg_stoic_statue.png'), 
+    title: 'MARCO AURELIO HD', 
+    quote: '"Controla tu percepción. Acepta tu destino con fortaleza."' 
+  },
+  { 
+    src: require('../../assets/images/bg_workout_dark.png'), 
+    title: 'DISCIPLINA EN EL TEMPLO', 
+    quote: '"Ningún hombre tiene derecho a ser un aficionado en el entrenamiento físico."' 
+  },
+  { 
+    src: require('../../assets/images/bg_stoic_cosmos.png'), 
+    title: 'CONSTELACIÓN DEL COSMOS', 
+    quote: '"Mira las estrellas y siéntete parte de la danza del universo."' 
+  },
 ];
 
 function Constellation({ points, size = 150 }: { points: boolean[], size?: number }) {
@@ -55,7 +68,7 @@ function Constellation({ points, size = 150 }: { points: boolean[], size?: numbe
 }
 
 export default function HoyScreen() {
-  const { log, loading, addWater, toggleTraining, addMeal, saveCheckIn, addSteps, setStepGoal, updateUserMetrics } = useDailyLog();
+  const { log, loading, addWater, toggleTraining, addMeal, saveCheckIn, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const { historyMap } = useHistoryLog();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
@@ -157,12 +170,12 @@ export default function HoyScreen() {
       {/* Background dynamic carousel */}
       <View style={StyleSheet.absoluteFill}>
         <Animated.Image
-          source={backgroundImages[bgIndex]}
+          source={backgroundImages[bgIndex].src}
           style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}
           resizeMode="cover"
         />
         {/* Gritty overlay to ensure contrast */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.45)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.65)' }]} />
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -286,6 +299,13 @@ export default function HoyScreen() {
           userMetrics={log.userMetrics}
           consumedMacros={log.macros}
           onUpdateMetrics={updateUserMetrics}
+        />
+
+        {/* NUEVO MÓDULO: Telemetría & Enlazamiento con Smartwatch */}
+        <SmartDeviceCard
+          deviceState={log.smartDevice}
+          onUpdateDevice={updateSmartDevice}
+          onSyncSteps={addSteps}
         />
 
         {/* Panel de Hábitos Interactivos */}

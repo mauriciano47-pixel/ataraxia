@@ -12,6 +12,14 @@ export interface UserMetrics {
   goal: 'deficit' | 'maintenance' | 'surplus';
 }
 
+export interface SmartDeviceState {
+  connected: boolean;
+  deviceName: string; // e.g. "Apple Watch Series 9", "Garmin Fenix 7", "Fitbit Charge 6", "Galaxy Watch 6"
+  heartRateBpm: number;
+  lastSync: string;
+  batteryLevel?: number;
+}
+
 export interface DailyLog {
   waterLitres: number;
   trainingCompleted: boolean;
@@ -24,6 +32,9 @@ export interface DailyLog {
   energyLevel?: number;
   sleepQuality?: number;
   checkInDone?: boolean;
+  stoicAvatarUri?: string;
+  userName?: string;
+  smartDevice?: SmartDeviceState;
   macros: {
     protein: number;
     carbs: number;
@@ -39,6 +50,15 @@ const DEFAULT_LOG: DailyLog = {
   targetCalories: 2200,
   steps: 0,
   stepGoal: 10000,
+  stoicAvatarUri: '',
+  userName: 'Ciudadano Prokopton',
+  smartDevice: {
+    connected: false,
+    deviceName: 'Ninguno (Desconectado)',
+    heartRateBpm: 72,
+    lastSync: 'Nunca',
+    batteryLevel: 90,
+  },
   userMetrics: {
     weightKg: 75,
     heightCm: 175,
@@ -184,6 +204,24 @@ export function useDailyLog() {
     updateLog(updates);
   };
 
+  const setStoicAvatar = (uri: string) => {
+    updateLog({ stoicAvatarUri: uri });
+  };
+
+  const setUserName = (name: string) => {
+    updateLog({ userName: name });
+  };
+
+  const updateSmartDevice = (deviceUpdates: Partial<SmartDeviceState>) => {
+    const currentDevice = log.smartDevice || DEFAULT_LOG.smartDevice!;
+    updateLog({
+      smartDevice: {
+        ...currentDevice,
+        ...deviceUpdates,
+      }
+    });
+  };
+
   return {
     log,
     loading,
@@ -198,6 +236,9 @@ export function useDailyLog() {
     setSteps,
     setStepGoal,
     updateUserMetrics,
+    setStoicAvatar,
+    setUserName,
+    updateSmartDevice,
   };
 }
 
