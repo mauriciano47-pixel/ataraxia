@@ -3,11 +3,24 @@ import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
+export interface UserMetrics {
+  weightKg: number;
+  heightCm: number;
+  age: number;
+  gender: 'male' | 'female';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'athlete';
+  goal: 'deficit' | 'maintenance' | 'surplus';
+}
+
 export interface DailyLog {
   waterLitres: number;
   trainingCompleted: boolean;
   mealsLogged: number;
   totalCalories: number;
+  targetCalories?: number;
+  steps?: number;
+  stepGoal?: number;
+  userMetrics?: UserMetrics;
   energyLevel?: number;
   sleepQuality?: number;
   checkInDone?: boolean;
@@ -23,6 +36,17 @@ const DEFAULT_LOG: DailyLog = {
   trainingCompleted: false,
   mealsLogged: 0,
   totalCalories: 0,
+  targetCalories: 2200,
+  steps: 0,
+  stepGoal: 10000,
+  userMetrics: {
+    weightKg: 75,
+    heightCm: 175,
+    age: 28,
+    gender: 'male',
+    activityLevel: 'moderate',
+    goal: 'maintenance',
+  },
   checkInDone: false,
   macros: { protein: 0, carbs: 0, fats: 0 }
 };
@@ -39,12 +63,17 @@ export function useDailyLog() {
   useEffect(() => {
     // 1. Sign in Anonymously
     const initAuth = () => {
+      if (!auth) {
+        setIsLocalMode(true);
+        setLoading(false);
+        return () => {};
+      }
       const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
         if (currentUser) {
           setUser(currentUser);
         } else {
           try {
-            await signInAnonymously(auth);
+            if (auth) await signInAnonymously(auth);
           } catch (error) {
             console.warn("⚠️ Firebase Auth falló. Activando modo local (sin nube) para que puedas probar la app.", error);
             setIsLocalMode(true);
@@ -60,7 +89,7 @@ export function useDailyLog() {
   }, []);
 
   useEffect(() => {
-    if (!user || isLocalMode) {
+    if (!user || isLocalMode || !db) {
       setTimeout(() => setLoading(false), 0);
       return;
     }
@@ -90,12 +119,11 @@ export function useDailyLog() {
     const newLog = { ...log, ...updates };
     setLog(newLog);
 
-    if (isLocalMode) {
-      // Solo actualizamos el estado local, no intentamos ir a Firebase
+    if (isLocalMode || !db) {
       return;
     }
 
-    if (user) {
+    if (user && db) {
       const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
       try {
         await setDoc(docRef, updates, { merge: true });
@@ -135,6 +163,27 @@ export function useDailyLog() {
     });
   };
 
+  const addSteps = (amount: number) => {
+    updateLog({ steps: Math.max(0, (log.steps || 0) + amount) });
+  };
+
+  const setSteps = (amount: number) => {
+    updateLog({ steps: Math.max(0, amount) });
+  };
+
+  const setStepGoal = (goal: number) => {
+    updateLog({ stepGoal: Math.max(1000, goal) });
+  };
+
+  const updateUserMetrics = (metrics: Partial<UserMetrics>, targetCals?: number) => {
+    const newMetrics = { ...DEFAULT_LOG.userMetrics, ...(log.userMetrics || {}), ...metrics } as UserMetrics;
+    const updates: Partial<DailyLog> = { userMetrics: newMetrics };
+    if (targetCals) {
+      updates.targetCalories = targetCals;
+    }
+    updateLog(updates);
+  };
+
   return {
     log,
     loading,
@@ -145,6 +194,10 @@ export function useDailyLog() {
     addCalories,
     saveCheckIn,
     addMacros,
+    addSteps,
+    setSteps,
+    setStepGoal,
+    updateUserMetrics,
   };
 }
 
@@ -158,7 +211,7 @@ export function useWeekHistory(days: number = 7) {
 
   useEffect(() => {
     const fetchWeek = async () => {
-      if (!auth.currentUser) {
+      if (!auth || !db || !auth.currentUser) {
         setLoadingWeek(false);
         return;
       }
@@ -174,7 +227,6 @@ export function useWeekHistory(days: number = 7) {
         snapshot.forEach((docSnap) => {
           logs.push({ ...(docSnap.data() as DailyLog), date: docSnap.id });
         });
-        // Más antiguo primero
         logs.reverse();
         setWeekLogs(logs);
       } catch (error) {
@@ -183,6 +235,11 @@ export function useWeekHistory(days: number = 7) {
         setLoadingWeek(false);
       }
     };
+
+    if (!auth) {
+      setLoadingWeek(false);
+      return;
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) fetchWeek();
@@ -200,13 +257,12 @@ export function useHistoryLog() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!auth.currentUser) {
+      if (!auth || !db || !auth.currentUser) {
         setLoadingHistory(false);
         return;
       }
 
       try {
-        // Document IDs are YYYY-MM-DD
         const q = query(
           collection(db, `users/${auth.currentUser.uid}/daily_logs`),
           orderBy('__name__', 'desc'),
@@ -220,10 +276,8 @@ export function useHistoryLog() {
           map.push(success);
         });
         
-        // Reverse so the oldest is first, newest is last (index 29)
         map.reverse();
         
-        // If there are less than 30 days, fill the rest with empty space
         while (map.length < 30) {
           map.unshift(false);
         }
@@ -235,6 +289,11 @@ export function useHistoryLog() {
         setLoadingHistory(false);
       }
     };
+
+    if (!auth) {
+      setLoadingHistory(false);
+      return;
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) fetchHistory();

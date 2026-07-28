@@ -30,20 +30,23 @@ export function useJournalHistory() {
 
   // Cargar conversación del día actual + entradas pasadas
   useEffect(() => {
+    if (!auth || !db) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
+      if (!user || !db) {
         setLoading(false);
         return;
       }
 
       try {
-        // 1. Escuchar la conversación de hoy en tiempo real
         const todayRef = doc(db, `users/${user.uid}/journal_entries/${today}`);
         const unsubSnapshot = onSnapshot(todayRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as JournalEntry;
             setMessages(data.messages || []);
-            // Si ya hay mensajes guardados, el disclaimer ya se mostró
             if (data.messages && data.messages.length > 0) {
               setDisclaimerShown(true);
             }
@@ -54,11 +57,10 @@ export function useJournalHistory() {
           setLoading(false);
         });
 
-        // 2. Cargar las últimas 3 entradas pasadas (excluyendo hoy)
         const pastQuery = query(
           collection(db, `users/${user.uid}/journal_entries`),
           orderBy('__name__', 'desc'),
-          limit(4) // 4 para asegurar que al filtrar hoy queden 3
+          limit(4)
         );
         const snapshot = await getDocs(pastQuery);
         const entries: JournalEntry[] = [];
@@ -82,9 +84,8 @@ export function useJournalHistory() {
     return () => unsubscribe();
   }, [today]);
 
-  // Guardar mensajes en Firestore
   const saveMessages = useCallback(async (updatedMessages: JournalMessage[]) => {
-    if (!auth.currentUser) return;
+    if (!auth || !db || !auth.currentUser) return;
 
     const docRef = doc(db, `users/${auth.currentUser.uid}/journal_entries/${today}`);
     try {

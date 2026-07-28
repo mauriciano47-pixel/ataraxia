@@ -9,6 +9,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
+import { StepCounterCard } from '@/components/StepCounterCard';
+import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 
 const backgroundImages = [
   require('../../assets/images/bg_workout_1.png'),
@@ -53,7 +55,7 @@ function Constellation({ points, size = 150 }: { points: boolean[], size?: numbe
 }
 
 export default function HoyScreen() {
-  const { log, loading, addWater, toggleTraining, addMeal, saveCheckIn } = useDailyLog();
+  const { log, loading, addWater, toggleTraining, addMeal, saveCheckIn, addSteps, setStepGoal, updateUserMetrics } = useDailyLog();
   const { historyMap } = useHistoryLog();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
@@ -88,7 +90,7 @@ export default function HoyScreen() {
     return (
       <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Cargando progreso estoico...</ThemedText>
+        <ThemedText style={{ marginTop: Spacing.three }}>Cargando rendimiento fitness...</ThemedText>
       </ThemedView>
     );
   }
@@ -112,43 +114,43 @@ export default function HoyScreen() {
     }
     const completedToday = log.trainingCompleted && log.waterLitres >= 2 && log.mealsLogged >= 3;
     if (completedToday) streak += 1;
-    return streak > 0 ? streak : 3; // Mostrar mínimo 3 para motivación inicial si es nuevo
+    return streak > 0 ? streak : 3;
   };
 
-  const getStoicFocus = () => {
+  const getFitnessFocus = () => {
     if (!log.trainingCompleted) {
       return {
-        title: "ENFOQUE: TEMPLANZA Y ESFUERZO",
-        description: "El ejercicio físico es el yunque donde se forja la mente estoica. Soportar la incomodidad voluntaria de levantar peso o correr entrena tu voluntad para los golpes reales de la vida.",
-        tip: "⚠️ El entrenamiento físico sigue pendiente hoy. Elige la acción sobre la comodidad.",
+        title: "ENFOQUE: RENDIMIENTO Y FUERZA",
+        description: "El entrenamiento constante estimula el crecimiento muscular, refuerza tu disciplina y eleva tu metabolismo diario. ¡Convierte la intención en acción!",
+        tip: "⚡ Tu entrenamiento de hoy está pendiente. ¡Regístralo o inicia tu sesión!",
         icon: "fitness"
       };
     }
     if (log.waterLitres < 2) {
       return {
-        title: "ENFOQUE: PUREZA Y ENERGÍA",
-        description: "El agua purifica y revitaliza el cuerpo. Beber lo suficiente es una decisión consciente de autocuidado y disciplina. Mantén la mente alerta y el cuerpo listo para cualquier prueba.",
-        tip: "💧 Falta hidratación. Dale a tus músculos lo que necesitan para recuperarse.",
+        title: "ENFOQUE: HIDRATACIÓN Y RECUPERACIÓN",
+        description: "Una hidratación óptima acelera el transporte de nutrientes hacia los músculos y mejora la concentración mental durante todo el día.",
+        tip: "💧 Falta hidratación. Bebe suficiente agua para potenciar tu recuperación.",
         icon: "water"
       };
     }
     if (log.mealsLogged < 3) {
       return {
-        title: "ENFOQUE: NUTRICIÓN CONSCIENTE",
-        description: "Comer con propósito es un acto de respeto hacia tu cuerpo. Evita comer por impulso o placer descontrolado; aliméntate para dotar a tu organismo de la energía y fortaleza requeridas.",
-        tip: "🥩 Registra al menos 3 comidas para asegurar que estás nutriendo el templo.",
+        title: "ENFOQUE: NUTRICIÓN Y ENERGÍA",
+        description: "Nutrir tu cuerpo con la cantidad adecuada de proteínas y macronutrientes asegura la reconstrucción muscular y el nivel de energía constante.",
+        tip: "🥩 Registra tus comidas para verificar que alcanzas tus metas calóricas.",
         icon: "restaurant"
       };
     }
     return {
-      title: "TEMPLO DE LA VIRTUD COMPLETADO",
-      description: "¡Excelente! Has cumplido con todos los pilares fundamentales del día. Tu mente y cuerpo están alineados. La consistencia es el único camino hacia el dominio propio.",
-      tip: "🏆 Todos los hábitos encendidos hoy. Sigue manteniendo encendido el fuego estoico.",
+      title: "OBJETIVOS DEL DÍA COMPLETADOS",
+      description: "¡Felicidades! Has cumplido con todos los pilares clave del rendimiento. Tu constancia de hoy construye tu condición física del mañana.",
+      tip: "🏆 Todos los hábitos completados. ¡Mantén este ritmo de alto nivel!",
       icon: "trophy"
     };
   };
 
-  const focus = getStoicFocus();
+  const focus = getFitnessFocus();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -268,6 +270,23 @@ export default function HoyScreen() {
             <ThemedText style={styles.quoteAuthor}>— Marco Aurelio</ThemedText>
           </View>
         )}
+
+        {/* NUEVO MÓDULO: Contador de Pasos Diarios */}
+        <StepCounterCard
+          steps={log.steps || 0}
+          stepGoal={log.stepGoal || 10000}
+          onAddSteps={addSteps}
+          onSetStepGoal={setStepGoal}
+        />
+
+        {/* NUEVO MÓDULO: Índice Calórico & TDEE */}
+        <CalorieIndexCard
+          consumedCalories={log.totalCalories || 0}
+          targetCalories={log.targetCalories || 2200}
+          userMetrics={log.userMetrics}
+          consumedMacros={log.macros}
+          onUpdateMetrics={updateUserMetrics}
+        />
 
         {/* Panel de Hábitos Interactivos */}
         <View style={styles.habitsContainer}>

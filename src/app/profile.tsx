@@ -17,7 +17,7 @@ export default function ProfileScreen() {
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
 
-  const uid = auth.currentUser?.uid || 'Desconocido';
+  const uid = auth?.currentUser?.uid || 'Desconocido';
   const shortUid = uid.substring(0, 8);
 
   return (

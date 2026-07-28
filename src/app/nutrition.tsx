@@ -7,24 +7,26 @@ import { useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
+import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 export default function NutritionScreen() {
-  const { log, addCalories, addMacros } = useDailyLog();
+  const { log, addCalories, addMacros, updateUserMetrics } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const goalCalories = log.targetCalories || 2200;
+  const currentCalories = log.totalCalories || 0;
+  const calPercent = Math.min((currentCalories / goalCalories) * 100, 100);
 
   const macros = {
     protein: { current: log.macros?.protein || 0, goal: 160 },
     carbs: { current: log.macros?.carbs || 0, goal: 200 },
     fats: { current: log.macros?.fats || 0, goal: 60 }
   };
-  const currentCalories = log.totalCalories || 0;
-  const goalCalories = 2100;
-  const calPercent = Math.min((currentCalories / goalCalories) * 100, 100);
 
   const handleTakePhoto = async () => {
     try {
@@ -86,9 +88,18 @@ export default function NutritionScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         
         <View style={styles.header}>
-          <ThemedText style={styles.label}>COMBUSTIBLE</ThemedText>
-          <ThemedText style={styles.title}>Nutrición</ThemedText>
+          <ThemedText style={styles.label}>COMBUSTIBLE & META</ThemedText>
+          <ThemedText style={styles.title}>Nutrición Fitness</ThemedText>
         </View>
+
+        {/* Módulo de Calculadora e Índice Calórico TDEE/BMR */}
+        <CalorieIndexCard
+          consumedCalories={currentCalories}
+          targetCalories={goalCalories}
+          userMetrics={log.userMetrics}
+          consumedMacros={log.macros}
+          onUpdateMetrics={updateUserMetrics}
+        />
 
         {/* Calorías totales */}
         <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>

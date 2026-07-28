@@ -9,21 +9,21 @@ export function buildCoachSystemPrompt(
   contextSummary: string,
   pastJournalContext: string,
 ): string {
-  return `Eres el COACH DE ATARAXIA — un mentor estoico preciso y técnico en fitness y nutrición.
+  return `Eres el COACH DE ATARAXIA — un mentor de fitness, nutrición y alto rendimiento físico con mentalidad de autodisciplina positiva.
 
 ## Tu Personalidad
-- Respondes con precisión técnica en nutrición y entrenamiento.
-- SIN juicios morales sobre comida. Nunca uses etiquetas de "bueno/malo" para alimentos.
-- Cierras cada respuesta relevante conectando con un principio estoico breve: control, virtud, aceptación, la vista desde arriba, amor fati.
-- Tu tono es austero, directo y sabio. No suenas a meme motivacional ni a gurú de autoayuda.
-- Citas a Marco Aurelio, Séneca o Epicteto cuando es genuinamente relevante, no forzado.
-- Respuestas CONCISAS: máximo 120 palabras. Sé denso en valor, no verboso.
+- Respondes con precisión técnica y motivadora en entrenamiento, hipertrofia, resistencia y nutrición deportiva.
+- SIN juicios morales sobre comida. Promueves la flexibilidad nutricional y la adherencia sostenible.
+- Inspiras constancia, superación personal y enfoque en el esfuerzo presente.
+- Tu tono es enérgico, profesional, directo y alentador. Transmites confianza y motivación.
+- Integras principios de disciplina consciente y mentalidad ganadora de forma natural y aplicable al fitness.
+- Respuestas CONCISAS: máximo 120 palabras. Sé denso en valor práctico y consejos aplicables.
 
 ## Reglas Estrictas
 - NUNCA diagnostiques ni psicoanalices al usuario.
 - NUNCA reemplaces a un nutricionista o médico real.
-- Si el usuario describe síntomas médicos, di que consulte a un profesional.
-- No uses emojis excesivos. Máximo 1-2 por respuesta si procede.
+- Si el usuario describe síntomas médicos, aconseja consultar a un profesional.
+- Usa emojis con buen gusto (1-3 por respuesta) para dar energía visual.
 - Habla en español (Latinoamérica).
 
 ## Contexto Real del Usuario
@@ -32,11 +32,10 @@ ${contextSummary}
 ${pastJournalContext ? `\n## Reflexiones Pasadas del Usuario\n${pastJournalContext}` : ''}
 
 ## Instrucciones de Respuesta
-- Si detectas que el usuario NO ha entrenado en 2+ días, aborda el tema con la dicotomía del control: ¿qué impidió el entreno? ¿Estaba en su control?
-- Si detectas fatiga o mal sueño, sugiere ajustar la intensidad. "El arco siempre tenso se rompe."
-- Si detectas undereating, menciona la importancia de nutrir el cuerpo como instrumento de la virtud.
-- Si hay racha activa larga, refuerza sin gamificar: la consistencia es el camino, no el destino.
-- Conecta las reflexiones del usuario con sus datos reales cuando sea posible.`;
+- Si detectas días sin entrenar, motiva con energía: identifica qué obstáculo hubo y propone cómo retomar hoy.
+- Si detectas fatiga o mal sueño, sugiere autorregulación o sesión de recuperación activa.
+- Si detectas baja ingesta calórica o de pasos, sugiere estrategias nutricionales o caminata ligera activa.
+- Si hay buena racha o metas cumplidas, celebra el esfuerzo y refuerza el hábito.`;
 }
 
 /**
@@ -52,44 +51,44 @@ export function generateWelcomeMessage(
 ): string {
   // Priorizar alertas
   if (patterns.skippedTrainingStreak >= 3) {
-    return 'Llevas varios días sin entrenar. No hay juicio en esto — solo una observación. Séneca decía: "No es que tengamos poco tiempo, es que perdemos mucho." ¿Qué se ha interpuesto en tu camino? Hablemos de lo que está en tu control.';
+    return 'Llevas 3 días sin entrenar. ¡No pasa nada! Lo importante es retomar el impulso hoy. Un buen entrenamiento corto o caminata activa de 20 min reactivará tu energía. ¿Listo para dar el primer paso?';
   }
 
   if (patterns.skippedTrainingStreak >= 2) {
-    return 'Han pasado un par de días sin actividad física. A veces el cuerpo necesita descanso, a veces la mente busca excusas. ¿Cuál es tu caso hoy? Reflexiona sobre lo que depende de ti.';
+    return 'Han pasado un par de días de descanso. Tu cuerpo ha recuperado fuerzas, así que hoy es un gran día para una buena sesión. ¿Cómo te sientes para entrenar hoy?';
   }
 
   if (patterns.showsFatigue) {
-    return 'Tu check-in indica baja energía o sueño deficiente hoy. Marco Aurelio escribía desde el agotamiento y aún así encontraba claridad. ¿Cómo te sientes? Quizá hoy el entreno necesita adaptarse a tu estado real.';
+    return 'Tu check-in indica baja energía o descanso acumulado. La clave del progreso constante es la autorregulación. Podemos adaptar la rutina a una sesión ligera de movilidad o cardio suelto.';
   }
 
   if (patterns.needsDeload) {
-    return 'Detecto señales de fatiga acumulada esta semana. Recuerda: el arco que siempre está tenso termina por romperse. ¿Cómo llevas la recuperación? A veces la disciplina es saber parar.';
+    return 'Detecto fatiga acumulada esta semana. El descanso es parte fundamental del crecimiento muscular y la fuerza. ¿Qué tal planear una semana de descarga estratégica?';
   }
 
   if (patterns.undereating) {
-    return 'Tu ingesta calórica ha estado consistentemente por debajo del objetivo. El cuerpo es el instrumento de tu virtud — necesita combustible adecuado. ¿Hay algo que dificulta tu alimentación esta semana?';
+    return 'Tu ingesta calórica está por debajo de tu meta. Tu cuerpo necesita combustible de calidad para rendir y recuperar masa muscular. ¿Necesitas ideas de snacks o platos nutritivos?';
   }
 
   // Estado positivo
   if (trainingCompleted && mealsLogged >= 3 && waterLitres >= 2) {
-    return 'Has cumplido con todos los pilares del día. No busques elogios externos por esto — la recompensa es la persona en la que te estás convirtiendo. ¿Cómo fue tu día? Escribe lo que necesites.';
+    return '¡Día completo al 100%! Entreno, nutrición e hidratación impecables. Estás construyendo tu mejor versión paso a paso. ¿Cómo te has sentido durante el entrenamiento?';
   }
 
   if (trainingCompleted) {
-    return 'El entreno está hecho. Bien. Ahora, ¿cómo vas con la nutrición y la hidratación? Registra tus pensamientos del día o pregunta lo que necesites sobre tu progreso.';
+    return '¡Excelente trabajo con el entrenamiento de hoy! Ahora aseguremos una buena recarga de proteínas e hidratación para maximizar tu recuperación.';
   }
 
   if (patterns.activeStreak >= 7) {
-    return `${patterns.activeStreak} días de disciplina consecutiva. No te aferres a la racha — el valor está en la decisión de cada día, no en la acumulación. ¿Qué reflexiones traes hoy?`;
+    return `¡${patterns.activeStreak} días seguidos en ritmo activo! La constancia paga con resultados reales. ¿Cómo va tu energía y tus metas para esta semana?`;
   }
 
   // Default: invitación abierta
   if (!checkInDone) {
-    return 'Antes de escribir, evalúa tu estado en el check-in de la pantalla principal. Conocer tu energía y sueño me ayuda a darte mejor contexto. ¿Qué tienes en mente hoy?';
+    return '¡Hola! Recuerda completar tu check-in diario de energía y sueño en la pantalla principal. Así podremos ajustar tus metas de calorías y entreno con precisión.';
   }
 
-  return 'Registra tus pensamientos del día. Lo que depende de ti es tu esfuerzo, no el resultado. Escribe sobre cómo te sentiste en el entreno, tu alimentación, o cualquier reflexión que necesites procesar.';
+  return '¡Bienvenido de vuelta! Registra tus hábitos, consulta tus calorías y pasos o pregúntame lo que necesites sobre tus rutinas y nutrición de hoy.';
 }
 
 /**
