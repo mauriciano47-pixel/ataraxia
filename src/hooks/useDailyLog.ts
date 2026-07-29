@@ -80,7 +80,27 @@ export function useDailyLog() {
   // Formato YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
 
+  // Safety fallback timer: nunca permitir que la pantalla se quede colgada cargando por más de 1.5 segundos
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Intentar recuperar de localStorage si está en web
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem(`ataraxia_log_${today}`);
+        if (saved) {
+          setLog((prev) => ({ ...prev, ...JSON.parse(saved) }));
+        }
+      }
+    } catch (e) {
+      console.warn("LocalStorage no disponible:", e);
+    }
+
     // 1. Sign in Anonymously
     const initAuth = () => {
       if (!auth) {
@@ -106,7 +126,7 @@ export function useDailyLog() {
 
     const unsubscribeAuth = initAuth();
     return () => unsubscribeAuth();
-  }, []);
+  }, [today]);
 
   useEffect(() => {
     if (!user || isLocalMode || !db) {
@@ -138,6 +158,15 @@ export function useDailyLog() {
   const updateLog = async (updates: Partial<DailyLog>) => {
     const newLog = { ...log, ...updates };
     setLog(newLog);
+
+    // Guardar copia local en web
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(newLog));
+      }
+    } catch (e) {
+      // Ignore storage error
+    }
 
     if (isLocalMode || !db) {
       return;
