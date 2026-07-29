@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#1F1A24" />
+      <stop offset="100%" stop-color="#050507" />
+    </radialGradient>
+    <linearGradient id="goldRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E53935" />
+      <stop offset="50%" stop-color="#D32F2F" />
+      <stop offset="100%" stop-color="#8E0000" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#B8860B" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="url(#goldRedGrad)" stroke-width="3" stroke-opacity="0.4" />
+
+  <!-- Outer Stoic Laurel Circle -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#2A2438" stroke-width="4" stroke-dasharray="8 6" />
+
+  <!-- Stoic Triangle Monogram A -->
+  <path d="M 256 96 L 396 384 L 326 384 L 286 296 L 226 296 L 186 384 L 116 384 Z" fill="url(#goldRedGrad)" filter="url(#glow)" />
+  
+  <!-- Inner Cutout Triangle -->
+  <path d="M 256 166 L 274 246 L 238 246 Z" fill="#0A090D" />
+  
+  <!-- Crossbar Accent Gold Line -->
+  <line x1="160" y1="316" x2="352" y2="316" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Memento Mori Star Dot -->
+  <circle cx="256" cy="135" r="7" fill="#FFF" />
+</svg>

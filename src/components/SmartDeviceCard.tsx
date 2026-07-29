@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, useColorScheme, ActivityIndicator, Modal, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { SmartDeviceState } from '@/hooks/useDailyLog';
+import { HeartIcon, SettingsIcon } from '@/components/ModuleSvgIcons';
 
 interface SmartDeviceCardProps {
   deviceState?: SmartDeviceState;
@@ -12,11 +12,11 @@ interface SmartDeviceCardProps {
 }
 
 const AVAILABLE_DEVICES = [
-  { id: 'apple_watch', name: 'Apple Watch Series 9 / Ultra 2', icon: 'logo-apple' as const, brand: 'Apple Health' },
-  { id: 'garmin_fenix', name: 'Garmin Fēnix 7 / Forerunner', icon: 'watch-outline' as const, brand: 'Garmin Connect' },
-  { id: 'fitbit_charge', name: 'Fitbit Charge 6 / Sense', icon: 'fitness-outline' as const, brand: 'Fitbit OS' },
-  { id: 'galaxy_watch', name: 'Galaxy Watch 6 / Pro', icon: 'hardware-chip-outline' as const, brand: 'Samsung Health' },
-  { id: 'health_connect', name: 'Google Health Connect API', icon: 'pulse-outline' as const, brand: 'Android Health' },
+  { id: 'apple_watch', name: 'Apple Watch Series 9 / Ultra 2', brand: 'Apple Health' },
+  { id: 'garmin_fenix', name: 'Garmin Fēnix 7 / Forerunner', brand: 'Garmin Connect' },
+  { id: 'fitbit_charge', name: 'Fitbit Charge 6 / Sense', brand: 'Fitbit OS' },
+  { id: 'galaxy_watch', name: 'Galaxy Watch 6 / Pro', brand: 'Samsung Health' },
+  { id: 'health_connect', name: 'Google Health Connect API', brand: 'Android Health' },
 ];
 
 export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: SmartDeviceCardProps) {
@@ -82,11 +82,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-          <Ionicons 
-            name={device.connected ? "watch-outline" : "hardware-chip-outline"} 
-            size={20} 
-            color={device.connected ? colors.accent : colors.textSecondary} 
-          />
+          <SettingsIcon color={device.connected ? colors.accent : colors.textSecondary} size={20} />
           <View>
             <ThemedText style={styles.badge}>TELEMETRÍA SMART</ThemedText>
             <ThemedText style={styles.deviceName} numberOfLines={1}>
@@ -107,7 +103,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       {device.connected ? (
         <View style={styles.metricsRow}>
           <View style={styles.metricItem}>
-            <Ionicons name="heart" size={16} color="#FF453A" />
+            <HeartIcon color="#FF453A" size={16} />
             <View>
               <ThemedText style={styles.metricLabel}>PULSO LIVE</ThemedText>
               <ThemedText style={styles.metricValue}>{device.heartRateBpm} <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>BPM</ThemedText></ThemedText>
@@ -115,7 +111,6 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
           </View>
 
           <View style={styles.metricItem}>
-            <Ionicons name="battery-charging-outline" size={16} color="#30D158" />
             <View>
               <ThemedText style={styles.metricLabel}>BATERÍA</ThemedText>
               <ThemedText style={styles.metricValue}>{device.batteryLevel}%</ThemedText>
@@ -123,7 +118,6 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
           </View>
 
           <View style={styles.metricItem}>
-            <Ionicons name="sync-outline" size={16} color={colors.accent} />
             <View>
               <ThemedText style={styles.metricLabel}>ÚLTIMA SYNC</ThemedText>
               <ThemedText style={[styles.metricValue, { fontSize: 11 }]}>{device.lastSync}</ThemedText>
@@ -148,10 +142,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
               {isSyncing ? (
                 <ActivityIndicator color="#FFF" size="small" />
               ) : (
-                <>
-                  <Ionicons name="refresh-outline" size={16} color="#FFF" />
-                  <ThemedText style={[styles.btnText, { color: '#FFF' }]}>Sincronizar Datos</ThemedText>
-                </>
+                <ThemedText style={[styles.btnText, { color: '#FFF' }]}>Sincronizar Datos</ThemedText>
               )}
             </TouchableOpacity>
 
@@ -167,7 +158,6 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
             style={[styles.btn, { backgroundColor: colors.accent, borderColor: colors.accent, flex: 1 }]}
             onPress={() => setModalVisible(true)}
           >
-            <Ionicons name="bluetooth-outline" size={18} color="#FFF" />
             <ThemedText style={[styles.btnText, { color: '#FFF' }]}>VINCULAR SMARTWATCH</ThemedText>
           </TouchableOpacity>
         )}
@@ -180,7 +170,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>SELECCIONAR DISPOSITIVO SMART</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <ThemedText style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>✕</ThemedText>
               </TouchableOpacity>
             </View>
 
@@ -199,12 +189,11 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
                     style={[styles.deviceOption, { borderColor: colors.backgroundSelected }]}
                     onPress={() => handleSelectDevice(dev)}
                   >
-                    <Ionicons name={dev.icon} size={24} color={colors.accent} />
                     <View style={{ flex: 1 }}>
                       <ThemedText style={styles.devOptionName}>{dev.name}</ThemedText>
                       <ThemedText style={styles.devOptionBrand}>{dev.brand}</ThemedText>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                    <ThemedText style={{ color: colors.textSecondary }}>→</ThemedText>
                   </TouchableOpacity>
                 ))}
               </ScrollView>

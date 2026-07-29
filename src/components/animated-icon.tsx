@@ -1,82 +1,72 @@
+// animated-icon.tsx
 import * as SplashScreen from 'expo-splash-screen';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Image, Platform } from 'react-native';
-import Animated, { Easing, Keyframe, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
-const DURATION = 3000; // 3 segundos exactos
+// Duración exacta de la pantalla de bienvenida
+const DURATION = 3000; // 3 000 ms
 
 export function AnimatedSplashOverlay() {
-  const [animate, setAnimate] = useState(false);
+  // Estado de visibilidad del overlay
   const [visible, setVisible] = useState(true);
-  const progressWidth = useSharedValue(0);
 
+  // Valor animado para la barra de progreso
+  const progress = useSharedValue(0);
+
+  // Duración del retardo antes de ocultar el splash nativo de Expo
+  const SPLASH_NATIVE_DELAY = 500; // 0.5 s
+
+  // Estilo animado de la barra de progreso
+  const progressStyle = useAnimatedStyle(() => ({
+    width: `${progress.value}%`,
+  }));
+
+  // Cuando el componente se monta, iniciamos la animación y ocultamos el splash nativo
   useEffect(() => {
-    // Inicialización garantizada tanto en Web como en Mobile
-    const timer = setTimeout(() => {
-      setAnimate(true);
-      SplashScreen.hideAsync().catch(() => {});
-    }, 50);
-    return () => clearTimeout(timer);
+    // Aseguramos que el splash nativo de Expo no desaparezca automáticamente
+    // (ya se llamó a preventAutoHideAsync en _layout.tsx)
+    const start = async () => {
+      // Retraso antes de ocultar el splash nativo de Expo
+      setTimeout(async () => {
+        await SplashScreen.hideAsync();
+      }, SPLASH_NATIVE_DELAY);
+      // Iniciamos la barra de progreso con duración exacta de 3 s
+      progress.value = withTiming(100, { duration: DURATION, easing: Easing.linear });
+      // Después de DURATION ms, removemos el overlay
+      setTimeout(() => setVisible(false), DURATION);
+    };
+    start();
   }, []);
-
-  useEffect(() => {
-    if (animate) {
-      progressWidth.value = withTiming(100, { duration: DURATION, easing: Easing.linear });
-    }
-  }, [animate, progressWidth]);
 
   if (!visible) return null;
 
-  const splashKeyframe = new Keyframe({
-    0: { opacity: 1 },
-    85: { opacity: 1 }, // Mantener visible durante los 3 segundos
-    100: { opacity: 0, easing: Easing.out(Easing.ease) },
-  });
-
-  const progressStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%`,
-  }));
-
-  const content = (
-    <View style={styles.contentContainer}>
-      {/* Ícono Estoico HD */}
-      <View style={styles.iconContainer}>
-        <Image 
-          source={require('../../assets/images/icon.png')} 
-          style={styles.logoImage}
-          resizeMode="cover"
-        />
-      </View>
-
-      {/* Título de la App */}
-      <Text style={styles.title}>ATARAXIA</Text>
-
-      {/* Lema Estoico Principal */}
-      <Text style={styles.motto}>&ldquo;Visto desde arriba, todo pesa menos&rdquo;</Text>
-      <Text style={styles.subMotto}>Controla tu percepción • Acepta tu destino</Text>
-
-      {/* Barra de progreso de 3 segundos */}
-      <View style={styles.progressTrack}>
-        <Animated.View style={[styles.progressBar, progressStyle]} />
+  return (
+    <View style={styles.splashOverlay}>
+      <View style={styles.contentContainer}>
+        {/* Ícono Estoico HD */}
+        <View style={styles.iconContainer}>
+          <Image
+            source={require('../../assets/images/icon.png')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
+        </View>
+        {/* Título de la App */}
+        <Text style={styles.title}>ATARAXIA</Text>
+        {/* Lema */}
+        <Text style={styles.motto}>“Visto desde arriba, todo pesa menos”</Text>
+        <Text style={styles.subMotto}>Controla tu percepción • Acepta tu destino</Text>
+        {/* Barra de progreso */}
+        <View style={styles.progressTrack}>
+          <Animated.View style={[styles.progressBar, progressStyle]} />
+        </View>
       </View>
     </View>
   );
-
-  return (
-    <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.splashOverlay}>
-      {content}
-    </Animated.View>
-  );
 }
 
+// Exportado para mantener compatibilidad con importaciones existentes
 export function AnimatedIcon() {
   return null;
 }
@@ -150,5 +140,5 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     backgroundColor: '#D32F2F',
-  }
+  },
 });

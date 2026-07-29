@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="hgBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1A0C14" />
+      <stop offset="100%" stop-color="#040204" />
+    </radialGradient>
+    <linearGradient id="crimsonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5252" />
+      <stop offset="100%" stop-color="#B71C1C" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#hgBg)" />
+  <rect width="500" height="500" x="6" y="6" rx="106" fill="none" stroke="#FF5252" stroke-width="2" stroke-opacity="0.3" />
+
+  <!-- Outer Hourglass Triangle A -->
+  <polygon points="256,80 400,396 112,396" fill="none" stroke="url(#crimsonGlow)" stroke-width="14" stroke-linejoin="round" />
+  
+  <!-- Hourglass inverted top triangle -->
+  <polygon points="256,260 352,120 160,120" fill="url(#crimsonGlow)" opacity="0.85" />
+  
+  <!-- Sand falling drops -->
+  <circle cx="256" cy="275" r="4" fill="#FFF" />
+  <circle cx="256" cy="295" r="5" fill="#FFF" />
+  <circle cx="256" cy="320" r="6" fill="#FFF" opacity="0.8" />
+  
+  <!-- Bottom sand heap -->
+  <path d="M 180 376 Q 256 320 332 376 Z" fill="url(#crimsonGlow)" />
+
+  <text x="256" y="445" font-family="monospace" font-size="22" font-weight="bold" fill="#888" text-anchor="middle" letter-spacing="6">MEMENTO MORI</text>
+</svg>

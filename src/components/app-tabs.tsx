@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '@/constants/theme';
+import { HomeTabIcon, BarbellTabIcon, NutritionTabIcon, JournalTabIcon, ProgressTabIcon } from '@/components/TabSvgIcons';
 
 export default function AppTabs() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -13,42 +13,49 @@ export default function AppTabs() {
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: { backgroundColor: colors.background, borderTopWidth: 2, borderTopColor: colors.backgroundSelected, paddingBottom: 5, height: 60 },
+        tabBarStyle: {
+          backgroundColor: '#0A0A0C',
+          borderTopWidth: 1.5,
+          borderTopColor: 'rgba(211, 47, 47, 0.3)',
+          paddingBottom: 6,
+          paddingTop: 6,
+          height: 62,
+        },
         headerShown: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Hoy',
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <HomeTabIcon color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="trainer"
         options={{
           title: 'Entreno',
-          tabBarIcon: ({ color }) => <Ionicons name="barbell" size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <BarbellTabIcon color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="nutrition"
         options={{
           title: 'Nutrición',
-          tabBarIcon: ({ color }) => <Ionicons name="nutrition" size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <NutritionTabIcon color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="journal"
         options={{
           title: 'Diario',
-          tabBarIcon: ({ color }) => <Ionicons name="book" size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <JournalTabIcon color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Historial',
-          tabBarIcon: ({ color }) => <Ionicons name="trending-up" size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <ProgressTabIcon color={color} size={24} focused={focused} />,
         }}
       />
     </Tabs>

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { UserMetrics } from '@/hooks/useDailyLog';
 import { calculateFitnessIndex } from '@/lib/fitnessCalculator';
+import { CalculatorIcon, SettingsIcon } from '@/components/ModuleSvgIcons';
 
 interface CalorieIndexCardProps {
   consumedCalories: number;
@@ -76,7 +76,7 @@ export function CalorieIndexCard({
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={styles.iconBadge}>
-            <Ionicons name="calculator" size={20} color="#FF6F00" />
+            <CalculatorIcon color="#FF6F00" size={20} />
           </View>
           <View>
             <ThemedText style={styles.titleText}>Índice Calórico & TDEE</ThemedText>
@@ -88,7 +88,7 @@ export function CalorieIndexCard({
           style={styles.calcButton} 
           onPress={() => setModalVisible(true)}
         >
-          <Ionicons name="options-outline" size={16} color="#FF6F00" />
+          <SettingsIcon color="#FF6F00" size={14} />
           <ThemedText style={styles.calcButtonText}>Calcular TDEE</ThemedText>
         </TouchableOpacity>
       </View>
@@ -152,7 +152,7 @@ export function CalorieIndexCard({
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Calculadora de Índice Calórico</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#9CA3AF" />
+                <ThemedText style={{ color: '#9CA3AF', fontSize: 18, fontWeight: 'bold' }}>✕</ThemedText>
               </TouchableOpacity>
             </View>
 
@@ -204,7 +204,7 @@ export function CalorieIndexCard({
                     style={[styles.selectOption, activity === item.key && styles.selectOptionActive]}
                     onPress={() => setActivity(item.key as any)}
                   >
-                    <Ionicons name={activity === item.key ? "radio-button-on" : "radio-button-off"} size={16} color={activity === item.key ? "#FF6F00" : "#6B7280"} />
+                    <ThemedText style={{ color: activity === item.key ? "#FF6F00" : "#6B7280" }}>{activity === item.key ? "●" : "○"}</ThemedText>
                     <ThemedText style={[styles.selectOptionText, activity === item.key && styles.selectOptionTextActive]}>{item.label}</ThemedText>
                   </TouchableOpacity>
                 ))}

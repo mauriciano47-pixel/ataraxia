@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
+import { FootstepsIcon, SettingsIcon, MapIcon, FlameIcon } from '@/components/ModuleSvgIcons';
 
 interface StepCounterCardProps {
   steps: number;
@@ -37,7 +37,7 @@ export function StepCounterCard({
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={styles.iconBadge}>
-            <Ionicons name="footsteps" size={20} color="#FFD54F" />
+            <FootstepsIcon color="#FFD54F" size={20} />
           </View>
           <View>
             <ThemedText style={styles.titleText}>Contador de Pasos</ThemedText>
@@ -52,7 +52,7 @@ export function StepCounterCard({
             setModalVisible(true);
           }}
         >
-          <Ionicons name="settings-outline" size={16} color="#A0AEC0" />
+          <SettingsIcon color="#A0AEC0" size={14} />
           <ThemedText style={styles.goalButtonText}>Meta: {stepGoal.toLocaleString()}</ThemedText>
         </TouchableOpacity>
       </View>
@@ -66,11 +66,11 @@ export function StepCounterCard({
 
         <View style={styles.metricsBadgeColumn}>
           <View style={styles.metricBadge}>
-            <Ionicons name="map-outline" size={14} color="#38BDF8" />
+            <MapIcon color="#38BDF8" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{km} km</ThemedText>
           </View>
           <View style={styles.metricBadge}>
-            <Ionicons name="flame-outline" size={14} color="#FF6F00" />
+            <FlameIcon color="#FF6F00" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{caloriesBurned} kcal</ThemedText>
           </View>
         </View>

@@ -6,7 +6,7 @@ import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import SplashScreenWrapper from '@/components/SplashScreenWrapper';
 import AppTabs from '@/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
@@ -67,9 +67,9 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <SplashScreenWrapper>
+        <AppTabs />
+      </SplashScreenWrapper>
     </ThemeProvider>
   );
 }
-

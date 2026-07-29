@@ -3,7 +3,6 @@ import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme, View, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -12,6 +11,10 @@ import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { StepCounterCard } from '@/components/StepCounterCard';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
+import { FlameIcon, PersonIcon, HeartIcon, WaterIcon, RestaurantIcon, CheckmarkIcon, TrophyIcon } from '@/components/ModuleSvgIcons';
+import { BarbellTabIcon } from '@/components/TabSvgIcons';
+
+import { PwaInstallButton } from '@/components/PwaInstallButton';
 
 const backgroundImages = [
   { 
@@ -127,7 +130,7 @@ export default function HoyScreen() {
         title: "ENFOQUE: RENDIMIENTO Y FUERZA",
         description: "El entrenamiento constante estimula el crecimiento muscular, refuerza tu disciplina y eleva tu metabolismo diario. ¡Convierte la intención en acción!",
         tip: "⚡ Tu entrenamiento de hoy está pendiente. ¡Regístralo o inicia tu sesión!",
-        icon: "fitness"
+        type: "fitness"
       };
     }
     if (log.waterLitres < 2) {
@@ -135,7 +138,7 @@ export default function HoyScreen() {
         title: "ENFOQUE: HIDRATACIÓN Y RECUPERACIÓN",
         description: "Una hidratación óptima acelera el transporte de nutrientes hacia los músculos y mejora la concentración mental durante todo el día.",
         tip: "💧 Falta hidratación. Bebe suficiente agua para potenciar tu recuperación.",
-        icon: "water"
+        type: "water"
       };
     }
     if (log.mealsLogged < 3) {
@@ -143,14 +146,14 @@ export default function HoyScreen() {
         title: "ENFOQUE: NUTRICIÓN Y ENERGÍA",
         description: "Nutrir tu cuerpo con la cantidad adecuada de proteínas y macronutrientes asegura la reconstrucción muscular y el nivel de energía constante.",
         tip: "🥩 Registra tus comidas para verificar que alcanzas tus metas calóricas.",
-        icon: "restaurant"
+        type: "restaurant"
       };
     }
     return {
       title: "OBJETIVOS DEL DÍA COMPLETADOS",
       description: "¡Felicidades! Has cumplido con todos los pilares clave del rendimiento. Tu constancia de hoy construye tu condición física del mañana.",
       tip: "🏆 Todos los hábitos completados. ¡Mantén este ritmo de alto nivel!",
-      icon: "trophy"
+      type: "trophy"
     };
   };
 
@@ -178,14 +181,17 @@ export default function HoyScreen() {
           </View>
           <View style={styles.headerRight}>
             <View style={styles.streakBadge}>
-              <Ionicons name="flame" size={18} color="#D32F2F" />
+              <FlameIcon color="#D32F2F" size={16} />
               <ThemedText style={styles.streakText}>{getStreak()} DÍAS</ThemedText>
             </View>
             <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
-              <Ionicons name="person-circle-outline" size={32} color="#FFF" />
+              <PersonIcon color="#FFF" size={28} />
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* PWA Download / Mobile Install Button */}
+        <PwaInstallButton />
 
         {/* Constellation Widget */}
         <View style={styles.constellationCard}>
@@ -204,8 +210,11 @@ export default function HoyScreen() {
         {/* Enfoque / Lección Stoic-Fitness (Didáctica) */}
         <View style={styles.didacticCard}>
           <View style={styles.didacticHeader}>
-            <Ionicons name={focus.icon as any} size={20} color="#D32F2F" style={{ marginRight: 8 }} />
-            <ThemedText style={styles.didacticTitle}>{focus.title}</ThemedText>
+            {focus.type === 'fitness' && <BarbellTabIcon color="#D32F2F" size={20} />}
+            {focus.type === 'water' && <WaterIcon color="#38BDF8" size={20} />}
+            {focus.type === 'restaurant' && <RestaurantIcon color="#FF6F00" size={20} />}
+            {focus.type === 'trophy' && <TrophyIcon color="#FFD700" size={20} />}
+            <ThemedText style={[styles.didacticTitle, { marginLeft: 8 }]}>{focus.title}</ThemedText>
           </View>
           <ThemedText style={styles.didacticDescription}>
             {focus.description}
@@ -219,8 +228,8 @@ export default function HoyScreen() {
         {!log.checkInDone ? (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="heart-half-outline" size={18} color="#D32F2F" style={{ marginRight: 6 }} />
-              <ThemedText style={styles.cardTitle}>Señal de Recuperación Estoica</ThemedText>
+              <HeartIcon color="#D32F2F" size={18} />
+              <ThemedText style={[styles.cardTitle, { marginLeft: 6 }]}>Señal de Recuperación Estoica</ThemedText>
             </View>
             <ThemedText style={styles.cardSubtitle}>Evalúa tu estado mental y físico para calibrar tu día.</ThemedText>
 
@@ -265,8 +274,8 @@ export default function HoyScreen() {
         ) : (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="bookmark-outline" size={18} color="#D32F2F" style={{ marginRight: 6 }} />
-              <ThemedText style={styles.cardTitle}>Máxima Stoica</ThemedText>
+              <FlameIcon color="#D32F2F" size={18} />
+              <ThemedText style={[styles.cardTitle, { marginLeft: 6 }]}>Máxima Stoica</ThemedText>
             </View>
             <ThemedText style={styles.quoteText}>
               {'"Contempla a menudo el conjunto del tiempo y de la sustancia, y verás qué pequeño es cada cosa."'}
@@ -305,11 +314,7 @@ export default function HoyScreen() {
           <View style={styles.habitCard}>
             <View style={styles.habitHeader}>
               <ThemedText style={styles.habitLabel}>TEMPLO (ENTRENO)</ThemedText>
-              <Ionicons 
-                name={log.trainingCompleted ? "checkmark-circle" : "ellipse-outline"} 
-                size={22} 
-                color={log.trainingCompleted ? "#D32F2F" : "#555"} 
-              />
+              <CheckmarkIcon color={log.trainingCompleted ? "#D32F2F" : "#555"} size={22} />
             </View>
             
             <TouchableOpacity 
@@ -332,11 +337,7 @@ export default function HoyScreen() {
           <View style={styles.habitCard}>
             <View style={styles.habitHeader}>
               <ThemedText style={styles.habitLabel}>AGUA (MIN. 2L)</ThemedText>
-              <Ionicons 
-                name={log.waterLitres >= 2 ? "water" : "water-outline"} 
-                size={22} 
-                color={log.waterLitres >= 2 ? "#D32F2F" : "#555"} 
-              />
+              <WaterIcon color={log.waterLitres >= 2 ? "#38BDF8" : "#555"} size={22} />
             </View>
             
             <View style={styles.habitInteractiveRow}>
@@ -362,11 +363,7 @@ export default function HoyScreen() {
           <View style={styles.habitCard}>
             <View style={styles.habitHeader}>
               <ThemedText style={styles.habitLabel}>COMIDAS (META 3)</ThemedText>
-              <Ionicons 
-                name={log.mealsLogged >= 3 ? "restaurant" : "restaurant-outline"} 
-                size={20} 
-                color={log.mealsLogged >= 3 ? "#D32F2F" : "#555"} 
-              />
+              <RestaurantIcon color={log.mealsLogged >= 3 ? "#FF6F00" : "#555"} size={20} />
             </View>
 
             <View style={styles.habitInteractiveRow}>
