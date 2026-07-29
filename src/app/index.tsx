@@ -99,15 +99,6 @@ export default function HoyScreen() {
     return () => clearInterval(interval);
   }, [fadeAnim]);
 
-  if (loading) {
-    return (
-      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Cargando rendimiento fitness...</ThemedText>
-      </ThemedView>
-    );
-  }
-
   const habitos = [
     log.trainingCompleted,
     log.waterLitres >= 2,

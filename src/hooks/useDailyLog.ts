@@ -74,7 +74,7 @@ const DEFAULT_LOG: DailyLog = {
 export function useDailyLog() {
   const [user, setUser] = useState<User | null>(null);
   const [log, setLog] = useState<DailyLog>(DEFAULT_LOG);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isLocalMode, setIsLocalMode] = useState(false);
 
   // Formato YYYY-MM-DD
