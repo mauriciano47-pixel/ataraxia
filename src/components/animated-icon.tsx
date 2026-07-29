@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Image } from 'react-native';
+import { StyleSheet, View, Text, Image, Platform } from 'react-native';
 import Animated, { Easing, Keyframe, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -10,6 +10,15 @@ export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
   const progressWidth = useSharedValue(0);
+
+  useEffect(() => {
+    // Inicialización garantizada tanto en Web como en Mobile
+    const timer = setTimeout(() => {
+      setAnimate(true);
+      SplashScreen.hideAsync().catch(() => {});
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (animate) {
@@ -31,7 +40,7 @@ export function AnimatedSplashOverlay() {
 
   const content = (
     <View style={styles.contentContainer}>
-      {/* Nuevo Ícono Estoico de Alta Resolución */}
+      {/* Ícono Estoico HD */}
       <View style={styles.iconContainer}>
         <Image 
           source={require('../../assets/images/icon.png')} 
@@ -54,7 +63,7 @@ export function AnimatedSplashOverlay() {
     </View>
   );
 
-  return animate ? (
+  return (
     <Animated.View
       entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
         'worklet';
@@ -65,16 +74,6 @@ export function AnimatedSplashOverlay() {
       style={styles.splashOverlay}>
       {content}
     </Animated.View>
-  ) : (
-    <View
-      onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
-      }}
-      style={styles.splashOverlay}>
-      {content}
-    </View>
   );
 }
 
@@ -85,10 +84,11 @@ export function AnimatedIcon() {
 const styles = StyleSheet.create({
   splashOverlay: {
     ...StyleSheet.absoluteFill,
+    ...(Platform.OS === 'web' ? ({ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 } as any) : {}),
     backgroundColor: '#050505',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 9999,
+    zIndex: 99999,
   },
   contentContainer: {
     alignItems: 'center',
