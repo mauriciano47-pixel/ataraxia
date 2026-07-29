@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
-import { DownloadIcon } from './ModuleSvgIcons';
 
 export function PwaInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
