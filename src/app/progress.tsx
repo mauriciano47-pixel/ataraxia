@@ -132,17 +132,19 @@ const styles = StyleSheet.create({
   },
   todayContainer: {
     borderWidth: 2,
-    borderColor: '#D32F2F',
-    borderRadius: 0,
+    borderColor: '#D4AF37', // Oro Imperial
+    borderRadius: 6,
   },
   star: {
     width: 14,
     height: 14,
-    borderRadius: 0,
+    borderRadius: 2,
   },
   card: {
     padding: Spacing.four,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
   },
 });

@@ -253,12 +253,12 @@ export function CalorieIndexCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#111827',
-    borderRadius: 16,
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderRadius: 8,
     padding: Spacing.three,
     marginBottom: Spacing.three,
-    borderWidth: 1,
-    borderColor: '#1F2937',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
   },
   headerRow: {
     flexDirection: 'row',
@@ -274,30 +274,35 @@ const styles = StyleSheet.create({
   iconBadge: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 111, 0, 0.15)',
+    borderRadius: 8,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
   },
   titleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#F9FAFB',
+    fontFamily: 'monospace',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   subtitleText: {
-    fontSize: 11,
-    color: '#9CA3AF',
+    fontSize: 10.5,
+    color: '#A0A4B0',
+    fontFamily: 'monospace',
   },
   calcButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 111, 0, 0.15)',
+    backgroundColor: 'rgba(30, 30, 38, 0.8)',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 111, 0, 0.3)',
+    borderColor: 'rgba(212, 175, 55, 0.3)',
   },
   calcButtonText: {
     fontSize: 11,

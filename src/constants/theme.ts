@@ -1,28 +1,28 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import '@/global.css';
-
 import { Platform } from 'react-native';
 
 export const Colors = {
   light: { 
     text: '#FFFFFF', 
-    background: '#000000', 
-    backgroundElement: '#0A0A0A', 
-    backgroundSelected: '#222222', 
-    textSecondary: '#666666', 
+    background: '#050507', 
+    backgroundElement: 'rgba(18, 18, 24, 0.88)', 
+    backgroundSelected: 'rgba(212, 175, 55, 0.3)', 
+    textSecondary: '#A0A4B0', 
     accent: '#D32F2F', 
+    gold: '#D4AF37',
+    goldGlow: 'rgba(212, 175, 55, 0.15)',
+    crimsonGlow: 'rgba(211, 47, 47, 0.2)',
   },
-  dark: { // Cosmos Theme
-    text: '#FFFFFF', // ink
-    background: '#000000', // bg negro puro
-    backgroundElement: '#0A0A0A', // card
-    backgroundSelected: '#222222', // cardBorder
-    textSecondary: '#666666', // inkDim
-    accent: '#D32F2F', // rojo militar
+  dark: { // Imperial Marble & Crimson Gold Theme
+    text: '#FFFFFF', 
+    background: '#050507', 
+    backgroundElement: 'rgba(18, 18, 24, 0.88)', 
+    backgroundSelected: 'rgba(212, 175, 55, 0.3)', 
+    textSecondary: '#A0A4B0', 
+    accent: '#D32F2F', 
+    gold: '#D4AF37',
+    goldGlow: 'rgba(212, 175, 55, 0.15)',
+    crimsonGlow: 'rgba(211, 47, 47, 0.2)',
   },
 } as const;
 
@@ -30,13 +30,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

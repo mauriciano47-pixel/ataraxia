@@ -196,8 +196,10 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
   },
   cardHeader: {
     flexDirection: 'row',

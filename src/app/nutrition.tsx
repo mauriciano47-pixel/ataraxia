@@ -472,21 +472,23 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.four,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
     marginBottom: Spacing.three,
   },
   progressContainer: {
-    height: 12,
-    borderRadius: 0,
+    height: 10,
+    borderRadius: 5,
     marginTop: Spacing.three,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: 'rgba(212, 175, 55, 0.2)',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 0,
+    borderRadius: 5,
   },
   macrosContainer: {
     flexDirection: 'row',
@@ -496,8 +498,10 @@ const styles = StyleSheet.create({
   macroCard: {
     flex: 1,
     padding: Spacing.three,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
   },
   section: {
     marginTop: Spacing.four,

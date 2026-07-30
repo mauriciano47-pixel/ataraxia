@@ -1,16 +1,13 @@
-// SplashScreenWrapper.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Image, Text, StyleSheet, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 
-// Duración exacta de la pantalla de bienvenida (3 segundos)
 const DURATION = 3000;
 
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    // Evitar que el splash nativo se oculte automáticamente (solo móvil)
     if (Platform.OS !== 'web') {
       SplashScreen.preventAutoHideAsync().catch(() => {});
     }
@@ -30,10 +27,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   return (
     <View style={styles.splashOverlay}>
       <View style={styles.contentContainer}>
-        <Image source={require('../../assets/images/icon.png')} style={styles.logoImage} resizeMode="cover" />
+        <View style={styles.logoFrame}>
+          <Image source={require('../../assets/images/icon.png')} style={styles.logoImage} resizeMode="cover" />
+        </View>
         <Text style={styles.title}>ATARAXIA</Text>
         <Text style={styles.motto}>"Visto desde arriba, todo pesa menos"</Text>
-        <Text style={styles.subMotto}>Controla tu percepción • Acepta tu destino</Text>
+        <Text style={styles.subMotto}>🏛️ MEMENTO MORI • IMPERIUM ESTOICO 🏛️</Text>
       </View>
     </View>
   );
@@ -43,7 +42,7 @@ const styles = StyleSheet.create({
   splashOverlay: {
     ...StyleSheet.absoluteFill,
     ...(Platform.OS === 'web' ? ({ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 } as any) : {}),
-    backgroundColor: '#050505',
+    backgroundColor: '#050507',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 99999,
@@ -54,13 +53,22 @@ const styles = StyleSheet.create({
     width: '85%',
     maxWidth: 400,
   },
+  logoFrame: {
+    borderRadius: 65,
+    padding: 3,
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    borderWidth: 2,
+    borderColor: '#D4AF37', // Oro Imperial
+    marginBottom: 20,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
   logoImage: {
     width: 110,
     height: 110,
     borderRadius: 55,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#D32F2F',
   },
   title: {
     fontSize: 42,
@@ -80,12 +88,13 @@ const styles = StyleSheet.create({
     fontFamily: 'serif',
   },
   subMotto: {
-    fontSize: 11,
-    color: '#888888',
+    fontSize: 10.5,
+    color: '#D4AF37', // Oro Imperial
     textTransform: 'uppercase',
     letterSpacing: 2,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 8,
     fontFamily: 'monospace',
+    fontWeight: 'bold',
   },
 });

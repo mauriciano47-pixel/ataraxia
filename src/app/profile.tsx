@@ -360,7 +360,10 @@ const styles = StyleSheet.create({
   },
   avatarCard: {
     padding: Spacing.four,
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    borderRadius: 8,
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
     alignItems: 'center',
     marginBottom: Spacing.four,
   },
@@ -373,7 +376,7 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 2,
-    borderColor: '#D32F2F',
+    borderColor: '#D4AF37', // Oro Imperial
   },
   avatarPlaceholder: {
     width: 90,
@@ -382,7 +385,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D32F2F',
+    borderColor: '#D4AF37',
   },
   cameraBadge: {
     position: 'absolute',
@@ -394,17 +397,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: '#050507',
   },
   userNameText: {
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'serif',
     marginTop: 4,
+    color: '#FFFFFF',
   },
   userRoleText: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 11,
+    color: '#D4AF37', // Oro Imperial
     fontFamily: 'monospace',
     marginTop: 2,
   },
@@ -415,13 +419,15 @@ const styles = StyleSheet.create({
   presetLabel: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: '#888',
+    color: '#A0A4B0',
   },
   presetChip: {
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#555',
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 4,
   },
   presetChipText: {
     fontSize: 10,

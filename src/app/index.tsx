@@ -480,11 +480,16 @@ const styles = StyleSheet.create({
   constellationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(10, 10, 10, 0.85)',
-    borderWidth: 2,
-    borderColor: 'rgba(211, 47, 47, 0.3)',
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
     padding: Spacing.three,
+    borderRadius: 8,
     gap: Spacing.three,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   constellationInfo: {
     flex: 1,
@@ -493,7 +498,7 @@ const styles = StyleSheet.create({
   constellationTitle: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#D4AF37', // Oro
     fontWeight: 'bold',
     fontFamily: 'monospace',
     letterSpacing: 1.5,
@@ -505,13 +510,14 @@ const styles = StyleSheet.create({
   },
   constellationTip: {
     fontSize: 10,
-    color: '#777',
+    color: '#A0A4B0',
     lineHeight: 14,
   },
   didacticCard: {
-    backgroundColor: 'rgba(15, 15, 15, 0.9)',
-    borderWidth: 2,
+    backgroundColor: 'rgba(16, 16, 22, 0.92)',
+    borderWidth: 1.5,
     borderColor: '#D32F2F',
+    borderRadius: 8,
     padding: Spacing.four,
     gap: 8,
   },
@@ -528,27 +534,28 @@ const styles = StyleSheet.create({
   },
   didacticDescription: {
     fontSize: 13.5,
-    color: '#DDD',
+    color: '#E0E2E8',
     lineHeight: 20,
     fontFamily: 'serif',
   },
   didacticFooter: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: 'rgba(212, 175, 55, 0.2)',
     paddingTop: 8,
     marginTop: 4,
   },
   didacticTipText: {
     fontSize: 11,
-    color: '#D32F2F',
+    color: '#D4AF37',
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
   card: {
-    backgroundColor: 'rgba(10, 10, 10, 0.85)',
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
     padding: Spacing.four,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderRadius: 8,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -565,7 +572,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 11,
-    color: '#666',
+    color: '#8A8E9B',
     marginBottom: 12,
   },
   quoteText: {
@@ -573,11 +580,11 @@ const styles = StyleSheet.create({
     fontFamily: 'serif',
     fontStyle: 'italic',
     lineHeight: 22,
-    color: '#EEE',
+    color: '#F0F2F5',
   },
   quoteAuthor: {
     fontSize: 11,
-    color: '#D32F2F',
+    color: '#D4AF37',
     marginTop: 10,
     fontFamily: 'monospace',
     textTransform: 'uppercase',
