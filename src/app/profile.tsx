@@ -2,7 +2,7 @@ import { StyleSheet, View, Switch, TouchableOpacity, useColorScheme, Image, Moda
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 
 import { ThemedText } from '@/components/themed-text';
@@ -38,6 +38,19 @@ export default function ProfileScreen() {
 
   const uid = auth?.currentUser?.uid || 'Desconocido';
   const shortUid = uid.substring(0, 8);
+
+  // Sync inputs when modal opens or log updates
+  useEffect(() => {
+    if (showEditModal) {
+      const currentMetrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
+      setNameInput(log.userName || 'Ciudadano Prokopton');
+      setAgeInput(currentMetrics.age.toString());
+      setWeightInput(currentMetrics.weightKg.toString());
+      setHeightInput(currentMetrics.heightCm.toString());
+      setTargetCalInput((log.targetCalories || 2200).toString());
+      setTargetStepInput((log.stepGoal || 10000).toString());
+    }
+  }, [showEditModal, log]);
 
   const handlePickAvatarPhoto = async () => {
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -14,7 +14,7 @@ export interface UserMetrics {
 
 export interface SmartDeviceState {
   connected: boolean;
-  deviceName: string; // e.g. "Apple Watch Series 9", "Garmin Fenix 7", "Fitbit Charge 6", "Galaxy Watch 6"
+  deviceName: string;
   heartRateBpm: number;
   lastSync: string;
   batteryLevel?: number;
@@ -42,6 +42,15 @@ export interface DailyLog {
   };
 }
 
+const DEFAULT_USER_METRICS: UserMetrics = {
+  weightKg: 75,
+  heightCm: 175,
+  age: 28,
+  gender: 'male',
+  activityLevel: 'moderate',
+  goal: 'maintenance',
+};
+
 const DEFAULT_LOG: DailyLog = {
   waterLitres: 0,
   trainingCompleted: false,
@@ -59,131 +68,173 @@ const DEFAULT_LOG: DailyLog = {
     lastSync: 'Nunca',
     batteryLevel: 90,
   },
-  userMetrics: {
-    weightKg: 75,
-    heightCm: 175,
-    age: 28,
-    gender: 'male',
-    activityLevel: 'moderate',
-    goal: 'maintenance',
-  },
+  userMetrics: DEFAULT_USER_METRICS,
   checkInDone: false,
-  macros: { protein: 0, carbs: 0, fats: 0 }
+  macros: { protein: 0, carbs: 0, fats: 0 },
 };
+
+const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v2';
 
 export function useDailyLog() {
   const [user, setUser] = useState<User | null>(null);
   const [log, setLog] = useState<DailyLog>(DEFAULT_LOG);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isLocalMode, setIsLocalMode] = useState(false);
 
-  // Formato YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
+  const logRef = useRef<DailyLog>(DEFAULT_LOG);
+  logRef.current = log;
 
-  // Safety fallback timer: nunca permitir que la pantalla se quede colgada cargando por más de 1.5 segundos
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  // Helper local storage reader
+  const loadLocalState = (): DailyLog => {
+    let baseLog: DailyLog = { ...DEFAULT_LOG };
 
-  useEffect(() => {
-    // Intentar recuperar de localStorage si está en web
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem(`ataraxia_log_${today}`);
-        if (saved) {
-          setLog((prev) => ({ ...prev, ...JSON.parse(saved) }));
+        // 1. Load global profile
+        const savedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (savedProfile) {
+          const profileData = JSON.parse(savedProfile);
+          baseLog = { ...baseLog, ...profileData };
+        }
+
+        // 2. Load today's log
+        const savedToday = window.localStorage.getItem(`ataraxia_log_${today}`);
+        if (savedToday) {
+          const todayData = JSON.parse(savedToday);
+          baseLog = { ...baseLog, ...todayData };
         }
       }
     } catch (e) {
-      console.warn("LocalStorage no disponible:", e);
+      console.warn("Error leyendo localStorage:", e);
     }
 
-    // 1. Sign in Anonymously
-    const initAuth = () => {
-      if (!auth) {
-        setIsLocalMode(true);
-        setLoading(false);
-        return () => {};
-      }
-      const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-        if (currentUser) {
-          setUser(currentUser);
-        } else {
-          try {
-            if (auth) await signInAnonymously(auth);
-          } catch (error) {
-            console.warn("⚠️ Firebase Auth falló. Activando modo local (sin nube) para que puedas probar la app.", error);
-            setIsLocalMode(true);
-            setLoading(false);
-          }
-        }
-      });
-      return unsubscribeAuth;
-    };
+    return baseLog;
+  };
 
-    const unsubscribeAuth = initAuth();
-    return () => unsubscribeAuth();
+  // Helper local storage saver
+  const saveLocalState = (currentLog: DailyLog) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Save profile
+        const profileData = {
+          userName: currentLog.userName,
+          stoicAvatarUri: currentLog.stoicAvatarUri,
+          userMetrics: currentLog.userMetrics,
+          targetCalories: currentLog.targetCalories,
+          stepGoal: currentLog.stepGoal,
+          smartDevice: currentLog.smartDevice,
+        };
+        window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+
+        // Save today's log
+        window.localStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(currentLog));
+      }
+    } catch (e) {
+      console.warn("Error guardando en localStorage:", e);
+    }
+  };
+
+  // Initial local load on mount
+  useEffect(() => {
+    const initialLocal = loadLocalState();
+    setLog(initialLocal);
+    setLoading(false);
   }, [today]);
 
+  // Auth & Cloud Sync
   useEffect(() => {
-    if (!user || isLocalMode || !db) {
-      setTimeout(() => setLoading(false), 0);
+    if (!auth) {
+      setIsLocalMode(true);
       return;
     }
 
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        try {
+          if (auth) await signInAnonymously(auth);
+        } catch (error) {
+          console.warn("Firebase Auth fallback a modo local:", error);
+          setIsLocalMode(true);
+        }
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Firestore sync listener
+  useEffect(() => {
+    if (!user || isLocalMode || !db) return;
+
     const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
 
-    // Listen to changes
-    const unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setLog(docSnap.data() as DailyLog);
-      } else {
-        // Document doesn't exist, create it
-        setDoc(docRef, DEFAULT_LOG).catch(console.error);
-        setLog(DEFAULT_LOG);
+    const unsubscribeSnapshot = onSnapshot(
+      docRef,
+      (docSnap) => {
+        const currentLocal = logRef.current;
+        if (docSnap.exists()) {
+          const remoteData = docSnap.data() as DailyLog;
+          // Deep merge remote data with local data to prevent wiping unsaved local fields
+          const mergedLog: DailyLog = {
+            ...currentLocal,
+            ...remoteData,
+            userMetrics: { ...(currentLocal.userMetrics || DEFAULT_USER_METRICS), ...(remoteData.userMetrics || {}) },
+            macros: { ...(currentLocal.macros || { protein: 0, carbs: 0, fats: 0 }), ...(remoteData.macros || {}) },
+          };
+          setLog(mergedLog);
+          saveLocalState(mergedLog);
+        } else {
+          // Document does NOT exist in Firestore yet: upload our current local state!
+          // NEVER wipe local state with DEFAULT_LOG!
+          setDoc(docRef, currentLocal, { merge: true }).catch(console.error);
+          saveLocalState(currentLocal);
+        }
+      },
+      (error) => {
+        console.warn("Firestore listener fallback a modo local:", error);
+        setIsLocalMode(true);
       }
-      setLoading(false);
-    }, (error) => {
-      console.error("Firestore Error:", error);
-      setIsLocalMode(true);
-      setLoading(false);
-    });
+    );
 
     return () => unsubscribeSnapshot();
   }, [user, today, isLocalMode]);
 
   const updateLog = async (updates: Partial<DailyLog>) => {
-    const newLog = { ...log, ...updates };
+    const current = logRef.current;
+    const newLog: DailyLog = {
+      ...current,
+      ...updates,
+      userMetrics: updates.userMetrics
+        ? { ...(current.userMetrics || DEFAULT_USER_METRICS), ...updates.userMetrics }
+        : current.userMetrics,
+      macros: updates.macros
+        ? { ...(current.macros || { protein: 0, carbs: 0, fats: 0 }), ...updates.macros }
+        : current.macros,
+    };
+
+    // 1. Update React state immediately
     setLog(newLog);
 
-    // Guardar copia local en web
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(newLog));
-      }
-    } catch (e) {
-      // Ignore storage error
-    }
+    // 2. Persist locally immediately
+    saveLocalState(newLog);
 
-    if (isLocalMode || !db) {
-      return;
-    }
-
-    if (user && db) {
+    // 3. Persist to Firestore in background if online
+    if (user && db && !isLocalMode) {
       const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
       try {
         await setDoc(docRef, updates, { merge: true });
       } catch (error) {
-        console.error("Update Error:", error);
+        console.warn("Error en setDoc Firestore:", error);
       }
     }
   };
 
   const addWater = (amount: number = 0.25) => {
-    updateLog({ waterLitres: log.waterLitres + amount });
+    const newLitres = Math.max(0, parseFloat((log.waterLitres + amount).toFixed(2)));
+    updateLog({ waterLitres: newLitres });
   };
 
   const toggleTraining = () => {
@@ -191,11 +242,11 @@ export function useDailyLog() {
   };
 
   const addMeal = () => {
-    updateLog({ mealsLogged: log.mealsLogged + 1 });
+    updateLog({ mealsLogged: (log.mealsLogged || 0) + 1 });
   };
 
   const addCalories = (amount: number) => {
-    updateLog({ totalCalories: (log.totalCalories || 0) + amount });
+    updateLog({ totalCalories: Math.max(0, (log.totalCalories || 0) + amount) });
   };
 
   const saveCheckIn = (energy: number, sleep: number) => {
@@ -203,12 +254,13 @@ export function useDailyLog() {
   };
 
   const addMacros = (p: number, c: number, f: number) => {
-    updateLog({ 
+    const currentMacros = log.macros || { protein: 0, carbs: 0, fats: 0 };
+    updateLog({
       macros: {
-        protein: log.macros.protein + p,
-        carbs: log.macros.carbs + c,
-        fats: log.macros.fats + f
-      } 
+        protein: Math.max(0, currentMacros.protein + p),
+        carbs: Math.max(0, currentMacros.carbs + c),
+        fats: Math.max(0, currentMacros.fats + f),
+      },
     });
   };
 
@@ -225,7 +277,8 @@ export function useDailyLog() {
   };
 
   const updateUserMetrics = (metrics: Partial<UserMetrics>, targetCals?: number) => {
-    const newMetrics = { ...DEFAULT_LOG.userMetrics, ...(log.userMetrics || {}), ...metrics } as UserMetrics;
+    const currentMetrics = log.userMetrics || DEFAULT_USER_METRICS;
+    const newMetrics: UserMetrics = { ...currentMetrics, ...metrics };
     const updates: Partial<DailyLog> = { userMetrics: newMetrics };
     if (targetCals) {
       updates.targetCalories = targetCals;
@@ -247,7 +300,7 @@ export function useDailyLog() {
       smartDevice: {
         ...currentDevice,
         ...deviceUpdates,
-      }
+      },
     });
   };
 
@@ -271,10 +324,6 @@ export function useDailyLog() {
   };
 }
 
-/**
- * Hook que retorna el historial de los últimos N días de daily_logs.
- * Usado por el coach para construir contexto histórico.
- */
 export function useWeekHistory(days: number = 7) {
   const [weekLogs, setWeekLogs] = useState<(DailyLog & { date: string })[]>([]);
   const [loadingWeek, setLoadingWeek] = useState(true);
@@ -345,9 +394,9 @@ export function useHistoryLog() {
           const success = data.checkInDone || data.trainingCompleted || false;
           map.push(success);
         });
-        
+
         map.reverse();
-        
+
         while (map.length < 30) {
           map.unshift(false);
         }
