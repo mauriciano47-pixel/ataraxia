@@ -9,6 +9,8 @@ import { Platform } from 'react-native';
 import SplashScreenWrapper from '@/components/SplashScreenWrapper';
 import AppTabs from '@/components/app-tabs';
 
+import { DailyLogProvider } from '@/context/DailyLogContext';
+
 SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
@@ -66,10 +68,12 @@ export default function TabLayout() {
   }
 
   return (
-    <ThemeProvider value={DarkTheme}>
-      <SplashScreenWrapper>
-        <AppTabs />
-      </SplashScreenWrapper>
-    </ThemeProvider>
+    <DailyLogProvider>
+      <ThemeProvider value={DarkTheme}>
+        <SplashScreenWrapper>
+          <AppTabs />
+        </SplashScreenWrapper>
+      </ThemeProvider>
+    </DailyLogProvider>
   );
 }
