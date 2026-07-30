@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { SafeStorage } from '@/utils/safeStorage';
 
 export interface UserMetrics {
   weightKg: number;
@@ -73,7 +74,8 @@ const DEFAULT_LOG: DailyLog = {
   macros: { protein: 0, carbs: 0, fats: 0 },
 };
 
-const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v2';
+const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v3';
+const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
 
 export function useDailyLog() {
   const [user, setUser] = useState<User | null>(null);
@@ -84,53 +86,66 @@ export function useDailyLog() {
   const today = new Date().toISOString().split('T')[0];
   const logRef = useRef<DailyLog>(DEFAULT_LOG);
 
-  // Helper local storage reader
+  // Helper local storage reader con SafeStorage
   const loadLocalState = (): DailyLog => {
     let baseLog: DailyLog = { ...DEFAULT_LOG };
 
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        // 1. Load global profile
-        const savedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-        if (savedProfile) {
-          const profileData = JSON.parse(savedProfile);
-          baseLog = { ...baseLog, ...profileData };
-        }
+      // 1. Load global profile core
+      const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
+      if (savedProfile) {
+        const profileData = JSON.parse(savedProfile);
+        baseLog = { ...baseLog, ...profileData };
+      }
 
-        // 2. Load today's log
-        const savedToday = window.localStorage.getItem(`ataraxia_log_${today}`);
-        if (savedToday) {
-          const todayData = JSON.parse(savedToday);
-          baseLog = { ...baseLog, ...todayData };
-        }
+      // 2. Load isolated avatar URI
+      const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);
+      if (savedAvatar) {
+        baseLog.stoicAvatarUri = savedAvatar;
+      }
+
+      // 3. Load today's log
+      const savedToday = SafeStorage.getItem(`ataraxia_log_${today}`);
+      if (savedToday) {
+        const todayData = JSON.parse(savedToday);
+        // Exclude stoicAvatarUri from today log if empty to preserve savedAvatar
+        const { stoicAvatarUri, ...todayDataClean } = todayData;
+        baseLog = {
+          ...baseLog,
+          ...todayDataClean,
+          ...(stoicAvatarUri ? { stoicAvatarUri } : {}),
+        };
       }
     } catch (e) {
-      console.warn("Error leyendo localStorage:", e);
+      console.warn("[useDailyLog] Error cargando estado con SafeStorage:", e);
     }
 
     return baseLog;
   };
 
-  // Helper local storage saver
+  // Helper local storage saver con aislamiento de cuota de avatar
   const saveLocalState = (currentLog: DailyLog) => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        // Save profile
-        const profileData = {
-          userName: currentLog.userName,
-          stoicAvatarUri: currentLog.stoicAvatarUri,
-          userMetrics: currentLog.userMetrics,
-          targetCalories: currentLog.targetCalories,
-          stepGoal: currentLog.stepGoal,
-          smartDevice: currentLog.smartDevice,
-        };
-        window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+      // 1. Save core profile metrics (without large avatar string to guarantee success)
+      const profileCore = {
+        userName: currentLog.userName,
+        userMetrics: currentLog.userMetrics,
+        targetCalories: currentLog.targetCalories,
+        stepGoal: currentLog.stepGoal,
+        smartDevice: currentLog.smartDevice,
+      };
+      SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
 
-        // Save today's log
-        window.localStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(currentLog));
+      // 2. Save today's log (without large avatar string)
+      const { stoicAvatarUri, ...cleanLog } = currentLog;
+      SafeStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(cleanLog));
+
+      // 3. Save avatar URI in isolated key (prevents quota errors from breaking user metrics)
+      if (currentLog.stoicAvatarUri) {
+        SafeStorage.setItem(AVATAR_STORAGE_KEY, currentLog.stoicAvatarUri);
       }
     } catch (e) {
-      console.warn("Error guardando en localStorage:", e);
+      console.warn("[useDailyLog] Error guardando estado con SafeStorage:", e);
     }
   };
 
