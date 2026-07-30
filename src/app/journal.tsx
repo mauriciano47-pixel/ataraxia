@@ -1,5 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, View, useColorScheme, Animated, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  View,
+  useColorScheme,
+  Animated,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleGenAI } from '@google/genai';
@@ -13,7 +25,15 @@ import { buildCoachSystemPrompt, generateWelcomeMessage } from '@/lib/coachPromp
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
-const DISCLAIMER_TEXT = '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA. No reemplaza el consejo de un médico, nutricionista o profesional de salud certificado. Si tienes condiciones médicas, consulta siempre a un especialista.';
+const DISCLAIMER_TEXT =
+  '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA. No reemplaza el consejo de un médico, nutricionista o profesional de salud certificado. Si tienes condiciones médicas, consulta siempre a un especialista.';
+
+const QUICK_PROMPTS = [
+  { icon: 'barbell-outline', text: '🏋️ Sugiere rutina de hoy' },
+  { icon: 'restaurant-outline', text: '🥗 Ideas de comida alta en proteína' },
+  { icon: 'water-outline', text: '💧 ¿Cómo voy con el agua hoy?' },
+  { icon: 'sparkles-outline', text: '🧠 Reflexión para motivarme' },
+];
 
 export default function JournalScreen() {
   const { today, patterns, contextSummary, loading: loadingContext } = useCoachContext();
@@ -23,7 +43,6 @@ export default function JournalScreen() {
     loading: loadingHistory,
     disclaimerShown,
     setDisclaimerShown,
-    addMessage,
     saveMessages,
     getPastContext,
   } = useJournalHistory();
@@ -35,17 +54,16 @@ export default function JournalScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Animaciones
   const typingDots = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Animación de "escribiendo..." con puntos pulsantes
+  // Animación "escribiendo..."
   useEffect(() => {
     if (isLoading) {
       const animation = Animated.loop(
         Animated.sequence([
-          Animated.timing(typingDots, { toValue: 1, duration: 600, useNativeDriver: true }),
-          Animated.timing(typingDots, { toValue: 0, duration: 600, useNativeDriver: true }),
+          Animated.timing(typingDots, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.timing(typingDots, { toValue: 0, duration: 500, useNativeDriver: true }),
         ])
       );
       animation.start();
@@ -53,34 +71,31 @@ export default function JournalScreen() {
     }
   }, [isLoading, typingDots]);
 
-  // Auto-scroll al final cuando cambian los mensajes
+  // Scroll automático al final
   useEffect(() => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 150);
   }, [messages, isLoading]);
 
-  // Inicializar el coach con bienvenida contextual + disclaimer
+  // Inicialización contextual del Coach
   useEffect(() => {
     if (initialized || loadingContext || loadingHistory) return;
     if (messages.length > 0) {
-      // Ya hay conversación de hoy, no reinicializar
       setInitialized(true);
       return;
     }
 
-    // Generar bienvenida contextual
     const welcomeMsg = generateWelcomeMessage(
       patterns,
       today.trainingCompleted,
       today.mealsLogged,
       today.waterLitres,
-      today.checkInDone || false,
+      today.checkInDone || false
     );
 
     const initialMessages: JournalMessage[] = [];
 
-    // Disclaimer la primera vez
     if (!disclaimerShown) {
       initialMessages.push({
         text: DISCLAIMER_TEXT,
@@ -90,7 +105,6 @@ export default function JournalScreen() {
       setDisclaimerShown(true);
     }
 
-    // Bienvenida contextual
     initialMessages.push({
       text: welcomeMsg,
       sender: 'bot',
@@ -102,119 +116,169 @@ export default function JournalScreen() {
     setInitialized(true);
   }, [initialized, loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown]);
 
-  const sendMessage = useCallback(async () => {
-    const trimmed = inputText.trim();
+  // Generador inteligente de respaldo si Gemini no tiene API Key o falla red
+  const generateFallbackResponse = (userPrompt: string): string => {
+    const promptLower = userPrompt.toLowerCase();
+
+    if (promptLower.includes('rutina') || promptLower.includes('entren') || promptLower.includes('ejercicio')) {
+      if (today.trainingCompleted) {
+        return '🏆 ¡Ya completaste tu entrenamiento de hoy! Enfoque ahora en recuperar: consume 30g-40g de proteína, hidrátate bien y estira 10 minutos. El crecimiento muscular ocurre en el descanso.';
+      }
+      return '💪 Para hoy te sugiero una rutina de 45 min dividida en: 1) Calentamiento dinámico (5m), 2) Sentadilla o Flexiones 4x10 (15m), 3) Remo o Dominadas 4x8 (15m), 4) Trabajo de core 3x1min. ¡Mantén la disciplina!';
+    }
+
+    if (promptLower.includes('comida') || promptLower.includes('prote') || promptLower.includes('nutri') || promptLower.includes('receta')) {
+      return `🥗 Basado en tus metas (${today.targetCalories || 2200} kcal/día): Te recomiendo una comida rica en proteína limpia como pechuga de pollo/pavo a la plancha (250g), arroz integral (150g) y vegetales al vapor. Aporta ~45g de proteína y energía limpia.`;
+    }
+
+    if (promptLower.includes('agua') || promptLower.includes('hidrat')) {
+      const remaining = Math.max(0, parseFloat((2.5 - today.waterLitres).toFixed(2)));
+      if (remaining === 0) {
+        return `💧 ¡Excelente trabajo! Has alcanzado ${today.waterLitres}L de agua hoy. Tu cuerpo y cerebro están perfectamente hidratados.`;
+      }
+      return `💧 Llevas ${today.waterLitres}L de agua hoy. Te faltan aproximadamente ${remaining}L para tu meta recomendada de 2.5L. ¡Bebe un vaso de agua ahora mismo!`;
+    }
+
+    if (promptLower.includes('reflex') || promptLower.includes('motiv') || promptLower.includes('frase')) {
+      return '🏛️ "El valor no es la ausencia de miedo, sino el juicio de que hay algo más importante que el miedo." — Séneca.\n\nConcentra tu mente en lo que depende de ti hoy: tu entreno, tu nutrición y tu carácter.';
+    }
+
+    return `🏛️ Como Coach de Ataraxia, analizo tu estado de hoy: Llevas ${today.waterLitres}L de agua, ${today.totalCalories} kcal registradas y ${today.trainingCompleted ? 'entrenamiento completado' : 'entrenamiento pendiente'}. ¿En qué objetivo específico quieres enfocar tus esfuerzos hoy?`;
+  };
+
+  const handleSendQuery = async (textToSend: string) => {
+    const trimmed = textToSend.trim();
     if (!trimmed || isLoading) return;
 
-    // Añadir mensaje del usuario
     const userMsg: JournalMessage = {
       text: trimmed,
       sender: 'user',
       timestamp: Date.now(),
     };
+
     const updatedWithUser = [...messages, userMsg];
     setMessages(updatedWithUser);
     setInputText('');
     setIsLoading(true);
 
-    // Guardar inmediatamente el mensaje del usuario
     await saveMessages(updatedWithUser);
 
     try {
-      // Construir el system prompt con todo el contexto
-      const pastContext = getPastContext();
-      const systemPrompt = buildCoachSystemPrompt(contextSummary, pastContext);
+      let botText = '';
 
-      // Construir historial multi-turno para Gemini
-      // Incluimos los últimos mensajes de la conversación para coherencia
-      const conversationParts: string[] = [];
-      updatedWithUser.forEach((msg) => {
-        const prefix = msg.sender === 'user' ? 'USUARIO' : 'COACH';
-        conversationParts.push(`${prefix}: ${msg.text}`);
-      });
+      if (ai) {
+        const pastContext = getPastContext();
+        const systemPrompt = buildCoachSystemPrompt(contextSummary, pastContext);
 
-      const fullPrompt = conversationParts.join('\n\n');
+        const conversationParts: string[] = [];
+        updatedWithUser.slice(-8).forEach((msg) => {
+          const prefix = msg.sender === 'user' ? 'USUARIO' : 'COACH';
+          conversationParts.push(`${prefix}: ${msg.text}`);
+        });
 
-      if (!ai) {
-        const errorMsg: JournalMessage = {
-          text: 'La integración con Gemini no está configurada. Revisa las variables de entorno para habilitar el coach.',
-          sender: 'bot',
-          timestamp: Date.now(),
-        };
-        const updatedWithConfigError = [...updatedWithUser, errorMsg];
-        setMessages(updatedWithConfigError);
-        await saveMessages(updatedWithConfigError);
-        return;
+        const fullPrompt = conversationParts.join('\n\n');
+
+        try {
+          // Intento 1: Modelo primario de alta velocidad
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: fullPrompt,
+            config: {
+              systemInstruction: systemPrompt,
+            },
+          });
+          botText = response.text || '';
+        } catch (e1) {
+          console.warn("Reintentando Gemini con modelo 1.5-flash:", e1);
+          // Intento 2: Fallback gemini-1.5-flash
+          const response2 = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: fullPrompt,
+            config: {
+              systemInstruction: systemPrompt,
+            },
+          });
+          botText = response2.text || '';
+        }
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: fullPrompt,
-        config: {
-          systemInstruction: systemPrompt,
-        }
-      });
-
-      const botText = response.text || 'No pude generar una respuesta. Inténtalo de nuevo.';
+      if (!botText) {
+        botText = generateFallbackResponse(trimmed);
+      }
 
       const botMsg: JournalMessage = {
         text: botText,
         sender: 'bot',
         timestamp: Date.now(),
       };
+
       const updatedWithBot = [...updatedWithUser, botMsg];
       setMessages(updatedWithBot);
       await saveMessages(updatedWithBot);
-
     } catch (error) {
-      console.error('Error del Coach: unable to generate response.');
-      const errorMsg: JournalMessage = {
-        text: 'Error de conexión con el Oráculo. La sabiduría estoica no requiere conexión — reflexiona por ti mismo mientras tanto.',
+      console.warn("Falla en consulta de IA Gemini, usando respuesta inteligente contextual:", error);
+      const fallbackText = generateFallbackResponse(trimmed);
+      const botMsg: JournalMessage = {
+        text: fallbackText,
         sender: 'bot',
         timestamp: Date.now(),
       };
-      const updatedWithError = [...updatedWithUser, errorMsg];
-      setMessages(updatedWithError);
-      await saveMessages(updatedWithError);
+      const updatedWithFallback = [...updatedWithUser, botMsg];
+      setMessages(updatedWithFallback);
+      await saveMessages(updatedWithFallback);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const sendMessage = useCallback(() => {
+    handleSendQuery(inputText);
   }, [inputText, isLoading, messages, contextSummary, getPastContext, saveMessages]);
 
-  // Placeholder dinámico basado en contexto
   const getPlaceholder = () => {
     if (!today.trainingCompleted && !today.checkInDone) {
-      return '¿Cómo va tu día? Escribe aquí...';
+      return 'Consulta al Oráculo Gemini...';
     }
     if (today.trainingCompleted) {
-      return '¿Cómo fue el entreno? Reflexiona aquí...';
+      return '¿Cómo fue el entreno? Pregunta aquí...';
     }
-    return 'Escribe tu reflexión estoica...';
+    return 'Pregunta al Coach sobre tu plan de hoy...';
   };
 
   if (loadingContext || loadingHistory) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={styles.loadingText}>Consultando al Oráculo...</ThemedText>
+        <ThemedText style={styles.loadingText}>Iniciando Oráculo Gemini AI...</ThemedText>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <SafeAreaView style={styles.safeArea}>
+      {/* Fondo Fotográfico Estoico Profesional con Superposición Oscura Elegante */}
+      <View style={StyleSheet.absoluteFill}>
+        <Image
+          source={require('../../assets/images/bg_stoic_cosmos.png')}
+          style={[StyleSheet.absoluteFill, { opacity: 0.28 }]}
+          resizeMode="cover"
+        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(5, 5, 5, 0.88)' }]} />
+      </View>
 
+      <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <ThemedText style={styles.label}>REFLEXIÓN</ThemedText>
-            <ThemedText style={styles.title}>Diario</ThemedText>
+            <ThemedText style={styles.label}>MENTORÍA IA & DIARIO</ThemedText>
+            <ThemedText style={styles.title}>Oráculo Gemini</ThemedText>
           </View>
           <View style={styles.headerRight}>
             <View style={styles.coachBadge}>
-              <Ionicons name="eye-outline" size={14} color="#D32F2F" />
-              <ThemedText style={styles.coachBadgeText}>COACH ACTIVO</ThemedText>
+              <Ionicons name="sparkles" size={14} color="#D32F2F" />
+              <ThemedText style={styles.coachBadgeText}>
+                {GEMINI_API_KEY ? 'GEMINI AI ACTIVO' : 'COACH LOCAL ACTIVO'}
+              </ThemedText>
             </View>
           </View>
         </View>
@@ -235,30 +299,32 @@ export default function JournalScreen() {
                 msg.sender === 'user'
                   ? styles.userMessage
                   : msg.text === DISCLAIMER_TEXT
-                    ? styles.disclaimerMessage
-                    : styles.botMessage
+                  ? styles.disclaimerMessage
+                  : styles.botMessage,
               ]}
             >
               {msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT && (
                 <View style={styles.coachLabel}>
-                  <Ionicons name="sparkles-outline" size={12} color="#D32F2F" />
-                  <ThemedText style={styles.coachLabelText}>ORÁCULO</ThemedText>
+                  <Ionicons name="sparkles" size={12} color="#D32F2F" />
+                  <ThemedText style={styles.coachLabelText}>COACH ORÁCULO</ThemedText>
                 </View>
               )}
               {msg.text === DISCLAIMER_TEXT && (
                 <View style={styles.coachLabel}>
                   <Ionicons name="medical-outline" size={12} color="#888" />
-                  <ThemedText style={[styles.coachLabelText, { color: '#888' }]}>AVISO</ThemedText>
+                  <ThemedText style={[styles.coachLabelText, { color: '#888' }]}>AVISO DE SALUD</ThemedText>
                 </View>
               )}
-              <ThemedText style={[
-                styles.messageText,
-                msg.sender === 'user'
-                  ? styles.userText
-                  : msg.text === DISCLAIMER_TEXT
+              <ThemedText
+                style={[
+                  styles.messageText,
+                  msg.sender === 'user'
+                    ? styles.userText
+                    : msg.text === DISCLAIMER_TEXT
                     ? styles.disclaimerText
-                    : styles.botText
-              ]}>
+                    : styles.botText,
+                ]}
+              >
                 {msg.text}
               </ThemedText>
               <ThemedText style={styles.timestamp}>
@@ -267,12 +333,12 @@ export default function JournalScreen() {
             </View>
           ))}
 
-          {/* Indicador de "escribiendo" animado */}
+          {/* Indicador animado de respuesta */}
           {isLoading && (
             <View style={[styles.messageBubble, styles.botMessage]}>
               <View style={styles.coachLabel}>
-                <Ionicons name="sparkles-outline" size={12} color="#D32F2F" />
-                <ThemedText style={styles.coachLabelText}>ORÁCULO</ThemedText>
+                <Ionicons name="sparkles" size={12} color="#D32F2F" />
+                <ThemedText style={styles.coachLabelText}>GEMINI PENSANDO...</ThemedText>
               </View>
               <Animated.View style={[styles.typingIndicator, { opacity: typingDots }]}>
                 <View style={styles.typingDot} />
@@ -283,12 +349,29 @@ export default function JournalScreen() {
           )}
         </ScrollView>
 
+        {/* Quick Prompts Bar */}
+        <View style={styles.quickPromptsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptsContent}>
+            {QUICK_PROMPTS.map((qp, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.quickPromptChip}
+                onPress={() => handleSendQuery(qp.text)}
+                disabled={isLoading}
+              >
+                <Ionicons name={qp.icon as any} size={12} color="#FFF" />
+                <ThemedText style={styles.quickPromptText}>{qp.text}</ThemedText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Input Area */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             placeholder={getPlaceholder()}
-            placeholderTextColor="#555"
+            placeholderTextColor="#666"
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={sendMessage}
@@ -301,7 +384,7 @@ export default function JournalScreen() {
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
           >
-            <Ionicons name="arrow-up" size={20} color="#FFF" />
+            <Ionicons name="paper-plane-outline" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -312,7 +395,7 @@ export default function JournalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#050505',
   },
   safeArea: {
     flex: 1,
@@ -328,7 +411,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: Spacing.three,
-    color: '#666',
+    color: '#888',
     fontFamily: 'monospace',
     fontSize: 11,
     textTransform: 'uppercase',
@@ -342,8 +425,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.two,
     paddingBottom: Spacing.three,
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(211,47,47,0.25)',
   },
   headerLeft: {},
   headerRight: {},
@@ -351,7 +434,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     textTransform: 'uppercase',
     color: '#D32F2F',
-    letterSpacing: 3,
+    letterSpacing: 2,
     fontWeight: 'bold',
     fontFamily: 'monospace',
   },
@@ -366,25 +449,26 @@ const styles = StyleSheet.create({
   coachBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(211,47,47,0.1)',
+    gap: 6,
+    backgroundColor: 'rgba(211,47,47,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(211,47,47,0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderColor: '#D32F2F',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   coachBadgeText: {
-    fontSize: 8,
+    fontSize: 8.5,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#D32F2F',
+    color: '#FFF',
     letterSpacing: 1,
   },
 
-  // Chat
+  // Chat Area
   chatArea: {
     flex: 1,
-    marginTop: Spacing.three,
+    marginTop: Spacing.two,
   },
   chatContent: {
     paddingBottom: Spacing.four,
@@ -394,23 +478,24 @@ const styles = StyleSheet.create({
   // Mensajes
   messageBubble: {
     padding: Spacing.three,
-    maxWidth: '88%',
-    borderWidth: 2,
+    maxWidth: '90%',
+    borderRadius: 8,
+    borderWidth: 1,
   },
   botMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(10,10,10,0.9)',
-    borderColor: 'rgba(211,47,47,0.2)',
+    backgroundColor: 'rgba(15, 15, 18, 0.92)',
+    borderColor: 'rgba(211, 47, 47, 0.35)',
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: 'rgba(211,47,47,0.12)',
-    borderColor: 'rgba(211,47,47,0.4)',
+    backgroundColor: 'rgba(211, 47, 47, 0.22)',
+    borderColor: '#D32F2F',
   },
   disclaimerMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(10,10,10,0.6)',
-    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(10, 10, 10, 0.75)',
+    borderColor: 'rgba(128, 128, 128, 0.2)',
   },
   coachLabel: {
     flexDirection: 'row',
@@ -419,7 +504,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   coachLabelText: {
-    fontSize: 8,
+    fontSize: 8.5,
     fontWeight: 'bold',
     fontFamily: 'monospace',
     color: '#D32F2F',
@@ -427,24 +512,24 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 13.5,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   botText: {
-    color: '#CCC',
+    color: '#EEE',
     fontFamily: 'serif',
-    fontStyle: 'italic',
   },
   userText: {
     color: '#FFF',
+    fontWeight: '600',
   },
   disclaimerText: {
-    color: '#777',
+    color: '#888',
     fontSize: 11,
     lineHeight: 16,
   },
   timestamp: {
     fontSize: 9,
-    color: '#444',
+    color: '#666',
     fontFamily: 'monospace',
     marginTop: 6,
     alignSelf: 'flex-end',
@@ -463,37 +548,62 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
+  // Quick Prompts
+  quickPromptsContainer: {
+    marginVertical: Spacing.two,
+  },
+  quickPromptsContent: {
+    gap: 8,
+    paddingHorizontal: 2,
+  },
+  quickPromptChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(30, 30, 35, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(211, 47, 47, 0.4)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  quickPromptText: {
+    color: '#DDD',
+    fontSize: 10.5,
+    fontFamily: 'monospace',
+  },
+
   // Input
   inputContainer: {
     flexDirection: 'row',
     gap: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'flex-end',
-    borderTopWidth: 2,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(211, 47, 47, 0.2)',
   },
   input: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(10,10,10,0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(211, 47, 47, 0.4)',
+    backgroundColor: 'rgba(15, 15, 20, 0.95)',
     color: '#FFF',
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 8,
     minHeight: 44,
-    maxHeight: 120,
-    fontSize: 14,
+    maxHeight: 100,
+    fontSize: 13.5,
   },
   sendButton: {
     width: 44,
     height: 44,
     backgroundColor: '#D32F2F',
-    borderWidth: 2,
-    borderColor: '#D32F2F',
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
 });

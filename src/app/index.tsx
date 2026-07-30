@@ -161,15 +161,31 @@ export default function HoyScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Background dynamic carousel */}
+      {/* Background dynamic carousel ultra-profesional */}
       <View style={StyleSheet.absoluteFill}>
         <Animated.Image
           source={backgroundImages[bgIndex].src}
-          style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: 1.04 }],
+            },
+          ]}
           resizeMode="cover"
         />
-        {/* Gritty overlay to ensure contrast */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.65)' }]} />
+        {/* Capa de contraste y gradiente cinemático estoico */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(5, 5, 5, 0.75)' }]} />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: 'rgba(211, 47, 47, 0.2)',
+            },
+          ]}
+        />
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
