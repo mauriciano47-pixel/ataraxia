@@ -25,7 +25,7 @@ interface AnalysisResult {
 }
 
 export default function NutritionScreen() {
-  const { log, addCalories, addMacros, addMeal, updateUserMetrics } = useDailyLog();
+  const { log, logMealWithMacros, updateUserMetrics } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
 
@@ -172,9 +172,7 @@ export default function NutritionScreen() {
 
   const handleConfirmAnalysis = () => {
     if (!lastAnalysis) return;
-    addCalories(lastAnalysis.calories);
-    addMacros(lastAnalysis.protein, lastAnalysis.carbs, lastAnalysis.fats);
-    addMeal();
+    logMealWithMacros(lastAnalysis.calories, lastAnalysis.protein, lastAnalysis.carbs, lastAnalysis.fats);
     Alert.alert("Registrado en el Templo", `${lastAnalysis.dishName} (+${lastAnalysis.calories} kcal) agregado a tu nutrición diaria.`);
     setLastAnalysis(null);
     setScannedImageUri(null);
@@ -186,9 +184,7 @@ export default function NutritionScreen() {
     const c = parseInt(manualCarbs, 10) || 0;
     const f = parseInt(manualFats, 10) || 0;
 
-    addCalories(cals);
-    addMacros(p, c, f);
-    addMeal();
+    logMealWithMacros(cals, p, c, f);
     setShowManualModal(false);
     Alert.alert("Registro Guardado", `+${cals} kcal registradas manualmente.`);
   };

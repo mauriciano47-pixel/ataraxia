@@ -174,6 +174,9 @@ export function useDailyLog() {
     const unsubscribeSnapshot = onSnapshot(
       docRef,
       (docSnap) => {
+        // Prevent stale snapshot echo if local writes are currently in flight
+        if (docSnap.metadata?.hasPendingWrites) return;
+
         const currentLocal = logRef.current;
         if (docSnap.exists()) {
           const remoteData = docSnap.data() as DailyLog;
@@ -237,6 +240,20 @@ export function useDailyLog() {
         console.warn("Error en setDoc Firestore:", error);
       }
     }
+  };
+
+  const logMealWithMacros = (cals: number, protein: number = 0, carbs: number = 0, fats: number = 0) => {
+    const current = logRef.current;
+    const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
+    updateLog({
+      totalCalories: Math.max(0, (current.totalCalories || 0) + cals),
+      mealsLogged: (current.mealsLogged || 0) + 1,
+      macros: {
+        protein: Math.max(0, currentMacros.protein + protein),
+        carbs: Math.max(0, currentMacros.carbs + carbs),
+        fats: Math.max(0, currentMacros.fats + fats),
+      },
+    });
   };
 
   const saveFullProfile = (data: {
@@ -340,6 +357,7 @@ export function useDailyLog() {
     loading,
     user,
     saveFullProfile,
+    logMealWithMacros,
     addWater,
     toggleTraining,
     addMeal,

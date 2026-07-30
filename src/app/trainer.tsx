@@ -5,6 +5,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useState } from 'react';
 
+import { useDailyLog } from '@/hooks/useDailyLog';
+
 // Mock de la rutina (SesionEntreno)
 const RUTINA_MOCK = [
   { id: '1', n: "Sentadilla", s: "4x8", done: false, rpe: null as number | null },
@@ -20,16 +22,17 @@ const CALISTENIA_MOCK = [
 ];
 
 export default function TrainerScreen() {
+  const { log, toggleTraining } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
-  
+
   const [ejercicios, setEjercicios] = useState(RUTINA_MOCK);
   const [isAmorFati, setIsAmorFati] = useState(false);
 
   const toggleDone = (id: string) => {
     setEjercicios(prev => prev.map(e => {
       if (e.id === id) {
-        return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null }; // Default RPE 7 si se marca done sin elegir
+        return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null };
       }
       return e;
     }));
@@ -41,8 +44,15 @@ export default function TrainerScreen() {
 
   const checkDeload = () => {
     const doneExercises = ejercicios.filter(e => e.done && e.rpe !== null);
-    if (doneExercises.length === 0) return;
-    
+    if (doneExercises.length === 0) {
+      Alert.alert("Entreno no iniciado", "Marca al menos un ejercicio completado para finalizar la sesión.");
+      return;
+    }
+
+    if (!log.trainingCompleted) {
+      toggleTraining();
+    }
+
     const avgRpe = doneExercises.reduce((acc, curr) => acc + (curr.rpe || 0), 0) / doneExercises.length;
     if (avgRpe > 8.5) {
       Alert.alert(
@@ -50,7 +60,7 @@ export default function TrainerScreen() {
         "El arco que siempre está tenso termina por romperse. Tu esfuerzo (RPE) ha sido muy alto. Bajaremos la intensidad mañana. Lo que depende de ti es recuperar."
       );
     } else {
-      Alert.alert("Entreno Finalizado", "Buen trabajo manteniendo el control.");
+      Alert.alert("Entreno Finalizado", "Buen trabajo manteniendo el control. Tu hábito de entreno fue registrado.");
     }
   };
 
