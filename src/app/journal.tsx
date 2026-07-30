@@ -31,8 +31,10 @@ const DISCLAIMER_TEXT =
 const QUICK_PROMPTS = [
   { icon: 'barbell-outline', text: '🏋️ Sugiere rutina de hoy' },
   { icon: 'restaurant-outline', text: '🥗 Ideas de comida alta en proteína' },
+  { icon: 'fitness-outline', text: '💊 ¿Qué suplementos me recomiendas?' },
   { icon: 'water-outline', text: '💧 ¿Cómo voy con el agua hoy?' },
-  { icon: 'sparkles-outline', text: '🧠 Reflexión para motivarme' },
+  { icon: 'moon-outline', text: '😴 Cómo mejorar mi sueño y recuperar' },
+  { icon: 'sparkles-outline', text: '🧠 Lección estoica para motivarme' },
 ];
 
 export default function JournalScreen() {
@@ -116,34 +118,48 @@ export default function JournalScreen() {
     setInitialized(true);
   }, [initialized, loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown]);
 
-  // Generador inteligente de respaldo si Gemini no tiene API Key o falla red
+  // Generador contextual amplio y variado de respaldo
   const generateFallbackResponse = (userPrompt: string): string => {
-    const promptLower = userPrompt.toLowerCase();
+    const p = userPrompt.toLowerCase();
 
-    if (promptLower.includes('rutina') || promptLower.includes('entren') || promptLower.includes('ejercicio')) {
+    // 1. ENTRENAMIENTO & RUTINAS
+    if (p.includes('rutina') || p.includes('entren') || p.includes('ejercicio') || p.includes('pesas') || p.includes('gym')) {
       if (today.trainingCompleted) {
-        return '🏆 ¡Ya completaste tu entrenamiento de hoy! Enfoque ahora en recuperar: consume 30g-40g de proteína, hidrátate bien y estira 10 minutos. El crecimiento muscular ocurre en el descanso.';
+        return '🏆 ¡Ya cumpliste con tu entrenamiento de hoy! Excelente sobrecarga. Tu foco ahora debe estar en el anabolismo pasivo:\n\n• 🍳 **Proteína**: 35-45g de rápida asimilación.\n• 💧 **Agua**: Mínimo 500ml con sal rosa o electrólitos.\n• 🛌 **Descanso**: Al menos 7.5 horas de sueño reparador.';
       }
-      return '💪 Para hoy te sugiero una rutina de 45 min dividida en: 1) Calentamiento dinámico (5m), 2) Sentadilla o Flexiones 4x10 (15m), 3) Remo o Dominadas 4x8 (15m), 4) Trabajo de core 3x1min. ¡Mantén la disciplina!';
+      return '💪 **Propuesta de Sesión de Fuerza & Hipertrofia (45-50 min)**:\n\n1. **Calentamiento (5m)**: Movilidad de hombros y cadera + 2 series livianas.\n2. **Fuerza Principal**: Sentadillas o Press 4 series x 8-10 reps (RIR 2).\n3. **Tensión Mecánica**: Remo o Dominadas 4 series x 10-12 reps.\n4. **Bombeo**: Flexiones o Zancadas 3 series al fallo técnico.\n5. **Core**: Plancha abdominal 3 x 45 segundos.\n\n*Recuerda: la ejecución perfecta supera siempre al peso egoísta.*';
     }
 
-    if (promptLower.includes('comida') || promptLower.includes('prote') || promptLower.includes('nutri') || promptLower.includes('receta')) {
-      return `🥗 Basado en tus metas (${today.targetCalories || 2200} kcal/día): Te recomiendo una comida rica en proteína limpia como pechuga de pollo/pavo a la plancha (250g), arroz integral (150g) y vegetales al vapor. Aporta ~45g de proteína y energía limpia.`;
+    // 2. NUTRICIÓN & MACROS
+    if (p.includes('comida') || p.includes('prote') || p.includes('nutri') || p.includes('receta') || p.includes('macro') || p.includes('calor')) {
+      return `🥗 **Estrategia Nutricional Recomendada (Meta: ${today.targetCalories || 2200} kcal)**:\n\n• **Plato Atleta**: 220g de Pechuga de Pollo/Pavo o Salmón a la plancha (45g proteína) + 150g de Arroz Integral o Camote + Ensalada verde con aceite de oliva extra virgen.\n• **Snack Anabólico**: Batido de proteína Whey con avena y plátano o Yoguet Griego 0% con frutos secos.\n\n*Mantén la proteína repartida en 3-4 tomas diarias para maximizar la síntesis proteica.*`;
     }
 
-    if (promptLower.includes('agua') || promptLower.includes('hidrat')) {
+    // 3. SUPLEMENTACIÓN
+    if (p.includes('suplement') || p.includes('creatina') || p.includes('whey') || p.includes('vitamina') || p.includes('cafeina')) {
+      return '💊 **Guía de Suplementación con Evidencia Científica**:\n\n1. **Creatina Monohidrato**: 3-5g diarios (mejora fuerza, potencia y volumen celular no retenido en piel).\n2. **Proteína Whey/Aislada**: Útil para alcanzar fácilmente tus 1.6-2.2g/kg de proteína.\n3. **Cafeína (150-200mg)**: Tomar 45 min antes de entrenar (evitar 6 horas antes de dormir).\n4. **Omega 3 & Vitamina D3**: Apoyan la salud articular, cardiovascular y hormonal.\n\n*Nota: Los suplementos complementan, la comida real y el sueño construyen.*';
+    }
+
+    // 4. HIDRATACIÓN
+    if (p.includes('agua') || p.includes('hidrat') || p.includes('beber')) {
       const remaining = Math.max(0, parseFloat((2.5 - today.waterLitres).toFixed(2)));
       if (remaining === 0) {
-        return `💧 ¡Excelente trabajo! Has alcanzado ${today.waterLitres}L de agua hoy. Tu cuerpo y cerebro están perfectamente hidratados.`;
+        return `💧 **Estado de Hidratación Óptimo**: Has registrado **${today.waterLitres}L** de agua hoy. Tus músculos están 75% compuestos de agua; la hidratación mantiene tu fuerza y transporte de nutrientes al máximo.`;
       }
-      return `💧 Llevas ${today.waterLitres}L de agua hoy. Te faltan aproximadamente ${remaining}L para tu meta recomendada de 2.5L. ¡Bebe un vaso de agua ahora mismo!`;
+      return `💧 **Métrica de Agua**: Llevas **${today.waterLitres}L** hoy. Te faltan **${remaining}L** para tu meta óptima de 2.5L. ¡Aprovecha este momento y bebe un gran vaso de agua fresca ahora mismo!`;
     }
 
-    if (promptLower.includes('reflex') || promptLower.includes('motiv') || promptLower.includes('frase')) {
-      return '🏛️ "El valor no es la ausencia de miedo, sino el juicio de que hay algo más importante que el miedo." — Séneca.\n\nConcentra tu mente en lo que depende de ti hoy: tu entreno, tu nutrición y tu carácter.';
+    // 5. SUEÑO & RECUPERACIÓN
+    if (p.includes('sueño') || p.includes('dormir') || p.includes('cansad') || p.includes('recupera') || p.includes('descans')) {
+      return '😴 **Optimización de Sueño y Cortisol**:\n\n• **Luz Solar Matutina**: Recibe 10 min de luz solar al despertar para alinear tu ritmo circadiano.\n• **Corte de Pantallas**: Apaga pantallas o usa filtro azul 60 min antes de acostarte.\n• **Magnesio Bisglicinato**: 200-400mg antes de dormir favorece la relajación muscular profunda y reduce despertares nocturnos.';
     }
 
-    return `🏛️ Como Coach de Ataraxia, analizo tu estado de hoy: Llevas ${today.waterLitres}L de agua, ${today.totalCalories} kcal registradas y ${today.trainingCompleted ? 'entrenamiento completado' : 'entrenamiento pendiente'}. ¿En qué objetivo específico quieres enfocar tus esfuerzos hoy?`;
+    // 6. ESTOICISMO & MENTALIDAD
+    if (p.includes('reflex') || p.includes('motiv') || p.includes('frase') || p.includes('perez') || p.includes('mente') || p.includes('estoic')) {
+      return '🏛️ *"Ningún hombre tiene el derecho de ser un aficionado en el entrenamiento físico. Es una vergüenza para un hombre envejecer sin ver la belleza y fuerza de la que su cuerpo es capaz."* — Sócrates / Epicteto.\n\nHoy no buscas ganas, buscas disciplina. Cumple tu deber sin negociar con la pereza.';
+    }
+
+    return `🏛️ **Status de tu Coach Ataraxia**:\n\n• **Pasos**: ${(today.steps || 0).toLocaleString()} / ${(today.stepGoal || 10000).toLocaleString()}\n• **Nutrición**: ${today.totalCalories} / ${today.targetCalories || 2200} kcal\n• **Agua**: ${today.waterLitres}L / 2.5L\n• **Entreno**: ${today.trainingCompleted ? 'COMPLETADO 🏆' : 'PENDIENTE ⏳'}\n\n¿En qué área específica (rutina, suplementos, comidas, mentalidad) necesitas mi asesoramiento en este instante?`;
   };
 
   const handleSendQuery = async (textToSend: string) => {
