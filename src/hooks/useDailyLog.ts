@@ -83,7 +83,6 @@ export function useDailyLog() {
 
   const today = new Date().toISOString().split('T')[0];
   const logRef = useRef<DailyLog>(DEFAULT_LOG);
-  logRef.current = log;
 
   // Helper local storage reader
   const loadLocalState = (): DailyLog => {
@@ -138,6 +137,7 @@ export function useDailyLog() {
   // Initial local load on mount
   useEffect(() => {
     const initialLocal = loadLocalState();
+    logRef.current = initialLocal;
     setLog(initialLocal);
     setLoading(false);
   }, [today]);
@@ -183,12 +183,13 @@ export function useDailyLog() {
             ...remoteData,
             userMetrics: { ...(currentLocal.userMetrics || DEFAULT_USER_METRICS), ...(remoteData.userMetrics || {}) },
             macros: { ...(currentLocal.macros || { protein: 0, carbs: 0, fats: 0 }), ...(remoteData.macros || {}) },
+            smartDevice: { ...(currentLocal.smartDevice || DEFAULT_LOG.smartDevice!), ...(remoteData.smartDevice || {}) },
           };
+          logRef.current = mergedLog;
           setLog(mergedLog);
           saveLocalState(mergedLog);
         } else {
           // Document does NOT exist in Firestore yet: upload our current local state!
-          // NEVER wipe local state with DEFAULT_LOG!
           setDoc(docRef, currentLocal, { merge: true }).catch(console.error);
           saveLocalState(currentLocal);
         }
@@ -213,15 +214,21 @@ export function useDailyLog() {
       macros: updates.macros
         ? { ...(current.macros || { protein: 0, carbs: 0, fats: 0 }), ...updates.macros }
         : current.macros,
+      smartDevice: updates.smartDevice
+        ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...updates.smartDevice }
+        : current.smartDevice,
     };
 
-    // 1. Update React state immediately
+    // 1. Immediately update ref synchronously to ensure consecutive calls in the same event tick stack correctly!
+    logRef.current = newLog;
+
+    // 2. Functional React state update
     setLog(newLog);
 
-    // 2. Persist locally immediately
+    // 3. Persist locally immediately
     saveLocalState(newLog);
 
-    // 3. Persist to Firestore in background if online
+    // 4. Persist to Firestore in background if online
     if (user && db && !isLocalMode) {
       const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
       try {
@@ -232,21 +239,45 @@ export function useDailyLog() {
     }
   };
 
+  const saveFullProfile = (data: {
+    userName: string;
+    age: number;
+    weightKg: number;
+    heightCm: number;
+    targetCalories: number;
+    stepGoal: number;
+    stoicAvatarUri?: string;
+  }) => {
+    const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
+    updateLog({
+      userName: data.userName.trim() || 'Ciudadano Prokopton',
+      userMetrics: {
+        ...currentMetrics,
+        age: data.age,
+        weightKg: data.weightKg,
+        heightCm: data.heightCm,
+      },
+      targetCalories: data.targetCalories,
+      stepGoal: data.stepGoal,
+      ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
+    });
+  };
+
   const addWater = (amount: number = 0.25) => {
-    const newLitres = Math.max(0, parseFloat((log.waterLitres + amount).toFixed(2)));
+    const newLitres = Math.max(0, parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2)));
     updateLog({ waterLitres: newLitres });
   };
 
   const toggleTraining = () => {
-    updateLog({ trainingCompleted: !log.trainingCompleted });
+    updateLog({ trainingCompleted: !logRef.current.trainingCompleted });
   };
 
   const addMeal = () => {
-    updateLog({ mealsLogged: (log.mealsLogged || 0) + 1 });
+    updateLog({ mealsLogged: (logRef.current.mealsLogged || 0) + 1 });
   };
 
   const addCalories = (amount: number) => {
-    updateLog({ totalCalories: Math.max(0, (log.totalCalories || 0) + amount) });
+    updateLog({ totalCalories: Math.max(0, (logRef.current.totalCalories || 0) + amount) });
   };
 
   const saveCheckIn = (energy: number, sleep: number) => {
@@ -254,7 +285,7 @@ export function useDailyLog() {
   };
 
   const addMacros = (p: number, c: number, f: number) => {
-    const currentMacros = log.macros || { protein: 0, carbs: 0, fats: 0 };
+    const currentMacros = logRef.current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
       macros: {
         protein: Math.max(0, currentMacros.protein + p),
@@ -265,7 +296,7 @@ export function useDailyLog() {
   };
 
   const addSteps = (amount: number) => {
-    updateLog({ steps: Math.max(0, (log.steps || 0) + amount) });
+    updateLog({ steps: Math.max(0, (logRef.current.steps || 0) + amount) });
   };
 
   const setSteps = (amount: number) => {
@@ -277,7 +308,7 @@ export function useDailyLog() {
   };
 
   const updateUserMetrics = (metrics: Partial<UserMetrics>, targetCals?: number) => {
-    const currentMetrics = log.userMetrics || DEFAULT_USER_METRICS;
+    const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const newMetrics: UserMetrics = { ...currentMetrics, ...metrics };
     const updates: Partial<DailyLog> = { userMetrics: newMetrics };
     if (targetCals) {
@@ -295,7 +326,7 @@ export function useDailyLog() {
   };
 
   const updateSmartDevice = (deviceUpdates: Partial<SmartDeviceState>) => {
-    const currentDevice = log.smartDevice || DEFAULT_LOG.smartDevice!;
+    const currentDevice = logRef.current.smartDevice || DEFAULT_LOG.smartDevice!;
     updateLog({
       smartDevice: {
         ...currentDevice,
@@ -308,6 +339,7 @@ export function useDailyLog() {
     log,
     loading,
     user,
+    saveFullProfile,
     addWater,
     toggleTraining,
     addMeal,

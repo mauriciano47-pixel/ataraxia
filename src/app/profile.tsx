@@ -20,9 +20,8 @@ const STOIC_PRESET_AVATARS = [
 export default function ProfileScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { log, updateUserMetrics, setStoicAvatar, setUserName, setStepGoal } = useDailyLog();
-  
+  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];  const { log, updateUserMetrics, setStoicAvatar, setUserName, setStepGoal, saveFullProfile } = useDailyLog();
+
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -84,9 +83,15 @@ export default function ProfileScreen() {
     const targetCals = parseInt(targetCalInput, 10) || 2200;
     const targetSteps = parseInt(targetStepInput, 10) || 10000;
 
-    setUserName(nameInput.trim() || 'Ciudadano Prokopton');
-    updateUserMetrics({ age, weightKg: weight, heightCm: height }, targetCals);
-    setStepGoal(targetSteps);
+    saveFullProfile({
+      userName: nameInput.trim() || 'Ciudadano Prokopton',
+      age,
+      weightKg: weight,
+      heightCm: height,
+      targetCalories: targetCals,
+      stepGoal: targetSteps,
+    });
+
     setShowEditModal(false);
     Alert.alert("Datos Guardados", "Tu biometría y metas estoicas han sido actualizadas.");
   };
