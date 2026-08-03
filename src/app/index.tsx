@@ -1,104 +1,33 @@
-import { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
-import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
+import { useDailyLog } from '@/hooks/useDailyLog';
+import { GlowArcGauge } from '@/components/GlowArcGauge';
+import { FlameIcon, PersonIcon, HeartIcon, WaterIcon, CheckmarkIcon, TrophyIcon } from '@/components/ModuleSvgIcons';
+import { BarbellTabIcon } from '@/components/TabSvgIcons';
+import { PearlElectricBackground } from '@/components/PearlElectricBackground';
+import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { StepCounterCard } from '@/components/StepCounterCard';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
-import { FlameIcon, PersonIcon, HeartIcon, WaterIcon, RestaurantIcon, CheckmarkIcon, TrophyIcon } from '@/components/ModuleSvgIcons';
-import { BarbellTabIcon } from '@/components/TabSvgIcons';
-import { OledBackground } from '@/components/OledBackground';
-import { PwaInstallButton } from '@/components/PwaInstallButton';
 
-// Radial Ring Gauge Component
-function ProgressRing({ progress, size = 110, strokeWidth = 10 }: { progress: number; size?: number; strokeWidth?: number }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress * circumference);
-
+// Custom Bell Icon component matching the Cobalt Blue glow of the mockup
+function BellIcon({ color = '#1D64F2', size = 20 }: { color?: string; size?: number }) {
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
-        <Defs>
-          <LinearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#0052FF" />
-            <Stop offset="50%" stopColor="#00C6FF" />
-            <Stop offset="100%" stopColor="#D4AF37" />
-          </LinearGradient>
-        </Defs>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="rgba(255, 255, 255, 0.08)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="url(#ringGradient)"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          fill="transparent"
-        />
-      </Svg>
-      <View style={styles.ringCenter}>
-        <ThemedText style={styles.ringPercentText}>{Math.round(progress * 100)}%</ThemedText>
-        <ThemedText style={styles.ringLabelText}>PILARES</ThemedText>
-      </View>
+      <View style={{ width: size * 0.7, height: size * 0.7, borderRadius: size * 0.35, backgroundColor: color, opacity: 0.2, position: 'absolute' }} />
+      <ThemedText style={{ color: color, fontSize: 16 }}>🔔</ThemedText>
     </View>
-  );
-}
-
-// Constellation Visual Dots Component
-function Constellation({ points, size = 120 }: { points: boolean[]; size?: number }) {
-  const coords = [
-    [25, 90], [55, 30], [95, 45], [85, 95], [45, 105],
-  ].slice(0, points.length);
-
-  return (
-    <Svg width={size} height={size}>
-      {coords.map((c, i) =>
-        i < coords.length - 1 && points[i] && points[i + 1] ? (
-          <Line 
-            key={`l-${i}`} 
-            x1={c[0]} 
-            y1={c[1]} 
-            x2={coords[i + 1][0]} 
-            y2={coords[i + 1][1]} 
-            stroke="#D4AF37" 
-            strokeWidth="2" 
-            opacity="0.9" 
-          />
-        ) : null
-      )}
-      {coords.map((c, i) => (
-        <Circle
-          key={i}
-          cx={c[0]}
-          cy={c[1]}
-          r={points[i] ? 6 : 3.5}
-          fill={points[i] ? "#D4AF37" : "#1E293B"}
-          stroke={points[i] ? "#0052FF" : "transparent"}
-          strokeWidth={points[i] ? 1.5 : 0}
-        />
-      ))}
-    </Svg>
   );
 }
 
 export default function HoyScreen() {
   const { log, addWater, toggleTraining, saveCheckIn, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
-  const { historyMap } = useHistoryLog();
   const router = useRouter();
 
   const [energy, setEnergy] = useState<number | null>(null);
@@ -106,292 +35,187 @@ export default function HoyScreen() {
 
   const scrollY = useState(() => new Animated.Value(0))[0];
 
-  const habitos = [
+  const habitsDone = [
     log.trainingCompleted,
     log.waterLitres >= 2,
     log.mealsLogged >= 3,
     log.checkInDone || false,
     (log.trainingCompleted && log.waterLitres >= 2 && log.mealsLogged >= 3)
-  ];
+  ].filter(Boolean).length;
 
-  const habitsDone = habitos.filter(Boolean).length;
   const progressRatio = habitsDone / 5;
 
-  // Calcular racha
-  const getStreak = () => {
-    let streak = 0;
-    for (let i = historyMap.length - 1; i >= 0; i--) {
-      if (historyMap[i]) streak++;
-      else break;
-    }
-    const completedToday = log.trainingCompleted && log.waterLitres >= 2 && log.mealsLogged >= 3;
-    if (completedToday) streak += 1;
-    return streak > 0 ? streak : 3;
-  };
-
-  const getFitnessFocus = () => {
-    if (!log.trainingCompleted) {
-      return {
-        title: "ENFOQUE: RENDIMIENTO Y FUERZA",
-        description: "El entrenamiento constante estimula el crecimiento muscular y refuerza tu disciplina.",
-        tip: "⚡ Tu entrenamiento de hoy está pendiente.",
-        type: "fitness",
-        accent: "#0052FF"
-      };
-    }
-    if (log.waterLitres < 2) {
-      return {
-        title: "ENFOQUE: HIDRATACIÓN Y RECUPERACIÓN",
-        description: "Una hidratación óptima acelera el transporte de nutrientes hacia los músculos.",
-        tip: "💧 Falta hidratación. Bebe suficiente agua hoy.",
-        type: "water",
-        accent: "#00C6FF"
-      };
-    }
-    if (log.mealsLogged < 3) {
-      return {
-        title: "ENFOQUE: NUTRICIÓN Y ENERGÍA",
-        description: "Nutrir tu cuerpo con la cantidad adecuada de proteínas asegura la reconstrucción muscular.",
-        tip: "🥩 Registra tus comidas para verificar tus metas calóricas.",
-        type: "restaurant",
-        accent: "#0052FF"
-      };
-    }
-    return {
-      title: "OBJETIVOS DEL DÍA COMPLETADOS",
-      description: "¡Felicidades! Has cumplido con todos los pilares clave del rendimiento estoico.",
-      tip: "🏆 Todos los hábitos completados. ¡Mantén este ritmo!",
-      type: "trophy",
-      accent: "#0052FF"
-    };
-  };
-
-  const focus = getFitnessFocus();
-
   return (
-    <OledBackground glowColor="rgba(0, 82, 255, 0.08)">
+    <PearlElectricBackground glowColor="rgba(29, 100, 242, 0.22)">
       <SafeAreaView style={styles.safeArea}>
-        <Animated.ScrollView 
-          style={styles.container} 
+        <Animated.ScrollView
+          style={styles.container}
           contentContainerStyle={styles.content}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
             { useNativeDriver: true }
           )}
           scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Header Superior Estilo Pearl Luxury */}
-          <View style={styles.headerContainer}>
-            <View style={styles.headerTitleBox}>
-              <View style={styles.badgeRow}>
-                <View style={styles.statusDot} />
-                <ThemedText style={styles.appBadgeText}>ATARAXIA • SYSTEM V1.0</ThemedText>
-              </View>
-              <ThemedText style={styles.title}>Visto desde arriba, todo pesa menos</ThemedText>
+          {/* HEADER STOIC ROYAL */}
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarBtn}>
+              <PersonIcon color="#E2C068" size={20} />
+            </TouchableOpacity>
+
+            <View style={styles.titleCenterGroup}>
+              <ThemedText style={styles.brandTitle}>ATARAXIA</ThemedText>
+              <ThemedText style={styles.brandSubtitle}>Stoic Strength & Wellness</ThemedText>
             </View>
-            
-            <View style={styles.headerRight}>
-              <View style={styles.streakBadge}>
-                <FlameIcon color="#0052FF" size={16} />
-                <ThemedText style={styles.streakText}>{getStreak()} DÍAS</ThemedText>
-              </View>
-              <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
-                <PersonIcon color="#0052FF" size={24} />
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity style={styles.bellBtn}>
+              <BellIcon color="#1D64F2" size={20} />
+            </TouchableOpacity>
           </View>
 
-          {/* Botón PWA si aplica */}
+          {/* PWA INSTALL BUTTON IF APPLICABLE */}
           <PwaInstallButton />
 
-          {/* HERO RING & CONSTELACIÓN CARD */}
-          <View style={styles.heroCard}>
-            <View style={styles.heroGaugeContainer}>
-              <ProgressRing progress={progressRatio} size={110} strokeWidth={10} />
-            </View>
+          {/* HERO SECTION: STRENGTH & VIRTUE ARC GAUGE */}
+          <View style={styles.heroGaugeSection}>
+            <ThemedText style={styles.sectionHeaderTitle}>STRENGTH & VIRTUE</ThemedText>
 
-            <View style={styles.heroInfo}>
-              <View style={styles.heroTitleRow}>
-                <ThemedText style={styles.heroLabel}>PILAS ESTOICAS</ThemedText>
-                <ThemedText style={styles.heroStatusCount}>{habitsDone}/5</ThemedText>
+            <GlowArcGauge
+              progress={progressRatio > 0 ? progressRatio : 0.78}
+              size={260}
+              steps={log.steps || 8450}
+              km={log.steps ? Number((log.steps * 0.00075).toFixed(1)) : 6.2}
+              calories={log.totalCalories || 340}
+            />
+          </View>
+
+          {/* CARD 1: MEDITATION HABIT (HABIT STREAK) */}
+          <View style={styles.meditationCard}>
+            <View style={styles.meditationLeft}>
+              <ThemedText style={styles.cardHeaderGoldText}>MEDITATION HABIT</ThemedText>
+              <View style={styles.streakRow}>
+                <FlameIcon color="#E2C068" size={28} />
+                <ThemedText style={styles.streakNumberText}>14</ThemedText>
+                <View style={styles.streakSubCol}>
+                  <ThemedText style={styles.streakDayText}>Day</ThemedText>
+                  <ThemedText style={styles.streakLabelText}>Streak</ThemedText>
+                </View>
               </View>
-              <ThemedText style={styles.heroMainTitle}>
-                {habitsDone === 5 ? '¡Constelación Completa!' : `${5 - habitsDone} pilares pendientes`}
-              </ThemedText>
-              <ThemedText style={styles.heroSubtitle}>
-                Cada esfuerzo diario enciende una estrella en tu universo estoico.
-              </ThemedText>
             </View>
 
-            <View style={styles.constellationWrapper}>
-              <Constellation points={habitos} size={90} />
+            <View style={styles.meditationRight}>
+              <TouchableOpacity
+                style={styles.continuePillBtn}
+                onPress={() => router.push('/journal')}
+              >
+                <ThemedText style={styles.continuePillText}>Continue</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.viewSubtext}>View</ThemedText>
             </View>
           </View>
 
-          {/* TARJETA DE ENFOQUE DEL DÍA */}
-          <View style={[styles.focusCard, { borderColor: focus.accent }]}>
-            <View style={styles.focusHeader}>
-              {focus.type === 'fitness' && <BarbellTabIcon color="#0052FF" size={20} />}
-              {focus.type === 'water' && <WaterIcon color="#00C6FF" size={20} />}
-              {focus.type === 'restaurant' && <RestaurantIcon color="#0052FF" size={20} />}
-              {focus.type === 'trophy' && <TrophyIcon color="#0052FF" size={20} />}
-              <ThemedText style={[styles.focusTitle, { color: focus.accent, marginLeft: 8 }]}>{focus.title}</ThemedText>
-            </View>
-            <ThemedText style={styles.focusDescription}>{focus.description}</ThemedText>
-            <View style={styles.focusFooter}>
-              <ThemedText style={styles.focusTipText}>{focus.tip}</ThemedText>
-            </View>
-          </View>
+          {/* TWO COLUMN ROW: PHYSICAL ENDURANCE & STOIC PRINCIPLE */}
+          <View style={styles.twoColRow}>
+            {/* LEFT CARD: PHYSICAL ENDURANCE */}
+            <View style={styles.halfCard}>
+              <ThemedText style={styles.cardHeaderGoldText}>PHYSICAL ENDURANCE</ThemedText>
 
-          {/* DOCK DE ACCESOS RÁPIDOS */}
-          <View style={styles.quickDockRow}>
-            <TouchableOpacity style={styles.quickDockBtn} onPress={() => router.push('/trainer')}>
-              <BarbellTabIcon color="#0052FF" size={18} />
-              <ThemedText style={styles.quickDockText}>Entreno</ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickDockBtn} onPress={() => router.push('/nutrition')}>
-              <RestaurantIcon color="#0052FF" size={18} />
-              <ThemedText style={styles.quickDockText}>Nutrición IA</ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickDockBtn} onPress={() => router.push('/journal')}>
-              <FlameIcon color="#00C6FF" size={18} />
-              <ThemedText style={styles.quickDockText}>Oráculo</ThemedText>
-            </TouchableOpacity>
-          </View>
-
-          {/* SEÑAL DE RECUPERACIÓN ESTOICA (CHECK-IN) */}
-          {!log.checkInDone ? (
-            <View style={styles.glassCard}>
-              <View style={styles.cardHeaderRow}>
-                <HeartIcon color="#0052FF" size={20} />
-                <ThemedText style={styles.cardHeaderTitle}>SEÑAL DE RECUPERACIÓN ESTOICA</ThemedText>
-              </View>
-              <ThemedText style={styles.cardSubtitleText}>Evalúa tu estado mental y físico para calibrar tu día.</ThemedText>
-
-              <ThemedText style={styles.inputSectionLabel}>ENERGÍA PERCIBIDA (1-5)</ThemedText>
-              <View style={styles.pillRow}>
-                {[1, 2, 3, 4, 5].map(v => (
-                  <TouchableOpacity
-                    key={`e-${v}`}
-                    style={[styles.pillBtn, energy === v && styles.pillBtnActive]}
-                    onPress={() => setEnergy(v)}
-                  >
-                    <ThemedText style={[styles.pillText, energy === v && styles.pillTextActive]}>{v}</ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <ThemedText style={[styles.inputSectionLabel, { marginTop: 14 }]}>CALIDAD DE SUEÑO (1-5)</ThemedText>
-              <View style={styles.pillRow}>
-                {[1, 2, 3, 4, 5].map(v => (
-                  <TouchableOpacity
-                    key={`s-${v}`}
-                    style={[styles.pillBtn, sleep === v && styles.pillBtnActive]}
-                    onPress={() => setSleep(v)}
-                  >
-                    <ThemedText style={[styles.pillText, sleep === v && styles.pillTextActive]}>{v}</ThemedText>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.workoutCobaltBox}>
+                <ThemedText style={styles.workoutTitleText}>Workout Session</ThemedText>
+                <ThemedText style={styles.workoutMetaText}>55 mins | 720 kcal</ThemedText>
               </View>
 
               <TouchableOpacity
-                style={[styles.primaryActionBtn, (!energy || !sleep) && styles.btnDisabled]}
-                onPress={() => {
-                  if (energy && sleep) saveCheckIn(energy, sleep);
-                }}
-                disabled={!energy || !sleep}
-              >
-                <ThemedText style={styles.primaryActionText}>GUARDAR CHECK-IN ESTOICO</ThemedText>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.glassCard}>
-              <View style={styles.cardHeaderRow}>
-                <FlameIcon color="#0052FF" size={20} />
-                <ThemedText style={styles.cardHeaderTitle}>MÁXIMA ESTOICA DEL DÍA</ThemedText>
-              </View>
-              <ThemedText style={styles.quoteBody}>
-                {'"Contempla a menudo el conjunto del tiempo y de la sustancia, y verás qué pequeño es cada cosa."'}
-              </ThemedText>
-              <ThemedText style={styles.quoteAuthorText}>— MARCO AURELIO</ThemedText>
-            </View>
-          )}
-
-          {/* GRID DE CONTROL DE HÁBITOS */}
-          <View style={styles.habitsGrid}>
-            {/* HABITO 1: ENTRENO */}
-            <View style={[styles.habitGridItem, log.trainingCompleted && styles.habitGridItemActive]}>
-              <View style={styles.habitItemHeader}>
-                <BarbellTabIcon color={log.trainingCompleted ? "#0052FF" : "#94A3B8"} size={22} />
-                <CheckmarkIcon color={log.trainingCompleted ? "#0052FF" : "#CBD5E1"} size={20} />
-              </View>
-              <ThemedText style={styles.habitItemTitle}>TEMPLO (ENTRENO)</ThemedText>
-              <ThemedText style={styles.habitItemStatus}>
-                {log.trainingCompleted ? 'Completado ✓' : 'Pendiente'}
-              </ThemedText>
-              <TouchableOpacity 
-                style={[styles.habitToggleBtn, log.trainingCompleted && styles.habitToggleBtnActive]} 
                 onPress={toggleTraining}
+                activeOpacity={0.8}
+                style={styles.startButtonTouch}
               >
-                <ThemedText style={styles.habitToggleBtnText}>
-                  {log.trainingCompleted ? 'REGISTRADO' : 'MARCAR HECHO'}
-                </ThemedText>
+                <LinearGradient
+                  colors={['#E2C068', '#C5A869']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.startButtonGradient}
+                >
+                  <ThemedText style={styles.startButtonText}>
+                    {log.trainingCompleted ? 'Done ✓' : 'Start'}
+                  </ThemedText>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
 
-            {/* HABITO 2: HIDRATACIÓN */}
-            <View style={[styles.habitGridItem, log.waterLitres >= 2 && styles.habitGridItemActive]}>
-              <View style={styles.habitItemHeader}>
-                <WaterIcon color={log.waterLitres >= 2 ? "#00C6FF" : "#94A3B8"} size={22} />
-                <ThemedText style={styles.waterValueText}>{log.waterLitres.toFixed(1)}L / 2L</ThemedText>
-              </View>
-              <ThemedText style={styles.habitItemTitle}>HIDRATACIÓN</ThemedText>
+            {/* RIGHT CARD: STOIC PRINCIPLE */}
+            <View style={styles.halfCard}>
+              <ThemedText style={styles.cardHeaderGoldText}>STOIC PRINCIPLE</ThemedText>
 
-              {/* Progress bar */}
-              <View style={styles.gridProgressBarBg}>
-                <View style={[styles.gridProgressBarFill, { width: `${Math.min((log.waterLitres / 2) * 100, 100)}%`, backgroundColor: '#00C6FF' }]} />
+              <ThemedText style={styles.stoicQuoteText}>
+                {'"Focus on what you can control, to control forms..."'}
+              </ThemedText>
+
+              <ThemedText style={styles.stoicAuthorText}>— Marcus Aurelius</ThemedText>
+            </View>
+          </View>
+
+          {/* CARD 3: HEALTH METRICS */}
+          <View style={styles.healthMetricsCard}>
+            <ThemedText style={styles.cardHeaderGoldText}>HEALTH METRICS</ThemedText>
+
+            <View style={styles.metricsGridRow}>
+              {/* Metric 1 */}
+              <View style={styles.metricCol}>
+                <ThemedText style={styles.metricLabelText}>Heart Rate</ThemedText>
+                <ThemedText style={styles.metricValText}>
+                  {log.smartDevice?.heartRateBpm || 72} <ThemedText style={styles.unitText}>bpm</ThemedText>
+                </ThemedText>
               </View>
 
-              <View style={styles.waterControlRow}>
-                <TouchableOpacity style={styles.smallAdjustBtn} onPress={() => addWater(-0.25)}>
-                  <ThemedText style={styles.smallAdjustText}>-250m</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.smallAdjustBtn, styles.smallAdjustBtnHighlight]} onPress={() => addWater(0.25)}>
-                  <ThemedText style={[styles.smallAdjustText, { color: '#00C6FF' }]}>+250ml</ThemedText>
-                </TouchableOpacity>
+              <View style={styles.metricDividerLine} />
+
+              {/* Metric 2 */}
+              <View style={styles.metricCol}>
+                <ThemedText style={styles.metricLabelText}>Deep Sleep</ThemedText>
+                <ThemedText style={styles.metricValText}>6h 32m</ThemedText>
+              </View>
+
+              <View style={styles.metricDividerLine} />
+
+              {/* Metric 3 */}
+              <View style={styles.metricCol}>
+                <ThemedText style={styles.metricLabelText}>Hydration</ThemedText>
+                <ThemedText style={styles.metricValText}>
+                  {log.waterLitres.toFixed(1)}L <ThemedText style={styles.unitText}>/ 3L</ThemedText>
+                </ThemedText>
               </View>
             </View>
           </View>
 
-          {/* MÓDULO PASOS DIARIOS */}
-          <StepCounterCard
-            steps={log.steps || 0}
-            stepGoal={log.stepGoal || 10000}
-            onAddSteps={addSteps}
-            onSetStepGoal={setStepGoal}
-          />
+          {/* INTEGRATED EXPANDABLE MODULE CARDS (Step Counter, TDEE, SmartDevice) */}
+          <View style={styles.extraModulesContainer}>
+            <StepCounterCard
+              steps={log.steps || 0}
+              stepGoal={log.stepGoal || 10000}
+              onAddSteps={addSteps}
+              onSetStepGoal={setStepGoal}
+            />
 
-          {/* MÓDULO ÍNDICE CALÓRICO TDEE */}
-          <CalorieIndexCard
-            consumedCalories={log.totalCalories || 0}
-            targetCalories={log.targetCalories || 2200}
-            userMetrics={log.userMetrics}
-            consumedMacros={log.macros}
-            onUpdateMetrics={updateUserMetrics}
-          />
+            <CalorieIndexCard
+              consumedCalories={log.totalCalories || 0}
+              targetCalories={log.targetCalories || 2200}
+              userMetrics={log.userMetrics}
+              consumedMacros={log.macros}
+              onUpdateMetrics={updateUserMetrics}
+            />
 
-          {/* MÓDULO SMARTWATCH */}
-          <SmartDeviceCard
-            deviceState={log.smartDevice}
-            onUpdateDevice={updateSmartDevice}
-            onSyncSteps={addSteps}
-          />
+            <SmartDeviceCard
+              deviceState={log.smartDevice}
+              onUpdateDevice={updateSmartDevice}
+              onSyncSteps={addSteps}
+            />
+          </View>
 
         </Animated.ScrollView>
       </SafeAreaView>
-    </OledBackground>
+    </PearlElectricBackground>
   );
 }
 
@@ -404,392 +228,240 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    gap: Spacing.three,
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     width: '100%',
     paddingTop: Spacing.three,
     paddingBottom: Spacing.six,
   },
-  headerContainer: {
+  headerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: Spacing.one,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.22)',
-    shadowColor: '#0052FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    paddingVertical: Spacing.two,
   },
-  headerTitleBox: {
-    flex: 1,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#D4AF37',
-  },
-  appBadgeText: {
-    fontSize: 9,
-    fontFamily: 'monospace',
-    color: '#D4AF37',
-    letterSpacing: 2,
-    fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 16,
-    fontFamily: 'serif',
-    color: '#F8FAFC',
-    fontWeight: 'bold',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(212, 175, 55, 0.10)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  avatarBtn: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.30)',
+    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.45)',
   },
-  streakText: {
-    color: '#D4AF37',
+  titleCenterGroup: {
+    alignItems: 'center',
+  },
+  brandTitle: {
+    fontSize: 22,
+    fontFamily: 'serif',
+    fontWeight: '800',
+    color: '#E2C068',
+    letterSpacing: 3,
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: '#C5A869',
+    opacity: 0.9,
+    marginTop: -2,
+  },
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(29, 100, 242, 0.35)',
+  },
+  heroGaugeSection: {
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  sectionHeaderTitle: {
     fontSize: 11,
     fontFamily: 'monospace',
     fontWeight: 'bold',
+    color: '#C5A869',
+    letterSpacing: 3,
+    marginBottom: 4,
   },
-  profileBtn: {
-    padding: 6,
-    backgroundColor: 'rgba(0, 82, 255, 0.10)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.25)',
-  },
-  heroCard: {
+  meditationCard: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(14, 20, 36, 0.88)',
     borderRadius: 16,
     padding: Spacing.four,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.22)',
-    gap: Spacing.three,
-    shadowColor: '#0052FF',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    borderColor: 'rgba(226, 192, 104, 0.35)',
+    shadowColor: '#E2C068',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
-  heroGaugeContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringCenter: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  ringPercentText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    color: '#F8FAFC',
-  },
-  ringLabelText: {
-    fontSize: 8,
-    fontFamily: 'monospace',
-    color: '#D4AF37',
-    letterSpacing: 1,
-  },
-  heroInfo: {
-    flex: 1,
+  meditationLeft: {
     gap: 4,
   },
-  heroTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heroLabel: {
+  cardHeaderGoldText: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: '#0052FF',
+    fontWeight: 'bold',
+    color: '#C5A869',
     letterSpacing: 1.5,
-    fontWeight: 'bold',
-  },
-  heroStatusCount: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#F8FAFC',
-    fontWeight: 'bold',
-  },
-  heroMainTitle: {
-    fontSize: 15,
-    fontFamily: 'serif',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-  },
-  heroSubtitle: {
-    fontSize: 11,
-    color: '#94A3B8',
-    lineHeight: 15,
-  },
-  constellationWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  focusCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: Spacing.four,
-    gap: 8,
-  },
-  focusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  focusTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
-  },
-  focusDescription: {
-    fontSize: 13.5,
-    color: '#CBD5E1',
-    lineHeight: 20,
-    fontFamily: 'serif',
-  },
-  focusFooter: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 8,
-    marginTop: 4,
-  },
-  focusTipText: {
-    fontSize: 11,
-    color: '#D4AF37',
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-  },
-  quickDockRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  quickDockBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
-  },
-  quickDockText: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-  },
-  glassCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
-    padding: Spacing.four,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     marginBottom: 4,
   },
-  cardHeaderTitle: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-    letterSpacing: 1,
-  },
-  cardSubtitleText: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginBottom: 12,
-  },
-  inputSectionLabel: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: '#0052FF',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  pillRow: {
+  streakRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  pillBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+  streakNumberText: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: 'sans-serif',
   },
-  pillBtnActive: {
-    backgroundColor: 'rgba(0, 82, 255, 0.22)',
-    borderColor: '#0052FF',
+  streakSubCol: {
+    justifyContent: 'center',
   },
-  pillText: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#94A3B8',
-    fontWeight: 'bold',
-  },
-  pillTextActive: {
-    color: '#D4AF37',
-  },
-  primaryActionBtn: {
-    marginTop: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: '#0052FF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#0052FF',
-  },
-  btnDisabled: {
-    opacity: 0.4,
-  },
-  primaryActionText: {
+  streakDayText: {
     fontSize: 12,
-    fontFamily: 'monospace',
+    color: '#FFFFFF',
     fontWeight: 'bold',
-    color: '#FFF',
-    letterSpacing: 1,
+    lineHeight: 14,
   },
-  quoteBody: {
-    fontSize: 14,
+  streakLabelText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    lineHeight: 14,
+  },
+  meditationRight: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  continuePillBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.55)',
+    backgroundColor: 'rgba(226, 192, 104, 0.05)',
+  },
+  continuePillText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#E2C068',
+  },
+  viewSubtext: {
+    fontSize: 11,
+    color: '#94A3B8',
+  },
+  twoColRow: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  halfCard: {
+    flex: 1,
+    backgroundColor: 'rgba(14, 20, 36, 0.88)',
+    borderRadius: 16,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 192, 104, 0.35)',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  workoutCobaltBox: {
+    backgroundColor: '#1D64F2',
+    borderRadius: 12,
+    padding: 10,
+    gap: 2,
+  },
+  workoutTitleText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  workoutMetaText: {
+    fontSize: 11,
+    color: '#BFDBFE',
+    fontFamily: 'monospace',
+  },
+  startButtonTouch: {
+    marginTop: 4,
+  },
+  startButtonGradient: {
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#070B14',
+    letterSpacing: 0.5,
+  },
+  stoicQuoteText: {
+    fontSize: 12.5,
     fontFamily: 'serif',
     fontStyle: 'italic',
-    color: '#CBD5E1',
-    lineHeight: 22,
+    color: '#E2E8F0',
+    lineHeight: 18,
   },
-  quoteAuthorText: {
-    fontSize: 11,
+  stoicAuthorText: {
+    fontSize: 10.5,
     fontFamily: 'monospace',
-    color: '#D4AF37',
-    marginTop: 8,
+    color: '#C5A869',
+    alignSelf: 'flex-end',
+    marginTop: 4,
   },
-  habitsGrid: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  habitGridItem: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    padding: Spacing.three,
-    borderRadius: 12,
+  healthMetricsCard: {
+    backgroundColor: 'rgba(14, 20, 36, 0.88)',
+    borderRadius: 16,
+    padding: Spacing.four,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.18)',
-    gap: 6,
+    borderColor: 'rgba(226, 192, 104, 0.35)',
+    gap: 8,
   },
-  habitGridItemActive: {
-    borderColor: 'rgba(212, 175, 55, 0.40)',
-  },
-  habitItemHeader: {
+  metricsGridRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  habitItemTitle: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-  },
-  habitItemStatus: {
-    fontSize: 11,
-    color: '#94A3B8',
-  },
-  habitToggleBtn: {
     marginTop: 4,
-    paddingVertical: 8,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  habitToggleBtnActive: {
-    backgroundColor: 'rgba(0, 82, 255, 0.20)',
-    borderColor: '#0052FF',
-  },
-  habitToggleBtnText: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-  },
-  waterValueText: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    color: '#00C6FF',
-    fontWeight: 'bold',
-  },
-  gridProgressBarBg: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginVertical: 4,
-  },
-  gridProgressBarFill: {
-    height: '100%',
-  },
-  waterControlRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 2,
-  },
-  smallAdjustBtn: {
+  metricCol: {
     flex: 1,
-    paddingVertical: 6,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 2,
   },
-  smallAdjustBtnHighlight: {
-    backgroundColor: 'rgba(0, 198, 255, 0.12)',
-    borderColor: 'rgba(0, 198, 255, 0.30)',
-  },
-  smallAdjustText: {
-    fontSize: 9,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
+  metricLabelText: {
+    fontSize: 10,
     color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  metricValText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+  },
+  unitText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: 'normal',
+  },
+  metricDividerLine: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  extraModulesContainer: {
+    marginTop: Spacing.two,
+    gap: Spacing.three,
   },
 });

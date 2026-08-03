@@ -4,6 +4,7 @@ export interface FitnessCalculation {
   bmr: number;
   tdee: number;
   targetCalories: number;
+  stoicScore?: number;
   macros: {
     protein: number; // grams
     carbs: number;   // grams
@@ -66,6 +67,7 @@ export function calculateFitnessIndex(metrics: UserMetrics): FitnessCalculation 
     bmr,
     tdee,
     targetCalories,
+    stoicScore: 88,
     macros: {
       protein: proteinGrams,
       carbs: carbsGrams,
