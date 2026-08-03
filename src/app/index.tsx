@@ -27,14 +27,15 @@ function ProgressRing({ progress, size = 110, strokeWidth = 10 }: { progress: nu
         <Defs>
           <LinearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <Stop offset="0%" stopColor="#0052FF" />
-            <Stop offset="100%" stopColor="#00C6FF" />
+            <Stop offset="50%" stopColor="#00C6FF" />
+            <Stop offset="100%" stopColor="#D4AF37" />
           </LinearGradient>
         </Defs>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(0, 82, 255, 0.10)"
+          stroke="rgba(255, 255, 255, 0.08)"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -74,7 +75,7 @@ function Constellation({ points, size = 120 }: { points: boolean[]; size?: numbe
             y1={c[1]} 
             x2={coords[i + 1][0]} 
             y2={coords[i + 1][1]} 
-            stroke="#0052FF" 
+            stroke="#D4AF37" 
             strokeWidth="2" 
             opacity="0.9" 
           />
@@ -86,8 +87,8 @@ function Constellation({ points, size = 120 }: { points: boolean[]; size?: numbe
           cx={c[0]}
           cy={c[1]}
           r={points[i] ? 6 : 3.5}
-          fill={points[i] ? "#0052FF" : "#CBD5E1"}
-          stroke={points[i] ? "#00C6FF" : "transparent"}
+          fill={points[i] ? "#D4AF37" : "#1E293B"}
+          stroke={points[i] ? "#0052FF" : "transparent"}
           strokeWidth={points[i] ? 1.5 : 0}
         />
       ))}
@@ -415,16 +416,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: Spacing.one,
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(0, 82, 255, 0.22)',
     shadowColor: '#0052FF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
   headerTitleBox: {
     flex: 1,
@@ -439,19 +440,19 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#0052FF',
+    backgroundColor: '#D4AF37',
   },
   appBadgeText: {
     fontSize: 9,
     fontFamily: 'monospace',
-    color: '#0052FF',
+    color: '#D4AF37',
     letterSpacing: 2,
     fontWeight: 'bold',
   },
   title: {
     fontSize: 16,
     fontFamily: 'serif',
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontWeight: 'bold',
   },
   headerRight: {
@@ -463,39 +464,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0, 82, 255, 0.08)',
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    borderColor: 'rgba(212, 175, 55, 0.30)',
   },
   streakText: {
-    color: '#0052FF',
+    color: '#D4AF37',
     fontSize: 11,
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
   profileBtn: {
     padding: 6,
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    backgroundColor: 'rgba(0, 82, 255, 0.10)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    borderColor: 'rgba(0, 82, 255, 0.25)',
   },
   heroCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     borderRadius: 16,
     padding: Spacing.four,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(0, 82, 255, 0.22)',
     gap: Spacing.three,
     shadowColor: '#0052FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   heroGaugeContainer: {
     alignItems: 'center',
@@ -509,12 +510,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#0F172A',
+    color: '#F8FAFC',
   },
   ringLabelText: {
     fontSize: 8,
     fontFamily: 'monospace',
-    color: '#0052FF',
+    color: '#D4AF37',
     letterSpacing: 1,
   },
   heroInfo: {
@@ -536,18 +537,18 @@ const styles = StyleSheet.create({
   heroStatusCount: {
     fontSize: 12,
     fontFamily: 'monospace',
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontWeight: 'bold',
   },
   heroMainTitle: {
     fontSize: 15,
     fontFamily: 'serif',
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
   },
   heroSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#94A3B8',
     lineHeight: 15,
   },
   constellationWrapper: {
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   focusCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     borderWidth: 1,
     borderRadius: 14,
     padding: Spacing.four,
@@ -573,19 +574,19 @@ const styles = StyleSheet.create({
   },
   focusDescription: {
     fontSize: 13.5,
-    color: '#334155',
+    color: '#CBD5E1',
     lineHeight: 20,
     fontFamily: 'serif',
   },
   focusFooter: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 82, 255, 0.08)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingTop: 8,
     marginTop: 4,
   },
   focusTipText: {
     fontSize: 11,
-    color: '#0052FF',
+    color: '#D4AF37',
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
@@ -599,24 +600,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(0, 82, 255, 0.20)',
   },
   quickDockText: {
     fontSize: 11,
     fontFamily: 'monospace',
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
   },
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     padding: Spacing.four,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(0, 82, 255, 0.20)',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -628,12 +629,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'monospace',
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
     letterSpacing: 1,
   },
   cardSubtitleText: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 12,
   },
   inputSectionLabel: {
@@ -651,23 +652,23 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 82, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.10)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   pillBtnActive: {
-    backgroundColor: 'rgba(0, 82, 255, 0.15)',
+    backgroundColor: 'rgba(0, 82, 255, 0.22)',
     borderColor: '#0052FF',
   },
   pillText: {
     fontSize: 14,
     fontFamily: 'monospace',
-    color: '#64748B',
+    color: '#94A3B8',
     fontWeight: 'bold',
   },
   pillTextActive: {
-    color: '#0052FF',
+    color: '#D4AF37',
   },
   primaryActionBtn: {
     marginTop: 16,
@@ -692,13 +693,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'serif',
     fontStyle: 'italic',
-    color: '#334155',
+    color: '#CBD5E1',
     lineHeight: 22,
   },
   quoteAuthorText: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#0052FF',
+    color: '#D4AF37',
     marginTop: 8,
   },
   habitsGrid: {
@@ -707,15 +708,15 @@ const styles = StyleSheet.create({
   },
   habitGridItem: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     padding: Spacing.three,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.12)',
+    borderColor: 'rgba(0, 82, 255, 0.18)',
     gap: 6,
   },
   habitGridItemActive: {
-    borderColor: 'rgba(0, 82, 255, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.40)',
   },
   habitItemHeader: {
     flexDirection: 'row',
@@ -726,30 +727,30 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'monospace',
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
   },
   habitItemStatus: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#94A3B8',
   },
   habitToggleBtn: {
     marginTop: 4,
     paddingVertical: 8,
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   habitToggleBtnActive: {
-    backgroundColor: 'rgba(0, 82, 255, 0.15)',
+    backgroundColor: 'rgba(0, 82, 255, 0.20)',
     borderColor: '#0052FF',
   },
   habitToggleBtnText: {
     fontSize: 10,
     fontFamily: 'monospace',
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
   },
   waterValueText: {
     fontSize: 11,
@@ -759,7 +760,7 @@ const styles = StyleSheet.create({
   },
   gridProgressBarBg: {
     height: 4,
-    backgroundColor: 'rgba(0, 82, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 2,
     overflow: 'hidden',
     marginVertical: 4,
@@ -776,19 +777,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 6,
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 82, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.10)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   smallAdjustBtnHighlight: {
-    backgroundColor: 'rgba(0, 198, 255, 0.10)',
-    borderColor: 'rgba(0, 198, 255, 0.25)',
+    backgroundColor: 'rgba(0, 198, 255, 0.12)',
+    borderColor: 'rgba(0, 198, 255, 0.30)',
   },
   smallAdjustText: {
     fontSize: 9,
     fontFamily: 'monospace',
     fontWeight: 'bold',
-    color: '#64748B',
+    color: '#94A3B8',
   },
 });

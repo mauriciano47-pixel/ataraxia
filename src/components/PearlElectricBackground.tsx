@@ -8,51 +8,51 @@ interface PearlElectricBackgroundProps {
 }
 
 export function PearlElectricBackground({
-  glowColor = 'rgba(0, 82, 255, 0.08)',
+  glowColor = 'rgba(0, 82, 255, 0.16)',
   children,
 }: PearlElectricBackgroundProps) {
   return (
     <View style={styles.container}>
-      {/* Fondo Blanco Perla Suave Base */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#F8FAFC' }]} />
+      {/* Fondo Azul Noche Obsidiana Profundo */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#070B19' }]} />
 
-      {/* Degradado Superior Ambiental en Azul Eléctrico Flotante */}
+      {/* Degradado Superior Ambiental en Azul Cobalto */}
       <LinearGradient
-        colors={[glowColor, 'rgba(0, 198, 255, 0.03)', 'transparent']}
+        colors={[glowColor, 'rgba(0, 82, 255, 0.04)', 'transparent']}
         style={styles.topGlow}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
 
-      {/* Aura Radial Zafiro/Cian en la Esquina Superior Derecha */}
+      {/* Aura Radial Zafiro Neón en la Esquina Superior Derecha */}
       <LinearGradient
-        colors={['rgba(0, 198, 255, 0.09)', 'rgba(0, 82, 255, 0.02)', 'transparent']}
+        colors={['rgba(0, 198, 255, 0.12)', 'rgba(0, 82, 255, 0.03)', 'transparent']}
         style={styles.cyanGlow}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0.8 }}
       />
 
-      {/* Aura Lateral Izquierda de Luz Nácar Azul */}
+      {/* Resplandor Dorado Champán Superior sutil */}
       <LinearGradient
-        colors={['rgba(0, 82, 255, 0.05)', 'transparent']}
-        style={styles.leftGlow}
-        start={{ x: 0, y: 0.4 }}
-        end={{ x: 1, y: 0.8 }}
+        colors={['rgba(212, 175, 55, 0.08)', 'transparent']}
+        style={styles.goldGlow}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 0.5 }}
       />
 
-      {/* Viñeta Inferior Cristal Perlada */}
+      {/* Viñeta Inferior Noche */}
       <LinearGradient
-        colors={['transparent', 'rgba(241, 245, 249, 0.70)']}
+        colors={['transparent', 'rgba(4, 7, 15, 0.90)']}
         style={styles.bottomGlow}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
 
-      {/* Línea de Acento Superior Ultra Fina Azul Eléctrico a Zafiro */}
+      {/* Micro Línea de Acento Superior Azul Cobalto a Dorado Champán */}
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        colors={['transparent', '#0052FF', '#00C6FF', 'transparent']}
+        colors={['transparent', '#0052FF', '#D4AF37', '#00C6FF', 'transparent']}
         style={styles.topLine}
       />
 
@@ -64,30 +64,30 @@ export function PearlElectricBackground({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#070B19',
   },
   topGlow: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 380,
+    height: 400,
     pointerEvents: 'none',
   },
   cyanGlow: {
     position: 'absolute',
     top: 0,
     right: 0,
-    width: 320,
-    height: 320,
+    width: 340,
+    height: 340,
     pointerEvents: 'none',
   },
-  leftGlow: {
+  goldGlow: {
     position: 'absolute',
-    top: 180,
-    left: 0,
-    width: 250,
-    height: 400,
+    top: 0,
+    left: 40,
+    right: 40,
+    height: 220,
     pointerEvents: 'none',
   },
   bottomGlow: {

@@ -6,8 +6,8 @@ export default function AppTabs() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0052FF', // Azul Eléctrico
-        tabBarInactiveTintColor: '#64748B', // Gris Plata
+        tabBarActiveTintColor: '#0052FF', // Azul Cobalto
+        tabBarInactiveTintColor: '#64748B',
         tabBarLabelStyle: {
           fontFamily: 'monospace',
           fontSize: 10,
@@ -15,17 +15,17 @@ export default function AppTabs() {
           letterSpacing: 0.5,
         },
         tabBarStyle: {
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: 'rgba(11, 17, 33, 0.96)',
           borderTopWidth: 1,
-          borderTopColor: 'rgba(0, 82, 255, 0.15)',
+          borderTopColor: 'rgba(0, 82, 255, 0.25)',
           paddingBottom: 6,
           paddingTop: 6,
           height: 64,
-          elevation: 8,
+          elevation: 12,
           shadowColor: '#0052FF',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.2,
+          shadowRadius: 10,
         },
         headerShown: false,
       }}>
@@ -54,7 +54,7 @@ export default function AppTabs() {
         name="journal"
         options={{
           title: 'Diario',
-          tabBarIcon: ({ color, focused }) => <JournalTabIcon color={focused ? '#00C6FF' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <JournalTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
