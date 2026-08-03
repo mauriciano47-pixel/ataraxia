@@ -77,12 +77,12 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+    <View style={styles.card}>
       
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-          <SettingsIcon color={device.connected ? colors.accent : colors.textSecondary} size={20} />
+          <SettingsIcon color={device.connected ? '#0052FF' : '#94A3B8'} size={20} />
           <View>
             <ThemedText style={styles.badge}>TELEMETRÍA SMART</ThemedText>
             <ThemedText style={styles.deviceName} numberOfLines={1}>
@@ -91,29 +91,29 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
           </View>
         </View>
 
-        <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(211,47,47,0.15)' : 'rgba(128,128,128,0.15)' }]}>
-          <View style={[styles.dot, { backgroundColor: device.connected ? '#10B981' : '#4A5568' }]} />
-          <ThemedText style={[styles.statusText, { color: device.connected ? '#10B981' : '#4A5568' }]}>
+        <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(0, 82, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
+          <View style={[styles.dot, { backgroundColor: device.connected ? '#0052FF' : '#64748B' }]} />
+          <ThemedText style={[styles.statusText, { color: device.connected ? '#0052FF' : '#94A3B8' }]}>
             {device.connected ? 'VINCULADO' : 'OFFLINE'}
           </ThemedText>
         </View>
       </View>
 
-      {/* Connection Info / Metrics */}
+      {/* Sensor Data Display if Connected */}
       {device.connected ? (
         <View style={styles.metricsRow}>
           <View style={styles.metricItem}>
-            <HeartIcon color="#FF453A" size={16} />
+            <HeartIcon color="#D4AF37" size={16} />
             <View>
-              <ThemedText style={styles.metricLabel}>PULSO LIVE</ThemedText>
-              <ThemedText style={styles.metricValue}>{device.heartRateBpm} <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>BPM</ThemedText></ThemedText>
+              <ThemedText style={styles.metricLabel}>RITMO CARDÍACO</ThemedText>
+              <ThemedText style={styles.metricValue}>{device.heartRateBpm || 72} BPM</ThemedText>
             </View>
           </View>
 
           <View style={styles.metricItem}>
             <View>
               <ThemedText style={styles.metricLabel}>BATERÍA</ThemedText>
-              <ThemedText style={styles.metricValue}>{device.batteryLevel}%</ThemedText>
+              <ThemedText style={styles.metricValue}>{device.batteryLevel || 90}%</ThemedText>
             </View>
           </View>
 
@@ -126,134 +126,123 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         </View>
       ) : (
         <ThemedText style={styles.promptText}>
-          Enlaza tu Smartwatch o pulsera estoica para sincronizar pasos, ritmo cardíaco y calidad de sueño en tiempo real.
+          Sincroniza tu reloj inteligente o Google Health Connect para medir ritmo cardíaco y pasos automáticamente.
         </ThemedText>
       )}
 
       {/* Action Buttons */}
       <View style={styles.actionsRow}>
-        {device.connected ? (
-          <>
-            <TouchableOpacity 
-              style={[styles.btn, { backgroundColor: colors.accent, borderColor: colors.accent, flex: 2 }]}
-              onPress={handleSyncNow}
-              disabled={isSyncing}
-            >
-              {isSyncing ? (
-                <ActivityIndicator color="#FFF" size="small" />
-              ) : (
-                <ThemedText style={[styles.btnText, { color: '#FFF' }]}>Sincronizar Datos</ThemedText>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.btn, { backgroundColor: 'transparent', borderColor: colors.backgroundSelected, flex: 1 }]}
-              onPress={() => setModalVisible(true)}
-            >
-              <ThemedText style={[styles.btnText, { color: colors.textSecondary }]}>Cambiar</ThemedText>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.btn, { backgroundColor: colors.accent, borderColor: colors.accent, flex: 1 }]}
-            onPress={() => setModalVisible(true)}
+        {device.connected && (
+          <TouchableOpacity
+            style={[styles.btn, { backgroundColor: '#0052FF', borderColor: '#0052FF', flex: 2 }]}
+            onPress={handleSyncNow}
+            disabled={isSyncing}
           >
-            <ThemedText style={[styles.btnText, { color: '#FFF' }]}>VINCULAR SMARTWATCH</ThemedText>
+            {isSyncing ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <ThemedText style={[styles.btnText, { color: '#FFF' }]}>SINCRONIZAR AHORA</ThemedText>
+            )}
           </TouchableOpacity>
         )}
+
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(0, 82, 255, 0.20)', flex: 1 }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <ThemedText style={[styles.btnText, { color: '#F8FAFC' }]}>
+            {device.connected ? 'GESTIONAR' : 'CONECTAR'}
+          </ThemedText>
+        </TouchableOpacity>
       </View>
 
-      {/* Device Pair Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
+      {/* Select Device Modal */}
+      <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.backgroundSelected }]}>
+          <View style={[styles.modalContent, { backgroundColor: '#0F172A', borderColor: 'rgba(0, 82, 255, 0.25)' }]}>
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>SELECCIONAR DISPOSITIVO SMART</ThemedText>
+              <ThemedText style={styles.modalTitle}>VINCULAR SMARTWATCH / HEALTH API</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <ThemedText style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>✕</ThemedText>
+                <ThemedText style={{ color: '#94A3B8', fontSize: 16, fontWeight: 'bold' }}>✕</ThemedText>
               </TouchableOpacity>
             </View>
 
             {isScanning ? (
               <View style={styles.scanningBox}>
-                <ActivityIndicator size="large" color={colors.accent} />
-                <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace' }}>
-                  Escaneando pulso y sensores Bluetooth LE...
+                <ActivityIndicator color="#0052FF" size="large" />
+                <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', color: '#0052FF', fontSize: 12 }}>
+                  ESTABLECIENDO CONEXIÓN SEGURA...
                 </ThemedText>
               </View>
             ) : (
               <ScrollView style={{ maxHeight: 320 }}>
-                {AVAILABLE_DEVICES.map((dev) => (
+                {AVAILABLE_DEVICES.map(dev => (
                   <TouchableOpacity
                     key={dev.id}
-                    style={[styles.deviceOption, { borderColor: colors.backgroundSelected }]}
+                    style={[styles.deviceOption, { backgroundColor: 'rgba(255, 255, 255, 0.04)', borderColor: 'rgba(255, 255, 255, 0.08)' }]}
                     onPress={() => handleSelectDevice(dev)}
                   >
                     <View style={{ flex: 1 }}>
                       <ThemedText style={styles.devOptionName}>{dev.name}</ThemedText>
                       <ThemedText style={styles.devOptionBrand}>{dev.brand}</ThemedText>
                     </View>
-                    <ThemedText style={{ color: colors.textSecondary }}>→</ThemedText>
+                    <ThemedText style={{ color: '#0052FF', fontWeight: 'bold', fontSize: 12 }}>VINCULAR</ThemedText>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
-            )}
 
-            {device.connected && (
-              <TouchableOpacity 
-                style={[styles.disconnectBtn, { borderColor: '#FF453A' }]}
-                onPress={() => {
-                  handleDisconnect();
-                  setModalVisible(false);
-                }}
-              >
-                <ThemedText style={{ color: '#FF453A', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                  DESCONECTAR DISPOSITIVO ACTUAL
-                </ThemedText>
-              </TouchableOpacity>
+                {device.connected && (
+                  <TouchableOpacity
+                    style={[styles.disconnectBtn, { borderColor: 'rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}
+                    onPress={handleDisconnect}
+                  >
+                    <ThemedText style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 11, fontFamily: 'monospace' }}>
+                      DESCONECTAR DISPOSITIVO
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
             )}
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    padding: Spacing.four,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
-    marginBottom: Spacing.four,
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderRadius: 16,
+    padding: Spacing.three,
+    marginBottom: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 82, 255, 0.20)',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.three,
   },
   badge: {
     fontSize: 9,
     fontFamily: 'monospace',
-    letterSpacing: 2,
-    color: '#10B981',
+    color: '#0052FF',
+    letterSpacing: 1.5,
     fontWeight: 'bold',
   },
   deviceName: {
-    fontSize: 15,
-    fontFamily: 'serif',
+    fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 2,
+    fontFamily: 'monospace',
+    color: '#F8FAFC',
+    marginTop: 1,
   },
   statusTag: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 6,
     gap: 6,
   },
   dot: {
@@ -268,7 +257,7 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 12,
-    color: '#888',
+    color: '#94A3B8',
     lineHeight: 18,
     marginVertical: Spacing.two,
   },
@@ -279,7 +268,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.two,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   metricItem: {
     flexDirection: 'row',
@@ -289,12 +278,13 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontSize: 9,
     fontFamily: 'monospace',
-    color: '#888',
+    color: '#94A3B8',
   },
   metricValue: {
     fontSize: 13,
     fontWeight: 'bold',
     fontFamily: 'monospace',
+    color: '#F8FAFC',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -307,17 +297,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderWidth: 1.5,
+    borderRadius: 10,
+    borderWidth: 1,
     gap: 6,
   },
   btnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     fontFamily: 'monospace',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(7, 11, 25, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.four,
@@ -326,7 +317,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     padding: Spacing.four,
-    borderWidth: 2,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -339,6 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'monospace',
     letterSpacing: 1,
+    color: '#F8FAFC',
   },
   scanningBox: {
     padding: Spacing.five,
@@ -348,22 +341,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.three,
+    borderRadius: 10,
     borderWidth: 1,
     marginBottom: Spacing.two,
     gap: Spacing.three,
   },
   devOptionName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
+    color: '#F8FAFC',
   },
   devOptionBrand: {
     fontSize: 11,
-    color: '#888',
+    color: '#94A3B8',
     fontFamily: 'monospace',
   },
   disconnectBtn: {
     marginTop: Spacing.four,
     padding: Spacing.three,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
   }

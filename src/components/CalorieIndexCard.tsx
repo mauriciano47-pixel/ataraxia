@@ -76,7 +76,7 @@ export function CalorieIndexCard({
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={styles.iconBadge}>
-            <CalculatorIcon color="#FF6F00" size={20} />
+            <CalculatorIcon color="#D4AF37" size={20} />
           </View>
           <View>
             <ThemedText style={styles.titleText}>Índice Calórico & TDEE</ThemedText>
@@ -88,7 +88,7 @@ export function CalorieIndexCard({
           style={styles.calcButton} 
           onPress={() => setModalVisible(true)}
         >
-          <SettingsIcon color="#FF6F00" size={14} />
+          <SettingsIcon color="#0052FF" size={14} />
           <ThemedText style={styles.calcButtonText}>Calcular TDEE</ThemedText>
         </TouchableOpacity>
       </View>
@@ -102,16 +102,16 @@ export function CalorieIndexCard({
 
         <View style={styles.remainingBadge}>
           <ThemedText style={styles.remainingValue}>{remainingCals.toLocaleString()} kcal</ThemedText>
-          <ThemedText style={styles.remainingLabel}>Restantes</ThemedText>
+          <ThemedText style={styles.remainingLabel}>restantes</ThemedText>
         </View>
       </View>
 
-      {/* Calorie Progress Bar */}
+      {/* Progress Bar */}
       <View style={styles.progressBarTrack}>
         <View style={[styles.progressBarFill, { width: `${consumedPct}%` }]} />
       </View>
 
-      {/* BMR / TDEE Quick Index badges */}
+      {/* Fitness Index Badges */}
       <View style={styles.indexBadgesRow}>
         <View style={styles.indexItem}>
           <ThemedText style={styles.indexItemLabel}>BMR (Basal)</ThemedText>
@@ -119,20 +119,20 @@ export function CalorieIndexCard({
         </View>
         <View style={styles.indexDivider} />
         <View style={styles.indexItem}>
-          <ThemedText style={styles.indexItemLabel}>TDEE (Diario)</ThemedText>
+          <ThemedText style={styles.indexItemLabel}>TDEE (Mantenimiento)</ThemedText>
           <ThemedText style={styles.indexItemVal}>{fitnessCalc.tdee} kcal</ThemedText>
         </View>
         <View style={styles.indexDivider} />
         <View style={styles.indexItem}>
-          <ThemedText style={styles.indexItemLabel}>Meta Diario</ThemedText>
-          <ThemedText style={[styles.indexItemVal, { color: '#FF6F00' }]}>{effectiveTarget} kcal</ThemedText>
+          <ThemedText style={styles.indexItemLabel}>Puntuación Estoica</ThemedText>
+          <ThemedText style={[styles.indexItemVal, { color: '#D4AF37' }]}>{fitnessCalc.stoicScore}/100</ThemedText>
         </View>
       </View>
 
-      {/* Macro Split Guidance */}
+      {/* Macros Split */}
       <View style={styles.macroSplitRow}>
         <View style={styles.macroItem}>
-          <ThemedText style={styles.macroLabel}>Proteínas</ThemedText>
+          <ThemedText style={styles.macroLabel}>Proteína</ThemedText>
           <ThemedText style={styles.macroValue}>{consumedMacros.protein}g / {fitnessCalc.macros.protein}g</ThemedText>
         </View>
         <View style={styles.macroItem}>
@@ -145,45 +145,59 @@ export function CalorieIndexCard({
         </View>
       </View>
 
-      {/* Calculator Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
+      {/* TDEE Calculator Modal */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Calculadora de Índice Calórico</ThemedText>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <ThemedText style={{ color: '#9CA3AF', fontSize: 18, fontWeight: 'bold' }}>✕</ThemedText>
-              </TouchableOpacity>
-            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>Calculadora de Métricas TDEE</ThemedText>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <ThemedText style={{ color: '#94A3B8', fontSize: 16, fontWeight: 'bold' }}>✕</ThemedText>
+                </TouchableOpacity>
+              </View>
 
-            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
-              <ThemedText style={styles.sectionLabel}>Parámetros Biométricos</ThemedText>
-
+              <ThemedText style={styles.sectionLabel}>Datos Biométricos</ThemedText>
               <View style={styles.inputsGridRow}>
                 <View style={styles.inputGroup}>
                   <ThemedText style={styles.inputLabel}>Peso (kg)</ThemedText>
-                  <TextInput style={styles.textInput} value={weight} onChangeText={setWeight} keyboardType="numeric" />
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    value={weight}
+                    onChangeText={setWeight}
+                  />
                 </View>
                 <View style={styles.inputGroup}>
                   <ThemedText style={styles.inputLabel}>Altura (cm)</ThemedText>
-                  <TextInput style={styles.textInput} value={height} onChangeText={setHeight} keyboardType="numeric" />
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    value={height}
+                    onChangeText={setHeight}
+                  />
                 </View>
                 <View style={styles.inputGroup}>
                   <ThemedText style={styles.inputLabel}>Edad</ThemedText>
-                  <TextInput style={styles.textInput} value={age} onChangeText={setAge} keyboardType="numeric" />
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    value={age}
+                    onChangeText={setAge}
+                  />
                 </View>
               </View>
 
-              <ThemedText style={styles.sectionLabel}>Sexo</ThemedText>
+              <ThemedText style={styles.sectionLabel}>Biológico</ThemedText>
               <View style={styles.toggleRow}>
-                <TouchableOpacity 
-                  style={[styles.toggleChip, gender === 'male' && styles.toggleChipActive]} 
+                <TouchableOpacity
+                  style={[styles.toggleChip, gender === 'male' && styles.toggleChipActive]}
                   onPress={() => setGender('male')}
                 >
                   <ThemedText style={[styles.toggleText, gender === 'male' && styles.toggleTextActive]}>Hombre</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.toggleChip, gender === 'female' && styles.toggleChipActive]} 
+                <TouchableOpacity
+                  style={[styles.toggleChip, gender === 'female' && styles.toggleChipActive]}
                   onPress={() => setGender('female')}
                 >
                   <ThemedText style={[styles.toggleText, gender === 'female' && styles.toggleTextActive]}>Mujer</ThemedText>
@@ -193,57 +207,54 @@ export function CalorieIndexCard({
               <ThemedText style={styles.sectionLabel}>Nivel de Actividad Física</ThemedText>
               <View style={styles.selectColumn}>
                 {[
-                  { key: 'sedentary', label: 'Sedentario (Oficina / Poco ejercicio)' },
-                  { key: 'light', label: 'Ligero (1-3 días/semana)' },
-                  { key: 'moderate', label: 'Moderado (3-5 días/semana)' },
-                  { key: 'active', label: 'Activo (6-7 días/semana)' },
-                  { key: 'athlete', label: 'Atleta (Doble sesión / Trabajo pesado)' },
-                ].map((item) => (
+                  { id: 'sedentary', label: 'Sedentario (Oficina / Poco ejercicio)' },
+                  { id: 'light', label: 'Ligero (1-3 días entreno/sem)' },
+                  { id: 'moderate', label: 'Moderado (3-5 días entreno/sem)' },
+                  { id: 'very_active', label: 'Muy Activo (6-7 días entreno int)' },
+                ].map(opt => (
                   <TouchableOpacity
-                    key={item.key}
-                    style={[styles.selectOption, activity === item.key && styles.selectOptionActive]}
-                    onPress={() => setActivity(item.key as any)}
+                    key={opt.id}
+                    style={[styles.selectOption, activity === opt.id && styles.selectOptionActive]}
+                    onPress={() => setActivity(opt.id as any)}
                   >
-                    <ThemedText style={{ color: activity === item.key ? "#FF6F00" : "#6B7280" }}>{activity === item.key ? "●" : "○"}</ThemedText>
-                    <ThemedText style={[styles.selectOptionText, activity === item.key && styles.selectOptionTextActive]}>{item.label}</ThemedText>
+                    <ThemedText style={[styles.selectOptionText, activity === opt.id && styles.selectOptionTextActive]}>
+                      {opt.label}
+                    </ThemedText>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <ThemedText style={styles.sectionLabel}>Objetivo Fitness</ThemedText>
-              <View style={styles.toggleRow}>
-                <TouchableOpacity 
-                  style={[styles.toggleChip, goal === 'deficit' && styles.toggleChipActive]} 
-                  onPress={() => setGoal('deficit')}
-                >
-                  <ThemedText style={[styles.toggleText, goal === 'deficit' && styles.toggleTextActive]}>Perder Grasa</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.toggleChip, goal === 'maintenance' && styles.toggleChipActive]} 
-                  onPress={() => setGoal('maintenance')}
-                >
-                  <ThemedText style={[styles.toggleText, goal === 'maintenance' && styles.toggleTextActive]}>Mantener</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.toggleChip, goal === 'surplus' && styles.toggleChipActive]} 
-                  onPress={() => setGoal('surplus')}
-                >
-                  <ThemedText style={[styles.toggleText, goal === 'surplus' && styles.toggleTextActive]}>Ganar Músculo</ThemedText>
-                </TouchableOpacity>
+              <ThemedText style={styles.sectionLabel}>Objetivo Nutricional</ThemedText>
+              <View style={styles.selectColumn}>
+                {[
+                  { id: 'deficit', label: 'Pérdida de Grasa (Déficit -15%)' },
+                  { id: 'maintenance', label: 'Mantenimiento Calórico (Salud)' },
+                  { id: 'surplus', label: 'Ganancia Muscular (Superávit +10%)' },
+                ].map(opt => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[styles.selectOption, goal === opt.id && styles.selectOptionActive]}
+                    onPress={() => setGoal(opt.id as any)}
+                  >
+                    <ThemedText style={[styles.selectOptionText, goal === opt.id && styles.selectOptionTextActive]}>
+                      {opt.label}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
               </View>
 
-              {/* Calculated Results Live Preview */}
+              {/* Realtime Calculated preview */}
               <View style={styles.calcResultBox}>
-                <ThemedText style={styles.calcResultTitle}>Resultado Calculado:</ThemedText>
-                <ThemedText style={styles.calcResultRow}>• BMR (Gasto Basal): <ThemedText style={{ fontWeight: 'bold', color: '#FFF' }}>{fitnessCalc.bmr} kcal</ThemedText></ThemedText>
-                <ThemedText style={styles.calcResultRow}>• TDEE (Gasto Total): <ThemedText style={{ fontWeight: 'bold', color: '#FFF' }}>{fitnessCalc.tdee} kcal</ThemedText></ThemedText>
-                <ThemedText style={styles.calcResultRow}>• Meta Recomendada: <ThemedText style={{ fontWeight: 'bold', color: '#FF6F00' }}>{fitnessCalc.targetCalories} kcal/día</ThemedText></ThemedText>
+                <ThemedText style={styles.calcResultTitle}>Resultado TDEE Estimado</ThemedText>
+                <ThemedText style={styles.calcResultRow}>BMR (Metabolismo Basal): {fitnessCalc.bmr} kcal</ThemedText>
+                <ThemedText style={styles.calcResultRow}>TDEE (Mantenimiento): {fitnessCalc.tdee} kcal</ThemedText>
+                <ThemedText style={[styles.calcResultRow, { color: '#0052FF', fontWeight: 'bold' }]}>Meta Objetivo: {fitnessCalc.targetCalories} kcal</ThemedText>
               </View>
-            </ScrollView>
 
-            <TouchableOpacity style={styles.saveCalcBtn} onPress={handleSaveCalculator}>
-              <ThemedText style={styles.saveCalcBtnText}>Aplicar Meta y Macros</ThemedText>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.saveCalcBtn} onPress={handleSaveCalculator}>
+                <ThemedText style={styles.saveCalcBtnText}>GUARDAR Y APLICAR METAS</ThemedText>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -253,12 +264,13 @@ export function CalorieIndexCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderRadius: 16,
     padding: Spacing.three,
     marginBottom: Spacing.three,
-    borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    borderWidth: 1,
+    borderColor: 'rgba(0, 82, 255, 0.20)',
+    gap: 8,
   },
   headerRow: {
     flexDirection: 'row',
@@ -274,40 +286,41 @@ const styles = StyleSheet.create({
   iconBadge: {
     width: 36,
     height: 36,
-    borderRadius: 8,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderRadius: 18,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderColor: 'rgba(212, 175, 55, 0.30)',
   },
   titleText: {
     fontSize: 15,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#FFFFFF',
+    color: '#F8FAFC',
     letterSpacing: 0.5,
   },
   subtitleText: {
-    fontSize: 10.5,
-    color: '#A0A4B0',
+    fontSize: 11,
+    color: '#94A3B8',
     fontFamily: 'monospace',
   },
   calcButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(30, 30, 38, 0.8)',
+    backgroundColor: 'rgba(0, 82, 255, 0.10)',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: 'rgba(0, 82, 255, 0.25)',
   },
   calcButtonText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#FF6F00',
+    color: '#0052FF',
+    fontFamily: 'monospace',
   },
   caloriesOverviewRow: {
     flexDirection: 'row',
@@ -318,68 +331,78 @@ const styles = StyleSheet.create({
   consumedCalsNumber: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#FF6F00',
+    color: '#0052FF',
     lineHeight: 36,
+    fontFamily: 'monospace',
   },
   calsTargetSub: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 11,
+    color: '#94A3B8',
     marginTop: 2,
+    fontFamily: 'monospace',
   },
   remainingBadge: {
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     alignItems: 'flex-end',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
   },
   remainingValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#10B981',
+    color: '#D4AF37',
+    fontFamily: 'monospace',
   },
   remainingLabel: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#94A3B8',
+    fontFamily: 'monospace',
   },
   progressBarTrack: {
-    height: 10,
-    backgroundColor: '#1F2937',
-    borderRadius: 5,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 4,
     overflow: 'hidden',
     marginBottom: Spacing.three,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FF6F00',
-    borderRadius: 5,
+    backgroundColor: '#0052FF',
+    borderRadius: 4,
   },
   indexBadgesRow: {
     flexDirection: 'row',
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 10,
     padding: 10,
     justifyContent: 'space-around',
     alignItems: 'center',
     marginBottom: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   indexItem: {
     alignItems: 'center',
   },
   indexItemLabel: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     marginBottom: 2,
+    fontFamily: 'monospace',
   },
   indexItemVal: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#E5E7EB',
+    color: '#F8FAFC',
+    fontFamily: 'monospace',
   },
   indexDivider: {
     width: 1,
     height: 20,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   macroSplitRow: {
     flexDirection: 'row',
@@ -387,24 +410,28 @@ const styles = StyleSheet.create({
   },
   macroItem: {
     flex: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 8,
     padding: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   macroLabel: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     marginBottom: 2,
+    fontFamily: 'monospace',
   },
   macroValue: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: '#F8FAFC',
+    fontFamily: 'monospace',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(7, 11, 25, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.three,
@@ -412,11 +439,11 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#111827',
+    backgroundColor: '#0F172A',
     borderRadius: 16,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: '#1F2937',
+    borderColor: 'rgba(0, 82, 255, 0.25)',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -427,16 +454,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F8FAFC',
   },
   sectionLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FF6F00',
+    color: '#0052FF',
     marginTop: Spacing.two,
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontFamily: 'monospace',
   },
   inputsGridRow: {
     flexDirection: 'row',
@@ -447,19 +475,21 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     marginBottom: 4,
+    fontFamily: 'monospace',
   },
   textInput: {
-    backgroundColor: '#1F2937',
-    color: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    color: '#F8FAFC',
     borderRadius: 8,
     padding: 8,
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    fontFamily: 'monospace',
   },
   toggleRow: {
     flexDirection: 'row',
@@ -467,24 +497,26 @@ const styles = StyleSheet.create({
   },
   toggleChip: {
     flex: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   toggleChipActive: {
-    backgroundColor: '#FF6F00',
-    borderColor: '#FF6F00',
+    backgroundColor: '#0052FF',
+    borderColor: '#0052FF',
   },
   toggleText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#94A3B8',
+    fontFamily: 'monospace',
   },
   toggleTextActive: {
     color: '#FFF',
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   selectColumn: {
     gap: 6,
@@ -493,45 +525,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   selectOptionActive: {
-    borderColor: '#FF6F00',
-    backgroundColor: 'rgba(255, 111, 0, 0.1)',
+    borderColor: '#0052FF',
+    backgroundColor: 'rgba(0, 82, 255, 0.15)',
   },
   selectOptionText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#94A3B8',
+    fontFamily: 'monospace',
   },
   selectOptionTextActive: {
-    color: '#FFF',
+    color: '#F8FAFC',
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   calcResultBox: {
-    backgroundColor: '#1F2937',
+    backgroundColor: 'rgba(0, 82, 255, 0.08)',
     borderRadius: 10,
     padding: 12,
     marginTop: Spacing.two,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF6F00',
+    borderLeftColor: '#0052FF',
   },
   calcResultTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#9CA3AF',
+    color: '#94A3B8',
     marginBottom: 4,
+    fontFamily: 'monospace',
   },
   calcResultRow: {
     fontSize: 12,
-    color: '#D1D5DB',
+    color: '#CBD5E1',
     marginBottom: 2,
+    fontFamily: 'monospace',
   },
   saveCalcBtn: {
-    backgroundColor: '#FF6F00',
+    backgroundColor: '#0052FF',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -541,5 +577,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
 });
