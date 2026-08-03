@@ -1,8 +1,8 @@
-import { StyleSheet, View, Switch, TouchableOpacity, useColorScheme, Image, Modal, TextInput, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Switch, TouchableOpacity, useColorScheme, Image, Modal, TextInput, ScrollView, Alert, Platform, Clipboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 
 import { ThemedText } from '@/components/themed-text';
@@ -10,17 +10,18 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
+import { OledBackground } from '@/components/OledBackground';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
   { id: 'seneca', name: 'Séneca', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Seneca_Prado.jpg/330px-Seneca_Prado.jpg' },
   { id: 'epictetus', name: 'Epicteto', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Epicteti_Enchiridion_Latin_1596.jpg/330px-Epicteti_Enchiridion_Latin_1596.jpg' },
 ];
-
-export default function ProfileScreen() {
+export default function ProfileScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];  const { log, updateUserMetrics, setStoicAvatar, setUserName, setStepGoal, saveFullProfile } = useDailyLog();
+  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const { log, setStoicAvatar, saveFullProfile } = useDailyLog();
 
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
@@ -35,21 +36,41 @@ export default function ProfileScreen() {
   const [targetCalInput, setTargetCalInput] = useState((log.targetCalories || 2200).toString());
   const [targetStepInput, setTargetStepInput] = useState((log.stepGoal || 10000).toString());
 
-  const uid = auth?.currentUser?.uid || 'Desconocido';
-  const shortUid = uid.substring(0, 8);
+  const uid = auth?.currentUser?.uid || null;
+  const shortUid = uid ? uid.substring(0, 8) : '????????';
 
-  // Sync inputs when modal opens or log updates
-  useEffect(() => {
-    if (showEditModal) {
-      const currentMetrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
-      setNameInput(log.userName || 'Ciudadano Prokopton');
-      setAgeInput(currentMetrics.age.toString());
-      setWeightInput(currentMetrics.weightKg.toString());
-      setHeightInput(currentMetrics.heightCm.toString());
-      setTargetCalInput((log.targetCalories || 2200).toString());
-      setTargetStepInput((log.stepGoal || 10000).toString());
+  // Estado de sincronización Firebase
+  type FirebaseStatus = 'online' | 'offline' | 'no_config' | 'checking';
+  const firebaseStatus: FirebaseStatus = !auth ? 'no_config' : uid ? 'online' : 'offline';
+
+  const handleOpenEditModal = () => {
+    const currentMetrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
+    setNameInput(log.userName || 'Ciudadano Prokopton');
+    setAgeInput(currentMetrics.age.toString());
+    setWeightInput(currentMetrics.weightKg.toString());
+    setHeightInput(currentMetrics.heightCm.toString());
+    setTargetCalInput((log.targetCalories || 2200).toString());
+    setTargetStepInput((log.stepGoal || 10000).toString());
+    setShowEditModal(true);
+  };
+
+  const handleCopyUID = useCallback(() => {
+    if (!uid) return;
+    if (Platform.OS === 'web') {
+      navigator.clipboard?.writeText(uid).catch(() => {});
+    } else {
+      Clipboard.setString(uid);
     }
-  }, [showEditModal, log]);
+    Alert.alert('ID Copiado', 'Tu ID de Guardián ha sido copiado al portapapeles.');
+  }, [uid]);
+
+  const statusConfig: Record<FirebaseStatus, { label: string; color: string; icon: 'checkmark-circle' | 'close-circle' | 'warning' | 'time' }> = {
+    online:    { label: 'SINCRONIZADO CON LA NUBE', color: '#4CAF50', icon: 'checkmark-circle' },
+    offline:   { label: 'SIN CONEXIÓN (MODO LOCAL)', color: '#FF9800', icon: 'warning' },
+    no_config: { label: 'FIREBASE NO CONFIGURADO',  color: '#FF453A', icon: 'close-circle' },
+    checking:  { label: 'VERIFICANDO...',            color: '#888',    icon: 'time' },
+  };
+  const status = statusConfig[firebaseStatus];
 
   const handlePickAvatarPhoto = async () => {
     try {
@@ -97,7 +118,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <OledBackground glowColor="rgba(16, 185, 129, 0.08)">
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={{ paddingBottom: Spacing.five }}>
           
@@ -112,7 +133,7 @@ export default function ProfileScreen() {
             </View>
             <TouchableOpacity 
               style={[styles.editBtn, { backgroundColor: colors.accent }]}
-              onPress={() => setShowEditModal(true)}
+              onPress={handleOpenEditModal}
             >
               <Ionicons name="create-outline" size={16} color="#FFF" />
               <ThemedText style={styles.editBtnText}>EDITAR</ThemedText>
@@ -215,6 +236,36 @@ export default function ProfileScreen() {
             </View>
           </ThemedView>
 
+          {/* Sección Estado del Guardián */}
+          <ThemedView style={[styles.section, { borderColor: 'rgba(16, 185, 129, 0.25)', marginTop: Spacing.four }]}>
+            <ThemedText style={styles.sectionTitle}>ESTADO DEL GUARDIÁN</ThemedText>
+
+            {/* Indicador de estado */}
+            <View style={styles.statusBadge}>
+              <Ionicons name={status.icon} size={16} color={status.color} />
+              <ThemedText style={[styles.statusText, { color: status.color }]}>{status.label}</ThemedText>
+            </View>
+
+            {/* UID Copiable */}
+            <View style={styles.row}>
+              <ThemedText style={styles.rowLabel}>ID del Guardián</ThemedText>
+              <TouchableOpacity onPress={handleCopyUID} style={styles.uidButton}>
+                <ThemedText style={styles.uidText}>#{shortUid}...</ThemedText>
+                <Ionicons name="copy-outline" size={12} color="#10B981" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Advertencia sesión anónima */}
+            <View style={styles.warningBox}>
+              <Ionicons name="shield-outline" size={14} color="#FF9800" style={{ marginTop: 1 }} />
+              <ThemedText style={styles.warningText}>
+                {'Tu sesión es anónima y está ligada a este dispositivo/navegador. '}
+                {'Si borras los datos del sitio, usas modo incógnito o cambias de dispositivo, '}
+                {'perderás acceso a tu historial en la nube. Anota tu ID de Guardián como respaldo.'}
+              </ThemedText>
+            </View>
+          </ThemedView>
+
           {/* Sección de Peligro */}
           <ThemedView style={[styles.section, { borderColor: colors.backgroundSelected, marginTop: Spacing.four }]}>
             <TouchableOpacity style={styles.dangerButton} onPress={() => Alert.alert("Destruir Ego", "Esta acción limpiará permanentemente tu cuenta anónima.")}>
@@ -224,7 +275,6 @@ export default function ProfileScreen() {
           </ThemedView>
 
         </ScrollView>
-      </SafeAreaView>
 
       {/* Modal para Editar Biometría & Datos */}
       <Modal visible={showEditModal} animationType="slide" transparent>
@@ -304,7 +354,8 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-    </ThemedView>
+      </SafeAreaView>
+    </OledBackground>
   );
 }
 
@@ -334,7 +385,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#10B981',
     letterSpacing: 2,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -361,9 +412,9 @@ const styles = StyleSheet.create({
   avatarCard: {
     padding: Spacing.four,
     borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
+    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
     borderRadius: 8,
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     alignItems: 'center',
     marginBottom: Spacing.four,
   },
@@ -376,7 +427,7 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 2,
-    borderColor: '#D4AF37', // Oro Imperial
+    borderColor: '#10B981', // Esmeralda Fit
   },
   avatarPlaceholder: {
     width: 90,
@@ -385,7 +436,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D4AF37',
+    borderColor: '#10B981',
   },
   cameraBadge: {
     position: 'absolute',
@@ -397,7 +448,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#050507',
+    borderColor: '#0B131F',
   },
   userNameText: {
     fontSize: 18,
@@ -408,7 +459,7 @@ const styles = StyleSheet.create({
   },
   userRoleText: {
     fontSize: 11,
-    color: '#D4AF37', // Oro Imperial
+    color: '#10B981', // Esmeralda Fit
     fontFamily: 'monospace',
     marginTop: 2,
   },
@@ -425,8 +476,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderColor: 'rgba(16, 185, 129, 0.30)',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderRadius: 4,
   },
   presetChipText: {
@@ -495,6 +546,57 @@ const styles = StyleSheet.create({
     color: '#FF453A',
     fontWeight: 'bold',
     fontSize: 14,
+    fontFamily: 'monospace',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 4,
+    marginBottom: Spacing.three,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  uidButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.06)',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.20)',
+  },
+  uidText: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+    color: '#10B981',
+    letterSpacing: 1,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: Spacing.three,
+    padding: Spacing.three,
+    backgroundColor: 'rgba(255,152,0,0.07)',
+    borderLeftWidth: 2,
+    borderLeftColor: '#FF9800',
+    borderRadius: 2,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#B0824A',
+    lineHeight: 17,
     fontFamily: 'monospace',
   },
   modalOverlay: {

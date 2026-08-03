@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { Colors, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { UserMetrics } from '@/hooks/useDailyLog';
 import { calculateFitnessIndex } from '@/lib/fitnessCalculator';
 import { CalculatorIcon, SettingsIcon } from '@/components/ModuleSvgIcons';

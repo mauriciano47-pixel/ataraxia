@@ -92,8 +92,8 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         </View>
 
         <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(211,47,47,0.15)' : 'rgba(128,128,128,0.15)' }]}>
-          <View style={[styles.dot, { backgroundColor: device.connected ? '#D32F2F' : '#888' }]} />
-          <ThemedText style={[styles.statusText, { color: device.connected ? '#D32F2F' : '#888' }]}>
+          <View style={[styles.dot, { backgroundColor: device.connected ? '#10B981' : '#4A5568' }]} />
+          <ThemedText style={[styles.statusText, { color: device.connected ? '#10B981' : '#4A5568' }]}>
             {device.connected ? 'VINCULADO' : 'OFFLINE'}
           </ThemedText>
         </View>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontFamily: 'monospace',
     letterSpacing: 2,
-    color: '#D32F2F',
+    color: '#10B981',
     fontWeight: 'bold',
   },
   deviceName: {

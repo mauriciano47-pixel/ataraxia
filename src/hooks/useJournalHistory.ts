@@ -23,7 +23,7 @@ export interface JournalEntry {
 export function useJournalHistory() {
   const [messages, setMessages] = useState<JournalMessage[]>([]);
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(auth && db));
   const [disclaimerShown, setDisclaimerShown] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
@@ -31,7 +31,6 @@ export function useJournalHistory() {
   // Cargar conversación del día actual + entradas pasadas
   useEffect(() => {
     if (!auth || !db) {
-      setLoading(false);
       return;
     }
 

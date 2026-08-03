@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
+import { OledBackground } from '@/components/OledBackground';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -32,7 +33,7 @@ export default function NutritionScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [lastAnalysis, setLastAnalysis] = useState<AnalysisResult | null>(null);
-  
+
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualCal, setManualCal] = useState('450');
   const [manualProtein, setManualProtein] = useState('35');
@@ -190,249 +191,251 @@ export default function NutritionScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        
-        <View style={styles.header}>
-          <ThemedText style={styles.label}>COMBUSTIBLE & TEMPLO</ThemedText>
-          <ThemedText style={styles.title}>Oráculo Nutricional</ThemedText>
-        </View>
+    <OledBackground glowColor="rgba(16, 185, 129, 0.08)">
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
-        {/* Módulo de Calculadora e Índice Calórico TDEE/BMR */}
-        <CalorieIndexCard
-          consumedCalories={currentCalories}
-          targetCalories={goalCalories}
-          userMetrics={log.userMetrics}
-          consumedMacros={log.macros}
-          onUpdateMetrics={updateUserMetrics}
-        />
+          <View style={styles.header}>
+            <ThemedText style={styles.label}>COMBUSTIBLE & TEMPLO</ThemedText>
+            <ThemedText style={styles.title}>Oráculo Nutricional</ThemedText>
+          </View>
 
-        {/* Calorías totales */}
-        <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <View>
-              <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Calorías ingeridas hoy</ThemedText>
-              <ThemedText style={{ fontSize: 24, fontFamily: 'serif' }}>{currentCalories} <ThemedText style={{ fontSize: 14, color: colors.textSecondary }}>/ {goalCalories} kcal</ThemedText></ThemedText>
+          {/* Módulo de Calculadora e Índice Calórico TDEE/BMR */}
+          <CalorieIndexCard
+            consumedCalories={currentCalories}
+            targetCalories={goalCalories}
+            userMetrics={log.userMetrics}
+            consumedMacros={log.macros}
+            onUpdateMetrics={updateUserMetrics}
+          />
+
+          {/* Calorías totales */}
+          <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <View>
+                <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Calorías ingeridas hoy</ThemedText>
+                <ThemedText style={{ fontSize: 24, fontFamily: 'serif' }}>{currentCalories} <ThemedText style={{ fontSize: 14, color: colors.textSecondary }}>/ {goalCalories} kcal</ThemedText></ThemedText>
+              </View>
+              <ThemedText style={{ fontSize: 12, color: colors.accent, fontWeight: 'bold' }}>Restan {Math.max(goalCalories - currentCalories, 0)} kcal</ThemedText>
             </View>
-            <ThemedText style={{ fontSize: 12, color: colors.accent, fontWeight: 'bold' }}>Restan {Math.max(goalCalories - currentCalories, 0)} kcal</ThemedText>
-          </View>
-          <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
-            <View style={[styles.progressBar, { width: `${calPercent}%`, backgroundColor: colors.accent }]} />
-          </View>
-        </View>
-
-        {/* Macros */}
-        <View style={styles.macrosContainer}>
-          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>PROTEÍNA</ThemedText>
-            <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.protein.current}g</ThemedText>
-            <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.protein.goal}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-              <View style={[styles.progressBar, { width: `${Math.min((macros.protein.current/macros.protein.goal)*100, 100)}%`, backgroundColor: '#FFFFFF' }]} />
+            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
+              <View style={[styles.progressBar, { width: `${calPercent}%`, backgroundColor: colors.accent }]} />
             </View>
           </View>
-          
-          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>CARBS</ThemedText>
-            <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.carbs.current}g</ThemedText>
-            <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.carbs.goal}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-              <View style={[styles.progressBar, { width: `${Math.min((macros.carbs.current/macros.carbs.goal)*100, 100)}%`, backgroundColor: '#AAAAAA' }]} />
-            </View>
-          </View>
-          
-          <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>GRASAS</ThemedText>
-            <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.fats.current}g</ThemedText>
-            <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.fats.goal}g</ThemedText>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-              <View style={[styles.progressBar, { width: `${Math.min((macros.fats.current/macros.fats.goal)*100, 100)}%`, backgroundColor: '#555555' }]} />
-            </View>
-          </View>
-        </View>
 
-        {/* Sección de Registro por Foto / Oráculo */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>ESCANEAR ALIMENTO (GEMINI VISION HD)</ThemedText>
-          
-          <View style={{ flexDirection: 'row', gap: Spacing.three }}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]} 
-              onPress={handleTakePhoto}
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? (
-                <ActivityIndicator color={colors.text} size="small" />
-              ) : (
-                <>
-                  <Ionicons name="camera-outline" size={20} color={colors.text} />
-                  <ThemedText style={styles.buttonText}>Cámara</ThemedText>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]} 
-              onPress={handlePickGallery}
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? (
-                <ActivityIndicator color={colors.text} size="small" />
-              ) : (
-                <>
-                  <Ionicons name="images-outline" size={20} color={colors.text} />
-                  <ThemedText style={styles.buttonText}>Galería</ThemedText>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.accent, borderColor: colors.accent }]} 
-              onPress={() => setShowManualModal(true)}
-            >
-              <Ionicons name="create-outline" size={20} color="#FFFFFF" />
-              <ThemedText style={[styles.buttonText, { color: '#FFFFFF' }]}>Manual</ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* TARJETA DE ANÁLISIS DETALLADO DE COMIDA ESCANEADA */}
-        {isAnalyzing && (
-          <View style={[styles.analysisCard, { borderColor: colors.accent }]}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', textAlign: 'center' }}>
-              El Oráculo está juzgando la densidad nutricional y desglosando los macros de tu plato...
-            </ThemedText>
-          </View>
-        )}
-
-        {lastAnalysis && !isAnalyzing && (
-          <View style={[styles.analysisCard, { borderColor: colors.accent, backgroundColor: colors.backgroundElement }]}>
-            <View style={styles.analysisHeader}>
-              <Ionicons name="checkmark-circle-outline" size={22} color={colors.accent} />
-              <ThemedText style={styles.analysisTitle}>ANÁLISIS DEL ORÁCULO COMPLETADO</ThemedText>
-            </View>
-
-            {scannedImageUri && (
-              <Image source={{ uri: scannedImageUri }} style={styles.scannedPreviewImage} resizeMode="cover" />
-            )}
-
-            <ThemedText style={styles.dishNameText}>{lastAnalysis.dishName}</ThemedText>
-            <ThemedText style={styles.evaluationText}>&ldquo;{lastAnalysis.stoicEvaluation}&rdquo;</ThemedText>
-
-            {/* Desglose de Macronutrientes y Micronutrientes */}
-            <View style={styles.detailGrid}>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>CALORÍAS</ThemedText>
-                <ThemedText style={[styles.detailVal, { color: colors.accent }]}>{lastAnalysis.calories} kcal</ThemedText>
-              </View>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>PROTEÍNA</ThemedText>
-                <ThemedText style={styles.detailVal}>{lastAnalysis.protein} g</ThemedText>
-              </View>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>CARBOHIDRATOS</ThemedText>
-                <ThemedText style={styles.detailVal}>{lastAnalysis.carbs} g</ThemedText>
-              </View>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>GRASAS</ThemedText>
-                <ThemedText style={styles.detailVal}>{lastAnalysis.fats} g</ThemedText>
-              </View>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>FIBRA ESTIMADA</ThemedText>
-                <ThemedText style={styles.detailVal}>{lastAnalysis.fiber} g</ThemedText>
-              </View>
-              <View style={styles.detailItem}>
-                <ThemedText style={styles.detailLabel}>SODIO ESTIMADO</ThemedText>
-                <ThemedText style={styles.detailVal}>{lastAnalysis.sodium} mg</ThemedText>
+          {/* Macros */}
+          <View style={styles.macrosContainer}>
+            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>PROTEÍNA</ThemedText>
+              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.protein.current}g</ThemedText>
+              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.protein.goal}g</ThemedText>
+              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
+                <View style={[styles.progressBar, { width: `${Math.min((macros.protein.current / macros.protein.goal) * 100, 100)}%`, backgroundColor: '#FFFFFF' }]} />
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.four }}>
-              <TouchableOpacity 
-                style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
-                onPress={handleConfirmAnalysis}
+            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>CARBS</ThemedText>
+              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.carbs.current}g</ThemedText>
+              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.carbs.goal}g</ThemedText>
+              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
+                <View style={[styles.progressBar, { width: `${Math.min((macros.carbs.current / macros.carbs.goal) * 100, 100)}%`, backgroundColor: '#AAAAAA' }]} />
+              </View>
+            </View>
+
+            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>GRASAS</ThemedText>
+              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.fats.current}g</ThemedText>
+              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.fats.goal}g</ThemedText>
+              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
+                <View style={[styles.progressBar, { width: `${Math.min((macros.fats.current / macros.fats.goal) * 100, 100)}%`, backgroundColor: '#555555' }]} />
+              </View>
+            </View>
+          </View>
+
+          {/* Sección de Registro por Foto / Oráculo */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>ESCANEAR ALIMENTO (GEMINI VISION HD)</ThemedText>
+
+            <View style={{ flexDirection: 'row', gap: Spacing.three }}>
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]}
+                onPress={handleTakePhoto}
+                disabled={isAnalyzing}
               >
-                <ThemedText style={styles.confirmBtnText}>CONFIRMAR Y AGREGAR AL TEMPLO</ThemedText>
+                {isAnalyzing ? (
+                  <ActivityIndicator color={colors.text} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="camera-outline" size={20} color={colors.text} />
+                    <ThemedText style={styles.buttonText}>Cámara</ThemedText>
+                  </>
+                )}
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.discardBtn, { borderColor: colors.backgroundSelected }]}
-                onPress={() => {
-                  setLastAnalysis(null);
-                  setScannedImageUri(null);
-                }}
+
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]}
+                onPress={handlePickGallery}
+                disabled={isAnalyzing}
               >
-                <ThemedText style={{ color: colors.textSecondary, fontFamily: 'monospace' }}>Descartar</ThemedText>
+                {isAnalyzing ? (
+                  <ActivityIndicator color={colors.text} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="images-outline" size={20} color={colors.text} />
+                    <ThemedText style={styles.buttonText}>Galería</ThemedText>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                onPress={() => setShowManualModal(true)}
+              >
+                <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+                <ThemedText style={[styles.buttonText, { color: '#FFFFFF' }]}>Manual</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
-        )}
 
-      </ScrollView>
+          {/* TARJETA DE ANÁLISIS DETALLADO DE COMIDA ESCANEADA */}
+          {isAnalyzing && (
+            <View style={[styles.analysisCard, { borderColor: colors.accent }]}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', textAlign: 'center' }}>
+                El Oráculo está juzgando la densidad nutricional y desglosando los macros de tu plato...
+              </ThemedText>
+            </View>
+          )}
 
-      {/* Modal de Registro Manual */}
-      <Modal visible={showManualModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.backgroundSelected }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>REGISTRAR COMIDA MANUAL</ThemedText>
-              <TouchableOpacity onPress={() => setShowManualModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
+          {lastAnalysis && !isAnalyzing && (
+            <View style={[styles.analysisCard, { borderColor: colors.accent, backgroundColor: colors.backgroundElement }]}>
+              <View style={styles.analysisHeader}>
+                <Ionicons name="checkmark-circle-outline" size={22} color={colors.accent} />
+                <ThemedText style={styles.analysisTitle}>ANÁLISIS DEL ORÁCULO COMPLETADO</ThemedText>
+              </View>
+
+              {scannedImageUri && (
+                <Image source={{ uri: scannedImageUri }} style={styles.scannedPreviewImage} resizeMode="cover" />
+              )}
+
+              <ThemedText style={styles.dishNameText}>{lastAnalysis.dishName}</ThemedText>
+              <ThemedText style={styles.evaluationText}>&ldquo;{lastAnalysis.stoicEvaluation}&rdquo;</ThemedText>
+
+              {/* Desglose de Macronutrientes y Micronutrientes */}
+              <View style={styles.detailGrid}>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>CALORÍAS</ThemedText>
+                  <ThemedText style={[styles.detailVal, { color: colors.accent }]}>{lastAnalysis.calories} kcal</ThemedText>
+                </View>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>PROTEÍNA</ThemedText>
+                  <ThemedText style={styles.detailVal}>{lastAnalysis.protein} g</ThemedText>
+                </View>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>CARBOHIDRATOS</ThemedText>
+                  <ThemedText style={styles.detailVal}>{lastAnalysis.carbs} g</ThemedText>
+                </View>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>GRASAS</ThemedText>
+                  <ThemedText style={styles.detailVal}>{lastAnalysis.fats} g</ThemedText>
+                </View>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>FIBRA ESTIMADA</ThemedText>
+                  <ThemedText style={styles.detailVal}>{lastAnalysis.fiber} g</ThemedText>
+                </View>
+                <View style={styles.detailItem}>
+                  <ThemedText style={styles.detailLabel}>SODIO ESTIMADO</ThemedText>
+                  <ThemedText style={styles.detailVal}>{lastAnalysis.sodium} mg</ThemedText>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.four }}>
+                <TouchableOpacity
+                  style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
+                  onPress={handleConfirmAnalysis}
+                >
+                  <ThemedText style={styles.confirmBtnText}>CONFIRMAR Y AGREGAR AL TEMPLO</ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.discardBtn, { borderColor: colors.backgroundSelected }]}
+                  onPress={() => {
+                    setLastAnalysis(null);
+                    setScannedImageUri(null);
+                  }}
+                >
+                  <ThemedText style={{ color: colors.textSecondary, fontFamily: 'monospace' }}>Descartar</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+        </ScrollView>
+
+        {/* Modal de Registro Manual */}
+        <Modal visible={showManualModal} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.backgroundSelected }]}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>REGISTRAR COMIDA MANUAL</ThemedText>
+                <TouchableOpacity onPress={() => setShowManualModal(false)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ThemedText style={styles.inputLabel}>Calorías Totales (kcal)</ThemedText>
+              <TextInput
+                style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                value={manualCal}
+                onChangeText={setManualCal}
+                keyboardType="numeric"
+              />
+
+              <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three }}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.inputLabel}>Proteína (g)</ThemedText>
+                  <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    value={manualProtein}
+                    onChangeText={setManualProtein}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.inputLabel}>Carbs (g)</ThemedText>
+                  <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    value={manualCarbs}
+                    onChangeText={setManualCarbs}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.inputLabel}>Grasas (g)</ThemedText>
+                  <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    value={manualFats}
+                    onChangeText={setManualFats}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.confirmBtn, { backgroundColor: colors.accent, marginTop: Spacing.four }]}
+                onPress={handleSaveManual}
+              >
+                <ThemedText style={styles.confirmBtnText}>GUARDAR REGISTRO</ThemedText>
               </TouchableOpacity>
             </View>
-
-            <ThemedText style={styles.inputLabel}>Calorías Totales (kcal)</ThemedText>
-            <TextInput 
-              style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
-              value={manualCal}
-              onChangeText={setManualCal}
-              keyboardType="numeric"
-            />
-
-            <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three }}>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.inputLabel}>Proteína (g)</ThemedText>
-                <TextInput 
-                  style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                  value={manualProtein}
-                  onChangeText={setManualProtein}
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.inputLabel}>Carbs (g)</ThemedText>
-                <TextInput 
-                  style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                  value={manualCarbs}
-                  onChangeText={setManualCarbs}
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.inputLabel}>Grasas (g)</ThemedText>
-                <TextInput 
-                  style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                  value={manualFats}
-                  onChangeText={setManualFats}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.confirmBtn, { backgroundColor: colors.accent, marginTop: Spacing.four }]}
-              onPress={handleSaveManual}
-            >
-              <ThemedText style={styles.confirmBtnText}>GUARDAR REGISTRO</ThemedText>
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-    </SafeAreaView>
+      </SafeAreaView>
+    </OledBackground>
   );
 }
 
@@ -458,7 +461,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#10B981',
     letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -474,8 +477,8 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     marginBottom: Spacing.three,
   },
   progressContainer: {
@@ -484,7 +487,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
+    borderColor: 'rgba(16, 185, 129, 0.15)',
   },
   progressBar: {
     height: '100%',

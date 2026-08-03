@@ -10,7 +10,6 @@ import {
   useColorScheme,
   Animated,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useCoachContext } from '@/hooks/useCoachContext';
 import { useJournalHistory, JournalMessage } from '@/hooks/useJournalHistory';
 import { buildCoachSystemPrompt, generateWelcomeMessage } from '@/lib/coachPrompt';
+import { OledBackground } from '@/components/OledBackground';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -54,9 +54,9 @@ export default function JournalScreen() {
 
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
 
-  const typingDots = useRef(new Animated.Value(0)).current;
+  const [typingDots] = useState(() => new Animated.Value(0));
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Animación "escribiendo..."
@@ -75,51 +75,57 @@ export default function JournalScreen() {
 
   // Scroll automático al final
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 150);
+    return () => clearTimeout(timer);
   }, [messages, isLoading]);
 
   // Inicialización contextual del Coach
   useEffect(() => {
-    if (initialized || loadingContext || loadingHistory) return;
+    if (initializedRef.current || loadingContext || loadingHistory) return;
     if (messages.length > 0) {
-      setInitialized(true);
+      initializedRef.current = true;
       return;
     }
 
-    const welcomeMsg = generateWelcomeMessage(
-      patterns,
-      today.trainingCompleted,
-      today.mealsLogged,
-      today.waterLitres,
-      today.checkInDone || false
-    );
+    initializedRef.current = true;
 
-    const initialMessages: JournalMessage[] = [];
+    const timer = setTimeout(() => {
+      const welcomeMsg = generateWelcomeMessage(
+        patterns,
+        today.trainingCompleted,
+        today.mealsLogged,
+        today.waterLitres,
+        today.checkInDone || false
+      );
 
-    if (!disclaimerShown) {
+      const initialMessages: JournalMessage[] = [];
+
+      if (!disclaimerShown) {
+        initialMessages.push({
+          text: DISCLAIMER_TEXT,
+          sender: 'bot',
+          timestamp: Date.now(),
+        });
+        setDisclaimerShown(true);
+      }
+
       initialMessages.push({
-        text: DISCLAIMER_TEXT,
+        text: welcomeMsg,
         sender: 'bot',
-        timestamp: Date.now(),
+        timestamp: Date.now() + 1,
       });
-      setDisclaimerShown(true);
-    }
 
-    initialMessages.push({
-      text: welcomeMsg,
-      sender: 'bot',
-      timestamp: Date.now() + 1,
-    });
+      setMessages(initialMessages);
+      saveMessages(initialMessages);
+    }, 0);
 
-    setMessages(initialMessages);
-    saveMessages(initialMessages);
-    setInitialized(true);
-  }, [initialized, loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown]);
+    return () => clearTimeout(timer);
+  }, [loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown, saveMessages, setDisclaimerShown, setMessages]);
 
   // Generador contextual amplio y variado de respaldo
-  const generateFallbackResponse = (userPrompt: string): string => {
+  const generateFallbackResponse = useCallback((userPrompt: string): string => {
     const p = userPrompt.toLowerCase();
 
     // 1. ENTRENAMIENTO & RUTINAS
@@ -160,9 +166,9 @@ export default function JournalScreen() {
     }
 
     return `🏛️ **Status de tu Coach Ataraxia**:\n\n• **Pasos**: ${(today.steps || 0).toLocaleString()} / ${(today.stepGoal || 10000).toLocaleString()}\n• **Nutrición**: ${today.totalCalories} / ${today.targetCalories || 2200} kcal\n• **Agua**: ${today.waterLitres}L / 2.5L\n• **Entreno**: ${today.trainingCompleted ? 'COMPLETADO 🏆' : 'PENDIENTE ⏳'}\n\n¿En qué área específica (rutina, suplementos, comidas, mentalidad) necesitas mi asesoramiento en este instante?`;
-  };
+  }, [today]);
 
-  const handleSendQuery = async (textToSend: string) => {
+  const handleSendQuery = useCallback(async (textToSend: string) => {
     const trimmed = textToSend.trim();
     if (!trimmed || isLoading) return;
 
@@ -245,11 +251,11 @@ export default function JournalScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [contextSummary, generateFallbackResponse, getPastContext, isLoading, messages, saveMessages, setMessages]);
 
-  const sendMessage = useCallback(() => {
+  const sendMessage = () => {
     handleSendQuery(inputText);
-  }, [inputText, isLoading, messages, contextSummary, getPastContext, saveMessages]);
+  };
 
   const getPlaceholder = () => {
     if (!today.trainingCompleted && !today.checkInDone) {
@@ -271,18 +277,9 @@ export default function JournalScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* Fondo Fotográfico Estoico Profesional con Superposición Oscura Elegante */}
-      <View style={StyleSheet.absoluteFill}>
-        <Image
-          source={require('../../assets/images/bg_stoic_cosmos.png')}
-          style={[StyleSheet.absoluteFill, { opacity: 0.28 }]}
-          resizeMode="cover"
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(5, 5, 5, 0.88)' }]} />
-      </View>
-
-      <SafeAreaView style={styles.safeArea}>
+    <OledBackground glowColor="rgba(16, 185, 129, 0.08)">
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -291,7 +288,7 @@ export default function JournalScreen() {
           </View>
           <View style={styles.headerRight}>
             <View style={styles.coachBadge}>
-              <Ionicons name="sparkles" size={14} color="#D32F2F" />
+              <Ionicons name="sparkles" size={14} color="#10B981" />
               <ThemedText style={styles.coachBadgeText}>
                 {GEMINI_API_KEY ? 'GEMINI AI ACTIVO' : 'COACH LOCAL ACTIVO'}
               </ThemedText>
@@ -321,7 +318,7 @@ export default function JournalScreen() {
             >
               {msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT && (
                 <View style={styles.coachLabel}>
-                  <Ionicons name="sparkles" size={12} color="#D32F2F" />
+                  <Ionicons name="sparkles" size={12} color="#10B981" />
                   <ThemedText style={styles.coachLabelText}>COACH ORÁCULO</ThemedText>
                 </View>
               )}
@@ -353,7 +350,7 @@ export default function JournalScreen() {
           {isLoading && (
             <View style={[styles.messageBubble, styles.botMessage]}>
               <View style={styles.coachLabel}>
-                <Ionicons name="sparkles" size={12} color="#D32F2F" />
+                <Ionicons name="sparkles" size={12} color="#10B981" />
                 <ThemedText style={styles.coachLabelText}>GEMINI PENSANDO...</ThemedText>
               </View>
               <Animated.View style={[styles.typingIndicator, { opacity: typingDots }]}>
@@ -403,15 +400,16 @@ export default function JournalScreen() {
             <Ionicons name="paper-plane-outline" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </OledBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050505',
+    backgroundColor: '#0B131F',
   },
   safeArea: {
     flex: 1,
@@ -442,14 +440,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
     paddingBottom: Spacing.three,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(211,47,47,0.25)',
+    borderBottomColor: 'rgba(16, 185, 129, 0.20)',
   },
   headerLeft: {},
   headerRight: {},
   label: {
     fontSize: 9,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#10B981',
     letterSpacing: 2,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -466,9 +464,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(211,47,47,0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: '#D32F2F',
+    borderColor: '#10B981',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -500,18 +498,18 @@ const styles = StyleSheet.create({
   },
   botMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(15, 15, 18, 0.92)',
-    borderColor: 'rgba(211, 47, 47, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: 'rgba(211, 47, 47, 0.22)',
-    borderColor: '#D32F2F',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderColor: '#10B981',
   },
   disclaimerMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(10, 10, 10, 0.75)',
-    borderColor: 'rgba(128, 128, 128, 0.2)',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderColor: 'rgba(148, 163, 184, 0.15)',
   },
   coachLabel: {
     flexDirection: 'row',
@@ -523,7 +521,7 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#D32F2F',
+    color: '#10B981',
     letterSpacing: 1.5,
   },
   messageText: {
@@ -560,7 +558,7 @@ const styles = StyleSheet.create({
   typingDot: {
     width: 8,
     height: 8,
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#10B981',
     borderRadius: 4,
   },
 
@@ -576,9 +574,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(30, 30, 35, 0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(211, 47, 47, 0.4)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
@@ -596,13 +594,13 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(211, 47, 47, 0.2)',
+    borderTopColor: 'rgba(16, 185, 129, 0.15)',
   },
   input: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: 'rgba(211, 47, 47, 0.4)',
-    backgroundColor: 'rgba(15, 15, 20, 0.95)',
+    borderColor: 'rgba(16, 185, 129, 0.30)',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     color: '#FFF',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
@@ -614,7 +612,7 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#10B981',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

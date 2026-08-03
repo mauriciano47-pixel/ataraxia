@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
 
@@ -77,6 +77,15 @@ export const DEFAULT_LOG: DailyLog = {
 const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
 const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
 
+type UserProfile = {
+  userName: string;
+  userMetrics: UserMetrics;
+  targetCalories: number;
+  stepGoal: number;
+  stoicAvatarUri: string;
+  smartDevice?: SmartDeviceState;
+};
+
 interface DailyLogContextType {
   log: DailyLog;
   loading: boolean;
@@ -108,106 +117,127 @@ interface DailyLogContextType {
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
 
-export function DailyLogProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [log, setLog] = useState<DailyLog>(DEFAULT_LOG);
-  const [loading, setLoading] = useState(true);
-  const [isLocalMode, setIsLocalMode] = useState(false);
+function loadLocalDailyLog(targetDate: string): DailyLog {
+  let baseLog: DailyLog = { ...DEFAULT_LOG };
 
-  const today = new Date().toISOString().split('T')[0];
-  const logRef = useRef<DailyLog>(DEFAULT_LOG);
-
-  // Reader con SafeStorage
-  const loadLocalState = (): DailyLog => {
-    let baseLog: DailyLog = { ...DEFAULT_LOG };
-
-    try {
-      // 1. Load global profile
-      const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
-      if (savedProfile) {
-        const profileData = JSON.parse(savedProfile);
-        baseLog = { ...baseLog, ...profileData };
-      }
-
-      // 2. Load avatar
-      const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);
-      if (savedAvatar) {
-        baseLog.stoicAvatarUri = savedAvatar;
-      }
-
-      // 3. Load today log
-      const savedToday = SafeStorage.getItem(`ataraxia_log_${today}`);
-      if (savedToday) {
-        const todayData = JSON.parse(savedToday);
-        const { stoicAvatarUri, ...todayDataClean } = todayData;
-        baseLog = {
-          ...baseLog,
-          ...todayDataClean,
-          ...(stoicAvatarUri ? { stoicAvatarUri } : {}),
-        };
-      }
-    } catch (e) {
-      console.warn("[DailyLogContext] Error cargando estado:", e);
+  try {
+    const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
+    if (savedProfile) {
+      const profileData = JSON.parse(savedProfile);
+      baseLog = { ...baseLog, ...profileData };
     }
 
-    return baseLog;
-  };
+    const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);
+    if (savedAvatar) {
+      baseLog.stoicAvatarUri = savedAvatar;
+    }
 
-  // Saver con SafeStorage
-  const saveLocalState = (currentLog: DailyLog) => {
-    try {
-      const profileCore = {
-        userName: currentLog.userName,
-        userMetrics: currentLog.userMetrics,
-        targetCalories: currentLog.targetCalories,
-        stepGoal: currentLog.stepGoal,
-        smartDevice: currentLog.smartDevice,
+    const savedToday = SafeStorage.getItem(`ataraxia_log_${targetDate}`);
+    if (savedToday) {
+      const todayData = JSON.parse(savedToday);
+      const { stoicAvatarUri, ...todayDataClean } = todayData;
+      baseLog = {
+        ...baseLog,
+        ...todayDataClean,
+        ...(stoicAvatarUri ? { stoicAvatarUri } : {}),
       };
-      SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
-
-      const { stoicAvatarUri, ...cleanLog } = currentLog;
-      SafeStorage.setItem(`ataraxia_log_${today}`, JSON.stringify(cleanLog));
-
-      if (currentLog.stoicAvatarUri) {
-        SafeStorage.setItem(AVATAR_STORAGE_KEY, currentLog.stoicAvatarUri);
-      }
-    } catch (e) {
-      console.warn("[DailyLogContext] Error guardando estado:", e);
     }
-  };
+  } catch (e) {
+    console.warn("[DailyLogContext] Error cargando estado:", e);
+  }
 
-  // Initial load
+  return baseLog;
+}
+
+function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
+  try {
+    const profileCore = {
+      userName: currentLog.userName,
+      userMetrics: currentLog.userMetrics,
+      targetCalories: currentLog.targetCalories,
+      stepGoal: currentLog.stepGoal,
+      smartDevice: currentLog.smartDevice,
+    };
+    SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
+
+    const { stoicAvatarUri, ...cleanLog } = currentLog;
+    SafeStorage.setItem(`ataraxia_log_${targetDate}`, JSON.stringify(cleanLog));
+
+    if (currentLog.stoicAvatarUri) {
+      SafeStorage.setItem(AVATAR_STORAGE_KEY, currentLog.stoicAvatarUri);
+    }
+  } catch (e) {
+    console.warn("[DailyLogContext] Error guardando estado:", e);
+  }
+}
+
+export function DailyLogProvider({ children }: { children: React.ReactNode }) {
+  const today = new Date().toISOString().split('T')[0];
+  const [user, setUser] = useState<User | null>(null);
+  const [log, setLog] = useState<DailyLog>(() => loadLocalDailyLog(today));
+  const loading = false;
+  const [isLocalMode, setIsLocalMode] = useState(() => !auth);
+
+  const logRef = useRef<DailyLog>(log);
+  const prevTodayRef = useRef(today);
+
   useEffect(() => {
-    const initial = loadLocalState();
-    logRef.current = initial;
-    setLog(initial);
-    setLoading(false);
+    if (prevTodayRef.current !== today) {
+      prevTodayRef.current = today;
+      const initial = loadLocalDailyLog(today);
+      logRef.current = initial;
+      setLog(initial);
+    }
   }, [today]);
 
-  // Auth setup
   useEffect(() => {
     if (!auth) {
-      setIsLocalMode(true);
       return;
     }
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+
+        if (db) {
+          try {
+            const profileDocRef = doc(db, `users/${currentUser.uid}/meta/profile`);
+            const profileSnap = await getDoc(profileDocRef);
+            if (profileSnap.exists()) {
+              const cloudProfile = profileSnap.data() as UserProfile;
+              const current = logRef.current;
+              const merged: DailyLog = {
+                ...current,
+                userName: cloudProfile.userName || current.userName,
+                userMetrics: { ...DEFAULT_USER_METRICS, ...(cloudProfile.userMetrics || {}) },
+                targetCalories: cloudProfile.targetCalories || current.targetCalories,
+                stepGoal: cloudProfile.stepGoal || current.stepGoal,
+                stoicAvatarUri: cloudProfile.stoicAvatarUri || current.stoicAvatarUri,
+                smartDevice: cloudProfile.smartDevice
+                  ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
+                  : current.smartDevice,
+              };
+              logRef.current = merged;
+              setLog(merged);
+              saveLocalDailyLog(today, merged);
+            }
+          } catch (e) {
+            console.warn('[DailyLogContext] No se pudo cargar el perfil de Firestore:', e);
+          }
+        }
       } else {
         try {
           if (auth) await signInAnonymously(auth);
         } catch (error) {
-          console.warn("Firebase Auth fallback local:", error);
+          console.warn('Firebase Auth fallback local:', error);
           setIsLocalMode(true);
         }
       }
     });
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [today]);
 
-  // Smart non-destructive merge helper
   const smartMerge = (local: DailyLog, remote: DailyLog): DailyLog => {
     return {
       ...DEFAULT_LOG,
@@ -242,7 +272,6 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // Firestore sync listener
   useEffect(() => {
     if (!user || isLocalMode || !db) return;
 
@@ -259,12 +288,11 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
           const merged = smartMerge(currentLocal, remoteData);
           logRef.current = merged;
           setLog(merged);
-          saveLocalState(merged);
-          // Always keep cloud in sync with merged maximums
+          saveLocalDailyLog(today, merged);
           setDoc(docRef, merged, { merge: true }).catch(console.error);
         } else {
           setDoc(docRef, currentLocal, { merge: true }).catch(console.error);
-          saveLocalState(currentLocal);
+          saveLocalDailyLog(today, currentLocal);
         }
       },
       (error) => {
@@ -294,7 +322,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     logRef.current = newLog;
     setLog(newLog);
-    saveLocalState(newLog);
+    saveLocalDailyLog(today, newLog);
 
     if (user && db && !isLocalMode) {
       const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
@@ -306,6 +334,16 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const saveProfileToFirestore = useCallback(async (profileData: Partial<UserProfile>) => {
+    if (!user || !db || isLocalMode) return;
+    try {
+      const profileDocRef = doc(db, `users/${user.uid}/meta/profile`);
+      await setDoc(profileDocRef, profileData, { merge: true });
+    } catch (e) {
+      console.warn('[DailyLogContext] Error guardando perfil en Firestore:', e);
+    }
+  }, [user, isLocalMode]);
+
   const saveFullProfile = (data: {
     userName: string;
     age: number;
@@ -316,14 +354,22 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     stoicAvatarUri?: string;
   }) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
+    const newMetrics: UserMetrics = {
+      ...currentMetrics,
+      age: data.age,
+      weightKg: data.weightKg,
+      heightCm: data.heightCm,
+    };
     updateLog({
       userName: data.userName.trim() || 'Ciudadano Prokopton',
-      userMetrics: {
-        ...currentMetrics,
-        age: data.age,
-        weightKg: data.weightKg,
-        heightCm: data.heightCm,
-      },
+      userMetrics: newMetrics,
+      targetCalories: data.targetCalories,
+      stepGoal: data.stepGoal,
+      ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
+    });
+    saveProfileToFirestore({
+      userName: data.userName.trim() || 'Ciudadano Prokopton',
+      userMetrics: newMetrics,
       targetCalories: data.targetCalories,
       stepGoal: data.stepGoal,
       ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
@@ -400,20 +446,19 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
   const setStoicAvatar = (uri: string) => {
     updateLog({ stoicAvatarUri: uri });
+    saveProfileToFirestore({ stoicAvatarUri: uri });
   };
 
   const setUserName = (name: string) => {
     updateLog({ userName: name });
+    saveProfileToFirestore({ userName: name });
   };
 
   const updateSmartDevice = (deviceUpdates: Partial<SmartDeviceState>) => {
     const currentDevice = logRef.current.smartDevice || DEFAULT_LOG.smartDevice!;
-    updateLog({
-      smartDevice: {
-        ...currentDevice,
-        ...deviceUpdates,
-      },
-    });
+    const newDevice = { ...currentDevice, ...deviceUpdates };
+    updateLog({ smartDevice: newDevice });
+    saveProfileToFirestore({ smartDevice: newDevice });
   };
 
   return (

@@ -37,7 +37,7 @@ export function AnimatedSplashOverlay() {
       setTimeout(() => setVisible(false), DURATION);
     };
     start();
-  }, []);
+  }, [progress]);
 
   if (!visible) return null;
 
@@ -92,9 +92,9 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#D32F2F',
+    borderColor: '#10B981',
     marginBottom: 20,
-    shadowColor: '#D32F2F',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   motto: {
     fontSize: 16,
-    color: '#D32F2F',
+    color: '#34D399',
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 12,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   subMotto: {
     fontSize: 11,
-    color: '#888888',
+    color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: 2,
     textAlign: 'center',
@@ -133,12 +133,12 @@ const styles = StyleSheet.create({
   progressTrack: {
     width: 140,
     height: 3,
-    backgroundColor: '#222222',
+    backgroundColor: '#1E293B',
     marginTop: 32,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#10B981',
   },
 });

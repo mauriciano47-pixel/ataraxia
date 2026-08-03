@@ -8,7 +8,7 @@ interface IconProps {
 }
 
 export function HomeTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D32F2F';
+  const colorStr = typeof color === 'string' ? color : '#0052FF';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -17,18 +17,18 @@ export function HomeTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#D32F2F' ? 'rgba(211, 47, 47, 0.15)' : 'none'}
+        fill={colorStr === '#0052FF' ? 'rgba(0, 82, 255, 0.12)' : 'none'}
       />
     </Svg>
   );
 }
 
 export function BarbellTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D32F2F';
+  const colorStr = typeof color === 'string' ? color : '#0052FF';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M6 5V19M18 5V19M4 8H8M16 8H20M2 11H6M18 11H22M4 16H8M16 16H20M8 12H16"
+        d="M6 5V19M18 5V19M4 8H8M16 8H20M2 11H6M18 11H24M4 16H8M16 16H20M8 12H16"
         stroke={colorStr}
         strokeWidth="2"
         strokeLinecap="round"
@@ -39,7 +39,7 @@ export function BarbellTabIcon({ color, size = 24 }: IconProps) {
 }
 
 export function NutritionTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D32F2F';
+  const colorStr = typeof color === 'string' ? color : '#0052FF';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -48,7 +48,7 @@ export function NutritionTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#D32F2F' ? 'rgba(211, 47, 47, 0.15)' : 'none'}
+        fill={colorStr === '#0052FF' ? 'rgba(0, 82, 255, 0.12)' : 'none'}
       />
       <Path
         d="M12 6V12M12 12L15 9"
@@ -61,7 +61,7 @@ export function NutritionTabIcon({ color, size = 24 }: IconProps) {
 }
 
 export function JournalTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D32F2F';
+  const colorStr = typeof color === 'string' ? color : '#00C6FF';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -76,14 +76,14 @@ export function JournalTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#D32F2F' ? 'rgba(211, 47, 47, 0.15)' : 'none'}
+        fill={colorStr === '#00C6FF' ? 'rgba(0, 198, 255, 0.12)' : 'none'}
       />
     </Svg>
   );
 }
 
 export function ProgressTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D32F2F';
+  const colorStr = typeof color === 'string' ? color : '#0052FF';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

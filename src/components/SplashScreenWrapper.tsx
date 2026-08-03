@@ -31,7 +31,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           <Image source={require('../../assets/images/icon.png')} style={styles.logoImage} resizeMode="cover" />
         </View>
         <Text style={styles.title}>ATARAXIA</Text>
-        <Text style={styles.motto}>"Visto desde arriba, todo pesa menos"</Text>
+        <Text style={styles.motto}>&quot;Visto desde arriba, todo pesa menos&quot;</Text>
         <Text style={styles.subMotto}>🏛️ MEMENTO MORI • IMPERIUM ESTOICO 🏛️</Text>
       </View>
     </View>
@@ -56,11 +56,11 @@ const styles = StyleSheet.create({
   logoFrame: {
     borderRadius: 65,
     padding: 3,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderWidth: 2,
-    borderColor: '#D4AF37', // Oro Imperial
+    borderColor: '#10B981', // Esmeralda Fit
     marginBottom: 20,
-    shadowColor: '#D4AF37',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   motto: {
     fontSize: 16,
-    color: '#D32F2F',
+    color: '#34D399',
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 12,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   subMotto: {
     fontSize: 10.5,
-    color: '#D4AF37', // Oro Imperial
+    color: '#10B981', // Esmeralda Fit
     textTransform: 'uppercase',
     letterSpacing: 2,
     textAlign: 'center',

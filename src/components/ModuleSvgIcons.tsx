@@ -1,12 +1,12 @@
 import React from 'react';
-import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Polyline } from 'react-native-svg';
 
 interface IconProps {
   color?: string;
   size?: number;
 }
 
-export function FlameIcon({ color = '#D32F2F', size = 20 }: IconProps) {
+export function FlameIcon({ color = '#10B981', size = 20 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -71,7 +71,7 @@ export function SettingsIcon({ color = '#A0AEC0', size = 16 }: IconProps) {
   );
 }
 
-export function HeartIcon({ color = '#D32F2F', size = 18 }: IconProps) {
+export function HeartIcon({ color = '#10B981', size = 18 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -128,7 +128,7 @@ export function PersonIcon({ color = '#FFF', size = 24 }: IconProps) {
   );
 }
 
-export function CheckmarkIcon({ color = '#D32F2F', size = 22 }: IconProps) {
+export function CheckmarkIcon({ color = '#10B981', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" fill={color} fillOpacity="0.2" />

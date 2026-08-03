@@ -1,25 +1,27 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { DailyLog } from '@/context/DailyLogContext';
 
 export { useDailyLog, DailyLogProvider, DailyLog, UserMetrics, SmartDeviceState, DEFAULT_LOG, DEFAULT_USER_METRICS } from '@/context/DailyLogContext';
 
 export function useWeekHistory(days: number = 7) {
   const [weekLogs, setWeekLogs] = useState<(DailyLog & { date: string })[]>([]);
-  const [loadingWeek, setLoadingWeek] = useState(true);
+  const [loadingWeek, setLoadingWeek] = useState(Boolean(auth && db));
 
   useEffect(() => {
-    const fetchWeek = async () => {
-      if (!auth || !db || !auth.currentUser) {
-        setLoadingWeek(false);
-        return;
-      }
+    if (!auth || !db) {
+      return;
+    }
 
+    const currentAuth = auth;
+    const currentDb = db;
+
+    const fetchWeek = async (user: User) => {
       try {
         const q = query(
-          collection(db, `users/${auth.currentUser.uid}/daily_logs`),
+          collection(currentDb, `users/${user.uid}/daily_logs`),
           orderBy('__name__', 'desc'),
           limit(days)
         );
@@ -37,13 +39,8 @@ export function useWeekHistory(days: number = 7) {
       }
     };
 
-    if (!auth) {
-      setLoadingWeek(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) fetchWeek();
+    const unsubscribe = onAuthStateChanged(currentAuth, (user) => {
+      if (user) fetchWeek(user);
       else setLoadingWeek(false);
     });
     return () => unsubscribe();
@@ -54,18 +51,20 @@ export function useWeekHistory(days: number = 7) {
 
 export function useHistoryLog() {
   const [historyMap, setHistoryMap] = useState<boolean[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(Boolean(auth && db));
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      if (!auth || !db || !auth.currentUser) {
-        setLoadingHistory(false);
-        return;
-      }
+    if (!auth || !db) {
+      return;
+    }
 
+    const currentAuth = auth;
+    const currentDb = db;
+
+    const fetchHistory = async (user: User) => {
       try {
         const q = query(
-          collection(db, `users/${auth.currentUser.uid}/daily_logs`),
+          collection(currentDb, `users/${user.uid}/daily_logs`),
           orderBy('__name__', 'desc'),
           limit(30)
         );
@@ -91,13 +90,8 @@ export function useHistoryLog() {
       }
     };
 
-    if (!auth) {
-      setLoadingHistory(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) fetchHistory();
+    const unsubscribe = onAuthStateChanged(currentAuth, (user) => {
+      if (user) fetchHistory(user);
       else setLoadingHistory(false);
     });
     return () => unsubscribe();

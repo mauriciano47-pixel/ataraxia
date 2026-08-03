@@ -5,49 +5,47 @@ import { Spacing } from '@/constants/theme';
 
 export function PwaInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return true;
 
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-
-    // 1. Check if user already installed or dismissed the banner
     try {
       const alreadyInstalled = localStorage.getItem('ataraxia_pwa_installed') === 'true';
       const alreadyDismissed = localStorage.getItem('ataraxia_pwa_dismissed') === 'true';
-      if (alreadyInstalled || alreadyDismissed) {
-        setIsDismissed(true);
-        return;
-      }
-    } catch (e) {
-      // Storage access error fallback
+      if (alreadyInstalled || alreadyDismissed) return true;
+    } catch {
+      // Storage access fallback
     }
 
-    // 2. Check if app is running in Standalone PWA mode
-    const isStandalone = 
-      window.matchMedia('(display-mode: standalone)').matches || 
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true ||
       document.referrer.includes('android-app://');
 
     if (isStandalone) {
-      setIsDismissed(true);
       try {
         localStorage.setItem('ataraxia_pwa_installed', 'true');
-      } catch (e) {}
-      return;
+      } catch {}
+      return true;
     }
 
-    // 3. Listen for browser install prompt
+    return false;
+  });
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || isDismissed) return;
+
+    // Listen for browser install prompt
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
 
-    // 4. Listen for successful installation event
+    // Listen for successful installation event
     const handleAppInstalled = () => {
       setIsDismissed(true);
       try {
         localStorage.setItem('ataraxia_pwa_installed', 'true');
-      } catch (e) {}
+      } catch {}
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -57,7 +55,7 @@ export function PwaInstallButton() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [isDismissed]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -67,7 +65,7 @@ export function PwaInstallButton() {
         setIsDismissed(true);
         try {
           localStorage.setItem('ataraxia_pwa_installed', 'true');
-        } catch (e) {}
+        } catch {}
       }
       setDeferredPrompt(null);
     } else {
@@ -79,7 +77,7 @@ export function PwaInstallButton() {
     setIsDismissed(true);
     try {
       localStorage.setItem('ataraxia_pwa_dismissed', 'true');
-    } catch (e) {}
+    } catch {}
   };
 
   if (Platform.OS !== 'web' || isDismissed) return null;
@@ -108,9 +106,9 @@ const styles = StyleSheet.create({
   bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(211, 47, 47, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1.5,
-    borderColor: '#D32F2F',
+    borderColor: '#10B981',
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -119,7 +117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   btnText: {
-    color: '#FFF',
+    color: '#F8FAFC',
     fontSize: 11,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -129,7 +127,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderLeftWidth: 1,
-    borderLeftColor: 'rgba(211, 47, 47, 0.4)',
+    borderLeftColor: 'rgba(16, 185, 129, 0.3)',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   closeText: {

@@ -3,26 +3,36 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: { 
-    text: '#FFFFFF', 
-    background: '#050507', 
-    backgroundElement: 'rgba(18, 18, 24, 0.88)', 
-    backgroundSelected: 'rgba(212, 175, 55, 0.3)', 
-    textSecondary: '#A0A4B0', 
-    accent: '#D32F2F', 
-    gold: '#D4AF37',
-    goldGlow: 'rgba(212, 175, 55, 0.15)',
-    crimsonGlow: 'rgba(211, 47, 47, 0.2)',
+    text: '#0F172A', 
+    background: '#F8FAFC', 
+    backgroundElement: 'rgba(255, 255, 255, 0.88)', 
+    backgroundSelected: 'rgba(0, 82, 255, 0.12)', 
+    textSecondary: '#64748B', 
+    accent: '#0052FF', 
+    electricBlue: '#0052FF',
+    sapphire: '#0066FF',
+    cyan: '#00C6FF',
+    emerald: '#0052FF',
+    mint: '#00C6FF',
+    gold: '#0052FF',
+    goldGlow: 'rgba(0, 82, 255, 0.12)',
+    crimsonGlow: 'rgba(0, 198, 255, 0.15)',
   },
-  dark: { // Imperial Marble & Crimson Gold Theme
-    text: '#FFFFFF', 
-    background: '#050507', 
-    backgroundElement: 'rgba(18, 18, 24, 0.88)', 
-    backgroundSelected: 'rgba(212, 175, 55, 0.3)', 
-    textSecondary: '#A0A4B0', 
-    accent: '#D32F2F', 
-    gold: '#D4AF37',
-    goldGlow: 'rgba(212, 175, 55, 0.15)',
-    crimsonGlow: 'rgba(211, 47, 47, 0.2)',
+  dark: { // Pearl Luxury & Electric Blue Style
+    text: '#0F172A', 
+    background: '#F8FAFC', 
+    backgroundElement: 'rgba(255, 255, 255, 0.88)', 
+    backgroundSelected: 'rgba(0, 82, 255, 0.12)', 
+    textSecondary: '#64748B', 
+    accent: '#0052FF', 
+    electricBlue: '#0052FF',
+    sapphire: '#0066FF',
+    cyan: '#00C6FF',
+    emerald: '#0052FF',
+    mint: '#00C6FF',
+    gold: '#0052FF',
+    goldGlow: 'rgba(0, 82, 255, 0.12)',
+    crimsonGlow: 'rgba(0, 198, 255, 0.15)',
   },
 } as const;
 
@@ -59,5 +69,4 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const MaxContentWidth = 600;

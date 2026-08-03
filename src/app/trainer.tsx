@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useState } from 'react';
+import { OledBackground } from '@/components/OledBackground';
 
 import { useDailyLog } from '@/hooks/useDailyLog';
 
@@ -71,8 +72,9 @@ export default function TrainerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <OledBackground glowColor="rgba(0, 82, 255, 0.08)">
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         
         <View style={styles.header}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -107,14 +109,9 @@ export default function TrainerScreen() {
                   e.done ? { 
                     backgroundColor: colors.accent, 
                     borderColor: colors.accent,
-                    shadowColor: colors.accent,
-                    shadowOffset: { width: 4, height: 4 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                    elevation: 0
                   } : { 
                     backgroundColor: 'transparent', 
-                    borderColor: colors.backgroundSelected 
+                    borderColor: 'rgba(0, 82, 255, 0.20)' 
                   }
                 ]} />
               </TouchableOpacity>
@@ -130,7 +127,7 @@ export default function TrainerScreen() {
                         key={rpeValue} 
                         style={[
                           styles.rpeButton, 
-                          { borderColor: colors.backgroundSelected },
+                          { borderColor: 'rgba(0, 82, 255, 0.15)' },
                           isSelected && { backgroundColor: colors.accent, borderColor: colors.accent }
                         ]}
                         onPress={() => setRPE(e.id, rpeValue)}
@@ -152,8 +149,9 @@ export default function TrainerScreen() {
           <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Entreno</ThemedText>
         </TouchableOpacity>
 
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </OledBackground>
   );
 }
 
@@ -179,7 +177,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#0052FF',
     letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -190,16 +188,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     fontWeight: '900',
+    color: '#0F172A',
   },
   list: {
     gap: Spacing.three,
   },
   card: {
     padding: Spacing.three,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 82, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.90)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -211,6 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     fontFamily: 'monospace',
+    color: '#0F172A',
   },
   exerciseSets: {
     fontSize: 12,
@@ -220,26 +220,26 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 0,
+    borderRadius: 6,
     borderWidth: 2,
   },
   rpeContainer: {
     marginTop: Spacing.three,
     paddingTop: Spacing.three,
-    borderTopWidth: 2,
-    borderTopColor: '#222222',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 82, 255, 0.08)',
   },
   rpeButton: {
     width: 36,
     height: 36,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 6,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   amorFatiBtn: {
-    borderWidth: 2,
-    borderRadius: 0,
+    borderWidth: 1,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
   finishBtn: {
     marginTop: Spacing.four,
     padding: Spacing.four,
-    borderRadius: 0,
-    borderWidth: 2,
-    borderColor: '#D32F2F',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#0052FF',
     alignItems: 'center',
   }
 });

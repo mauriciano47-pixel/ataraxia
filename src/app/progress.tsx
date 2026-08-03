@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
+import { OledBackground } from '@/components/OledBackground';
 export default function ProgressScreen() {
   const { log, loading } = useDailyLog();
   const { historyMap, loadingHistory } = useHistoryLog();
@@ -28,7 +29,7 @@ export default function ProgressScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <OledBackground glowColor="rgba(0, 191, 255, 0.08)">
       <SafeAreaView style={styles.safeArea}>
         
         <View style={styles.header}>
@@ -74,7 +75,7 @@ export default function ProgressScreen() {
         </ThemedView>
 
       </SafeAreaView>
-    </ThemedView>
+    </OledBackground>
   );
 }
 
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#D32F2F',
+    color: '#10B981',
     letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   },
   todayContainer: {
     borderWidth: 2,
-    borderColor: '#D4AF37', // Oro Imperial
+    borderColor: '#10B981', // Esmeralda Fit
     borderRadius: 6,
   },
   star: {
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.35)', // Oro Imperial
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
   },
 });

@@ -20,11 +20,11 @@ En lugar de usar recompensas dopaminérgicas (likes, rachas coloridas, notificac
 
 Esta aplicación ha sido desarrollada como una aplicación nativa tanto para **Android** como para **iOS** utilizando un stack moderno, reactivo y enfocado en la velocidad:
 
-*   **Framework:** [React Native](https://reactnative.dev/) con [Expo](https://expo.dev/) (Expo Router v3 para navegación basada en archivos).
-*   **Lenguaje:** TypeScript estricto.
-*   **Backend:** Firebase (Firestore para base de datos NoSQL en tiempo real y Firebase Auth para autenticación anónima).
-*   **Inteligencia Artificial:** Google Gemini API (`@google/genai` sdk).
-*   **Notificaciones:** `expo-notifications` programadas localmente.
+* **Framework:** [React Native](https://reactnative.dev/) con [Expo](https://expo.dev/) (Expo Router v3 para navegación basada en archivos).
+* **Lenguaje:** TypeScript estricto.
+* **Backend:** Firebase (Firestore para base de datos NoSQL en tiempo real y Firebase Auth para autenticación anónima).
+* **Inteligencia Artificial:** Google Gemini API (`@google/genai` sdk).
+* **Notificaciones:** `expo-notifications` programadas localmente.
 
 ### Compilación para Android y iOS
 
