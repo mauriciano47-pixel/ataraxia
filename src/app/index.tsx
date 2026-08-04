@@ -15,6 +15,7 @@ import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { StepCounterCard } from '@/components/StepCounterCard';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
+import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 
 // Custom Bell Icon component matching the Cobalt Blue glow of the mockup
 function BellIcon({ color = '#1D64F2', size = 20 }: { color?: string; size?: number }) {
@@ -30,6 +31,7 @@ export default function HoyScreen() {
   const { log, addWater, toggleTraining, saveCheckIn, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
+  const [onboardingVisible, setOnboardingVisible] = useState<boolean>(!log.hasCompletedOnboarding);
   const [energy, setEnergy] = useState<number | null>(null);
   const [sleep, setSleep] = useState<number | null>(null);
 
@@ -214,6 +216,11 @@ export default function HoyScreen() {
           </View>
 
         </Animated.ScrollView>
+
+        <StoicOnboardingModal
+          visible={onboardingVisible || !log.hasCompletedOnboarding}
+          onClose={() => setOnboardingVisible(false)}
+        />
       </SafeAreaView>
     </PearlElectricBackground>
   );

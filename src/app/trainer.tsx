@@ -27,7 +27,8 @@ export default function TrainerScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
 
-  const [ejercicios, setEjercicios] = useState(RUTINA_MOCK);
+  const activeRoutine = log.customRoutine && log.customRoutine.length > 0 ? log.customRoutine : RUTINA_MOCK;
+  const [ejercicios, setEjercicios] = useState(activeRoutine);
   const [isAmorFati, setIsAmorFati] = useState(false);
 
   const toggleDone = (id: string) => {
@@ -67,9 +68,12 @@ export default function TrainerScreen() {
 
   const toggleAmorFati = () => {
     setIsAmorFati(!isAmorFati);
-    setEjercicios(!isAmorFati ? CALISTENIA_MOCK : RUTINA_MOCK);
+    setEjercicios(!isAmorFati ? CALISTENIA_MOCK : activeRoutine);
     Alert.alert("Amor Fati", !isAmorFati ? "No controlas tu entorno, pero controlas tu reacción. Rutina adaptada a peso corporal." : "Volviendo a tu rutina de gimnasio.");
   };
+
+  const durationMin = log.prokoptonProfile?.sessionDurationMinutes || 45;
+  const equipName = log.prokoptonProfile?.equipment === 'gym' ? 'Gimnasio' : log.prokoptonProfile?.equipment === 'home_dumbbell' ? 'Mancuernas en Casa' : 'Calistenia';
 
   return (
     <OledBackground glowColor="rgba(0, 82, 255, 0.08)">
@@ -79,8 +83,11 @@ export default function TrainerScreen() {
         <View style={styles.header}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
             <View>
-              <ThemedText style={styles.label}>HOY</ThemedText>
-              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia" : "Tren inferior"}</ThemedText>
+              <ThemedText style={styles.label}>HOY — {equipName.toUpperCase()}</ThemedText>
+              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia Espartana" : "Rutina Personalizada IA"}</ThemedText>
+              <ThemedText style={{fontSize: 12, color: colors.accent, marginTop: 2, fontWeight: 'bold'}}>
+                ⏱️ Tiempo estimado: {durationMin} min | {ejercicios.length} ejercicios
+              </ThemedText>
             </View>
             <TouchableOpacity 
               style={[styles.amorFatiBtn, { borderColor: colors.accent, backgroundColor: isAmorFati ? colors.accent : 'transparent' }]}

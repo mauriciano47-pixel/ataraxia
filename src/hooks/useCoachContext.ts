@@ -96,11 +96,25 @@ export function useCoachContext(): CoachContext {
   const contextSummary = useMemo(() => {
     const lines: string[] = [];
 
+    lines.push('=== FICHA TÉCNICA DEL ATLETA PROKOPTON ===');
+    lines.push(`Nombre: ${log.userName || 'Ciudadano Prokopton'}`);
+    if (log.prokoptonProfile) {
+      const p = log.prokoptonProfile;
+      lines.push(`Enfoque Principal: ${p.focus === 'strength' ? 'Fuerza Espartana & Hipertrofia' : p.focus === 'fat_loss' ? 'Recomposición & Déficit' : p.focus === 'longevity' ? 'Resistencia & Longevidad' : 'Claridad Mental & Estoicismo'}`);
+      lines.push(`Equipamiento: ${p.equipment === 'gym' ? 'Gimnasio Completo' : p.equipment === 'home_dumbbell' ? 'Mancuernas en Casa' : 'Calistenia (Peso Corporal)'}`);
+      lines.push(`Sesión Objetivo: ${p.daysPerWeek} días/semana | ${p.sessionDurationMinutes} minutos por sesión`);
+      lines.push(`Nutrición Objetivo: ${p.dietPreference}`);
+      lines.push(`Biometría: Edad ${p.age} años | Peso Actual: ${p.weightKg} kg | Meta: ${p.targetWeightKg} kg | Altura: ${p.heightCm} cm`);
+    } else if (log.userMetrics) {
+      lines.push(`Biometría: Edad ${log.userMetrics.age} | Peso ${log.userMetrics.weightKg}kg | Altura ${log.userMetrics.heightCm}cm`);
+    }
+
+    lines.push('');
     lines.push('=== ESTADO ACTUAL DEL USUARIO HOY ===');
     lines.push(`Entrenamiento: ${log.trainingCompleted ? 'COMPLETADO' : 'PENDIENTE'}`);
     lines.push(`Agua: ${log.waterLitres.toFixed(1)}L (meta: 2L)`);
     lines.push(`Comidas registradas: ${log.mealsLogged} (meta: 3)`);
-    lines.push(`Calorías: ${log.totalCalories} (meta: 2100)`);
+    lines.push(`Calorías: ${log.totalCalories} (meta: ${log.targetCalories || 2100})`);
     if (log.macros) {
       lines.push(`Macros: P:${log.macros.protein}g C:${log.macros.carbs}g G:${log.macros.fats}g`);
     }

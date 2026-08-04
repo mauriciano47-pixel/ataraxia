@@ -11,13 +11,14 @@ import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { OledBackground } from '@/components/OledBackground';
+import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
   { id: 'seneca', name: 'Séneca', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Seneca_Prado.jpg/330px-Seneca_Prado.jpg' },
   { id: 'epictetus', name: 'Epicteto', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Epicteti_Enchiridion_Latin_1596.jpg/330px-Epicteti_Enchiridion_Latin_1596.jpg' },
 ];
-export default function ProfileScreen() {
+export default function ProfileScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
@@ -26,6 +27,7 @@ const STOIC_PRESET_AVATARS = [
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   // Editable fields
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
@@ -203,6 +205,23 @@ const STOIC_PRESET_AVATARS = [
               <ThemedText style={styles.rowLabel}>Meta de Pasos Diarios</ThemedText>
               <ThemedText style={[styles.rowValue, { color: colors.accent, fontWeight: 'bold' }]}>{log.stepGoal || 10000} pasos</ThemedText>
             </View>
+
+            <TouchableOpacity
+              style={{
+                marginTop: 12,
+                backgroundColor: 'rgba(212, 175, 55, 0.12)',
+                borderWidth: 1,
+                borderColor: '#D4AF37',
+                borderRadius: 10,
+                paddingVertical: 12,
+                alignItems: 'center',
+              }}
+              onPress={() => setShowOnboardingModal(true)}
+            >
+              <ThemedText style={{ color: '#D4AF37', fontSize: 13, fontWeight: 'bold' }}>
+                🏛️ Calibrar Ficha del Prokopton (Escáner IA)
+              </ThemedText>
+            </TouchableOpacity>
           </ThemedView>
 
           {/* Sección de Preferencias */}
@@ -353,6 +372,11 @@ const STOIC_PRESET_AVATARS = [
           </View>
         </View>
       </Modal>
+
+      <StoicOnboardingModal
+        visible={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+      />
 
       </SafeAreaView>
     </OledBackground>

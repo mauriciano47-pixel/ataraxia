@@ -3,6 +3,7 @@ import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
+import { ProkoptonProfile, CustomExercise } from '@/types/onboarding';
 
 export interface UserMetrics {
   weightKg: number;
@@ -36,6 +37,9 @@ export interface DailyLog {
   stoicAvatarUri?: string;
   userName?: string;
   smartDevice?: SmartDeviceState;
+  prokoptonProfile?: ProkoptonProfile;
+  customRoutine?: CustomExercise[];
+  hasCompletedOnboarding?: boolean;
   macros: {
     protein: number;
     carbs: number;
@@ -113,6 +117,8 @@ interface DailyLogContextType {
   setStoicAvatar: (uri: string) => void;
   setUserName: (name: string) => void;
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
+  saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
+  resetOnboarding: () => void;
 }
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
@@ -461,6 +467,40 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveProfileToFirestore({ smartDevice: newDevice });
   };
 
+  const saveOnboardingProfile = (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => {
+    const updatedMetrics: UserMetrics = {
+      weightKg: profile.weightKg,
+      heightCm: profile.heightCm,
+      age: profile.age,
+      gender: 'male',
+      activityLevel: 'moderate',
+      goal: profile.dietPreference === 'deficit' ? 'deficit' : profile.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
+    };
+
+    updateLog({
+      userName: profile.userName,
+      userMetrics: updatedMetrics,
+      targetCalories: targetCals,
+      prokoptonProfile: profile,
+      customRoutine: routine,
+      hasCompletedOnboarding: true,
+    });
+
+    saveProfileToFirestore({
+      userName: profile.userName,
+      userMetrics: updatedMetrics,
+      targetCalories: targetCals,
+    });
+  };
+
+  const resetOnboarding = () => {
+    updateLog({
+      hasCompletedOnboarding: false,
+      prokoptonProfile: undefined,
+      customRoutine: undefined,
+    });
+  };
+
   return (
     <DailyLogContext.Provider
       value={{
@@ -482,6 +522,8 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         setStoicAvatar,
         setUserName,
         updateSmartDevice,
+        saveOnboardingProfile,
+        resetOnboarding,
       }}
     >
       {children}
