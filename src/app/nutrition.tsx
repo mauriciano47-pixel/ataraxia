@@ -23,10 +23,12 @@ interface AnalysisResult {
   fats: number;
   fiber: number;
   sodium: number;
+  nutrientDensityScore?: number; // 1-10
+  verdict?: string; // Consejo socrático
 }
 
 export default function NutritionScreen() {
-  const { log, logMealWithMacros, updateUserMetrics } = useDailyLog();
+  const { log, logMealWithMacros, logMealWithEnrichedMacros, updateUserMetrics } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
 
@@ -42,7 +44,12 @@ export default function NutritionScreen() {
 
   const goalCalories = log.targetCalories || 2200;
   const currentCalories = log.totalCalories || 0;
-  const calPercent = Math.min((currentCalories / goalCalories) * 100, 100);
+
+  // Rango calórico flexible (+/- 100 kcal)
+  const rangeMin = log.targetCaloriesMin || goalCalories - 100;
+  const rangeMax = log.targetCaloriesMax || goalCalories + 100;
+
+  const isInRange = currentCalories >= rangeMin && currentCalories <= rangeMax;
 
   const macros = {
     protein: { current: log.macros?.protein || 0, goal: 160 },
@@ -110,7 +117,7 @@ export default function NutritionScreen() {
     setIsAnalyzing(true);
     try {
       if (!ai) {
-        // Fallback simulated detailed analysis if Gemini key not set locally
+        // Fallback simulado enriquecido si la key no está presente localmente
         setTimeout(() => {
           const fallbackData: AnalysisResult = {
             dishName: "Plato Proteico Templado (Pollo, Arroz Integral & Vegetales)",
@@ -120,7 +127,9 @@ export default function NutritionScreen() {
             carbs: 52,
             fats: 14,
             fiber: 7,
-            sodium: 420
+            sodium: 420,
+            nutrientDensityScore: 9,
+            verdict: "Excelente densidad de micronutrientes y fibra. Mantén este estándar para optimizar tu síntesis proteica."
           };
           setLastAnalysis(fallbackData);
           setIsAnalyzing(false);
@@ -137,11 +146,13 @@ export default function NutritionScreen() {
   "carbs": 50,
   "fats": 15,
   "fiber": 6,
-  "sodium": 350
+  "sodium": 350,
+  "nutrientDensityScore": 8,
+  "verdict": "Consejo socrático constructivo y positivo sobre cómo optimizar este alimento para el metabolismo y la digestión"
 }`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           { inlineData: { data: base64String, mimeType: 'image/jpeg' } },
           prompt,
@@ -164,7 +175,9 @@ export default function NutritionScreen() {
         carbs: 45,
         fats: 12,
         fiber: 5,
-        sodium: 300
+        sodium: 300,
+        nutrientDensityScore: 8,
+        verdict: "Aporte energético balanceado para tus requerimientos del día."
       });
     } finally {
       setIsAnalyzing(false);
@@ -173,7 +186,14 @@ export default function NutritionScreen() {
 
   const handleConfirmAnalysis = () => {
     if (!lastAnalysis) return;
-    logMealWithMacros(lastAnalysis.calories, lastAnalysis.protein, lastAnalysis.carbs, lastAnalysis.fats);
+    logMealWithEnrichedMacros(
+      lastAnalysis.calories, 
+      lastAnalysis.protein, 
+      lastAnalysis.carbs, 
+      lastAnalysis.fats, 
+      lastAnalysis.nutrientDensityScore || 8, 
+      lastAnalysis.verdict
+    );
     Alert.alert("Registrado en el Templo", `${lastAnalysis.dishName} (+${lastAnalysis.calories} kcal) agregado a tu nutrición diaria.`);
     setLastAnalysis(null);
     setScannedImageUri(null);
@@ -209,231 +229,195 @@ export default function NutritionScreen() {
             onUpdateMetrics={updateUserMetrics}
           />
 
-          {/* Calorías totales */}
+          {/* Calorías totales y Rango Flexible (Científico) */}
           <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <View>
-                <ThemedText style={{ fontSize: 12, color: colors.textSecondary }}>Calorías ingeridas hoy</ThemedText>
-                <ThemedText style={{ fontSize: 24, fontFamily: 'serif' }}>{currentCalories} <ThemedText style={{ fontSize: 14, color: colors.textSecondary }}>/ {goalCalories} kcal</ThemedText></ThemedText>
+                <ThemedText style={{ fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Calorías Ingeridas (Rango Flexible ±100 kcal)
+                </ThemedText>
+                <ThemedText style={{ fontSize: 24, fontFamily: 'serif', marginTop: 2 }}>
+                  {currentCalories} <ThemedText style={{ fontSize: 13, color: colors.textSecondary }}>/ {rangeMin} - {rangeMax} kcal</ThemedText>
+                </ThemedText>
               </View>
-              <ThemedText style={{ fontSize: 12, color: colors.accent, fontWeight: 'bold' }}>Restan {Math.max(goalCalories - currentCalories, 0)} kcal</ThemedText>
-            </View>
-            <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected }]}>
-              <View style={[styles.progressBar, { width: `${calPercent}%`, backgroundColor: colors.accent }]} />
-            </View>
-          </View>
-
-          {/* Macros */}
-          <View style={styles.macrosContainer}>
-            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>PROTEÍNA</ThemedText>
-              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.protein.current}g</ThemedText>
-              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.protein.goal}g</ThemedText>
-              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-                <View style={[styles.progressBar, { width: `${Math.min((macros.protein.current / macros.protein.goal) * 100, 100)}%`, backgroundColor: '#FFFFFF' }]} />
+              <View style={[styles.badgeContainer, { backgroundColor: isInRange ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0, 82, 255, 0.15)' }]}>
+                <ThemedText style={{ fontSize: 11, color: colors.accent, fontWeight: 'bold' }}>
+                  {isInRange ? "🟢 En Zona Óptima" : `Restan ${Math.max(rangeMin - currentCalories, 0)} kcal`}
+                </ThemedText>
               </View>
             </View>
 
-            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>CARBS</ThemedText>
-              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.carbs.current}g</ThemedText>
-              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.carbs.goal}g</ThemedText>
-              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-                <View style={[styles.progressBar, { width: `${Math.min((macros.carbs.current / macros.carbs.goal) * 100, 100)}%`, backgroundColor: '#AAAAAA' }]} />
+            {/* Macros */}
+            <View style={styles.macroRow}>
+              <View style={styles.macroItem}>
+                <ThemedText style={styles.macroValue}>{macros.protein.current}g</ThemedText>
+                <ThemedText style={styles.macroLabel}>Proteína ({macros.protein.goal}g)</ThemedText>
+              </View>
+              <View style={styles.macroItem}>
+                <ThemedText style={styles.macroValue}>{macros.carbs.current}g</ThemedText>
+                <ThemedText style={styles.macroLabel}>Carbos ({macros.carbs.goal}g)</ThemedText>
+              </View>
+              <View style={styles.macroItem}>
+                <ThemedText style={styles.macroValue}>{macros.fats.current}g</ThemedText>
+                <ThemedText style={styles.macroLabel}>Grasas ({macros.fats.goal}g)</ThemedText>
               </View>
             </View>
 
-            <View style={[styles.macroCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' }}>GRASAS</ThemedText>
-              <ThemedText style={{ fontSize: 18, marginTop: 4, fontWeight: 'bold' }}>{macros.fats.current}g</ThemedText>
-              <ThemedText style={{ fontSize: 10, color: '#888' }}>Meta: {macros.fats.goal}g</ThemedText>
-              <View style={[styles.progressContainer, { backgroundColor: colors.backgroundSelected, height: 6 }]}>
-                <View style={[styles.progressBar, { width: `${Math.min((macros.fats.current / macros.fats.goal) * 100, 100)}%`, backgroundColor: '#555555' }]} />
-              </View>
-            </View>
-          </View>
-
-          {/* Sección de Registro por Foto / Oráculo */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>ESCANEAR ALIMENTO (GEMINI VISION HD)</ThemedText>
-
-            <View style={{ flexDirection: 'row', gap: Spacing.three }}>
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]}
-                onPress={handleTakePhoto}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? (
-                  <ActivityIndicator color={colors.text} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="camera-outline" size={20} color={colors.text} />
-                    <ThemedText style={styles.buttonText}>Cámara</ThemedText>
-                  </>
+            {/* Puntuación de Densidad Nutricional Registrada por la IA */}
+            {log.lastNutrientDensityScore && (
+              <View style={styles.densityBanner}>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                  <ThemedText style={{fontSize: 11, color: colors.accent, fontWeight: 'bold'}}>
+                    🌱 Puntuación Densidad IA: {log.lastNutrientDensityScore}/10
+                  </ThemedText>
+                  <ThemedText style={{fontSize: 10, color: colors.textSecondary}}>Último Veredicto</ThemedText>
+                </View>
+                {log.lastNutrientVerdict && (
+                  <ThemedText style={{fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4}}>
+                    {"\""}{log.lastNutrientVerdict}{"\""}
+                  </ThemedText>
                 )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }, isAnalyzing && { opacity: 0.5 }]}
-                onPress={handlePickGallery}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? (
-                  <ActivityIndicator color={colors.text} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="images-outline" size={20} color={colors.text} />
-                    <ThemedText style={styles.buttonText}>Galería</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.accent, borderColor: colors.accent }]}
-                onPress={() => setShowManualModal(true)}
-              >
-                <Ionicons name="create-outline" size={20} color="#FFFFFF" />
-                <ThemedText style={[styles.buttonText, { color: '#FFFFFF' }]}>Manual</ThemedText>
-              </TouchableOpacity>
-            </View>
+              </View>
+            )}
           </View>
 
-          {/* TARJETA DE ANÁLISIS DETALLADO DE COMIDA ESCANEADA */}
+          {/* Botones de Acción (Cámara / Galería / Manual) */}
+          <View style={styles.actionGrid}>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accent }]} onPress={handleTakePhoto}>
+              <Ionicons name="camera" size={24} color="#FFF" />
+              <ThemedText style={styles.actionBtnText}>Escanear con Cámara</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.actionBtnSecondary, { borderColor: colors.accent }]} onPress={handlePickGallery}>
+              <Ionicons name="image" size={22} color={colors.accent} />
+              <ThemedText style={[styles.actionBtnSecondaryText, { color: colors.accent }]}>Elegir de Galería</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.manualBtn} onPress={() => setShowManualModal(true)}>
+              <ThemedText style={{ fontSize: 12, color: colors.textSecondary, textDecorationLine: 'underline' }}>
+                O ingresar nutrientes manualmente
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {/* Estado de Carga / Análisis Gemini */}
           {isAnalyzing && (
-            <View style={[styles.analysisCard, { borderColor: colors.accent }]}>
+            <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={colors.accent} />
-              <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', textAlign: 'center' }}>
-                El Oráculo está juzgando la densidad nutricional y desglosando los macros de tu plato...
+              <ThemedText style={{ marginTop: 12, fontSize: 13, color: colors.accent, fontFamily: 'monospace' }}>
+                Consultando al Oráculo Nutricional Gemini 2.5 Flash...
               </ThemedText>
             </View>
           )}
 
+          {/* Vista previa y resultado del análisis */}
           {lastAnalysis && !isAnalyzing && (
-            <View style={[styles.analysisCard, { borderColor: colors.accent, backgroundColor: colors.backgroundElement }]}>
-              <View style={styles.analysisHeader}>
-                <Ionicons name="checkmark-circle-outline" size={22} color={colors.accent} />
-                <ThemedText style={styles.analysisTitle}>ANÁLISIS DEL ORÁCULO COMPLETADO</ThemedText>
-              </View>
-
+            <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement, borderColor: colors.accent }]}>
               {scannedImageUri && (
-                <Image source={{ uri: scannedImageUri }} style={styles.scannedPreviewImage} resizeMode="cover" />
+                <Image source={{ uri: scannedImageUri }} style={styles.scannedImage} />
+              )}
+              <ThemedText style={styles.dishTitle}>{lastAnalysis.dishName}</ThemedText>
+              <ThemedText style={styles.stoicQuote}>{"\""}{lastAnalysis.stoicEvaluation}{"\""}</ThemedText>
+
+              {lastAnalysis.nutrientDensityScore && (
+                <View style={styles.densityTag}>
+                  <ThemedText style={{fontSize: 12, color: '#FFF', fontWeight: 'bold'}}>
+                    ⭐ Densidad Nutricional: {lastAnalysis.nutrientDensityScore}/10
+                  </ThemedText>
+                </View>
               )}
 
-              <ThemedText style={styles.dishNameText}>{lastAnalysis.dishName}</ThemedText>
-              <ThemedText style={styles.evaluationText}>&ldquo;{lastAnalysis.stoicEvaluation}&rdquo;</ThemedText>
-
-              {/* Desglose de Macronutrientes y Micronutrientes */}
-              <View style={styles.detailGrid}>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>CALORÍAS</ThemedText>
-                  <ThemedText style={[styles.detailVal, { color: colors.accent }]}>{lastAnalysis.calories} kcal</ThemedText>
+              <View style={styles.breakdownGrid}>
+                <View style={styles.breakdownItem}>
+                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.calories}</ThemedText>
+                  <ThemedText style={styles.breakdownTxt}>Kcal</ThemedText>
                 </View>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>PROTEÍNA</ThemedText>
-                  <ThemedText style={styles.detailVal}>{lastAnalysis.protein} g</ThemedText>
+                <View style={styles.breakdownItem}>
+                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.protein}g</ThemedText>
+                  <ThemedText style={styles.breakdownTxt}>Proteína</ThemedText>
                 </View>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>CARBOHIDRATOS</ThemedText>
-                  <ThemedText style={styles.detailVal}>{lastAnalysis.carbs} g</ThemedText>
+                <View style={styles.breakdownItem}>
+                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.carbs}g</ThemedText>
+                  <ThemedText style={styles.breakdownTxt}>Carbos</ThemedText>
                 </View>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>GRASAS</ThemedText>
-                  <ThemedText style={styles.detailVal}>{lastAnalysis.fats} g</ThemedText>
-                </View>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>FIBRA ESTIMADA</ThemedText>
-                  <ThemedText style={styles.detailVal}>{lastAnalysis.fiber} g</ThemedText>
-                </View>
-                <View style={styles.detailItem}>
-                  <ThemedText style={styles.detailLabel}>SODIO ESTIMADO</ThemedText>
-                  <ThemedText style={styles.detailVal}>{lastAnalysis.sodium} mg</ThemedText>
+                <View style={styles.breakdownItem}>
+                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.fats}g</ThemedText>
+                  <ThemedText style={styles.breakdownTxt}>Grasas</ThemedText>
                 </View>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.four }}>
-                <TouchableOpacity
-                  style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
-                  onPress={handleConfirmAnalysis}
-                >
-                  <ThemedText style={styles.confirmBtnText}>CONFIRMAR Y AGREGAR AL TEMPLO</ThemedText>
-                </TouchableOpacity>
+              {lastAnalysis.verdict && (
+                <View style={styles.verdictBox}>
+                  <ThemedText style={{fontSize: 12, color: colors.accent, fontWeight: 'bold'}}>Consejo Socrático:</ThemedText>
+                  <ThemedText style={{fontSize: 11, color: colors.text, marginTop: 2}}>{lastAnalysis.verdict}</ThemedText>
+                </View>
+              )}
 
-                <TouchableOpacity
-                  style={[styles.discardBtn, { borderColor: colors.backgroundSelected }]}
-                  onPress={() => {
-                    setLastAnalysis(null);
-                    setScannedImageUri(null);
-                  }}
-                >
-                  <ThemedText style={{ color: colors.textSecondary, fontFamily: 'monospace' }}>Descartar</ThemedText>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: colors.accent }]} onPress={handleConfirmAnalysis}>
+                <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Confirmar y Registrar Comida</ThemedText>
+              </TouchableOpacity>
             </View>
           )}
 
-        </ScrollView>
+          {/* Modal de Ingreso Manual */}
+          <Modal visible={showManualModal} transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalCard, { backgroundColor: colors.backgroundElement }]}>
+                <ThemedText style={styles.modalTitle}>Ingreso Manual de Nutrientes</ThemedText>
 
-        {/* Modal de Registro Manual */}
-        <Modal visible={showManualModal} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.backgroundSelected }]}>
-              <View style={styles.modalHeader}>
-                <ThemedText style={styles.modalTitle}>REGISTRAR COMIDA MANUAL</ThemedText>
-                <TouchableOpacity onPress={() => setShowManualModal(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-
-              <ThemedText style={styles.inputLabel}>Calorías Totales (kcal)</ThemedText>
-              <TextInput
-                style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                value={manualCal}
-                onChangeText={setManualCal}
-                keyboardType="numeric"
-              />
-
-              <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three }}>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.inputLabel}>Proteína (g)</ThemedText>
+                <View style={styles.inputGroup}>
+                  <ThemedText style={styles.inputLabel}>Calorías (kcal)</ThemedText>
                   <TextInput
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.textInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    keyboardType="numeric"
+                    value={manualCal}
+                    onChangeText={setManualCal}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <ThemedText style={styles.inputLabel}>Proteínas (g)</ThemedText>
+                  <TextInput
+                    style={[styles.textInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    keyboardType="numeric"
                     value={manualProtein}
                     onChangeText={setManualProtein}
-                    keyboardType="numeric"
                   />
                 </View>
 
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.inputLabel}>Carbs (g)</ThemedText>
+                <View style={styles.inputGroup}>
+                  <ThemedText style={styles.inputLabel}>Carbohidratos (g)</ThemedText>
                   <TextInput
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.textInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    keyboardType="numeric"
                     value={manualCarbs}
                     onChangeText={setManualCarbs}
-                    keyboardType="numeric"
                   />
                 </View>
 
-                <View style={{ flex: 1 }}>
+                <View style={styles.inputGroup}>
                   <ThemedText style={styles.inputLabel}>Grasas (g)</ThemedText>
                   <TextInput
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.textInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    keyboardType="numeric"
                     value={manualFats}
                     onChangeText={setManualFats}
-                    keyboardType="numeric"
                   />
                 </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowManualModal(false)}>
+                    <ThemedText style={{ color: colors.textSecondary }}>Cancelar</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.accent }]} onPress={handleSaveManual}>
+                    <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Guardar</ThemedText>
+                  </TouchableOpacity>
+                </View>
               </View>
-
-              <TouchableOpacity
-                style={[styles.confirmBtn, { backgroundColor: colors.accent, marginTop: Spacing.four }]}
-                onPress={handleSaveManual}
-              >
-                <ThemedText style={styles.confirmBtnText}>GUARDAR REGISTRO</ThemedText>
-              </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
+          </Modal>
 
+        </ScrollView>
       </SafeAreaView>
     </OledBackground>
   );
@@ -456,12 +440,12 @@ const styles = StyleSheet.create({
   },
   header: {
     marginTop: Spacing.two,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.three,
   },
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#10B981',
+    color: '#0052FF',
     letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -472,203 +456,186 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     fontWeight: '900',
+    color: '#0F172A',
   },
   card: {
-    padding: Spacing.four,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    marginBottom: Spacing.three,
-  },
-  progressContainer: {
-    height: 10,
-    borderRadius: 5,
-    marginTop: Spacing.three,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.15)',
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  macrosContainer: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  macroCard: {
-    flex: 1,
     padding: Spacing.three,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.35)',
-    backgroundColor: 'rgba(14, 20, 36, 0.88)',
-  },
-  section: {
-    marginTop: Spacing.four,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: Spacing.three,
-    textTransform: 'uppercase',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-    color: '#E2C068',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.three,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#0052FF',
-    backgroundColor: 'rgba(0, 82, 255, 0.10)',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  buttonText: {
-    fontWeight: 'bold',
-    fontSize: 12,
-    textTransform: 'uppercase',
-    fontFamily: 'monospace',
-    color: '#F8FAFC',
-  },
-  analysisCard: {
-    marginTop: Spacing.four,
-    padding: Spacing.four,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.4)',
-    backgroundColor: 'rgba(14, 20, 36, 0.90)',
-  },
-  analysisHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     marginBottom: Spacing.three,
   },
-  analysisTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-    color: '#E2C068',
+  badgeContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  scannedPreviewImage: {
-    width: '100%',
-    height: 180,
-    marginVertical: Spacing.two,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  dishNameText: {
-    fontSize: 18,
-    fontFamily: 'serif',
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-    marginVertical: 4,
-  },
-  evaluationText: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: '#94A3B8',
-    lineHeight: 20,
-    marginBottom: Spacing.three,
-  },
-  detailGrid: {
+  macroRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
+    justifyContent: 'space-between',
+    marginTop: Spacing.three,
+    paddingTop: Spacing.three,
     borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: 'rgba(0, 82, 255, 0.08)',
   },
-  detailItem: {
-    width: '48%',
-    padding: Spacing.two,
+  macroItem: {
+    alignItems: 'center',
   },
-  detailLabel: {
-    fontSize: 9,
-    fontFamily: 'monospace',
-    color: '#94A3B8',
-  },
-  detailVal: {
-    fontSize: 15,
+  macroValue: {
+    fontSize: 16,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#F8FAFC',
+  },
+  macroLabel: {
+    fontSize: 10,
+    color: '#64748B',
     marginTop: 2,
   },
-  confirmBtn: {
-    flex: 2,
-    paddingVertical: Spacing.three,
-    borderRadius: 10,
-    alignItems: 'center',
-    backgroundColor: '#0052FF',
+  densityBanner: {
+    marginTop: 10,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 82, 255, 0.05)',
   },
-  confirmBtnText: {
-    color: '#FFFFFF',
+  actionGrid: {
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.three,
+    borderRadius: 10,
+    gap: 8,
+  },
+  actionBtnText: {
+    color: '#FFF',
     fontWeight: 'bold',
-    fontFamily: 'monospace',
-    fontSize: 12,
+    fontSize: 14,
   },
-  discardBtn: {
-    flex: 1,
-    paddingVertical: Spacing.three,
-    borderRadius: 10,
+  actionBtnSecondary: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.three,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    gap: 8,
+  },
+  actionBtnSecondaryText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  manualBtn: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  loadingBox: {
+    padding: Spacing.four,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultCard: {
+    padding: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: Spacing.four,
+  },
+  scannedImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    marginBottom: Spacing.three,
+  },
+  dishTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'serif',
+  },
+  stoicQuote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#64748B',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  densityTag: {
+    backgroundColor: '#0052FF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  breakdownGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  breakdownItem: {
+    alignItems: 'center',
+  },
+  breakdownNum: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  breakdownTxt: {
+    fontSize: 10,
+    color: '#64748B',
+  },
+  verdictBox: {
+    padding: 8,
+    backgroundColor: 'rgba(0, 82, 255, 0.08)',
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  confirmBtn: {
+    padding: Spacing.three,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(7, 11, 20, 0.85)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    alignItems: 'center',
     padding: Spacing.four,
   },
-  modalContent: {
-    width: '100%',
-    maxWidth: 400,
+  modalCard: {
     padding: Spacing.four,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.25)',
-    backgroundColor: '#0F172A',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.four,
+    borderRadius: 12,
   },
   modalTitle: {
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'monospace',
-    color: '#F8FAFC',
+    marginBottom: Spacing.three,
+  },
+  inputGroup: {
+    marginBottom: Spacing.three,
   },
   inputLabel: {
-    fontSize: 10,
-    fontFamily: 'monospace',
+    fontSize: 12,
     marginBottom: 4,
-    color: '#94A3B8',
   },
-  input: {
-    borderRadius: 8,
+  textInput: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    color: '#F8FAFC',
-    padding: Spacing.two,
-    fontFamily: 'monospace',
-    fontSize: 14,
+    padding: 10,
+    borderRadius: 8,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: Spacing.two,
+  },
+  cancelBtn: {
+    padding: 10,
+  },
+  saveBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
   }
 });

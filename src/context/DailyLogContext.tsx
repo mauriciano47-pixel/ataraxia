@@ -45,6 +45,17 @@ export interface DailyLog {
     carbs: number;
     fats: number;
   };
+  readinessScore?: {
+    sleep: number;
+    stress: number;
+    soreness: number;
+    total: number;
+  };
+  effectiveSets?: number;
+  targetCaloriesMin?: number;
+  targetCaloriesMax?: number;
+  lastNutrientDensityScore?: number;
+  lastNutrientVerdict?: string;
 }
 
 export const DEFAULT_USER_METRICS: UserMetrics = {
@@ -76,6 +87,9 @@ export const DEFAULT_LOG: DailyLog = {
   userMetrics: DEFAULT_USER_METRICS,
   checkInDone: false,
   macros: { protein: 0, carbs: 0, fats: 0 },
+  targetCaloriesMin: 2100,
+  targetCaloriesMax: 2300,
+  effectiveSets: 0,
 };
 
 const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
@@ -119,6 +133,9 @@ interface DailyLogContextType {
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
   saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
   resetOnboarding: () => void;
+  saveReadinessScore: (sleep: number, stress: number, soreness: number) => void;
+  updateEffectiveSets: (count: number) => void;
+  logMealWithEnrichedMacros: (cals: number, p: number, c: number, f: number, densityScore?: number, verdict?: string) => void;
 }
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
@@ -501,6 +518,35 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const saveReadinessScore = (sleep: number, stress: number, soreness: number) => {
+    // Escala del 1 al 10 calculada ponderando sueño (40%), bajo estrés (30%), baja agobio físico (30%)
+    const total = Math.round((sleep * 0.4) + ((10 - stress) * 0.3) + ((10 - soreness) * 0.3));
+    updateLog({
+      readinessScore: { sleep, stress, soreness, total },
+      checkInDone: true
+    });
+  };
+
+  const updateEffectiveSets = (count: number) => {
+    updateLog({ effectiveSets: Math.max(0, count) });
+  };
+
+  const logMealWithEnrichedMacros = (cals: number, p: number = 0, c: number = 0, f: number = 0, densityScore?: number, verdict?: string) => {
+    const current = logRef.current;
+    const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
+    updateLog({
+      totalCalories: Math.max(0, (current.totalCalories || 0) + cals),
+      mealsLogged: (current.mealsLogged || 0) + 1,
+      macros: {
+        protein: Math.max(0, currentMacros.protein + p),
+        carbs: Math.max(0, currentMacros.carbs + c),
+        fats: Math.max(0, currentMacros.fats + f),
+      },
+      ...(densityScore !== undefined ? { lastNutrientDensityScore: densityScore } : {}),
+      ...(verdict ? { lastNutrientVerdict: verdict } : {})
+    });
+  };
+
   return (
     <DailyLogContext.Provider
       value={{
@@ -524,6 +570,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         updateSmartDevice,
         saveOnboardingProfile,
         resetOnboarding,
+        saveReadinessScore,
+        updateEffectiveSets,
+        logMealWithEnrichedMacros,
       }}
     >
       {children}
