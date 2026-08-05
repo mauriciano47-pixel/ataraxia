@@ -1,22 +1,22 @@
-# Expo HAS CHANGED
+# Reglas del Proyecto y Guía de Trabajo (Ataraxia & Apps)
 
-Read the exact versioned docs at <https://docs.expo.dev/versions/v57.0.0/> before writing any code.
+Read the exact versioned Expo docs at <https://docs.expo.dev/versions/v57.0.0/> before writing any code.
 
-## Flujo Automatizado
+## 🛡️ Seguridad Avanzada & Protección de Datos (Zero-Leakage & OWASP)
+
+- **Zero Leakage de Credenciales**: Queda estrictamente prohibido exponer o escribir llaves privadas, tokens de API de producción (OpenAI, Gemini, Firebase Admin) o credenciales de usuarios en mensajes planos o archivos de registro no protegidos. Las claves deben manejarse exclusivamente en `.env` (incluido en `.gitignore`).
+- **Sanitización y Validación Estricta**: Toda entrada de usuario y mutación en Firestore o bases de datos debe pasar por validación de tipos e inmutabilidad (TypeScript estricto, Firestore Security Rules) para evitar inyecciones XSS, SQLi o datos malformados.
+- **Respaldo de Comandos Destructivos**: Ante cualquier comando con potencial de eliminación de datos masivos o infraestructura, el agente creará primero una copia de seguridad temporal en la carpeta `scratch/` del proyecto activo.
+
+## ⚡ Calidad de Entrega & Excelencia Técnica (Zero-Warning Standard)
+
+- **Garantía de Compilación Sin Warnings (Zero-Warning Standard)**: Antes de finalizar cualquier tarea o hacer commit de Git, el agente DEBE ejecutar la validación de compilación (`npx expo export` o `npm run build`) y corregir proactivamente todo error de TypeScript y alertas de linter.
+- **Resiliencia y Fallback Graceful**: Toda integración de APIs de terceros o servicios de IA debe contar con un mecanismo de fallback o simulación guiada para evitar cierres inesperados o pantallas congeladas en caso de fallos de red o límite de cuotas.
+- **Estándar de Diseño Cyber-Obsidian Royal**: Mantener coherencia estética en todos los prototipos y aplicaciones (modos oscuros OLED, paleta de acentos azul eléctrico y esmeralda, fuentes cuidadas y maquetación adaptada a dispositivos móviles y escritorio).
+
+## 🚀 Flujo Automatizado & Despliegue
 
 - **Ejecución sin confirmación**: Al trabajar en cambios para Ataraxia, ejecutar todos los comandos de terminal (instalar dependencias, iniciar servidores, builds, etc.) de forma directa sin pedir autorización al usuario, para mantener un flujo rápido y automatizado.
-
-## Sincronización Automática con Git y Cerebros Obsidian (/learn)
-
 - **Commits Automáticos de Git**: Cada vez que se completen modificaciones, parches, rediseños o nuevas funcionalidades en la aplicación, el agente DEBE realizar automáticamente un commit en Git (`git add .` y `git commit -m "..."`) documentando los cambios realizados de forma limpia y descriptiva.
 - **Actualización Obligatoria de Cerebros Obsidian**: Tras cada actualización importante, el agente DEBE crear o actualizar la nota correspondiente en el cerebro de Obsidian ubicado en `C:\Users\mauro\OneDrive\Desktop\Cerebros_Obsidian\cerebro_<nombre_app>` (por ejemplo, en `cerebro_ataraxia`), incluyendo la arquitectura, paleta de colores, nuevos componentes y decisiones clave para mantener la base de conocimiento siempre al día.
-
-## Despliegue Automático y Visibilidad Inmediata en Dispositivos Móviles (/learn)
-
-- **Autodiagnóstico de Incidencias de Visualización**: Al completar cualquier rediseño o actualización visual en aplicaciones Web / PWA / Expo:
-  1. Si el proyecto cuenta con configuración de **Firebase Hosting** (ej. `firebase.json`), el agente DEBE ejecutar automáticamente la compilación de producción (`npx expo export` o `npm run build`) y realizar el despliegue a la nube (`npx firebase-tools deploy --only hosting`), informando la URL pública de producción (`https://<project>.web.app`) para que el celular del usuario reciba los cambios al instante sin retrasos.
-  2. Para pruebas locales en red Wi-Fi, el agente DEBE proporcionar la URL con la IP local exacta (`http://<IP_LOCAL>:<PUERTO>`) junto con `localhost`, permitiendo probar la app en tiempo real desde el navegador del móvil.
-
-## Resolución Proactiva de Problemas y Alertas de Terminal
-
-- **Solución Obligatoria de Errores y Alertas**: En cada modificación, actualización o desarrollo de aplicaciones (en esta carpeta y en todos los proyectos de las apps del usuario), el agente DEBE identificar, diagnosticar y solucionar proactivamente cualquier problema, error de compilación (TypeScript/React Native/Expo/Next.js/Vite/Linter) y alerta/warning emitido en la terminal antes de dar por finalizada la tarea.
+- **Autodiagnóstico y Despliegue Inmediato**: Al completar cualquier rediseño o actualización visual en aplicaciones Web / PWA / Expo, ejecutar la compilación de producción e informar las URLs de acceso.
