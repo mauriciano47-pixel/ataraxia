@@ -161,7 +161,7 @@ export default function NutritionScreen() {
       );
 
       const apiCall = ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: [
           { inlineData: { data: base64String, mimeType: 'image/jpeg' } },
           prompt,

@@ -234,9 +234,9 @@ export default function JournalScreen() {
         const fullPrompt = conversationParts.join('\n\n');
 
         try {
-          // Intento 1: Modelo primario con temperatura alta para máxima variedad
+          // Intento 1: Modelo primario gemini-2.0-flash
           const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             contents: fullPrompt,
             config: {
               systemInstruction: systemPrompt,
@@ -246,10 +246,9 @@ export default function JournalScreen() {
           });
           botText = response.text || '';
         } catch (e1) {
-          console.warn("Reintentando Gemini con modelo 1.5-flash y alta variabilidad:", e1);
-          // Intento 2: Fallback gemini-1.5-flash
+          console.warn("Reintentando Gemini con modelo gemini-2.0-flash y alta variabilidad:", e1);
           const response2 = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.0-flash',
             contents: fullPrompt,
             config: {
               systemInstruction: systemPrompt,

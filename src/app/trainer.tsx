@@ -155,7 +155,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
       );
 
       const apiCall = ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
       });
 
