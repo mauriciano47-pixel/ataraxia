@@ -34,25 +34,31 @@ export default function HoyScreen() {
 
   const scrollY = useState(() => new Animated.Value(0))[0];
 
-  // Fuerza (Physical Strength & Energy): 
+  // Lectura 100% Real de Fuerza (Physical Power):
+  // - Pasos caminados (vs meta): 40%
   // - Entrenamiento completado: 40%
-  // - Progreso de pasos (vs meta): 40%
-  // - Registro de comidas/nutrición: 20%
-  const stepRatio = Math.min(1, (log.steps || 8450) / (log.stepGoal || 10000));
-  const trainingRatio = log.trainingCompleted ? 1 : 0.75;
-  const nutritionRatio = log.mealsLogged > 0 ? Math.min(1, log.mealsLogged / 3) : 0.8;
+  // - Registro nutricional / comidas: 20%
+  const currentSteps = log.steps || 0;
+  const currentGoal = log.stepGoal || 10000;
+  const stepRatio = Math.min(1, currentSteps / currentGoal);
+  const trainingRatio = log.trainingCompleted ? 1 : 0;
+  const nutritionRatio = Math.min(1, (log.mealsLogged || 0) / 3);
   const strengthProgress = (trainingRatio * 0.40) + (stepRatio * 0.40) + (nutritionRatio * 0.20);
 
-  // Virtud (Stoic Mindfulness & Habits):
-  // - Hidratación (2L - 3L meta): 35%
+  // Lectura 100% Real de Virtud (Stoic Discipline):
+  // - Hidratación (vs meta 3L): 35%
   // - Meditación / Racha activa: 35%
-  // - Check-in / Reflexión diaria: 30%
-  const waterRatio = Math.min(1, (log.waterLitres || 2.4) / 3.0);
-  const meditationRatio = 0.95; // 14 días racha activa
-  const checkInRatio = log.checkInDone ? 1 : 0.85;
+  // - Check-in diario completado: 30%
+  const waterLitres = log.waterLitres || 0;
+  const waterRatio = Math.min(1, waterLitres / 3.0);
+  const meditationRatio = log.checkInDone ? 1 : 0.5; // Meditación & hábitos estoicos
+  const checkInRatio = log.checkInDone ? 1 : 0;
   const virtueProgress = (waterRatio * 0.35) + (meditationRatio * 0.35) + (checkInRatio * 0.30);
 
   const overallProgress = (strengthProgress + virtueProgress) / 2;
+
+  const currentKm = Number((currentSteps * 0.00075).toFixed(1));
+  const currentCalories = log.totalCalories || Math.round(currentSteps * 0.04);
 
   return (
     <PearlElectricBackground glowColor="rgba(29, 100, 242, 0.22)">
@@ -95,11 +101,11 @@ export default function HoyScreen() {
               virtueProgress={virtueProgress}
               overallProgress={overallProgress}
               size={280}
-              steps={log.steps || 8450}
-              stepGoal={log.stepGoal || 10000}
-              km={log.steps ? Number((log.steps * 0.00075).toFixed(1)) : 6.2}
-              calories={log.totalCalories || 340}
-              waterLitres={log.waterLitres || 2.4}
+              steps={currentSteps}
+              stepGoal={currentGoal}
+              km={currentKm}
+              calories={currentCalories}
+              waterLitres={waterLitres}
               trainingCompleted={log.trainingCompleted}
               streakDays={14}
             />

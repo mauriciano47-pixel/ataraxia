@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
 import { FootstepsIcon, SettingsIcon, MapIcon, FlameIcon } from '@/components/ModuleSvgIcons';
+import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 interface StepCounterCardProps {
   steps: number;
@@ -21,6 +22,11 @@ export function StepCounterCard({
   const [modalVisible, setModalVisible] = useState(false);
   const [customGoalInput, setCustomGoalInput] = useState(stepGoal.toString());
 
+  // Sensor for real step detection and live tracking
+  const { isLiveTracking, toggleLiveTracking, liveSessionSteps } = usePedometerSensor((addedSteps) => {
+    onAddSteps(addedSteps);
+  });
+
   const progressPct = Math.min(100, Math.round((steps / stepGoal) * 100));
   const { km, caloriesBurned } = estimateStepMetrics(steps);
 
@@ -36,12 +42,12 @@ export function StepCounterCard({
     <View style={styles.cardContainer}>
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <View style={styles.iconBadge}>
-            <FootstepsIcon color="#FFD54F" size={20} />
+          <View style={[styles.iconBadge, isLiveTracking && styles.iconBadgeActive]}>
+            <FootstepsIcon color={isLiveTracking ? '#00C6FF' : '#FFD54F'} size={20} />
           </View>
           <View>
-            <ThemedText style={styles.titleText}>Contador de Pasos</ThemedText>
-            <ThemedText style={styles.subtitleText}>Actividad NeAT & Movilidad</ThemedText>
+            <ThemedText style={styles.titleText}>Contador de Pasos Real</ThemedText>
+            <ThemedText style={styles.subtitleText}>Podómetro & Acelerómetro NeAT</ThemedText>
           </View>
         </View>
 
@@ -61,7 +67,9 @@ export function StepCounterCard({
       <View style={styles.statsMainRow}>
         <View>
           <ThemedText style={styles.bigStepsCount}>{steps.toLocaleString()}</ThemedText>
-          <ThemedText style={styles.stepsTargetSub}>de {stepGoal.toLocaleString()} pasos ({progressPct}%)</ThemedText>
+          <ThemedText style={styles.stepsTargetSub}>
+            de {stepGoal.toLocaleString()} pasos ({progressPct}%)
+          </ThemedText>
         </View>
 
         <View style={styles.metricsBadgeColumn}>
@@ -80,6 +88,25 @@ export function StepCounterCard({
       <View style={styles.progressBarTrack}>
         <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
       </View>
+
+      {/* LIVE PEDOMETER TOGGLE BUTTON */}
+      <TouchableOpacity
+        style={[styles.livePedometerBtn, isLiveTracking && styles.livePedometerBtnActive]}
+        onPress={toggleLiveTracking}
+        activeOpacity={0.8}
+      >
+        <View style={styles.liveIndicatorDotRow}>
+          <View style={[styles.pulseDot, isLiveTracking ? styles.pulseDotActive : styles.pulseDotInactive]} />
+          <ThemedText style={[styles.liveBtnText, isLiveTracking && styles.liveBtnTextActive]}>
+            {isLiveTracking ? 'Podómetro en Vivo: ACTIVO 🟢' : 'Activar Podómetro en Vivo ⚪'}
+          </ThemedText>
+        </View>
+        {isLiveTracking && (
+          <ThemedText style={styles.liveSessionSubtext}>
+            +{liveSessionSteps} pasos en esta sesión
+          </ThemedText>
+        )}
+      </TouchableOpacity>
 
       {/* Quick Add Buttons */}
       <View style={styles.quickAddRow}>
@@ -130,7 +157,7 @@ export function StepCounterCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: 16,
     padding: Spacing.three,
     borderWidth: 1,
@@ -154,6 +181,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 82, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconBadgeActive: {
+    backgroundColor: 'rgba(0, 198, 255, 0.20)',
+    borderWidth: 1,
+    borderColor: '#00C6FF',
   },
   titleText: {
     fontSize: 15,
@@ -226,12 +258,58 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 82, 255, 0.08)',
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: Spacing.three,
+    marginBottom: 4,
   },
   progressBarFill: {
     height: '100%',
     backgroundColor: '#0052FF',
     borderRadius: 4,
+  },
+  livePedometerBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+  },
+  livePedometerBtnActive: {
+    backgroundColor: 'rgba(0, 198, 255, 0.10)',
+    borderColor: '#00C6FF',
+  },
+  liveIndicatorDotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  pulseDotActive: {
+    backgroundColor: '#00E676',
+  },
+  pulseDotInactive: {
+    backgroundColor: '#94A3B8',
+  },
+  liveBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#334155',
+    fontFamily: 'monospace',
+  },
+  liveBtnTextActive: {
+    color: '#0077C2',
+  },
+  liveSessionSubtext: {
+    fontSize: 10,
+    color: '#0077C2',
+    fontFamily: 'monospace',
+    marginTop: 2,
   },
   quickAddRow: {
     flexDirection: 'row',
