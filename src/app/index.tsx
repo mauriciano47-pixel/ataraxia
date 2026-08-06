@@ -74,33 +74,46 @@ export default function HoyScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* HEADER STOIC ROYAL */}
+          {/* HEADER STOIC ROYAL (EXACTLY AS PROPOSAL 1 SCREENSHOT) */}
           <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarBtn}>
-              <PersonIcon color="#E2C068" size={20} />
+            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.laurelLogoBtn}>
+              <View style={styles.laurelRing}>
+                <ThemedText style={styles.laurelLetter}>A</ThemedText>
+              </View>
             </TouchableOpacity>
 
             <View style={styles.titleCenterGroup}>
               <ThemedText style={styles.brandTitle}>ATARAXIA</ThemedText>
-              <ThemedText style={styles.brandSubtitle}>Stoic Strength & Wellness</ThemedText>
+              <ThemedText style={styles.brandSubtitle}>STOIC WELLNESS</ThemedText>
             </View>
 
-            <TouchableOpacity style={styles.bellBtn}>
-              <BellIcon color="#1D64F2" size={20} />
-            </TouchableOpacity>
+            <View style={styles.headerRightActions}>
+              <TouchableOpacity style={styles.headerIconBtn}>
+                <ThemedText style={{ fontSize: 16, color: '#E2C068' }}>🔔</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/journal')}>
+                <ThemedText style={{ fontSize: 16, color: '#E2C068' }}>📋</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* DATE LINE */}
+          <View style={styles.dateRowCenter}>
+            <ThemedText style={styles.dateHeaderText}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()} | {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </ThemedText>
           </View>
 
           {/* PWA INSTALL BUTTON IF APPLICABLE */}
           <PwaInstallButton />
 
-          {/* 1. HERO SECTION: STRENGTH & VIRTUE ARC GAUGE */}
+          {/* 1. HERO SECTION: EXACT PROPOSAL 1 SPHERE GAUGE */}
           <View style={styles.heroGaugeSection}>
-            <ThemedText style={styles.sectionHeaderTitle}>EVOLUCIÓN ESTOICA • FUERZA & VIRTUD</ThemedText>
-
             <GlowArcGauge
               strengthProgress={strengthProgress}
               virtueProgress={virtueProgress}
               overallProgress={overallProgress}
-              size={280}
+              size={320}
               steps={currentSteps}
               stepGoal={currentGoal}
               km={currentKm}
@@ -323,42 +336,75 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.two,
   },
-  avatarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+  laurelLogoBtn: {
+    padding: 2,
+  },
+  laurelRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#E2C068',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(226, 192, 104, 0.45)',
+    backgroundColor: 'rgba(226, 192, 104, 0.12)',
+    boxShadow: '0 0 12px rgba(226, 192, 104, 0.35)',
+  },
+  laurelLetter: {
+    fontSize: 22,
+    fontFamily: 'serif',
+    fontWeight: '900',
+    color: '#F5D77F',
+    textShadowColor: 'rgba(226, 192, 104, 0.60)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   titleCenterGroup: {
     alignItems: 'center',
   },
   brandTitle: {
-    fontSize: 22,
+    fontSize: 26,
     fontFamily: 'serif',
-    fontWeight: '800',
-    color: '#E2C068',
-    letterSpacing: 3,
+    fontWeight: '900',
+    color: '#F5D77F',
+    letterSpacing: 4,
+    textShadowColor: 'rgba(226, 192, 104, 0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   brandSubtitle: {
     fontSize: 10,
-    fontFamily: 'monospace',
-    color: '#C5A869',
-    opacity: 0.9,
+    fontFamily: 'sans-serif',
+    fontWeight: 'bold',
+    color: '#00C6FF',
+    letterSpacing: 2.5,
     marginTop: -2,
   },
-  bellBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(14, 20, 36, 0.90)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(29, 100, 242, 0.35)',
+    borderColor: 'rgba(226, 192, 104, 0.35)',
+  },
+  dateRowCenter: {
+    alignItems: 'center',
+    marginVertical: -2,
+  },
+  dateHeaderText: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#94A3B8',
+    letterSpacing: 1.5,
   },
   heroGaugeSection: {
     alignItems: 'center',
