@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
@@ -40,14 +41,15 @@ export function StepCounterCard({
 
   return (
     <View style={styles.cardContainer}>
+      {/* HEADER ROW */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={[styles.iconBadge, isLiveTracking && styles.iconBadgeActive]}>
-            <FootstepsIcon color={isLiveTracking ? '#00C6FF' : '#FFD54F'} size={20} />
+            <FootstepsIcon color={isLiveTracking ? '#00C6FF' : '#E2C068'} size={20} />
           </View>
           <View>
-            <ThemedText style={styles.titleText}>Contador de Pasos Real</ThemedText>
-            <ThemedText style={styles.subtitleText}>Podómetro & Acelerómetro NeAT</ThemedText>
+            <ThemedText style={styles.titleText}>CONTADOR DE PASOS EN VIVO</ThemedText>
+            <ThemedText style={styles.subtitleText}>Podómetro Real & Acelerómetro NeAT</ThemedText>
           </View>
         </View>
 
@@ -57,13 +59,14 @@ export function StepCounterCard({
             setCustomGoalInput(stepGoal.toString());
             setModalVisible(true);
           }}
+          activeOpacity={0.8}
         >
-          <SettingsIcon color="#A0AEC0" size={14} />
+          <SettingsIcon color="#C5A869" size={13} />
           <ThemedText style={styles.goalButtonText}>Meta: {stepGoal.toLocaleString()}</ThemedText>
         </TouchableOpacity>
       </View>
 
-      {/* Main Step Stats */}
+      {/* MAIN STEP STATS */}
       <View style={styles.statsMainRow}>
         <View>
           <ThemedText style={styles.bigStepsCount}>{steps.toLocaleString()}</ThemedText>
@@ -74,26 +77,31 @@ export function StepCounterCard({
 
         <View style={styles.metricsBadgeColumn}>
           <View style={styles.metricBadge}>
-            <MapIcon color="#38BDF8" size={14} />
+            <MapIcon color="#00C6FF" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{km} km</ThemedText>
           </View>
           <View style={styles.metricBadge}>
-            <FlameIcon color="#FF6F00" size={14} />
+            <FlameIcon color="#E2C068" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{caloriesBurned} kcal</ThemedText>
           </View>
         </View>
       </View>
 
-      {/* Progress Bar */}
+      {/* PROGRESS BAR WITH ROYAL BICOLOR GRADIENT */}
       <View style={styles.progressBarTrack}>
-        <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+        <LinearGradient
+          colors={['#1D64F2', '#00C6FF', '#E2C068']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.progressBarFill, { width: `${progressPct}%` }]}
+        />
       </View>
 
       {/* LIVE PEDOMETER TOGGLE BUTTON */}
       <TouchableOpacity
         style={[styles.livePedometerBtn, isLiveTracking && styles.livePedometerBtnActive]}
         onPress={toggleLiveTracking}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
         <View style={styles.liveIndicatorDotRow}>
           <View style={[styles.pulseDot, isLiveTracking ? styles.pulseDotActive : styles.pulseDotInactive]} />
@@ -103,33 +111,33 @@ export function StepCounterCard({
         </View>
         {isLiveTracking && (
           <ThemedText style={styles.liveSessionSubtext}>
-            +{liveSessionSteps} pasos en esta sesión
+            +{liveSessionSteps} pasos detectados en tiempo real
           </ThemedText>
         )}
       </TouchableOpacity>
 
-      {/* Quick Add Buttons */}
+      {/* QUICK ADD STEP CHIPS */}
       <View style={styles.quickAddRow}>
-        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(500)}>
+        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(500)} activeOpacity={0.8}>
           <ThemedText style={styles.chipText}>+500</ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(1000)}>
+        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(1000)} activeOpacity={0.8}>
           <ThemedText style={styles.chipText}>+1.000</ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(2500)}>
+        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(2500)} activeOpacity={0.8}>
           <ThemedText style={styles.chipText}>+2.500</ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.addStepChip, styles.addStepChipAccent]} onPress={() => onAddSteps(5000)}>
+        <TouchableOpacity style={[styles.addStepChip, styles.addStepChipAccent]} onPress={() => onAddSteps(5000)} activeOpacity={0.8}>
           <ThemedText style={[styles.chipText, styles.chipTextAccent]}>+5.000</ThemedText>
         </TouchableOpacity>
       </View>
 
-      {/* Goal Modal */}
+      {/* GOAL ADJUSTMENT MODAL (DARK CYBER-OBSIDIAN STYLE) */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ThemedText style={styles.modalTitle}>Ajustar Meta Diaria de Pasos</ThemedText>
-            <ThemedText style={styles.modalSub}>Selecciona tu objetivo diario de movilidad activa:</ThemedText>
+            <ThemedText style={styles.modalSub}>Define tu objetivo personal de movilidad activa:</ThemedText>
 
             <TextInput
               style={styles.modalInput}
@@ -137,15 +145,15 @@ export function StepCounterCard({
               onChangeText={setCustomGoalInput}
               keyboardType="number-pad"
               placeholder="Ej: 10000"
-              placeholderTextColor="#666"
+              placeholderTextColor="#64748B"
             />
 
             <View style={styles.modalButtonsRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
-                <ThemedText style={{ color: '#AAA' }}>Cancelar</ThemedText>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)} activeOpacity={0.8}>
+                <ThemedText style={{ color: '#94A3B8', fontFamily: 'monospace' }}>Cancelar</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveGoal}>
-                <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Guardar Meta</ThemedText>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveGoal} activeOpacity={0.8}>
+                <ThemedText style={{ color: '#070B14', fontWeight: 'bold', fontFamily: 'monospace' }}>Guardar Meta</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -157,12 +165,16 @@ export function StepCounterCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(14, 20, 36, 0.88)',
     borderRadius: 16,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(226, 192, 104, 0.35)',
     gap: Spacing.two,
+    shadowColor: '#E2C068',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   headerRow: {
     flexDirection: 'row',
@@ -175,41 +187,45 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 82, 255, 0.08)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(226, 192, 104, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(226, 192, 104, 0.25)',
   },
   iconBadgeActive: {
-    backgroundColor: 'rgba(0, 198, 255, 0.20)',
-    borderWidth: 1,
+    backgroundColor: 'rgba(0, 198, 255, 0.15)',
     borderColor: '#00C6FF',
   },
   titleText: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#E2C068',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
   },
   subtitleText: {
-    fontSize: 11,
-    color: '#64748B',
+    fontSize: 10.5,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
   },
   goalButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    gap: 5,
+    backgroundColor: 'rgba(226, 192, 104, 0.08)',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.15)',
+    borderColor: 'rgba(226, 192, 104, 0.30)',
   },
   goalButtonText: {
     fontSize: 11,
-    color: '#0052FF',
+    color: '#E2C068',
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
@@ -220,15 +236,15 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   bigStepsCount: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    lineHeight: 36,
-    fontFamily: 'monospace',
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    lineHeight: 38,
+    fontFamily: 'serif',
   },
   stepsTargetSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#94A3B8',
     marginTop: 2,
     fontFamily: 'monospace',
   },
@@ -239,45 +255,44 @@ const styles = StyleSheet.create({
   metricBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: 5,
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   metricBadgeValue: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontFamily: 'monospace',
   },
   progressBarTrack: {
     height: 8,
-    backgroundColor: 'rgba(0, 82, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#0052FF',
     borderRadius: 4,
   },
   livePedometerBtn: {
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.04)',
+    backgroundColor: 'rgba(15, 23, 42, 0.80)',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.10)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 2,
   },
   livePedometerBtnActive: {
-    backgroundColor: 'rgba(0, 198, 255, 0.10)',
+    backgroundColor: 'rgba(0, 198, 255, 0.15)',
     borderColor: '#00C6FF',
   },
   liveIndicatorDotRow: {
@@ -297,17 +312,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#94A3B8',
   },
   liveBtnText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: 'bold',
-    color: '#334155',
+    color: '#CBD5E1',
     fontFamily: 'monospace',
   },
   liveBtnTextActive: {
-    color: '#0077C2',
+    color: '#00C6FF',
   },
   liveSessionSubtext: {
     fontSize: 10,
-    color: '#0077C2',
+    color: '#00C6FF',
     fontFamily: 'monospace',
     marginTop: 2,
   },
@@ -317,30 +332,29 @@ const styles = StyleSheet.create({
   },
   addStepChip: {
     flex: 1,
-    backgroundColor: 'rgba(0, 82, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingVertical: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.10)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   addStepChipAccent: {
-    backgroundColor: 'rgba(0, 82, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: '#0052FF',
+    backgroundColor: 'rgba(226, 192, 104, 0.15)',
+    borderColor: '#E2C068',
   },
   chipText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#64748B',
+    color: '#94A3B8',
     fontFamily: 'monospace',
   },
   chipTextAccent: {
-    color: '#0052FF',
+    color: '#E2C068',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.60)',
+    backgroundColor: 'rgba(7, 11, 20, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.three,
@@ -348,34 +362,37 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0E1424',
     borderRadius: 16,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    padding: Spacing.four,
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.40)',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#E2C068',
     marginBottom: 4,
+    fontFamily: 'monospace',
   },
   modalSub: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: Spacing.three,
+    fontFamily: 'sans-serif',
   },
   modalInput: {
-    backgroundColor: '#F8FAFC',
-    color: '#0F172A',
+    backgroundColor: '#161F33',
+    color: '#FFFFFF',
     borderRadius: 10,
     padding: 12,
     fontSize: 18,
     fontWeight: 'bold',
     borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    borderColor: 'rgba(226, 192, 104, 0.30)',
     marginBottom: Spacing.three,
     textAlign: 'center',
+    fontFamily: 'monospace',
   },
   modalButtonsRow: {
     flexDirection: 'row',
@@ -387,7 +404,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   saveBtn: {
-    backgroundColor: '#0052FF',
+    backgroundColor: '#E2C068',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
