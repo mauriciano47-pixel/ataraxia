@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated, ScrollView } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,8 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { GlowArcGauge } from '@/components/GlowArcGauge';
-import { FlameIcon, PersonIcon, HeartIcon, WaterIcon, CheckmarkIcon, TrophyIcon } from '@/components/ModuleSvgIcons';
-import { BarbellTabIcon } from '@/components/TabSvgIcons';
+import { FlameIcon, PersonIcon } from '@/components/ModuleSvgIcons';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { StepCounterCard } from '@/components/StepCounterCard';
@@ -28,12 +27,10 @@ function BellIcon({ color = '#1D64F2', size = 20 }: { color?: string; size?: num
 }
 
 export default function HoyScreen() {
-  const { log, addWater, toggleTraining, saveCheckIn, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
+  const { log, toggleTraining, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
   const [onboardingVisible, setOnboardingVisible] = useState<boolean>(!log.hasCompletedOnboarding);
-  const [energy, setEnergy] = useState<number | null>(null);
-  const [sleep, setSleep] = useState<number | null>(null);
 
   const scrollY = useState(() => new Animated.Value(0))[0];
 
