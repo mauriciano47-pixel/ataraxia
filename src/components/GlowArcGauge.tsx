@@ -161,6 +161,16 @@ export function GlowArcGauge({
             </LinearGradient>
           </Defs>
 
+          {/* Inner Glass Disc Background */}
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={innerRadius - 12}
+            fill="rgba(14, 20, 36, 0.75)"
+            stroke="rgba(226, 192, 104, 0.22)"
+            strokeWidth={1}
+          />
+
           {/* Outer Background Track (Fuerza) */}
           <Path
             d={backgroundArcOuter}
@@ -183,7 +193,7 @@ export function GlowArcGauge({
 
           {/* Outer Cap Glow Dot */}
           {strengthProgress > 0 && activeMode !== 'virtue' && (
-            <Circle cx={outerCapPos.x} cy={outerCapPos.y} r={outerStrokeWidth / 2 + 1} fill="#00C6FF" />
+            <Circle cx={outerCapPos.x} cy={outerCapPos.y} r={outerStrokeWidth / 2 + 2} fill="#00C6FF" />
           )}
 
           {/* Inner Background Track (Virtud) */}
@@ -208,40 +218,52 @@ export function GlowArcGauge({
 
           {/* Inner Cap Glow Dot */}
           {virtueProgress > 0 && activeMode !== 'strength' && (
-            <Circle cx={innerCapPos.x} cy={innerCapPos.y} r={innerStrokeWidth / 2 + 1} fill="#F5D77F" />
+            <Circle cx={innerCapPos.x} cy={innerCapPos.y} r={innerStrokeWidth / 2 + 2} fill="#F5D77F" />
           )}
         </Svg>
 
         {/* CENTER CONTENTS */}
         <View style={styles.centerContent}>
           <ThemedText style={styles.badgeCategoryText}>{displayLabel}</ThemedText>
-          <ThemedText style={[styles.percentText, { color: displayColor }]}>{displayPercent}%</ThemedText>
+
+          <View style={styles.percentGlowWrapper}>
+            <ThemedText style={[styles.percentText, { color: displayColor }]}>
+              {displayPercent}%
+            </ThemedText>
+          </View>
+
+          {/* PILL BADGES ROW IN SPHERE */}
+          <View style={styles.pillBadgesRow}>
+            <View style={styles.glassPill}>
+              <ThemedText style={styles.pillText}>🔥 {calories} kcal</ThemedText>
+            </View>
+            <View style={styles.glassPill}>
+              <ThemedText style={styles.pillText}>👟 {steps.toLocaleString()}</ThemedText>
+            </View>
+            <View style={styles.glassPill}>
+              <ThemedText style={styles.pillText}>💧 {waterLitres.toFixed(1)}L</ThemedText>
+            </View>
+          </View>
 
           {activeMode === 'strength' && (
-            <View style={styles.metricsDetailBox}>
-              <ThemedText style={styles.metricsText}>🏋️‍♂️ Entrenamiento: {trainingCompleted ? 'Completado ✓' : 'Pendiente'}</ThemedText>
-              <ThemedText style={styles.metricsText}>👟 {steps.toLocaleString()} / {stepGoal.toLocaleString()} Pasos</ThemedText>
-              <ThemedText style={styles.metricsText}>🔥 {calories} kcal | 📍 {km.toFixed(1)} km</ThemedText>
-            </View>
+            <ThemedText style={styles.subDetailText}>
+              🏋️‍♂️ {trainingCompleted ? 'Entrenamiento Completado ✓' : 'Sesión Pendiente'} | 📍 {km.toFixed(1)} km
+            </ThemedText>
           )}
 
           {activeMode === 'virtue' && (
-            <View style={styles.metricsDetailBox}>
-              <ThemedText style={styles.metricsText}>💧 Hidratación: {waterLitres.toFixed(1)}L / 3.0L</ThemedText>
-              <ThemedText style={styles.metricsText}>🔥 Racha Meditación: {streakDays} Días</ThemedText>
-              <ThemedText style={styles.metricsText}>📖 Diario & Check-In Estoico: Activo</ThemedText>
-            </View>
+            <ThemedText style={styles.subDetailText}>
+              🔥 Racha: {streakDays} Días | 📖 Diario Estoico Activo
+            </ThemedText>
           )}
 
           {activeMode === 'combined' && (
-            <View style={styles.metricsDetailBox}>
-              <ThemedText style={styles.metricsText}>⚔️ Fuerza: {strengthPct}%  |  🏛️ Virtud: {virtuePct}%</ThemedText>
-              <ThemedText style={styles.metricsText}>{steps.toLocaleString()} Pasos ({km.toFixed(1)} km)</ThemedText>
-              <ThemedText style={styles.metricsText}>{calories} kcal • {waterLitres.toFixed(1)}L Agua</ThemedText>
-            </View>
+            <ThemedText style={styles.subDetailText}>
+              ⚔️ Fuerza: {strengthPct}% • 🏛️ Virtud: {virtuePct}%
+            </ThemedText>
           )}
 
-          <ThemedText style={styles.goalSubtext}>Toca la esfera para cambiar enfoque</ThemedText>
+          <ThemedText style={styles.goalSubtext}>Toca la esfera para alternar vista</ThemedText>
         </View>
       </TouchableOpacity>
     </View>
@@ -259,27 +281,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   tabChip: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    backgroundColor: 'rgba(14, 20, 36, 0.80)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.25)',
   },
   tabChipStrengthActive: {
     borderColor: '#00C6FF',
-    backgroundColor: 'rgba(0, 198, 255, 0.15)',
+    backgroundColor: 'rgba(0, 198, 255, 0.18)',
   },
   tabChipVirtueActive: {
     borderColor: '#E2C068',
-    backgroundColor: 'rgba(226, 192, 104, 0.15)',
+    backgroundColor: 'rgba(226, 192, 104, 0.18)',
   },
   tabChipCombinedActive: {
-    borderColor: 'rgba(255, 255, 255, 0.40)',
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+    borderColor: '#F8FAFC',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   tabChipText: {
     fontSize: 11,
@@ -302,39 +324,56 @@ const styles = StyleSheet.create({
   centerContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: 10,
   },
   badgeCategoryText: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: '#C5A869',
-    letterSpacing: 2,
+    color: '#E2C068',
+    letterSpacing: 2.5,
     fontWeight: 'bold',
-    marginBottom: -2,
+    marginBottom: -4,
+  },
+  percentGlowWrapper: {
+    marginVertical: 2,
   },
   percentText: {
-    fontSize: 48,
+    fontSize: 54,
     fontWeight: '900',
     color: '#FFFFFF',
     fontFamily: 'serif',
-    letterSpacing: -1,
+    letterSpacing: -1.5,
   },
-  metricsDetailBox: {
-    alignItems: 'center',
-    gap: 2,
-    marginTop: 2,
+  pillBadgesRow: {
+    flexDirection: 'row',
+    gap: 4,
+    marginVertical: 4,
   },
-  metricsText: {
-    fontSize: 11.5,
+  glassPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  pillText: {
+    fontSize: 10,
+    color: '#E2E8F0',
+    fontFamily: 'monospace',
+    fontWeight: '600',
+  },
+  subDetailText: {
+    fontSize: 11,
     color: '#CBD5E1',
     fontFamily: 'monospace',
-    lineHeight: 16,
+    marginTop: 2,
   },
   goalSubtext: {
-    fontSize: 9.5,
+    fontSize: 9,
     color: '#94A3B8',
     fontFamily: 'monospace',
-    marginTop: 6,
+    marginTop: 4,
     opacity: 0.8,
   },
 });

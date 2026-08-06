@@ -264,12 +264,12 @@ export function CalorieIndexCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(14, 20, 36, 0.88)',
     borderRadius: 16,
     padding: Spacing.three,
     marginBottom: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.35)',
     gap: 8,
   },
   headerRow: {
