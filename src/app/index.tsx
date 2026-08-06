@@ -92,9 +92,9 @@ export default function HoyScreen() {
           {/* PWA INSTALL BUTTON IF APPLICABLE */}
           <PwaInstallButton />
 
-          {/* HERO SECTION: STRENGTH & VIRTUE ARC GAUGE */}
+          {/* 1. HERO SECTION: STRENGTH & VIRTUE ARC GAUGE */}
           <View style={styles.heroGaugeSection}>
-            <ThemedText style={styles.sectionHeaderTitle}>STRENGTH & VIRTUE</ThemedText>
+            <ThemedText style={styles.sectionHeaderTitle}>EVOLUCIÓN ESTOICA • FUERZA & VIRTUD</ThemedText>
 
             <GlowArcGauge
               strengthProgress={strengthProgress}
@@ -111,113 +111,169 @@ export default function HoyScreen() {
             />
           </View>
 
-          {/* CARD 1: MEDITATION HABIT (HABIT STREAK) */}
-          <View style={styles.meditationCard}>
-            <View style={styles.meditationLeft}>
-              <ThemedText style={styles.cardHeaderGoldText}>MEDITATION HABIT</ThemedText>
-              <View style={styles.streakRow}>
-                <FlameIcon color="#E2C068" size={28} />
-                <ThemedText style={styles.streakNumberText}>14</ThemedText>
-                <View style={styles.streakSubCol}>
-                  <ThemedText style={styles.streakDayText}>Day</ThemedText>
-                  <ThemedText style={styles.streakLabelText}>Streak</ThemedText>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.meditationRight}>
+          {/* 2. DOCK DE ACCIONES RÁPIDAS (Quick Action Dock) */}
+          <View style={styles.quickDockCard}>
+            <ThemedText style={styles.dockHeaderTitle}>ACCIONES RÁPIDAS EN VIVO</ThemedText>
+            <View style={styles.dockButtonsRow}>
               <TouchableOpacity
-                style={styles.continuePillBtn}
-                onPress={() => router.push('/journal')}
+                style={styles.dockChipBtn}
+                onPress={() => addSteps(1000)}
+                activeOpacity={0.8}
               >
-                <ThemedText style={styles.continuePillText}>Continue</ThemedText>
+                <ThemedText style={styles.dockChipText}>👟 +1k Pasos</ThemedText>
               </TouchableOpacity>
-              <ThemedText style={styles.viewSubtext}>View</ThemedText>
-            </View>
-          </View>
-
-          {/* TWO COLUMN ROW: PHYSICAL ENDURANCE & STOIC PRINCIPLE */}
-          <View style={styles.twoColRow}>
-            {/* LEFT CARD: PHYSICAL ENDURANCE */}
-            <View style={styles.halfCard}>
-              <ThemedText style={styles.cardHeaderGoldText}>PHYSICAL ENDURANCE</ThemedText>
-
-              <View style={styles.workoutCobaltBox}>
-                <ThemedText style={styles.workoutTitleText}>Workout Session</ThemedText>
-                <ThemedText style={styles.workoutMetaText}>55 mins | 720 kcal</ThemedText>
-              </View>
 
               <TouchableOpacity
+                style={[styles.dockChipBtn, log.trainingCompleted && styles.dockChipActive]}
                 onPress={toggleTraining}
                 activeOpacity={0.8}
-                style={styles.startButtonTouch}
               >
-                <LinearGradient
-                  colors={['#E2C068', '#C5A869']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.startButtonGradient}
-                >
-                  <ThemedText style={styles.startButtonText}>
-                    {log.trainingCompleted ? 'Done ✓' : 'Start'}
-                  </ThemedText>
-                </LinearGradient>
+                <ThemedText style={styles.dockChipText}>
+                  {log.trainingCompleted ? '🏋️‍♂️ Entrenado ✓' : '🏋️‍♂️ Entrenar'}
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.dockChipBtn}
+                onPress={() => useDailyLog().addWater(0.25)}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={styles.dockChipText}>💧 +0.25L Agua</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.dockChipBtn}
+                onPress={() => router.push('/journal')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={styles.dockChipText}>📖 Check-In</ThemedText>
               </TouchableOpacity>
             </View>
-
-            {/* RIGHT CARD: STOIC PRINCIPLE */}
-            <View style={styles.halfCard}>
-              <ThemedText style={styles.cardHeaderGoldText}>STOIC PRINCIPLE</ThemedText>
-
-              <ThemedText style={styles.stoicQuoteText}>
-                {'"Focus on what you can control, to control forms..."'}
-              </ThemedText>
-
-              <ThemedText style={styles.stoicAuthorText}>— Marcus Aurelius</ThemedText>
-            </View>
           </View>
 
-          {/* CARD 3: HEALTH METRICS */}
-          <View style={styles.healthMetricsCard}>
-            <ThemedText style={styles.cardHeaderGoldText}>HEALTH METRICS</ThemedText>
-
-            <View style={styles.metricsGridRow}>
-              {/* Metric 1 */}
-              <View style={styles.metricCol}>
-                <ThemedText style={styles.metricLabelText}>Heart Rate</ThemedText>
-                <ThemedText style={styles.metricValText}>
-                  {log.smartDevice?.heartRateBpm || 72} <ThemedText style={styles.unitText}>bpm</ThemedText>
-                </ThemedText>
-              </View>
-
-              <View style={styles.metricDividerLine} />
-
-              {/* Metric 2 */}
-              <View style={styles.metricCol}>
-                <ThemedText style={styles.metricLabelText}>Deep Sleep</ThemedText>
-                <ThemedText style={styles.metricValText}>6h 32m</ThemedText>
-              </View>
-
-              <View style={styles.metricDividerLine} />
-
-              {/* Metric 3 */}
-              <View style={styles.metricCol}>
-                <ThemedText style={styles.metricLabelText}>Hydration</ThemedText>
-                <ThemedText style={styles.metricValText}>
-                  {log.waterLitres.toFixed(1)}L <ThemedText style={styles.unitText}>/ 3L</ThemedText>
-                </ThemedText>
-              </View>
+          {/* 3. SECCIÓN 1: PILAR DE FUERZA Y ACTIVIDAD EN VIVO */}
+          <View style={styles.pillarSectionGroup}>
+            <View style={styles.sectionTitleRow}>
+              <ThemedText style={styles.sectionPillarTitle}>⚔️ PILAR DE FUERZA & MOVILIDAD</ThemedText>
+              <ThemedText style={styles.sectionPctBadge}>{(strengthProgress * 100).toFixed(0)}%</ThemedText>
             </View>
-          </View>
 
-          {/* INTEGRATED EXPANDABLE MODULE CARDS (Step Counter, TDEE, SmartDevice) */}
-          <View style={styles.extraModulesContainer}>
+            {/* Step Counter Card con Podómetro en Vivo */}
             <StepCounterCard
               steps={log.steps || 0}
               stepGoal={log.stepGoal || 10000}
               onAddSteps={addSteps}
               onSetStepGoal={setStepGoal}
             />
+
+            {/* Fila Doble: Sesión de Entrenamiento & Principio Estoico */}
+            <View style={styles.twoColRow}>
+              {/* Entrena */}
+              <View style={styles.halfCard}>
+                <ThemedText style={styles.cardHeaderGoldText}>RESISTENCIA FÍSICA</ThemedText>
+
+                <View style={styles.workoutCobaltBox}>
+                  <ThemedText style={styles.workoutTitleText}>Rutina de Hoy</ThemedText>
+                  <ThemedText style={styles.workoutMetaText}>55 mins | 720 kcal</ThemedText>
+                </View>
+
+                <TouchableOpacity
+                  onPress={toggleTraining}
+                  activeOpacity={0.8}
+                  style={styles.startButtonTouch}
+                >
+                  <LinearGradient
+                    colors={['#E2C068', '#C5A869']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.startButtonGradient}
+                  >
+                    <ThemedText style={styles.startButtonText}>
+                      {log.trainingCompleted ? 'Completado ✓' : 'Iniciar'}
+                    </ThemedText>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
+              {/* Filosofía Estoica */}
+              <View style={styles.halfCard}>
+                <ThemedText style={styles.cardHeaderGoldText}>PRINCIPIO ESTOICO</ThemedText>
+                <ThemedText style={styles.stoicQuoteText}>
+                  {'"Focus on what you can control, to control forms..."'}
+                </ThemedText>
+                <ThemedText style={styles.stoicAuthorText}>— Marco Aurelio</ThemedText>
+              </View>
+            </View>
+          </View>
+
+          {/* 4. SECCIÓN 2: PILAR DE VIRTUD Y BIENESTAR MENTAL */}
+          <View style={styles.pillarSectionGroup}>
+            <View style={styles.sectionTitleRow}>
+              <ThemedText style={styles.sectionPillarTitle}>🏛️ PILAR DE VIRTUD & BIENESTAR</ThemedText>
+              <ThemedText style={styles.sectionPctBadgeGold}>{(virtueProgress * 100).toFixed(0)}%</ThemedText>
+            </View>
+
+            {/* Hábito de Meditación */}
+            <View style={styles.meditationCard}>
+              <View style={styles.meditationLeft}>
+                <ThemedText style={styles.cardHeaderGoldText}>RACHA DE MEDITACIÓN</ThemedText>
+                <View style={styles.streakRow}>
+                  <FlameIcon color="#E2C068" size={28} />
+                  <ThemedText style={styles.streakNumberText}>14</ThemedText>
+                  <View style={styles.streakSubCol}>
+                    <ThemedText style={styles.streakDayText}>Días</ThemedText>
+                    <ThemedText style={styles.streakLabelText}>Racha Activa</ThemedText>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.meditationRight}>
+                <TouchableOpacity
+                  style={styles.continuePillBtn}
+                  onPress={() => router.push('/journal')}
+                >
+                  <ThemedText style={styles.continuePillText}>Continuar</ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.viewSubtext}>Diario</ThemedText>
+              </View>
+            </View>
+
+            {/* Métrica de Salud */}
+            <View style={styles.healthMetricsCard}>
+              <ThemedText style={styles.cardHeaderGoldText}>MÉTRICAS DE BIENESTAR EN TIEMPO REAL</ThemedText>
+
+              <View style={styles.metricsGridRow}>
+                <View style={styles.metricCol}>
+                  <ThemedText style={styles.metricLabelText}>Ritmo Cardíaco</ThemedText>
+                  <ThemedText style={styles.metricValText}>
+                    {log.smartDevice?.heartRateBpm || 72} <ThemedText style={styles.unitText}>bpm</ThemedText>
+                  </ThemedText>
+                </View>
+
+                <View style={styles.metricDividerLine} />
+
+                <View style={styles.metricCol}>
+                  <ThemedText style={styles.metricLabelText}>Sueño Profundo</ThemedText>
+                  <ThemedText style={styles.metricValText}>6h 32m</ThemedText>
+                </View>
+
+                <View style={styles.metricDividerLine} />
+
+                <View style={styles.metricCol}>
+                  <ThemedText style={styles.metricLabelText}>Hidratación</ThemedText>
+                  <ThemedText style={styles.metricValText}>
+                    {waterLitres.toFixed(1)}L <ThemedText style={styles.unitText}>/ 3.0L</ThemedText>
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 5. SECCIÓN 3: NUTRICIÓN & TECNOLOGÍA */}
+          <View style={styles.pillarSectionGroup}>
+            <View style={styles.sectionTitleRow}>
+              <ThemedText style={styles.sectionPillarTitle}>📊 NUTRICIÓN & TECNOLOGÍA</ThemedText>
+            </View>
 
             <CalorieIndexCard
               consumedCalories={log.totalCalories || 0}
@@ -489,5 +545,87 @@ const styles = StyleSheet.create({
   extraModulesContainer: {
     marginTop: Spacing.two,
     gap: Spacing.three,
+  },
+  quickDockCard: {
+    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+    borderRadius: 16,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(29, 100, 242, 0.30)',
+    gap: 8,
+    marginVertical: 4,
+  },
+  dockHeaderTitle: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#00C6FF',
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  dockButtonsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  dockChipBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  dockChipActive: {
+    backgroundColor: 'rgba(226, 192, 104, 0.20)',
+    borderColor: '#E2C068',
+  },
+  dockChipText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#F8FAFC',
+    fontFamily: 'monospace',
+  },
+  pillarSectionGroup: {
+    gap: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  sectionPillarTitle: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#E2C068',
+    letterSpacing: 1.8,
+  },
+  sectionPctBadge: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#00C6FF',
+    backgroundColor: 'rgba(0, 198, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 198, 255, 0.30)',
+  },
+  sectionPctBadgeGold: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#E2C068',
+    backgroundColor: 'rgba(226, 192, 104, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 192, 104, 0.30)',
   },
 });
