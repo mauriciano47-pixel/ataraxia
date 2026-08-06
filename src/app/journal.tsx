@@ -124,21 +124,45 @@ export default function JournalScreen() {
     return () => clearTimeout(timer);
   }, [loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown, saveMessages, setDisclaimerShown, setMessages]);
 
-  // Generador contextual amplio y variado de respaldo
+  // Índices para rotación continua anti-repetición de respaldos
+  const workoutIndexRef = useRef(0);
+  const mealIndexRef = useRef(0);
+  const stoicIndexRef = useRef(0);
+
+  // Generador contextual amplio y variado de respaldo (Rotación Cero Repetición)
   const generateFallbackResponse = useCallback((userPrompt: string): string => {
     const p = userPrompt.toLowerCase();
 
-    // 1. ENTRENAMIENTO & RUTINAS
+    // 1. ENTRENAMIENTO & RUTINAS (4 Variantes totalmente distintas)
     if (p.includes('rutina') || p.includes('entren') || p.includes('ejercicio') || p.includes('pesas') || p.includes('gym')) {
       if (today.trainingCompleted) {
-        return '🏆 ¡Ya cumpliste con tu entrenamiento de hoy! Excelente sobrecarga. Tu foco ahora debe estar en el anabolismo pasivo:\n\n• 🍳 **Proteína**: 35-45g de rápida asimilación.\n• 💧 **Agua**: Mínimo 500ml con sal rosa o electrólitos.\n• 🛌 **Descanso**: Al menos 7.5 horas de sueño reparador.';
+        return '🏆 ¡Ya cumpliste con tu entrenamiento de hoy! Excelente sobrecarga. Tu foco ahora debe estar en la recuperación activa:\n\n• 🍳 **Proteína**: 35-45g de rápida asimilación (pollo, atún o batido whey).\n• 💧 **Agua & Electrólitos**: Mínimo 500ml con pizca de sal rosa.\n• 🛌 **Descanso**: Al menos 7.5h de sueño profundo para la supercompensación.';
       }
-      return '💪 **Propuesta de Sesión de Fuerza & Hipertrofia (45-50 min)**:\n\n1. **Calentamiento (5m)**: Movilidad de hombros y cadera + 2 series livianas.\n2. **Fuerza Principal**: Sentadillas o Press 4 series x 8-10 reps (RIR 2).\n3. **Tensión Mecánica**: Remo o Dominadas 4 series x 10-12 reps.\n4. **Bombeo**: Flexiones o Zancadas 3 series al fallo técnico.\n5. **Core**: Plancha abdominal 3 x 45 segundos.\n\n*Recuerda: la ejecución perfecta supera siempre al peso egoísta.*';
+
+      const workoutOptions = [
+        '💪 **Propuesta A — Empuje & Fuerza Superior (45 min)**:\n\n1. **Press de Banca o Mancuernas**: 4x8-10 reps (RIR 2).\n2. **Press Militar de Hombro**: 3x10 reps.\n3. **Fondos en Paralelas / Flexiones**: 3x12 reps al fallo técnico.\n4. **Elevaciones Laterales**: 3x15 reps.\n5. **Plancha Abdominal**: 3x45s.\n\n*La constancia en la sobrecarga es la clave del progreso real.*',
+        '🏋️‍♂️ **Propuesta B — Tracción & Cadena Posterior (50 min)**:\n\n1. **Peso Muerto Rumano**: 4x8 reps (foco en isquios y glúteos).\n2. **Remo con Barra o Mancuerna**: 4x10 reps.\n3. **Dominadas o Jalón al Pecho**: 3x10 reps.\n4. **Curl de Bíceps con Barra**: 3x12 reps.\n5. **Face Pulls para Hombro Posterior**: 3x15 reps.\n\n*Tu espalda sostiene tu postura y tu carácter estoico.*',
+        '🦵 **Propuesta C — Tren Inferior & Potencia (45 min)**:\n\n1. **Sentadilla Trasera o Frontal**: 4x8 reps (RIR 2).\n2. **Zancadas Búlgaras**: 3x10 reps por pierna.\n3. **Prensa Inclinada**: 3x12 reps.\n4. **Elevaciones de Talón (Gemelos)**: 4x15 reps.\n5. **Elevación de Piernas para Core**: 3x15 reps.\n\n*Las piernas fuertes son el cimiento de un templo indestructible.*',
+        '🛡️ **Propuesta D — Calistenia Espartana en Casa (35 min)**:\n\n1. **Flexiones Declinadas o Diamante**: 4 series al fallo técnico.\n2. **Sentadillas Libres Explosivas**: 4x20 reps.\n3. **Zancadas Alternas**: 3x16 reps.\n4. **Plancha de Oso & Core**: 4x50s.\n\n*No necesitas máquinas caras para forjar una voluntad de hierro.*'
+      ];
+
+      const chosen = workoutOptions[workoutIndexRef.current % workoutOptions.length];
+      workoutIndexRef.current += 1;
+      return chosen;
     }
 
-    // 2. NUTRICIÓN & MACROS
+    // 2. NUTRICIÓN & MACROS (4 Variantes totalmente distintas)
     if (p.includes('comida') || p.includes('prote') || p.includes('nutri') || p.includes('receta') || p.includes('macro') || p.includes('calor')) {
-      return `🥗 **Estrategia Nutricional Recomendada (Meta: ${today.targetCalories || 2200} kcal)**:\n\n• **Plato Atleta**: 220g de Pechuga de Pollo/Pavo o Salmón a la plancha (45g proteína) + 150g de Arroz Integral o Camote + Ensalada verde con aceite de oliva extra virgen.\n• **Snack Anabólico**: Batido de proteína Whey con avena y plátano o Yoguet Griego 0% con frutos secos.\n\n*Mantén la proteína repartida en 3-4 tomas diarias para maximizar la síntesis proteica.*`;
+      const mealOptions = [
+        `🥗 **Opción A — Proteína Magra & Compleja (Meta: ${today.targetCalories || 2200} kcal)**:\n\n• **Plato Principal**: 220g de Pechuga de Pollo al Limón + 150g de Arroz Integral + Ensalada verde con aceite de oliva extra virgen.\n• **Macros Aproximados**: 45g Proteína | 50g Carbos | 12g Grasas (520 kcal).`,
+        `🐟 **Opción B — Omega-3 & Recomposición**: 200g de Salmón o Atún a la plancha + Quinoa hervida + Espárragos salteados en Ghee.\n• **Macros Aproximados**: 42g Proteína | 45g Carbos | 16g Grasas (550 kcal).`,
+        `🍳 **Opción C — Comida Proteica Rápida**: Omelette de 4 Huevos enteros + 100g de Queso Cottage + Champiñones + 2 Tostadas de Avena integral.\n• **Macros Aproximados**: 40g Proteína | 35g Carbos | 18g Grasas (490 kcal).`,
+        `🥩 **Opción D — Lomo Magro & Carbohidratos Complejos**: 200g de Lomo Magro salteado con pimientos + Camote al horno + Semillas de Chía o Almendras.\n• **Macros Aproximados**: 44g Proteína | 48g Carbos | 14g Grasas (530 kcal).`
+      ];
+
+      const chosen = mealOptions[mealIndexRef.current % mealOptions.length];
+      mealIndexRef.current += 1;
+      return chosen;
     }
 
     // 3. SUPLEMENTACIÓN
@@ -160,9 +184,18 @@ export default function JournalScreen() {
       return '😴 **Optimización de Sueño y Cortisol**:\n\n• **Luz Solar Matutina**: Recibe 10 min de luz solar al despertar para alinear tu ritmo circadiano.\n• **Corte de Pantallas**: Apaga pantallas o usa filtro azul 60 min antes de acostarte.\n• **Magnesio Bisglicinato**: 200-400mg antes de dormir favorece la relajación muscular profunda y reduce despertares nocturnos.';
     }
 
-    // 6. ESTOICISMO & MENTALIDAD
+    // 6. ESTOICISMO & MENTALIDAD (4 Variantes rotativas)
     if (p.includes('reflex') || p.includes('motiv') || p.includes('frase') || p.includes('perez') || p.includes('mente') || p.includes('estoic')) {
-      return '🏛️ *"Ningún hombre tiene el derecho de ser un aficionado en el entrenamiento físico. Es una vergüenza para un hombre envejecer sin ver la belleza y fuerza de la que su cuerpo es capaz."* — Sócrates / Epicteto.\n\nHoy no buscas ganas, buscas disciplina. Cumple tu deber sin negociar con la pereza.';
+      const stoicOptions = [
+        '🏛️ *"No nos atrevemos a muchas cosas porque son difíciles, pero son difíciles porque no nos atrevemos."* — Séneca.\n\nHoy no buscas ganas, buscas disciplina. Cumple tu deber sin negociar con la pereza.',
+        '🏛️ *"Tienes poder sobre tu mente, no sobre los acontecimientos externos. Date cuenta de esto y encontrarás tu fuerza."* — Marco Aurelio.\n\nEnfoca todo tu ímpetu en las decisiones que sí controlas hoy.',
+        '🏛️ *"No expliques tu filosofía; encárnala en tus actos de hoy."* — Epicteto.\n\nEl sudor de tu entrenamiento es tu mejor discurso.',
+        '🏛️ *"Si haces algo noble con esfuerzo, el esfuerzo pasa y lo noble queda."* — Musonio Rufo.\n\nEl cansancio de hoy se convertirá en la fortaleza de mañana.'
+      ];
+
+      const chosen = stoicOptions[stoicIndexRef.current % stoicOptions.length];
+      stoicIndexRef.current += 1;
+      return chosen;
     }
 
     return `🏛️ **Status de tu Coach Ataraxia**:\n\n• **Pasos**: ${(today.steps || 0).toLocaleString()} / ${(today.stepGoal || 10000).toLocaleString()}\n• **Nutrición**: ${today.totalCalories} / ${today.targetCalories || 2200} kcal\n• **Agua**: ${today.waterLitres}L / 2.5L\n• **Entreno**: ${today.trainingCompleted ? 'COMPLETADO 🏆' : 'PENDIENTE ⏳'}\n\n¿En qué área específica (rutina, suplementos, comidas, mentalidad) necesitas mi asesoramiento en este instante?`;
@@ -193,7 +226,7 @@ export default function JournalScreen() {
         const systemPrompt = buildCoachSystemPrompt(contextSummary, pastContext);
 
         const conversationParts: string[] = [];
-        updatedWithUser.slice(-8).forEach((msg) => {
+        updatedWithUser.slice(-10).forEach((msg) => {
           const prefix = msg.sender === 'user' ? 'USUARIO' : 'COACH';
           conversationParts.push(`${prefix}: ${msg.text}`);
         });
@@ -201,23 +234,27 @@ export default function JournalScreen() {
         const fullPrompt = conversationParts.join('\n\n');
 
         try {
-          // Intento 1: Modelo primario de alta velocidad
+          // Intento 1: Modelo primario con temperatura alta para máxima variedad
           const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
             config: {
               systemInstruction: systemPrompt,
+              temperature: 0.90,
+              topP: 0.95,
             },
           });
           botText = response.text || '';
         } catch (e1) {
-          console.warn("Reintentando Gemini con modelo 1.5-flash:", e1);
+          console.warn("Reintentando Gemini con modelo 1.5-flash y alta variabilidad:", e1);
           // Intento 2: Fallback gemini-1.5-flash
           const response2 = await ai.models.generateContent({
             model: 'gemini-1.5-flash',
             contents: fullPrompt,
             config: {
               systemInstruction: systemPrompt,
+              temperature: 0.90,
+              topP: 0.95,
             },
           });
           botText = response2.text || '';
