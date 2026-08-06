@@ -165,15 +165,15 @@ export function StepCounterCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(14, 20, 36, 0.88)',
+    backgroundColor: '#0F172A',
     borderRadius: 16,
     padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 145, 0, 0.40)',
     gap: Spacing.two,
-    shadowColor: '#E2C068',
+    shadowColor: '#FF9100',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
   },
   headerRow: {
@@ -190,11 +190,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(226, 192, 104, 0.10)',
+    backgroundColor: 'rgba(255, 145, 0, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.25)',
+    borderColor: 'rgba(255, 145, 0, 0.35)',
   },
   iconBadgeActive: {
     backgroundColor: 'rgba(0, 198, 255, 0.15)',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#E2C068',
+    color: '#FF9100',
     fontFamily: 'monospace',
     letterSpacing: 1,
   },

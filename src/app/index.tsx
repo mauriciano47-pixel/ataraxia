@@ -74,25 +74,25 @@ export default function HoyScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* HEADER STOIC ROYAL */}
-          {/* HEADER STOIC ROYAL (EXACTLY AS PROPOSAL 1 SCREENSHOT) */}
+          {/* HEADER HYPERTROPHY POWER GRID (CONCEPT 4) */}
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.push('/profile')} style={styles.laurelLogoBtn}>
               <View style={styles.laurelRing}>
-                <ThemedText style={styles.laurelLetter}>A</ThemedText>
+                <ThemedText style={styles.laurelLetter}>⚡</ThemedText>
               </View>
             </TouchableOpacity>
 
             <View style={styles.titleCenterGroup}>
               <ThemedText style={styles.brandTitle}>ATARAXIA</ThemedText>
-              <ThemedText style={styles.brandSubtitle}>STOIC WELLNESS</ThemedText>
+              <ThemedText style={styles.brandSubtitle}>POWER GRID • ATHLETIC</ThemedText>
             </View>
 
             <View style={styles.headerRightActions}>
               <TouchableOpacity style={styles.headerIconBtn}>
-                <ThemedText style={{ fontSize: 16, color: '#E2C068' }}>🔔</ThemedText>
+                <ThemedText style={{ fontSize: 16, color: '#FF9100' }}>⚡</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/journal')}>
-                <ThemedText style={{ fontSize: 16, color: '#E2C068' }}>📋</ThemedText>
+              <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/trainer')}>
+                <ThemedText style={{ fontSize: 16, color: '#00C6FF' }}>🏋️‍♂️</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -344,37 +344,33 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#E2C068',
+    borderColor: '#FF9100',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(226, 192, 104, 0.12)',
-    boxShadow: '0 0 12px rgba(226, 192, 104, 0.35)',
+    backgroundColor: 'rgba(255, 145, 0, 0.15)',
+    boxShadow: '0 0 12px rgba(255, 145, 0, 0.40)',
   },
   laurelLetter: {
-    fontSize: 22,
-    fontFamily: 'serif',
+    fontSize: 20,
     fontWeight: '900',
-    color: '#F5D77F',
-    textShadowColor: 'rgba(226, 192, 104, 0.60)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    color: '#FFAB00',
   },
   titleCenterGroup: {
     alignItems: 'center',
   },
   brandTitle: {
     fontSize: 26,
-    fontFamily: 'serif',
+    fontFamily: 'sans-serif',
     fontWeight: '900',
-    color: '#F5D77F',
+    color: '#FF9100',
     letterSpacing: 4,
-    textShadowColor: 'rgba(226, 192, 104, 0.35)',
+    textShadowColor: 'rgba(255, 145, 0, 0.50)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    textShadowRadius: 8,
   },
   brandSubtitle: {
     fontSize: 10,
-    fontFamily: 'sans-serif',
+    fontFamily: 'monospace',
     fontWeight: 'bold',
     color: '#00C6FF',
     letterSpacing: 2.5,
