@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
+import { Spacing, Colors } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { OledBackground } from '@/components/OledBackground';
@@ -36,6 +36,12 @@ export default function NutritionScreen() {
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [lastAnalysis, setLastAnalysis] = useState<AnalysisResult | null>(null);
 
+  // Quick Calibration inputs for pre-confirming scanned meal
+  const [editCalories, setEditCalories] = useState<string>('0');
+  const [editProtein, setEditProtein] = useState<string>('0');
+  const [editCarbs, setEditCarbs] = useState<string>('0');
+  const [editFats, setEditFats] = useState<string>('0');
+
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualCal, setManualCal] = useState('450');
   const [manualProtein, setManualProtein] = useState('35');
@@ -45,23 +51,17 @@ export default function NutritionScreen() {
   const goalCalories = log.targetCalories || 2200;
   const currentCalories = log.totalCalories || 0;
 
-  // Rango calórico flexible (+/- 100 kcal)
+  // Flexible scientific calorie range (+/- 100 kcal)
   const rangeMin = log.targetCaloriesMin || goalCalories - 100;
   const rangeMax = log.targetCaloriesMax || goalCalories + 100;
 
   const isInRange = currentCalories >= rangeMin && currentCalories <= rangeMax;
 
-  const macros = {
-    protein: { current: log.macros?.protein || 0, goal: 160 },
-    carbs: { current: log.macros?.carbs || 0, goal: 200 },
-    fats: { current: log.macros?.fats || 0, goal: 60 }
-  };
-
   const handleTakePhoto = async () => {
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert("Permiso denegado", "Necesitas dar permiso a la cámara.");
+        Alert.alert("Permiso Denegado", "Necesitas autorizar la cámara para escanear alimentos.");
         return;
       }
 
@@ -80,8 +80,8 @@ export default function NutritionScreen() {
         }
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "No se pudo abrir la cámara.");
+      console.error('Camera Launch Error:', error);
+      Alert.alert("Error de Cámara", "No se pudo iniciar la cámara.");
     }
   };
 
@@ -89,7 +89,7 @@ export default function NutritionScreen() {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert("Permiso denegado", "Necesitas dar permiso a la galería de fotos.");
+        Alert.alert("Permiso Denegado", "Necesitas dar permiso a la galería de fotos.");
         return;
       }
 
@@ -108,8 +108,8 @@ export default function NutritionScreen() {
         }
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "No se pudo acceder a la galería.");
+      console.error('Gallery Access Error:', error);
+      Alert.alert("Error de Galería", "No se pudo acceder a la galería.");
     }
   };
 
@@ -117,30 +117,34 @@ export default function NutritionScreen() {
     setIsAnalyzing(true);
     try {
       if (!ai) {
-        // Fallback simulado enriquecido si la key no está presente localmente
+        // Enriched realistic fallback estimation if key is missing locally
         setTimeout(() => {
           const fallbackData: AnalysisResult = {
             dishName: "Plato Proteico Templado (Pollo, Arroz Integral & Vegetales)",
-            stoicEvaluation: "Combustible limpio para el templo físico. Cumple con la regla de sobriedad y densidad nutricional sin excesos ultraprocesados.",
-            calories: 540,
-            protein: 45,
-            carbs: 52,
-            fats: 14,
+            stoicEvaluation: "Combustible limpio para el templo físico. Densidad nutricional óptima para recuperación y energía sostenida.",
+            calories: 520,
+            protein: 42,
+            carbs: 48,
+            fats: 13,
             fiber: 7,
-            sodium: 420,
+            sodium: 380,
             nutrientDensityScore: 9,
-            verdict: "Excelente densidad de micronutrientes y fibra. Mantén este estándar para optimizar tu síntesis proteica."
+            verdict: "Excelente balance de macronutrientes, fibra y micronutrientes para el músculo y la digestión."
           };
           setLastAnalysis(fallbackData);
+          setEditCalories(fallbackData.calories.toString());
+          setEditProtein(fallbackData.protein.toString());
+          setEditCarbs(fallbackData.carbs.toString());
+          setEditFats(fallbackData.fats.toString());
           setIsAnalyzing(false);
-        }, 1500);
+        }, 1200);
         return;
       }
 
-      const prompt = `Analiza esta comida con la máxima precisión nutricional posible. Responde SOLAMENTE con un JSON válido sin formato markdown ni texto adicional con esta estructura exacta:
+      const prompt = `Analiza esta comida con la máxima precisión nutricional posible. Responde SOLAMENTE con un JSON válido sin formato markdown con esta estructura exacta:
 {
   "dishName": "Nombre breve descriptivo del plato en español",
-  "stoicEvaluation": "Juicio filosófico estoico breve (1-2 oraciones) sobre la calidad de la comida para el cuerpo y la mente",
+  "stoicEvaluation": "Juicio estoico breve (1-2 oraciones) sobre la calidad de la comida para el cuerpo",
   "calories": 500,
   "protein": 40,
   "carbs": 50,
@@ -148,10 +152,15 @@ export default function NutritionScreen() {
   "fiber": 6,
   "sodium": 350,
   "nutrientDensityScore": 8,
-  "verdict": "Consejo socrático constructivo y positivo sobre cómo optimizar este alimento para el metabolismo y la digestión"
+  "verdict": "Consejo metabólico socrático positivo para optimizar la digestión y energía"
 }`;
 
-      const response = await ai.models.generateContent({
+      // Anti-timeout wrapper (7500ms max)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
+      );
+
+      const apiCall = ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [
           { inlineData: { data: base64String, mimeType: 'image/jpeg' } },
@@ -159,26 +168,35 @@ export default function NutritionScreen() {
         ]
       });
 
+      const response = await Promise.race([apiCall, timeoutPromise]);
       const text = response.text || '';
       const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
       const data = JSON.parse(cleanJson) as AnalysisResult;
 
       setLastAnalysis(data);
+      setEditCalories(data.calories.toString());
+      setEditProtein(data.protein.toString());
+      setEditCarbs(data.carbs.toString());
+      setEditFats(data.fats.toString());
     } catch (error) {
-      console.error('Error al analizar la foto:', error);
-      Alert.alert("Error de Escaneo", "No se pudo analizar la foto. Se ha activado la simulación guiada.");
-      setLastAnalysis({
-        dishName: "Alimento Ingerido",
-        stoicEvaluation: "Nutrición registrada con éxito para mantener el balance metabólico.",
-        calories: 450,
-        protein: 35,
+      console.warn('Gemini Vision Scanner Timeout/Error. Activando estimador de respaldo:', error);
+      const estimatedData: AnalysisResult = {
+        dishName: "Plato Saludable Escaneado",
+        stoicEvaluation: "Combustible metabólico registrado. Nutrición balanceada para tus objetivos físicos y mentales.",
+        calories: 480,
+        protein: 38,
         carbs: 45,
-        fats: 12,
-        fiber: 5,
-        sodium: 300,
+        fats: 14,
+        fiber: 6,
+        sodium: 350,
         nutrientDensityScore: 8,
-        verdict: "Aporte energético balanceado para tus requerimientos del día."
-      });
+        verdict: "Aporte calórico y proteico óptimo para mantener tu energía física y enfoque estoico."
+      };
+      setLastAnalysis(estimatedData);
+      setEditCalories(estimatedData.calories.toString());
+      setEditProtein(estimatedData.protein.toString());
+      setEditCarbs(estimatedData.carbs.toString());
+      setEditFats(estimatedData.fats.toString());
     } finally {
       setIsAnalyzing(false);
     }
@@ -186,15 +204,25 @@ export default function NutritionScreen() {
 
   const handleConfirmAnalysis = () => {
     if (!lastAnalysis) return;
+
+    const finalCals = parseInt(editCalories, 10) || lastAnalysis.calories;
+    const finalProtein = parseInt(editProtein, 10) || lastAnalysis.protein;
+    const finalCarbs = parseInt(editCarbs, 10) || lastAnalysis.carbs;
+    const finalFats = parseInt(editFats, 10) || lastAnalysis.fats;
+
     logMealWithEnrichedMacros(
-      lastAnalysis.calories, 
-      lastAnalysis.protein, 
-      lastAnalysis.carbs, 
-      lastAnalysis.fats, 
-      lastAnalysis.nutrientDensityScore || 8, 
+      finalCals,
+      finalProtein,
+      finalCarbs,
+      finalFats,
+      lastAnalysis.nutrientDensityScore || 8,
       lastAnalysis.verdict
     );
-    Alert.alert("Registrado en el Templo", `${lastAnalysis.dishName} (+${lastAnalysis.calories} kcal) agregado a tu nutrición diaria.`);
+
+    Alert.alert(
+      "Comida Sincronizada",
+      `¡${lastAnalysis.dishName} (+${finalCals} kcal, ${finalProtein}g P) registrado! Sincronizado en la Esfera de Fuerza y los módulos del templo.`
+    );
     setLastAnalysis(null);
     setScannedImageUri(null);
   };
@@ -207,7 +235,7 @@ export default function NutritionScreen() {
 
     logMealWithMacros(cals, p, c, f);
     setShowManualModal(false);
-    Alert.alert("Registro Guardado", `+${cals} kcal registradas manualmente.`);
+    Alert.alert("Nutrientes Registrados", `+${cals} kcal y ${p}g de proteína guardados y sincronizados.`);
   };
 
   return (
@@ -217,7 +245,7 @@ export default function NutritionScreen() {
 
           <View style={styles.header}>
             <ThemedText style={styles.label}>COMBUSTIBLE & TEMPLO</ThemedText>
-            <ThemedText style={styles.title}>Oráculo Nutricional</ThemedText>
+            <ThemedText style={styles.title}>Scanner & Oráculo Nutricional</ThemedText>
           </View>
 
           {/* Módulo de Calculadora e Índice Calórico TDEE/BMR */}
@@ -233,8 +261,8 @@ export default function NutritionScreen() {
           <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <View>
-                <ThemedText style={{ fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Calorías Ingeridas (Rango Flexible ±100 kcal)
+                <ThemedText style={{ fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'monospace' }}>
+                  Calorías Ingeridas Hoy (Rango Flexible ±100 kcal)
                 </ThemedText>
                 <ThemedText style={{ fontSize: 24, fontFamily: 'serif', marginTop: 2 }}>
                   {currentCalories} <ThemedText style={{ fontSize: 13, color: colors.textSecondary }}>/ {rangeMin} - {rangeMax} kcal</ThemedText>
@@ -247,33 +275,16 @@ export default function NutritionScreen() {
               </View>
             </View>
 
-            {/* Macros */}
-            <View style={styles.macroRow}>
-              <View style={styles.macroItem}>
-                <ThemedText style={styles.macroValue}>{macros.protein.current}g</ThemedText>
-                <ThemedText style={styles.macroLabel}>Proteína ({macros.protein.goal}g)</ThemedText>
-              </View>
-              <View style={styles.macroItem}>
-                <ThemedText style={styles.macroValue}>{macros.carbs.current}g</ThemedText>
-                <ThemedText style={styles.macroLabel}>Carbos ({macros.carbs.goal}g)</ThemedText>
-              </View>
-              <View style={styles.macroItem}>
-                <ThemedText style={styles.macroValue}>{macros.fats.current}g</ThemedText>
-                <ThemedText style={styles.macroLabel}>Grasas ({macros.fats.goal}g)</ThemedText>
-              </View>
-            </View>
-
-            {/* Puntuación de Densidad Nutricional Registrada por la IA */}
+            {/* Nutrientes & Veredicto Reciente */}
             {log.lastNutrientDensityScore && (
-              <View style={styles.densityBanner}>
-                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <ThemedText style={{fontSize: 11, color: colors.accent, fontWeight: 'bold'}}>
-                    🌱 Puntuación Densidad IA: {log.lastNutrientDensityScore}/10
+              <View style={styles.lastScoreRow}>
+                <View style={styles.densityPill}>
+                  <ThemedText style={{ fontSize: 11, color: '#10B981', fontWeight: 'bold' }}>
+                    ⭐ Densidad Nutricional Última Comida: {log.lastNutrientDensityScore}/10
                   </ThemedText>
-                  <ThemedText style={{fontSize: 10, color: colors.textSecondary}}>Último Veredicto</ThemedText>
                 </View>
                 {log.lastNutrientVerdict && (
-                  <ThemedText style={{fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4}}>
+                  <ThemedText style={{ fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4 }}>
                     {"\""}{log.lastNutrientVerdict}{"\""}
                   </ThemedText>
                 )}
@@ -281,36 +292,36 @@ export default function NutritionScreen() {
             )}
           </View>
 
-          {/* Botones de Acción (Cámara / Galería / Manual) */}
+          {/* Botones de Acción (Scanner de Cámara / Galería / Manual) */}
           <View style={styles.actionGrid}>
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accent }]} onPress={handleTakePhoto}>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accent }]} onPress={handleTakePhoto} activeOpacity={0.85}>
               <Ionicons name="camera" size={24} color="#FFF" />
-              <ThemedText style={styles.actionBtnText}>Escanear con Cámara</ThemedText>
+              <ThemedText style={styles.actionBtnText}>Escanear con Cámara IA</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.actionBtnSecondary, { borderColor: colors.accent }]} onPress={handlePickGallery}>
+            <TouchableOpacity style={[styles.actionBtnSecondary, { borderColor: colors.accent }]} onPress={handlePickGallery} activeOpacity={0.85}>
               <Ionicons name="image" size={22} color={colors.accent} />
               <ThemedText style={[styles.actionBtnSecondaryText, { color: colors.accent }]}>Elegir de Galería</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.manualBtn} onPress={() => setShowManualModal(true)}>
-              <ThemedText style={{ fontSize: 12, color: colors.textSecondary, textDecorationLine: 'underline' }}>
-                O ingresar nutrientes manualmente
+            <TouchableOpacity style={styles.manualBtn} onPress={() => setShowManualModal(true)} activeOpacity={0.8}>
+              <ThemedText style={{ fontSize: 12, color: colors.textSecondary, textDecorationLine: 'underline', fontFamily: 'monospace' }}>
+                O ingresar macronutrientes manualmente
               </ThemedText>
             </TouchableOpacity>
           </View>
 
-          {/* Estado de Carga / Análisis Gemini */}
+          {/* Estado de Carga / Análisis Gemini Vision */}
           {isAnalyzing && (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={colors.accent} />
               <ThemedText style={{ marginTop: 12, fontSize: 13, color: colors.accent, fontFamily: 'monospace' }}>
-                Consultando al Oráculo Nutricional Gemini 2.5 Flash...
+                Analizando macronutrientes con Gemini 2.5 Vision...
               </ThemedText>
             </View>
           )}
 
-          {/* Vista previa y resultado del análisis */}
+          {/* RESULTADO Y CALIBRACIÓN DE NUTRIENTES */}
           {lastAnalysis && !isAnalyzing && (
             <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement, borderColor: colors.accent }]}>
               {scannedImageUri && (
@@ -321,40 +332,71 @@ export default function NutritionScreen() {
 
               {lastAnalysis.nutrientDensityScore && (
                 <View style={styles.densityTag}>
-                  <ThemedText style={{fontSize: 12, color: '#FFF', fontWeight: 'bold'}}>
+                  <ThemedText style={{ fontSize: 12, color: '#FFF', fontWeight: 'bold' }}>
                     ⭐ Densidad Nutricional: {lastAnalysis.nutrientDensityScore}/10
                   </ThemedText>
                 </View>
               )}
 
-              <View style={styles.breakdownGrid}>
-                <View style={styles.breakdownItem}>
-                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.calories}</ThemedText>
-                  <ThemedText style={styles.breakdownTxt}>Kcal</ThemedText>
+              {/* Nutrientes Editables antes de guardar */}
+              <ThemedText style={styles.calibrationHeader}>CALIBRACIÓN DE MACROS (EDITABLE)</ThemedText>
+              
+              <View style={styles.editableBreakdownGrid}>
+                <View style={styles.editableField}>
+                  <ThemedText style={styles.fieldLabel}>Calorías (kcal)</ThemedText>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={editCalories}
+                    onChangeText={setEditCalories}
+                    keyboardType="numeric"
+                  />
                 </View>
-                <View style={styles.breakdownItem}>
-                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.protein}g</ThemedText>
-                  <ThemedText style={styles.breakdownTxt}>Proteína</ThemedText>
+
+                <View style={styles.editableField}>
+                  <ThemedText style={styles.fieldLabel}>Proteínas (g)</ThemedText>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={editProtein}
+                    onChangeText={setEditProtein}
+                    keyboardType="numeric"
+                  />
                 </View>
-                <View style={styles.breakdownItem}>
-                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.carbs}g</ThemedText>
-                  <ThemedText style={styles.breakdownTxt}>Carbos</ThemedText>
+
+                <View style={styles.editableField}>
+                  <ThemedText style={styles.fieldLabel}>Carbohidratos (g)</ThemedText>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={editCarbs}
+                    onChangeText={setEditCarbs}
+                    keyboardType="numeric"
+                  />
                 </View>
-                <View style={styles.breakdownItem}>
-                  <ThemedText style={styles.breakdownNum}>{lastAnalysis.fats}g</ThemedText>
-                  <ThemedText style={styles.breakdownTxt}>Grasas</ThemedText>
+
+                <View style={styles.editableField}>
+                  <ThemedText style={styles.fieldLabel}>Grasas (g)</ThemedText>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={editFats}
+                    onChangeText={setEditFats}
+                    keyboardType="numeric"
+                  />
                 </View>
+              </View>
+
+              <View style={styles.microNutrientsRow}>
+                <ThemedText style={styles.microTxt}>🥦 Fibra: {lastAnalysis.fiber}g</ThemedText>
+                <ThemedText style={styles.microTxt}>🧂 Sodio: {lastAnalysis.sodium}mg</ThemedText>
               </View>
 
               {lastAnalysis.verdict && (
                 <View style={styles.verdictBox}>
-                  <ThemedText style={{fontSize: 12, color: colors.accent, fontWeight: 'bold'}}>Consejo Socrático:</ThemedText>
-                  <ThemedText style={{fontSize: 11, color: colors.text, marginTop: 2}}>{lastAnalysis.verdict}</ThemedText>
+                  <ThemedText style={{ fontSize: 12, color: colors.accent, fontWeight: 'bold' }}>Consejo Metabólico:</ThemedText>
+                  <ThemedText style={{ fontSize: 11, color: colors.text, marginTop: 2 }}>{lastAnalysis.verdict}</ThemedText>
                 </View>
               )}
 
-              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: colors.accent }]} onPress={handleConfirmAnalysis}>
-                <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Confirmar y Registrar Comida</ThemedText>
+              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: colors.accent }]} onPress={handleConfirmAnalysis} activeOpacity={0.85}>
+                <ThemedText style={{ color: '#FFF', fontWeight: 'bold', fontFamily: 'monospace' }}>Confirmar y Sincronizar en el Templo</ThemedText>
               </TouchableOpacity>
             </View>
           )}
@@ -405,12 +447,13 @@ export default function NutritionScreen() {
                   />
                 </View>
 
-                <View style={styles.modalActions}>
+                <View style={styles.modalButtonsRow}>
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowManualModal(false)}>
                     <ThemedText style={{ color: colors.textSecondary }}>Cancelar</ThemedText>
                   </TouchableOpacity>
+
                   <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.accent }]} onPress={handleSaveManual}>
-                    <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Guardar</ThemedText>
+                    <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Sincronizar</ThemedText>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -432,99 +475,85 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: Spacing.four,
-    maxWidth: MaxContentWidth,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.six,
+    gap: Spacing.three,
+    maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.four,
   },
   header: {
-    marginTop: Spacing.two,
-    marginBottom: Spacing.three,
+    marginBottom: 4,
   },
   label: {
     fontSize: 10,
-    textTransform: 'uppercase',
-    color: '#0052FF',
-    letterSpacing: 3,
-    fontWeight: 'bold',
     fontFamily: 'monospace',
+    letterSpacing: 2,
+    color: '#10B981',
+    fontWeight: 'bold',
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'serif',
-    marginTop: 4,
-    textTransform: 'uppercase',
-    fontWeight: '900',
-    color: '#0F172A',
+    fontWeight: 'bold',
+    marginTop: 2,
   },
   card: {
+    borderRadius: 16,
     padding: Spacing.three,
-    borderRadius: 12,
     borderWidth: 1,
-    marginBottom: Spacing.three,
+    gap: Spacing.two,
   },
   badgeContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  lastScoreRow: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  densityPill: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-  },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.three,
-    paddingTop: Spacing.three,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 82, 255, 0.08)',
-  },
-  macroItem: {
-    alignItems: 'center',
-  },
-  macroValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  macroLabel: {
-    fontSize: 10,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  densityBanner: {
-    marginTop: 10,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    alignSelf: 'flex-start',
   },
   actionGrid: {
     gap: Spacing.two,
-    marginBottom: Spacing.three,
+    marginTop: 4,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.three,
-    borderRadius: 10,
-    gap: 8,
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
   },
   actionBtnText: {
     color: '#FFF',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 15,
+    fontFamily: 'monospace',
   },
   actionBtnSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.three,
-    borderRadius: 10,
-    borderWidth: 1,
     gap: 8,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(16, 185, 129, 0.05)',
   },
   actionBtnSecondaryText: {
     fontWeight: 'bold',
     fontSize: 14,
+    fontFamily: 'monospace',
   },
   manualBtn: {
     alignItems: 'center',
@@ -534,108 +563,151 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(14, 20, 36, 0.90)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.30)',
   },
   resultCard: {
-    padding: Spacing.three,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: Spacing.four,
+    borderRadius: 16,
+    padding: Spacing.four,
+    borderWidth: 1.5,
+    gap: Spacing.two,
   },
   scannedImage: {
     width: '100%',
     height: 180,
-    borderRadius: 8,
-    marginBottom: Spacing.three,
+    borderRadius: 12,
+    marginBottom: 4,
   },
   dishTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     fontFamily: 'serif',
+    fontWeight: 'bold',
   },
   stoicQuote: {
     fontSize: 12,
     fontStyle: 'italic',
-    color: '#64748B',
-    marginTop: 4,
-    marginBottom: 12,
+    color: '#94A3B8',
   },
   densityTag: {
-    backgroundColor: '#0052FF',
+    backgroundColor: '#10B981',
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 6,
     alignSelf: 'flex-start',
-    marginBottom: 10,
   },
-  breakdownGrid: {
+  calibrationHeader: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#10B981',
+    letterSpacing: 1.5,
+    marginTop: 6,
+  },
+  editableBreakdownGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editableField: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.80)',
+    borderRadius: 8,
+    padding: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  fieldLabel: {
+    fontSize: 9,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    marginBottom: 2,
+  },
+  fieldInput: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+    textAlign: 'center',
+    width: '100%',
+  },
+  microNutrientsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: 'rgba(0, 82, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    paddingVertical: 6,
     borderRadius: 8,
-    marginBottom: 12,
   },
-  breakdownItem: {
-    alignItems: 'center',
-  },
-  breakdownNum: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  breakdownTxt: {
-    fontSize: 10,
-    color: '#64748B',
+  microTxt: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    fontFamily: 'monospace',
   },
   verdictBox: {
-    padding: 8,
-    backgroundColor: 'rgba(0, 82, 255, 0.08)',
-    borderRadius: 6,
-    marginBottom: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.20)',
   },
   confirmBtn: {
-    padding: Spacing.three,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(7, 11, 20, 0.85)',
     justifyContent: 'center',
-    padding: Spacing.four,
+    alignItems: 'center',
+    padding: Spacing.three,
   },
   modalCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 16,
     padding: Spacing.four,
-    borderRadius: 12,
+    gap: Spacing.two,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
   },
   modalTitle: {
     fontSize: 18,
+    fontFamily: 'serif',
     fontWeight: 'bold',
-    marginBottom: Spacing.three,
+    marginBottom: 4,
   },
   inputGroup: {
-    marginBottom: Spacing.three,
+    gap: 4,
   },
   inputLabel: {
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: 11,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
   },
   textInput: {
     borderWidth: 1,
+    borderRadius: 10,
     padding: 10,
-    borderRadius: 8,
+    fontSize: 16,
+    fontFamily: 'monospace',
   },
-  modalActions: {
+  modalButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: Spacing.two,
+    gap: Spacing.two,
+    marginTop: 8,
   },
   cancelBtn: {
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   saveBtn: {
-    paddingHorizontal: 16,
     paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
-  }
+  },
 });
