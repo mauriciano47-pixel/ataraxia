@@ -234,8 +234,12 @@ export default function JournalScreen() {
         const fullPrompt = conversationParts.join('\n\n');
 
         try {
-          // Intento 1: Modelo primario gemini-2.0-flash
-          const response = await ai.models.generateContent({
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
+          );
+
+          // Intento: Modelo primario gemini-2.0-flash con timeout defensivo
+          const apiCall = ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: fullPrompt,
             config: {
@@ -244,19 +248,11 @@ export default function JournalScreen() {
               topP: 0.95,
             },
           });
+
+          const response = await Promise.race([apiCall, timeoutPromise]);
           botText = response.text || '';
         } catch (e1) {
-          console.warn("Reintentando Gemini con modelo gemini-2.0-flash y alta variabilidad:", e1);
-          const response2 = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: fullPrompt,
-            config: {
-              systemInstruction: systemPrompt,
-              temperature: 0.90,
-              topP: 0.95,
-            },
-          });
-          botText = response2.text || '';
+          console.warn("Gemini Oracle Timeout/Error. Activando respuesta contextual socrática:", e1);
         }
       }
 
