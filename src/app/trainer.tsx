@@ -1,32 +1,38 @@
-import { View, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { OledBackground } from '@/components/OledBackground';
 import { useDailyLog } from '@/hooks/useDailyLog';
+import { CustomExercise } from '@/types/onboarding';
 
-const RUTINA_MOCK = [
-  { id: '1', n: "Sentadilla", s: "4x8", done: false, rpe: null as number | null },
-  { id: '2', n: "Peso muerto", s: "3x6", done: false, rpe: null as number | null },
-  { id: '3', n: "Zancadas", s: "3x12", done: false, rpe: null as number | null },
-  { id: '4', n: "Prensa", s: "3x15", done: false, rpe: null as number | null },
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
+const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
+
+const RUTINA_MOCK: CustomExercise[] = [
+  { id: '1', n: "Sentadilla Trasera con Barra", s: "4x8", done: false, rpe: null },
+  { id: '2', n: "Peso Muerto Rumano", s: "3x8", done: false, rpe: null },
+  { id: '3', n: "Zancadas Búlgaras", s: "3x10", done: false, rpe: null },
+  { id: '4', n: "Prensa Inclinada", s: "3x12", done: false, rpe: null },
 ];
 
-const CALISTENIA_MOCK = [
-  { id: 'c1', n: "Flexiones (Push-ups)", s: "4 al fallo", done: false, rpe: null as number | null },
-  { id: 'c2', n: "Sentadillas libres", s: "4x20", done: false, rpe: null as number | null },
-  { id: 'c3', n: "Plancha Abdominal", s: "3x1min", done: false, rpe: null as number | null },
+const CALISTENIA_MOCK: CustomExercise[] = [
+  { id: 'c1', n: "Flexiones Declinadas (Push-ups)", s: "4 al fallo", done: false, rpe: null },
+  { id: 'c2', n: "Sentadillas Libres Explosivas", s: "4x20", done: false, rpe: null },
+  { id: 'c3', n: "Plancha Abdominal Estoica", s: "3x1min", done: false, rpe: null },
 ];
 
 export default function TrainerScreen() {
-  const { log, toggleTraining, saveReadinessScore, updateEffectiveSets } = useDailyLog();
+  const { log, toggleTraining, saveReadinessScore, updateEffectiveSets, setCustomRoutine } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
 
   const activeRoutine = log.customRoutine && log.customRoutine.length > 0 ? log.customRoutine : RUTINA_MOCK;
-  const [ejercicios, setEjercicios] = useState(activeRoutine);
+  const [ejercicios, setEjercicios] = useState<CustomExercise[]>(activeRoutine);
   const [isAmorFati, setIsAmorFati] = useState(false);
 
   // Readiness State
@@ -34,6 +40,14 @@ export default function TrainerScreen() {
   const [stressScore, setStressScore] = useState(log.readinessScore?.stress || 3);
   const [sorenessScore, setSorenessScore] = useState(log.readinessScore?.soreness || 2);
   const [showReadinessModal, setShowReadinessModal] = useState(!log.readinessScore);
+
+  // AI Workout Generator State
+  const [showGeneratorModal, setShowGeneratorModal] = useState(false);
+  const [selectedTime, setSelectedTime] = useState<number>(45);
+  const [selectedFocus, setSelectedFocus] = useState<string>('Full Body / Fuerza');
+  const [selectedEquip, setSelectedEquip] = useState<string>('Gimnasio');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedRoutine, setGeneratedRoutine] = useState<{ title: string; exercises: CustomExercise[] } | null>(null);
 
   const toggleDone = (id: string) => {
     setEjercicios(prev => {
@@ -57,10 +71,8 @@ export default function TrainerScreen() {
   };
 
   const calculateEffectiveSets = (list: typeof ejercicios) => {
-    // Cuenta el total estimado de sets efectivos (RPE >= 7)
     let totalEffective = 0;
     list.filter(e => e.done && (e.rpe || 0) >= 7).forEach(e => {
-      // Extrae el número de series del string "4x8" -> 4
       const setsMatch = e.s.match(/^(\d+)/);
       const numSets = setsMatch ? parseInt(setsMatch[1], 10) : 3;
       totalEffective += numSets;
@@ -108,8 +120,123 @@ export default function TrainerScreen() {
     Alert.alert("Amor Fati", !isAmorFati ? "No controlas tu entorno, pero controlas tu reacción. Rutina adaptada a peso corporal." : "Volviendo a tu rutina de gimnasio.");
   };
 
-  const durationMin = log.prokoptonProfile?.sessionDurationMinutes || 45;
-  const equipName = log.prokoptonProfile?.equipment === 'gym' ? 'Gimnasio' : log.prokoptonProfile?.equipment === 'home_dumbbell' ? 'Mancuernas en Casa' : 'Calistenia';
+  // AI GENERATOR LOGIC
+  const handleGenerateAI = async () => {
+    setIsGenerating(true);
+    setGeneratedRoutine(null);
+
+    try {
+      if (!ai) {
+        // Fallback inteligente enriquecido
+        setTimeout(() => {
+          const fallbackData = buildFallbackAIRoutine(selectedTime, selectedFocus, selectedEquip);
+          setGeneratedRoutine(fallbackData);
+          setIsGenerating(false);
+        }, 1200);
+        return;
+      }
+
+      const prompt = `Crea una rutina de entrenamiento de alta eficiencia científica y filosofía estoica para una sesión de ${selectedTime} minutos.
+Equipo disponible: ${selectedEquip}.
+Enfoque muscular / objetivo: ${selectedFocus}.
+
+Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura exacta:
+{
+  "title": "Nombre épico en español (ej: Torso Estoico de Alta Intensidad)",
+  "exercises": [
+    { "id": "1", "n": "Nombre del Ejercicio", "s": "4x8 (RIR 2)" },
+    { "id": "2", "n": "Nombre del Ejercicio 2", "s": "3x10 (RIR 2)" },
+    { "id": "3", "n": "Nombre del Ejercicio 3", "s": "3x12 (Fallo)" }
+  ]
+}`;
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
+      );
+
+      const apiCall = ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+
+      const response = await Promise.race([apiCall, timeoutPromise]);
+      const text = response.text || '';
+      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
+
+      const formattedExercises: CustomExercise[] = parsed.exercises.map((e: any, idx: number) => ({
+        id: `ai_${idx + 1}_${Date.now()}`,
+        n: e.n,
+        s: e.s,
+        done: false,
+        rpe: null,
+      }));
+
+      setGeneratedRoutine({
+        title: parsed.title,
+        exercises: formattedExercises,
+      });
+    } catch (error) {
+      console.warn("Gemini AI Workout Generator fallback triggered:", error);
+      const fallbackData = buildFallbackAIRoutine(selectedTime, selectedFocus, selectedEquip);
+      setGeneratedRoutine(fallbackData);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const buildFallbackAIRoutine = (time: number, focus: string, equip: string) => {
+    let title = `Rutina ${focus} (${time} min)`;
+    let exercises: CustomExercise[] = [];
+
+    if (equip === 'Peso Corporal') {
+      title = `Calistenia Espartana ${focus} (${time} min)`;
+      exercises = [
+        { id: 'fa1', n: 'Flexiones Declinadas o Pica', s: '4 al fallo', done: false, rpe: null },
+        { id: 'fa2', n: 'Sentadillas Explosivas con Pausa', s: '4x20', done: false, rpe: null },
+        { id: 'fa3', n: 'Zancadas Alternas en Desplazamiento', s: '3x16', done: false, rpe: null },
+        { id: 'fa4', n: 'Plancha Isométrica de Oso', s: '3x50s', done: false, rpe: null },
+      ];
+    } else if (focus.includes('Empuje')) {
+      title = `Poder de Empuje & Hombros (${time} min)`;
+      exercises = [
+        { id: 'fe1', n: 'Press de Banca Plano con Barra', s: '4x8 (RIR 2)', done: false, rpe: null },
+        { id: 'fe2', n: 'Press Militar de Hombro con Mancuernas', s: '3x10 (RIR 2)', done: false, rpe: null },
+        { id: 'fe3', n: 'Fondos en Paralelas / Inclinado', s: '3x12 (RIR 1)', done: false, rpe: null },
+        { id: 'fe4', n: 'Elevaciones Laterales para Deltoides', s: '3x15', done: false, rpe: null },
+      ];
+    } else if (focus.includes('Tracción')) {
+      title = `Densidad de Espalda & Bíceps (${time} min)`;
+      exercises = [
+        { id: 'ft1', n: 'Peso Muerto Rumano', s: '4x8 (RIR 2)', done: false, rpe: null },
+        { id: 'ft2', n: 'Remo Gironda o con Barra', s: '4x10 (RIR 2)', done: false, rpe: null },
+        { id: 'ft3', n: 'Jalón al Pecho Agarre Neutro', s: '3x10', done: false, rpe: null },
+        { id: 'ft4', n: 'Curl Martillo de Bíceps', s: '3x12', done: false, rpe: null },
+      ];
+    } else {
+      title = `Fuerza Full Body Estoica (${time} min)`;
+      exercises = [
+        { id: 'fb1', n: 'Sentadilla Trasera Profunda', s: '4x8 (RIR 2)', done: false, rpe: null },
+        { id: 'fb2', n: 'Press Inclinado con Mancuernas', s: '3x10 (RIR 2)', done: false, rpe: null },
+        { id: 'fb3', n: 'Remo Unilateral con Mancuerna', s: '3x10 por lado', done: false, rpe: null },
+        { id: 'fb4', n: 'Zancadas Búlgaras', s: '3x10 por pierna', done: false, rpe: null },
+        { id: 'fb5', n: 'Plancha Abdominal con Peso', s: '3x45s', done: false, rpe: null },
+      ];
+    }
+
+    return { title, exercises };
+  };
+
+  const handleApplyAIRoutine = () => {
+    if (!generatedRoutine) return;
+    setEjercicios(generatedRoutine.exercises);
+    setCustomRoutine(generatedRoutine.exercises);
+    setShowGeneratorModal(false);
+    Alert.alert("⚡ Rutina IA Cargada", `"${generatedRoutine.title}" ha sido cargada como tu sesión activa de hoy.`);
+  };
+
+  const durationMin = log.prokoptonProfile?.sessionDurationMinutes || selectedTime || 45;
+  const equipName = isAmorFati ? 'Calistenia' : (log.prokoptonProfile?.equipment === 'gym' ? 'Gimnasio' : 'Mancuernas');
 
   const completedCount = ejercicios.filter(e => e.done).length;
   const effectiveSetsToday = log.effectiveSets || 0;
@@ -137,6 +264,23 @@ export default function TrainerScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* BOTÓN PRINCIPAL GENERADOR DE RUTINAS IA */}
+        <TouchableOpacity
+          onPress={() => setShowGeneratorModal(true)}
+          activeOpacity={0.85}
+          style={styles.generatorMainTouch}
+        >
+          <LinearGradient
+            colors={['#1D64F2', '#2563EB', '#E2C068']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.generatorMainGradient}
+          >
+            <ThemedText style={styles.generatorBtnTitle}>⚡ GENERADOR DE RUTINAS IA A MEDIDA</ThemedText>
+            <ThemedText style={styles.generatorBtnSub}>Diseña tu sesión perfecta según tiempo, equipo y nivel con Gemini</ThemedText>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Card de Disposición Fisiológica (Readiness Score) */}
         <View style={[styles.readinessCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
@@ -195,7 +339,7 @@ export default function TrainerScreen() {
           )}
         </View>
 
-        {/* Indicator de Volume Efectivo Acumulado */}
+        {/* Indicator de Volumen Efectivo Acumulado */}
         <View style={[styles.volumeBanner, { backgroundColor: 'rgba(0, 82, 255, 0.08)', borderColor: 'rgba(0, 82, 255, 0.25)' }]}>
           <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
             <View>
@@ -290,6 +434,112 @@ export default function TrainerScreen() {
           <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Entreno</ThemedText>
         </TouchableOpacity>
 
+        {/* MODAL DEL GENERADOR DE RUTINAS IA */}
+        <Modal visible={showGeneratorModal} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <ThemedText style={styles.modalTitle}>⚡ Oráculo de Entrenamientos IA</ThemedText>
+              <ThemedText style={styles.modalSub}>Configura los parámetros para crear tu sesión perfecta:</ThemedText>
+
+              {/* Parámetro 1: Tiempo */}
+              <View style={styles.paramSection}>
+                <ThemedText style={styles.paramLabel}>⏱️ Tiempo Disponible:</ThemedText>
+                <View style={styles.chipRow}>
+                  {[15, 30, 45, 60].map((t) => (
+                    <TouchableOpacity
+                      key={`t_${t}`}
+                      style={[styles.paramChip, selectedTime === t && styles.paramChipActive]}
+                      onPress={() => setSelectedTime(t)}
+                    >
+                      <ThemedText style={[styles.paramChipText, selectedTime === t && styles.paramChipTextActive]}>
+                        {t} min
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Parámetro 2: Equipo */}
+              <View style={styles.paramSection}>
+                <ThemedText style={styles.paramLabel}>🏋️‍♂️ Equipo Disponible:</ThemedText>
+                <View style={styles.chipRow}>
+                  {['Gimnasio', 'Mancuernas en Casa', 'Peso Corporal'].map((eq) => (
+                    <TouchableOpacity
+                      key={`eq_${eq}`}
+                      style={[styles.paramChip, selectedEquip === eq && styles.paramChipActive]}
+                      onPress={() => setSelectedEquip(eq)}
+                    >
+                      <ThemedText style={[styles.paramChipText, selectedEquip === eq && styles.paramChipTextActive]}>
+                        {eq}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Parámetro 3: Enfoque Muscular */}
+              <View style={styles.paramSection}>
+                <ThemedText style={styles.paramLabel}>⚔️ Enfoque Principal:</ThemedText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                  {['Full Body / Fuerza', 'Empuje (Pecho/Hombro)', 'Tracción (Espalda/Bíceps)', 'Pierna & Core'].map((f) => (
+                    <TouchableOpacity
+                      key={`f_${f}`}
+                      style={[styles.paramChip, selectedFocus === f && styles.paramChipActive]}
+                      onPress={() => setSelectedFocus(f)}
+                    >
+                      <ThemedText style={[styles.paramChipText, selectedFocus === f && styles.paramChipTextActive]}>
+                        {f}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Botón de Generar */}
+              <TouchableOpacity
+                style={styles.generateActionBtn}
+                onPress={handleGenerateAI}
+                disabled={isGenerating}
+                activeOpacity={0.85}
+              >
+                {isGenerating ? (
+                  <ActivityIndicator color="#070B14" />
+                ) : (
+                  <ThemedText style={styles.generateActionBtnText}>Diseñar Rutina con Gemini IA 🚀</ThemedText>
+                )}
+              </TouchableOpacity>
+
+              {/* Resultado de la Generación */}
+              {generatedRoutine && (
+                <View style={styles.generatedPreviewBox}>
+                  <ThemedText style={styles.genTitle}>{generatedRoutine.title}</ThemedText>
+                  <View style={styles.genList}>
+                    {generatedRoutine.exercises.map((ex, i) => (
+                      <ThemedText key={`gen_${i}`} style={styles.genExerciseItem}>
+                        • {ex.n} ({ex.s})
+                      </ThemedText>
+                    ))}
+                  </View>
+                  <TouchableOpacity
+                    style={styles.loadRoutineBtn}
+                    onPress={handleApplyAIRoutine}
+                    activeOpacity={0.85}
+                  >
+                    <ThemedText style={styles.loadRoutineBtnText}>Cargar Rutina en la Sesión de Hoy ✓</ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={styles.closeModalBtn}
+                onPress={() => setShowGeneratorModal(false)}
+              >
+                <ThemedText style={{ color: '#94A3B8', fontFamily: 'monospace' }}>Cerrar</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         </ScrollView>
       </SafeAreaView>
     </OledBackground>
@@ -313,7 +563,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginTop: Spacing.two,
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   label: {
     fontSize: 10,
@@ -329,7 +579,32 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#F8FAFC',
+  },
+  generatorMainTouch: {
+    marginBottom: Spacing.three,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  generatorMainGradient: {
+    padding: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  generatorBtnTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+  generatorBtnSub: {
+    fontSize: 10.5,
+    color: '#E2E8F0',
+    fontFamily: 'sans-serif',
+    textAlign: 'center',
+    opacity: 0.9,
   },
   readinessCard: {
     padding: Spacing.three,
@@ -472,5 +747,123 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#0052FF',
     alignItems: 'center',
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 11, 20, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.three,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#0E1424',
+    borderRadius: 16,
+    padding: Spacing.four,
+    gap: Spacing.two,
+    borderWidth: 1.5,
+    borderColor: 'rgba(226, 192, 104, 0.40)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#E2C068',
+    fontFamily: 'monospace',
+  },
+  modalSub: {
+    fontSize: 11.5,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  paramSection: {
+    gap: 4,
+  },
+  paramLabel: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    color: '#00C6FF',
+    fontWeight: 'bold',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  paramChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  paramChipActive: {
+    backgroundColor: 'rgba(0, 198, 255, 0.18)',
+    borderColor: '#00C6FF',
+  },
+  paramChipText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  paramChipTextActive: {
+    color: '#00C6FF',
+    fontWeight: 'bold',
+  },
+  generateActionBtn: {
+    backgroundColor: '#E2C068',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  generateActionBtnText: {
+    color: '#070B14',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    fontSize: 13,
+  },
+  generatedPreviewBox: {
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderRadius: 12,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 198, 255, 0.35)',
+    gap: 6,
+    marginTop: 6,
+  },
+  genTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#E2C068',
+    fontFamily: 'serif',
+  },
+  genList: {
+    gap: 4,
+  },
+  genExerciseItem: {
+    fontSize: 11.5,
+    color: '#F8FAFC',
+    fontFamily: 'monospace',
+  },
+  loadRoutineBtn: {
+    backgroundColor: '#1D64F2',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  loadRoutineBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    fontSize: 11.5,
+  },
+  closeModalBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginTop: 4,
+  },
 });

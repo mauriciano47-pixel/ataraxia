@@ -136,6 +136,7 @@ interface DailyLogContextType {
   saveReadinessScore: (sleep: number, stress: number, soreness: number) => void;
   updateEffectiveSets: (count: number) => void;
   logMealWithEnrichedMacros: (cals: number, p: number, c: number, f: number, densityScore?: number, verdict?: string) => void;
+  setCustomRoutine: (routine: CustomExercise[]) => void;
 }
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
@@ -547,6 +548,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const setCustomRoutine = (routine: CustomExercise[]) => {
+    updateLog({ customRoutine: routine });
+  };
+
   return (
     <DailyLogContext.Provider
       value={{
@@ -573,6 +578,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         saveReadinessScore,
         updateEffectiveSets,
         logMealWithEnrichedMacros,
+        setCustomRoutine,
       }}
     >
       {children}
