@@ -64,6 +64,13 @@ export default function AppTabs() {
           tabBarIcon: ({ color, focused }) => <ProgressTabIcon color={focused ? '#0052FF' : color} size={24} focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }
