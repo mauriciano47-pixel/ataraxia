@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { GlowArcGauge } from '@/components/GlowArcGauge';
-import { FlameIcon, PersonIcon } from '@/components/ModuleSvgIcons';
+import { FlameIcon } from '@/components/ModuleSvgIcons';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { StepCounterCard } from '@/components/StepCounterCard';
@@ -16,18 +16,8 @@ import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 
-// Custom Bell Icon component matching the Cobalt Blue glow of the mockup
-function BellIcon({ color = '#1D64F2', size = 20 }: { color?: string; size?: number }) {
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: size * 0.7, height: size * 0.7, borderRadius: size * 0.35, backgroundColor: color, opacity: 0.2, position: 'absolute' }} />
-      <ThemedText style={{ color: color, fontSize: 16 }}>🔔</ThemedText>
-    </View>
-  );
-}
-
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
+  const { log, toggleTraining, addSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
   const [onboardingVisible, setOnboardingVisible] = useState<boolean>(!log.hasCompletedOnboarding);
@@ -151,7 +141,7 @@ export default function HoyScreen() {
 
               <TouchableOpacity
                 style={styles.dockChipBtn}
-                onPress={() => useDailyLog().addWater(0.25)}
+                onPress={() => addWater(0.25)}
                 activeOpacity={0.8}
               >
                 <ThemedText style={styles.dockChipText}>💧 +0.25L Agua</ThemedText>
