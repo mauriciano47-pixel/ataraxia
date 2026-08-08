@@ -77,6 +77,7 @@ export const DEFAULT_LOG: DailyLog = {
   stepGoal: 10000,
   stoicAvatarUri: '',
   userName: 'Ciudadano Prokopton',
+  hasCompletedOnboarding: false,
   smartDevice: {
     connected: false,
     deviceName: 'Ninguno (Desconectado)',
@@ -102,6 +103,9 @@ type UserProfile = {
   stepGoal: number;
   stoicAvatarUri: string;
   smartDevice?: SmartDeviceState;
+  hasCompletedOnboarding?: boolean;
+  prokoptonProfile?: ProkoptonProfile;
+  customRoutine?: CustomExercise[];
 };
 
 interface DailyLogContextType {
@@ -181,6 +185,9 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
       targetCalories: currentLog.targetCalories,
       stepGoal: currentLog.stepGoal,
       smartDevice: currentLog.smartDevice,
+      hasCompletedOnboarding: currentLog.hasCompletedOnboarding,
+      prokoptonProfile: currentLog.prokoptonProfile,
+      customRoutine: currentLog.customRoutine,
     };
     SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
 

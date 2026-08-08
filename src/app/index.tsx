@@ -306,7 +306,7 @@ export default function HoyScreen() {
         </Animated.ScrollView>
 
         <StoicOnboardingModal
-          visible={onboardingVisible || !log.hasCompletedOnboarding}
+          visible={onboardingVisible && !log.hasCompletedOnboarding}
           onClose={() => setOnboardingVisible(false)}
         />
       </SafeAreaView>

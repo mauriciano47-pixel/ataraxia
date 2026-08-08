@@ -11,17 +11,21 @@ import AppTabs from '@/components/app-tabs';
 
 import { DailyLogProvider } from '@/context/DailyLogContext';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch (e) {
+  // Ignorar en entornos que no soporten notificaciones
+}
 
 const QUOTES = [
   "Eres mortal y este día es un privilegio. ¿Cómo usarás tu cuerpo hoy?",
@@ -32,32 +36,42 @@ const QUOTES = [
 
 async function scheduleMorningNotification() {
   if (Platform.OS === 'web') return;
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') {
-    await Notifications.requestPermissionsAsync();
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      await Notifications.requestPermissionsAsync();
+    }
+
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Memento Mori 💀',
+        body: randomQuote,
+      },
+      // @ts-ignore
+      trigger: {
+        hour: 7,
+        minute: 0,
+        repeats: true,
+      },
+    });
+  } catch (err) {
+    console.warn('[Notifications] No se pudo programar:', err);
   }
-
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Memento Mori 💀',
-      body: randomQuote,
-    },
-    // @ts-ignore
-    trigger: {
-      hour: 7,
-      minute: 0,
-      repeats: true,
-    },
-  });
 }
 
 export default function TabLayout() {
   const [loaded, error] = useFonts({
     ...Ionicons.font,
   });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [loaded, error]);
 
   useEffect(() => {
     scheduleMorningNotification();

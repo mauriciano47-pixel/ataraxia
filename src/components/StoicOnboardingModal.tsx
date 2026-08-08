@@ -149,7 +149,26 @@ export function StoicOnboardingModal({ visible, onClose }: Props) {
       saveOnboardingProfile(profile, routine, targetCals);
       setIsAnalyzing(false);
       onClose();
-    }, 1200);
+    }, 500);
+  };
+
+  const handleSkip = () => {
+    const { routine, targetCals } = generateCalculatedPlan();
+    const profile: ProkoptonProfile = {
+      userName: userName.trim() || 'Ciudadano Prokopton',
+      focus,
+      equipment,
+      daysPerWeek,
+      sessionDurationMinutes: sessionDuration,
+      dietPreference,
+      age: 26,
+      weightKg: 75,
+      targetWeightKg: 70,
+      heightCm: 175,
+      completedAt: new Date().toISOString(),
+    };
+    saveOnboardingProfile(profile, routine, targetCals);
+    onClose();
   };
 
   return (
@@ -161,7 +180,7 @@ export function StoicOnboardingModal({ visible, onClose }: Props) {
             <View style={styles.badgeGold}>
               <Text style={styles.badgeGoldText}>🏛️ ESCÁNER DEL PROKOPTON</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={handleSkip} style={styles.closeBtn}>
               <Ionicons name="close" size={22} color="#94A3B8" />
             </TouchableOpacity>
           </View>
@@ -433,7 +452,9 @@ export function StoicOnboardingModal({ visible, onClose }: Props) {
                   <Text style={styles.btnSecondaryText}>Atrás</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={styles.flex1} />
+                <TouchableOpacity style={styles.btnSecondary} onPress={handleSkip}>
+                  <Text style={styles.btnSecondaryText}>Omitir por ahora</Text>
+                </TouchableOpacity>
               )}
 
               {step < 4 ? (
