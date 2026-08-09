@@ -6,7 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
-import { OledBackground } from '@/components/OledBackground';
+import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CustomExercise } from '@/types/onboarding';
 
@@ -242,7 +242,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
   const effectiveSetsToday = log.effectiveSets || 0;
 
   return (
-    <OledBackground glowColor="rgba(0, 82, 255, 0.08)">
+    <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         
@@ -251,16 +251,16 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
             <View>
               <ThemedText style={styles.label}>HOY — {equipName.toUpperCase()}</ThemedText>
-              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia Espartana" : "Rutina Personalizada IA"}</ThemedText>
-              <ThemedText style={{fontSize: 12, color: colors.accent, marginTop: 2, fontWeight: 'bold'}}>
+              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia Espartana" : "⚡ Rutina Imperial IA"}</ThemedText>
+              <ThemedText style={{fontSize: 12, color: '#D4AF37', marginTop: 2, fontWeight: 'bold'}}>
                 ⏱️ {durationMin} min | {completedCount}/{ejercicios.length} ejercicios
               </ThemedText>
             </View>
             <TouchableOpacity 
-              style={[styles.amorFatiBtn, { borderColor: colors.accent, backgroundColor: isAmorFati ? colors.accent : 'transparent' }]}
+              style={[styles.amorFatiBtn, { borderColor: '#D4AF37', backgroundColor: isAmorFati ? '#D4AF37' : 'rgba(212, 175, 55, 0.12)' }]}
               onPress={toggleAmorFati}
             >
-              <ThemedText style={[styles.amorFatiText, { color: isAmorFati ? '#FFF' : colors.accent }]}>Amor Fati</ThemedText>
+              <ThemedText style={[styles.amorFatiText, { color: isAmorFati ? '#050507' : '#FDE68A' }]}>Amor Fati</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -272,7 +272,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           style={styles.generatorMainTouch}
         >
           <LinearGradient
-            colors={['#1D64F2', '#2563EB', '#E2C068']}
+            colors={['#D4AF37', '#F59E0B', '#B45309']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.generatorMainGradient}
@@ -283,11 +283,11 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         </TouchableOpacity>
 
         {/* Card de Disposición Fisiológica (Readiness Score) */}
-        <View style={[styles.readinessCard, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+        <View style={[styles.readinessCard, { backgroundColor: 'rgba(13, 17, 28, 0.94)', borderColor: 'rgba(212, 175, 55, 0.35)' }]}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
             <ThemedText style={styles.cardSectionTitle}>⚡ Disposición Fisiológica (Readiness)</ThemedText>
             <TouchableOpacity onPress={() => setShowReadinessModal(!showReadinessModal)}>
-              <ThemedText style={{fontSize: 12, color: colors.accent, fontWeight: 'bold'}}>
+              <ThemedText style={{fontSize: 12, color: '#D4AF37', fontWeight: 'bold'}}>
                 {showReadinessModal ? "Ocultar" : "Ajustar"}
               </ThemedText>
             </TouchableOpacity>
@@ -300,10 +300,10 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                 <ThemedText style={styles.scoreLabel}>/ 10</ThemedText>
               </View>
               <View style={{flex: 1, marginLeft: 12}}>
-                <ThemedText style={{fontSize: 12, color: colors.textSecondary}}>
-                  Sueño: <ThemedText style={{fontWeight: 'bold'}}>{log.readinessScore.sleep}/10</ThemedText> | Estrés: <ThemedText style={{fontWeight: 'bold'}}>{log.readinessScore.stress}/10</ThemedText>
+                <ThemedText style={{fontSize: 12, color: '#CBD5E1'}}>
+                  Sueño: <ThemedText style={{fontWeight: 'bold', color: '#FDE68A'}}>{log.readinessScore.sleep}/10</ThemedText> | Estrés: <ThemedText style={{fontWeight: 'bold', color: '#FDE68A'}}>{log.readinessScore.stress}/10</ThemedText>
                 </ThemedText>
-                <ThemedText style={{fontSize: 11, color: colors.accent, marginTop: 2, fontStyle: 'italic'}}>
+                <ThemedText style={{fontSize: 11, color: '#D4AF37', marginTop: 2, fontStyle: 'italic'}}>
                   {log.readinessScore.total >= 7 ? "🟢 Estado Óptimo para Alta Carga" : log.readinessScore.total >= 5 ? "🟡 Estado Moderado (Ajusta RPE a 7-8)" : "🔴 Alta Fatiga: Sugerido Amor Fati / Calistenia"}
                 </ThemedText>
               </View>
@@ -314,8 +314,8 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                 <ThemedText style={styles.sliderLabel}>Calidad de Sueño (1-10): {sleepScore}</ThemedText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap: 4}}>
                   {[1,3,5,7,8,9,10].map(v => (
-                    <TouchableOpacity key={`sl_${v}`} style={[styles.miniBtn, sleepScore === v && {backgroundColor: colors.accent}]} onPress={() => setSleepScore(v)}>
-                      <ThemedText style={sleepScore === v ? {color: '#FFF'} : {}}>{v}</ThemedText>
+                    <TouchableOpacity key={`sl_${v}`} style={[styles.miniBtn, sleepScore === v && {backgroundColor: '#D4AF37', borderColor: '#D4AF37'}]} onPress={() => setSleepScore(v)}>
+                      <ThemedText style={sleepScore === v ? {color: '#050507', fontWeight: 'bold'} : {color: '#94A3B8'}}>{v}</ThemedText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -325,30 +325,30 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                 <ThemedText style={styles.sliderLabel}>Fatiga / Dolor Muscular (1-10): {sorenessScore}</ThemedText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap: 4}}>
                   {[1,3,5,7,8,9,10].map(v => (
-                    <TouchableOpacity key={`sr_${v}`} style={[styles.miniBtn, sorenessScore === v && {backgroundColor: colors.accent}]} onPress={() => setSorenessScore(v)}>
-                      <ThemedText style={sorenessScore === v ? {color: '#FFF'} : {}}>{v}</ThemedText>
+                    <TouchableOpacity key={`sr_${v}`} style={[styles.miniBtn, sorenessScore === v && {backgroundColor: '#D4AF37', borderColor: '#D4AF37'}]} onPress={() => setSorenessScore(v)}>
+                      <ThemedText style={sorenessScore === v ? {color: '#050507', fontWeight: 'bold'} : {color: '#94A3B8'}}>{v}</ThemedText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
 
-              <TouchableOpacity style={[styles.saveReadinessBtn, {backgroundColor: colors.accent}]} onPress={handleSaveReadiness}>
-                <ThemedText style={{color: '#FFF', fontWeight: 'bold', fontSize: 12}}>Guardar Evaluación de Disposición</ThemedText>
+              <TouchableOpacity style={[styles.saveReadinessBtn, {backgroundColor: '#D4AF37'}]} onPress={handleSaveReadiness}>
+                <ThemedText style={{color: '#050507', fontWeight: '900', fontSize: 12}}>Guardar Evaluación de Disposición</ThemedText>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
         {/* Indicator de Volumen Efectivo Acumulado */}
-        <View style={[styles.volumeBanner, { backgroundColor: 'rgba(0, 82, 255, 0.08)', borderColor: 'rgba(0, 82, 255, 0.25)' }]}>
+        <View style={[styles.volumeBanner, { backgroundColor: 'rgba(13, 17, 28, 0.94)', borderColor: 'rgba(212, 175, 55, 0.35)' }]}>
           <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
             <View>
-              <ThemedText style={{fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1}}>Series Efectivas Hoy (RPE ≥ 7)</ThemedText>
-              <ThemedText style={{fontSize: 20, fontWeight: 'bold', color: colors.accent}}>{effectiveSetsToday} Sets</ThemedText>
+              <ThemedText style={{fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1}}>Series Efectivas Hoy (RPE ≥ 7)</ThemedText>
+              <ThemedText style={{fontSize: 22, fontWeight: '900', color: '#FFE259', fontFamily: 'serif'}}>{effectiveSetsToday} Sets</ThemedText>
             </View>
             <View style={{alignItems: 'flex-end'}}>
-              <ThemedText style={{fontSize: 10, color: colors.textSecondary}}>Meta Semanal Científica</ThemedText>
-              <ThemedText style={{fontSize: 12, fontWeight: 'bold', color: colors.text}}>10 - 20 Sets / Músculo</ThemedText>
+              <ThemedText style={{fontSize: 10, color: '#94A3B8'}}>Meta Semanal Científica</ThemedText>
+              <ThemedText style={{fontSize: 12, fontWeight: 'bold', color: '#FDE68A'}}>10 - 20 Sets / Músculo</ThemedText>
             </View>
           </View>
         </View>
@@ -369,7 +369,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
             }
 
             return (
-              <View key={e.id} style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
+              <View key={e.id} style={[styles.card, { backgroundColor: 'rgba(13, 17, 28, 0.94)', borderColor: 'rgba(212, 175, 55, 0.35)' }]}>
                 <TouchableOpacity 
                   style={styles.cardHeader}
                   onPress={() => toggleDone(e.id)}
@@ -377,23 +377,25 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                 >
                   <View style={{flex: 1}}>
                     <ThemedText style={styles.exerciseName}>{e.n}</ThemedText>
-                    <ThemedText style={[styles.exerciseSets, { color: colors.textSecondary }]}>{e.s}</ThemedText>
+                    <ThemedText style={[styles.exerciseSets, { color: '#D4AF37' }]}>{e.s}</ThemedText>
                   </View>
                   
                   <View style={[
                     styles.checkbox,
                     e.done ? { 
-                      backgroundColor: colors.accent, 
-                      borderColor: colors.accent,
+                      backgroundColor: '#D4AF37', 
+                      borderColor: '#D4AF37',
                     } : { 
                       backgroundColor: 'transparent', 
-                      borderColor: 'rgba(0, 82, 255, 0.20)' 
+                      borderColor: 'rgba(212, 175, 55, 0.35)' 
                     }
-                  ]} />
+                  ]}>
+                    {e.done && <ThemedText style={{fontSize: 14, color: '#050507', textAlign: 'center', fontWeight: 'bold'}}>✓</ThemedText>}
+                  </View>
                 </TouchableOpacity>
                 
                 <View style={styles.rpeContainer}>
-                  <ThemedText style={{ fontSize: 10, color: colors.textSecondary, marginBottom: 6 }}>RPE (Esfuerzo Percibido 1-10):</ThemedText>
+                  <ThemedText style={{ fontSize: 10, color: '#94A3B8', marginBottom: 6 }}>RPE (Esfuerzo Percibido 1-10):</ThemedText>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
                     {[...Array(10)].map((_, i) => {
                       const rpeValue = i + 1;
@@ -403,12 +405,11 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                           key={rpeValue} 
                           style={[
                             styles.rpeButton, 
-                            { borderColor: 'rgba(0, 82, 255, 0.15)' },
-                            isSelected && { backgroundColor: colors.accent, borderColor: colors.accent }
+                            { borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: isSelected ? '#D4AF37' : 'rgba(212, 175, 55, 0.08)' }
                           ]}
                           onPress={() => setRPE(e.id, rpeValue)}
                         >
-                          <ThemedText style={isSelected ? { color: '#FFF' } : {}}>{rpeValue}</ThemedText>
+                          <ThemedText style={isSelected ? { color: '#050507', fontWeight: 'bold' } : { color: '#CBD5E1' }}>{rpeValue}</ThemedText>
                         </TouchableOpacity>
                       );
                     })}
@@ -417,7 +418,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
                 {progressionTip !== "" && (
                   <View style={styles.progressionBox}>
-                    <ThemedText style={{fontSize: 11, color: colors.accent, fontStyle: 'italic'}}>
+                    <ThemedText style={{fontSize: 11, color: '#FDE68A', fontStyle: 'italic'}}>
                       {progressionTip}
                     </ThemedText>
                   </View>
@@ -428,10 +429,18 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         </View>
 
         <TouchableOpacity 
-          style={[styles.finishBtn, { backgroundColor: colors.accent }]}
+          style={styles.finishBtnTouch}
           onPress={checkDeload}
+          activeOpacity={0.85}
         >
-          <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Entreno</ThemedText>
+          <LinearGradient
+            colors={['#D4AF37', '#F59E0B', '#B45309']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.finishBtnGradient}
+          >
+            <ThemedText style={{ color: '#050507', fontWeight: '900', fontSize: 14, letterSpacing: 1 }}>⚡ FINALIZAR SESIÓN DE FUERZA</ThemedText>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* MODAL DEL GENERADOR DE RUTINAS IA */}
@@ -542,7 +551,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
         </ScrollView>
       </SafeAreaView>
-    </OledBackground>
+    </PearlElectricBackground>
   );
 }
 
@@ -740,17 +749,24 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  finishBtn: {
+  finishBtnTouch: {
     marginTop: Spacing.four,
-    padding: Spacing.four,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#0052FF',
+    marginBottom: Spacing.three,
+  },
+  finishBtnGradient: {
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(7, 11, 20, 0.85)',
+    backgroundColor: 'rgba(5, 5, 7, 0.90)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.three,
@@ -758,18 +774,23 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#0E1424',
-    borderRadius: 16,
+    backgroundColor: '#0A0D16',
+    borderRadius: 20,
     padding: Spacing.four,
     gap: Spacing.two,
     borderWidth: 1.5,
-    borderColor: 'rgba(226, 192, 104, 0.40)',
+    borderColor: 'rgba(212, 175, 55, 0.45)',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#E2C068',
-    fontFamily: 'monospace',
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'serif',
+    letterSpacing: 1,
   },
   modalSub: {
     fontSize: 11.5,
@@ -782,7 +803,7 @@ const styles = StyleSheet.create({
   paramLabel: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#00C6FF',
+    color: '#D4AF37',
     fontWeight: 'bold',
   },
   chipRow: {
@@ -794,13 +815,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(212, 175, 55, 0.20)',
   },
   paramChipActive: {
-    backgroundColor: 'rgba(0, 198, 255, 0.18)',
-    borderColor: '#00C6FF',
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    borderColor: '#D4AF37',
   },
   paramChipText: {
     fontSize: 11,
@@ -808,36 +829,41 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   paramChipTextActive: {
-    color: '#00C6FF',
+    color: '#FDE68A',
     fontWeight: 'bold',
   },
   generateActionBtn: {
-    backgroundColor: '#E2C068',
+    backgroundColor: '#D4AF37',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   generateActionBtnText: {
-    color: '#070B14',
-    fontWeight: 'bold',
+    color: '#050507',
+    fontWeight: '900',
     fontFamily: 'monospace',
     fontSize: 13,
+    letterSpacing: 1,
   },
   generatedPreviewBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
     borderRadius: 12,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: 'rgba(0, 198, 255, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     gap: 6,
     marginTop: 6,
   },
   genTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#E2C068',
+    color: '#FFE259',
     fontFamily: 'serif',
   },
   genList: {
@@ -849,17 +875,17 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   loadRoutineBtn: {
-    backgroundColor: '#1D64F2',
+    backgroundColor: '#D4AF37',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 6,
   },
   loadRoutineBtnText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: '#050507',
+    fontWeight: '900',
     fontFamily: 'monospace',
-    fontSize: 11.5,
+    fontSize: 12,
   },
   closeModalBtn: {
     alignItems: 'center',

@@ -5,7 +5,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
-import { OledBackground } from '@/components/OledBackground';
+import { PearlElectricBackground } from '@/components/PearlElectricBackground';
+
 export default function ProgressScreen() {
   const { log, loading } = useDailyLog();
   const { historyMap, loadingHistory } = useHistoryLog();
@@ -14,9 +15,9 @@ export default function ProgressScreen() {
   
   if (loading || loadingHistory) {
     return (
-      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Conectando con el Oráculo...</ThemedText>
+      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#050507' }]}>
+        <ActivityIndicator size="large" color="#D4AF37" />
+        <ThemedText style={{ marginTop: Spacing.three, color: '#D4AF37', fontFamily: 'monospace' }}>Conectando con el Oráculo...</ThemedText>
       </ThemedView>
     );
   }
@@ -29,16 +30,16 @@ export default function ProgressScreen() {
   }
 
   return (
-    <OledBackground glowColor="rgba(0, 191, 255, 0.08)">
+    <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
         
         <View style={styles.header}>
-          <ThemedText style={styles.label}>CONSTELACIÓN</ThemedText>
-          <ThemedText style={styles.title}>Historial</ThemedText>
+          <ThemedText style={styles.label}>⚡ CONSTELACIÓN DE FUERZA</ThemedText>
+          <ThemedText style={styles.title}>Historial Estelar</ThemedText>
         </View>
 
         <ThemedText style={styles.description}>
-          Cada día de disciplina enciende una estrella. Un día perdido es espacio vacío en tu cosmos. Este es tu mapa estelar de los últimos 30 días.
+          Cada día de disciplina enciende un rayo estelar de oro. Un día perdido es espacio vacío en tu cosmos. Este es tu mapa de los últimos 30 días.
         </ThemedText>
 
         <View style={styles.starMap}>
@@ -55,27 +56,31 @@ export default function ProgressScreen() {
                 <View style={[
                   styles.star,
                   success ? {
-                    backgroundColor: colors.accent,
-                    shadowColor: colors.accent,
+                    backgroundColor: '#FFE259',
+                    shadowColor: '#D4AF37',
                     shadowOpacity: 1,
                     shadowRadius: 10,
-                    elevation: 5,
+                    elevation: 6,
                   } : {
-                    backgroundColor: colors.backgroundSelected,
+                    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+                    borderColor: 'rgba(212, 175, 55, 0.20)',
+                    borderWidth: 1,
                   },
-                  isToday && { borderWidth: 1, borderColor: '#FFF' }
+                  isToday && { borderWidth: 1.5, borderColor: '#FFE259' }
                 ]} />
               </View>
             );
           })}
         </View>
 
-        <ThemedView style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.backgroundSelected }]}>
-          <ThemedText style={{ fontFamily: 'serif', fontSize: 16 }}>&quot;No te lamentes por el espacio vacío. Alégrate por las estrellas que lograste encender hoy.&quot;</ThemedText>
+        <ThemedView style={styles.card}>
+          <ThemedText style={{ fontFamily: 'serif', fontSize: 15, color: '#FDE68A', fontStyle: 'italic', lineHeight: 22 }}>
+            &quot;No te lamentes por el espacio vacío. Alégrate por los rayos de oro que lograste encender hoy en tu templo.&quot;
+          </ThemedText>
         </ThemedView>
 
       </SafeAreaView>
-    </OledBackground>
+    </PearlElectricBackground>
   );
 }
 
@@ -94,12 +99,12 @@ const styles = StyleSheet.create({
   },
   header: {
     marginTop: Spacing.two,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
   },
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#10B981',
+    color: '#D4AF37',
     letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -110,20 +115,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     fontWeight: '900',
+    color: '#FFE259',
   },
   description: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontStyle: 'italic',
-    lineHeight: 22,
-    marginBottom: Spacing.five,
+    lineHeight: 20,
+    marginBottom: Spacing.three,
+    color: '#CBD5E1',
   },
   starMap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
     justifyContent: 'center',
-    marginBottom: Spacing.five,
+    marginBottom: Spacing.four,
     paddingVertical: Spacing.four,
+    backgroundColor: 'rgba(13, 17, 28, 0.75)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
   },
   starContainer: {
     width: '14%',
@@ -132,20 +143,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   todayContainer: {
-    borderWidth: 2,
-    borderColor: '#10B981', // Esmeralda Fit
-    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#FFE259',
+    borderRadius: 8,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
   },
   star: {
-    width: 14,
-    height: 14,
-    borderRadius: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 4,
   },
   card: {
     padding: Spacing.four,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
 });

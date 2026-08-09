@@ -20,7 +20,7 @@ import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useCoachContext } from '@/hooks/useCoachContext';
 import { useJournalHistory, JournalMessage } from '@/hooks/useJournalHistory';
 import { buildCoachSystemPrompt, generateWelcomeMessage } from '@/lib/coachPrompt';
-import { OledBackground } from '@/components/OledBackground';
+import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -29,12 +29,12 @@ const DISCLAIMER_TEXT =
   '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA. No reemplaza el consejo de un médico, nutricionista o profesional de salud certificado. Si tienes condiciones médicas, consulta siempre a un especialista.';
 
 const QUICK_PROMPTS = [
-  { icon: 'barbell-outline', text: '🏋️ Sugiere rutina de hoy' },
+  { icon: 'flash-outline', text: '⚡ Sugiere rutina de hoy' },
   { icon: 'restaurant-outline', text: '🥗 Ideas de comida alta en proteína' },
   { icon: 'fitness-outline', text: '💊 ¿Qué suplementos me recomiendas?' },
   { icon: 'water-outline', text: '💧 ¿Cómo voy con el agua hoy?' },
   { icon: 'moon-outline', text: '😴 Cómo mejorar mi sueño y recuperar' },
-  { icon: 'sparkles-outline', text: '🧠 Lección estoica para motivarme' },
+  { icon: 'sparkles-outline', text: '🏛️ Lección estoica para motivarme' },
 ];
 
 export default function JournalScreen() {
@@ -309,20 +309,20 @@ export default function JournalScreen() {
   }
 
   return (
-    <OledBackground glowColor="rgba(16, 185, 129, 0.08)">
+    <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <ThemedText style={styles.label}>MENTORÍA IA & DIARIO</ThemedText>
+            <ThemedText style={styles.label}>⚡ MENTORÍA IA & DIARIO</ThemedText>
             <ThemedText style={styles.title}>Oráculo Gemini</ThemedText>
           </View>
           <View style={styles.headerRight}>
             <View style={styles.coachBadge}>
-              <Ionicons name="sparkles" size={14} color="#10B981" />
+              <Ionicons name="flash" size={12} color="#FFE259" />
               <ThemedText style={styles.coachBadgeText}>
-                {GEMINI_API_KEY ? 'GEMINI AI ACTIVO' : 'COACH LOCAL ACTIVO'}
+                {GEMINI_API_KEY ? 'GEMINI 2.5 ACTIVO' : 'ORÁCULO LOCAL'}
               </ThemedText>
             </View>
           </View>
@@ -350,8 +350,8 @@ export default function JournalScreen() {
             >
               {msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT && (
                 <View style={styles.coachLabel}>
-                  <Ionicons name="sparkles" size={12} color="#10B981" />
-                  <ThemedText style={styles.coachLabelText}>COACH ORÁCULO</ThemedText>
+                  <Ionicons name="flash" size={12} color="#D4AF37" />
+                  <ThemedText style={styles.coachLabelText}>COACH ORÁCULO ESTOICO</ThemedText>
                 </View>
               )}
               {msg.text === DISCLAIMER_TEXT && (
@@ -382,8 +382,8 @@ export default function JournalScreen() {
           {isLoading && (
             <View style={[styles.messageBubble, styles.botMessage]}>
               <View style={styles.coachLabel}>
-                <Ionicons name="sparkles" size={12} color="#10B981" />
-                <ThemedText style={styles.coachLabelText}>GEMINI PENSANDO...</ThemedText>
+                <Ionicons name="flash" size={12} color="#D4AF37" />
+                <ThemedText style={styles.coachLabelText}>GEMINI CONSULTANDO EL TEMPLO...</ThemedText>
               </View>
               <Animated.View style={[styles.typingIndicator, { opacity: typingDots }]}>
                 <View style={styles.typingDot} />
@@ -404,7 +404,7 @@ export default function JournalScreen() {
                 onPress={() => handleSendQuery(qp.text)}
                 disabled={isLoading}
               >
-                <Ionicons name={qp.icon as any} size={12} color="#FFF" />
+                <Ionicons name={qp.icon as any} size={12} color="#FFE259" />
                 <ThemedText style={styles.quickPromptText}>{qp.text}</ThemedText>
               </TouchableOpacity>
             ))}
@@ -429,19 +429,19 @@ export default function JournalScreen() {
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
           >
-            <Ionicons name="paper-plane-outline" size={18} color="#FFF" />
+            <Ionicons name="paper-plane" size={18} color="#050507" />
           </TouchableOpacity>
         </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
-    </OledBackground>
+    </PearlElectricBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B131F',
+    backgroundColor: 'transparent',
   },
   safeArea: {
     flex: 1,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: Spacing.three,
-    color: '#888',
+    color: '#D4AF37',
     fontFamily: 'monospace',
     fontSize: 11,
     textTransform: 'uppercase',
@@ -472,14 +472,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
     paddingBottom: Spacing.three,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(16, 185, 129, 0.20)',
+    borderBottomColor: 'rgba(212, 175, 55, 0.25)',
   },
   headerLeft: {},
   headerRight: {},
   label: {
     fontSize: 9,
     textTransform: 'uppercase',
-    color: '#10B981',
+    color: '#D4AF37',
     letterSpacing: 2,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -490,24 +490,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textTransform: 'uppercase',
     fontWeight: '900',
-    color: '#FFF',
+    color: '#FFE259',
   },
   coachBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     borderWidth: 1,
-    borderColor: '#10B981',
+    borderColor: '#D4AF37',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   coachBadgeText: {
     fontSize: 8.5,
-    fontWeight: 'bold',
+    fontWeight: '900',
     fontFamily: 'monospace',
-    color: '#FFF',
+    color: '#FDE68A',
     letterSpacing: 1,
   },
 
@@ -525,23 +525,27 @@ const styles = StyleSheet.create({
   messageBubble: {
     padding: Spacing.three,
     maxWidth: '90%',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   botMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
-    borderColor: '#10B981',
+    backgroundColor: 'rgba(212, 175, 55, 0.22)',
+    borderColor: '#D4AF37',
   },
   disclaimerMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    borderColor: 'rgba(148, 163, 184, 0.15)',
+    backgroundColor: 'rgba(13, 17, 28, 0.80)',
+    borderColor: 'rgba(148, 163, 184, 0.20)',
   },
   coachLabel: {
     flexDirection: 'row',
@@ -553,7 +557,7 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#10B981',
+    color: '#FFE259',
     letterSpacing: 1.5,
   },
   messageText: {
@@ -561,7 +565,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   botText: {
-    color: '#EEE',
+    color: '#F1F5F9',
     fontFamily: 'serif',
   },
   userText: {
@@ -569,13 +573,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   disclaimerText: {
-    color: '#888',
+    color: '#94A3B8',
     fontSize: 11,
     lineHeight: 16,
   },
   timestamp: {
     fontSize: 9,
-    color: '#666',
+    color: '#94A3B8',
     fontFamily: 'monospace',
     marginTop: 6,
     alignSelf: 'flex-end',
@@ -590,7 +594,7 @@ const styles = StyleSheet.create({
   typingDot: {
     width: 8,
     height: 8,
-    backgroundColor: '#10B981',
+    backgroundColor: '#D4AF37',
     borderRadius: 4,
   },
 
@@ -606,15 +610,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(13, 17, 28, 0.90)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
   },
   quickPromptText: {
-    color: '#DDD',
+    color: '#FDE68A',
     fontSize: 10.5,
     fontFamily: 'monospace',
   },
@@ -626,17 +630,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(16, 185, 129, 0.15)',
+    borderTopColor: 'rgba(212, 175, 55, 0.25)',
   },
   input: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.30)',
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: 'rgba(13, 17, 28, 0.95)',
     color: '#FFF',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: 8,
+    borderRadius: 10,
     minHeight: 44,
     maxHeight: 100,
     fontSize: 13.5,
@@ -644,10 +648,14 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#10B981',
-    borderRadius: 8,
+    backgroundColor: '#D4AF37',
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
   },
   sendButtonDisabled: {
     opacity: 0.35,

@@ -4,13 +4,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
-import { OledBackground } from '@/components/OledBackground';
+import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 
 const STOIC_PRESET_AVATARS = [
@@ -18,6 +19,7 @@ const STOIC_PRESET_AVATARS = [
   { id: 'seneca', name: 'Séneca', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Seneca_Prado.jpg/330px-Seneca_Prado.jpg' },
   { id: 'epictetus', name: 'Epicteto', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Epicteti_Enchiridion_Latin_1596.jpg/330px-Epicteti_Enchiridion_Latin_1596.jpg' },
 ];
+
 export default function ProfileScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
@@ -41,7 +43,6 @@ export default function ProfileScreen() {
   const uid = auth?.currentUser?.uid || null;
   const shortUid = uid ? uid.substring(0, 8) : '????????';
 
-  // Estado de sincronización Firebase
   type FirebaseStatus = 'online' | 'offline' | 'no_config' | 'checking';
   const firebaseStatus: FirebaseStatus = !auth ? 'no_config' : uid ? 'online' : 'offline';
 
@@ -67,7 +68,7 @@ export default function ProfileScreen() {
   }, [uid]);
 
   const statusConfig: Record<FirebaseStatus, { label: string; color: string; icon: 'checkmark-circle' | 'close-circle' | 'warning' | 'time' }> = {
-    online:    { label: 'SINCRONIZADO CON LA NUBE', color: '#4CAF50', icon: 'checkmark-circle' },
+    online:    { label: 'SINCRONIZADO CON LA NUBE', color: '#D4AF37', icon: 'checkmark-circle' },
     offline:   { label: 'SIN CONEXIÓN (MODO LOCAL)', color: '#FF9800', icon: 'warning' },
     no_config: { label: 'FIREBASE NO CONFIGURADO',  color: '#FF453A', icon: 'close-circle' },
     checking:  { label: 'VERIFICANDO...',            color: '#888',    icon: 'time' },
@@ -99,74 +100,68 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSaveProfileData = () => {
-    const age = parseInt(ageInput, 10) || 28;
-    const weight = parseFloat(weightInput) || 75;
-    const height = parseFloat(heightInput) || 175;
-    const targetCals = parseInt(targetCalInput, 10) || 2200;
-    const targetSteps = parseInt(targetStepInput, 10) || 10000;
+  const handleSaveProfile = () => {
+    const age = parseInt(ageInput, 10) || metrics.age;
+    const weight = parseFloat(weightInput) || metrics.weightKg;
+    const height = parseFloat(heightInput) || metrics.heightCm;
+    const cals = parseInt(targetCalInput, 10) || 2200;
+    const steps = parseInt(targetStepInput, 10) || 10000;
 
     saveFullProfile({
       userName: nameInput.trim() || 'Ciudadano Prokopton',
-      age,
-      weightKg: weight,
-      heightCm: height,
-      targetCalories: targetCals,
-      stepGoal: targetSteps,
+      targetCalories: cals,
+      stepGoal: steps,
+      userMetrics: {
+        ...metrics,
+        age,
+        weightKg: weight,
+        heightCm: height,
+      }
     });
 
     setShowEditModal(false);
-    Alert.alert("Datos Guardados", "Tu biometría y metas estoicas han sido actualizadas.");
+    Alert.alert("Perfil Calibrado", "Tus datos biométricos han sido actualizados con éxito.");
   };
 
   return (
-    <OledBackground glowColor="rgba(16, 185, 129, 0.08)">
+    <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={{ paddingBottom: Spacing.five }}>
+        <ScrollView contentContainerStyle={styles.content}>
           
-          {/* Header con botón de volver */}
-          <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText style={styles.label}>PROKOPTON</ThemedText>
-              <ThemedText style={styles.title}>El Yo & Biometría</ThemedText>
-            </View>
-            <TouchableOpacity 
-              style={[styles.editBtn, { backgroundColor: colors.accent }]}
-              onPress={handleOpenEditModal}
-            >
-              <Ionicons name="create-outline" size={16} color="#FFF" />
-              <ThemedText style={styles.editBtnText}>EDITAR</ThemedText>
-            </TouchableOpacity>
+          <View style={styles.header}>
+            <ThemedText style={styles.label}>⚡ TEMPLO PERSONAL</ThemedText>
+            <ThemedText style={styles.title}>Perfil Estoico</ThemedText>
           </View>
 
-          {/* AVATAR ESTOICO & FOTO DE PERFIL */}
-          <View style={[styles.avatarCard, { borderColor: colors.backgroundSelected, backgroundColor: colors.backgroundElement }]}>
-            <View style={styles.avatarWrapper}>
+          {/* Avatar Hero Card */}
+          <View style={styles.avatarHeroCard}>
+            <TouchableOpacity onPress={handlePickAvatarPhoto} activeOpacity={0.8} style={styles.avatarContainer}>
               {log.stoicAvatarUri ? (
                 <Image source={{ uri: log.stoicAvatarUri }} style={styles.avatarImage} />
               ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
-                  <Ionicons name="person" size={44} color={colors.accent} />
+                <View style={[styles.avatarPlaceholder, { backgroundColor: 'rgba(212, 175, 55, 0.15)' }]}>
+                  <Ionicons name="person" size={44} color="#D4AF37" />
                 </View>
               )}
+              <View style={[styles.cameraBadge, { backgroundColor: '#D4AF37' }]}>
+                <Ionicons name="camera" size={14} color="#050507" />
+              </View>
+            </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.cameraBadge, { backgroundColor: colors.accent }]} onPress={handlePickAvatarPhoto}>
-                <Ionicons name="camera" size={14} color="#FFF" />
-              </TouchableOpacity>
-            </View>
+            <ThemedText style={styles.userNameText}>{log.userName || "Ciudadano Prokopton"}</ThemedText>
+            <ThemedText style={styles.userRoleText}>🏛️ Filósofo Práctico & Guerrero Imperial</ThemedText>
 
-            <ThemedText style={styles.userNameText}>{log.userName || 'Ciudadano Prokopton'}</ThemedText>
-            <ThemedText style={styles.userRoleText}>Aprendiz Stoic-Fitness • ID: #{shortUid}</ThemedText>
-
+            {/* Presets de Filósofos */}
             <View style={styles.presetRow}>
-              <ThemedText style={styles.presetLabel}>Avatares Filosóficos:</ThemedText>
-              <View style={{ flexDirection: 'row', gap: Spacing.two, marginTop: 4 }}>
-                {STOIC_PRESET_AVATARS.map((av) => (
-                  <TouchableOpacity key={av.id} onPress={() => setStoicAvatar(av.uri)} style={styles.presetChip}>
-                    <ThemedText style={styles.presetChipText}>{av.name}</ThemedText>
+              <ThemedText style={styles.presetLabel}>Avatares de Sabiduría:</ThemedText>
+              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                {STOIC_PRESET_AVATARS.map((p) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.presetChip}
+                    onPress={() => setStoicAvatar(p.uri)}
+                  >
+                    <ThemedText style={[styles.presetChipText, { color: '#FDE68A' }]}>{p.name}</ThemedText>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -174,12 +169,17 @@ export default function ProfileScreen() {
           </View>
 
           <ThemedText style={styles.description}>
-            &ldquo;La felicidad de tu vida depende de la calidad de tus pensamientos y de la fuerza de tu cuerpo.&rdquo; – Marco Aurelio
+            &quot;Ningún hombre es libre si no es dueño de sí mismo.&quot; — Epicteto
           </ThemedText>
 
           {/* Sección de Identidad Biométrica */}
-          <ThemedView style={[styles.section, { borderColor: colors.backgroundSelected }]}>
-            <ThemedText style={styles.sectionTitle}>BIOMETRÍA Y METAS ESTOICAS</ThemedText>
+          <ThemedView style={styles.section}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <ThemedText style={styles.sectionTitle}>BIOMETRÍA Y METAS ESTOICAS</ThemedText>
+              <TouchableOpacity onPress={handleOpenEditModal}>
+                <ThemedText style={{ fontSize: 12, color: '#FFE259', fontWeight: 'bold', fontFamily: 'monospace' }}>Editar</ThemedText>
+              </TouchableOpacity>
+            </View>
             
             <View style={styles.row}>
               <ThemedText style={styles.rowLabel}>Edad</ThemedText>
@@ -198,34 +198,26 @@ export default function ProfileScreen() {
 
             <View style={styles.row}>
               <ThemedText style={styles.rowLabel}>Meta Calórica Diaria</ThemedText>
-              <ThemedText style={[styles.rowValue, { color: colors.accent, fontWeight: 'bold' }]}>{log.targetCalories || 2200} kcal</ThemedText>
+              <ThemedText style={[styles.rowValue, { color: '#FFE259', fontWeight: 'bold' }]}>{log.targetCalories || 2200} kcal</ThemedText>
             </View>
 
             <View style={styles.row}>
               <ThemedText style={styles.rowLabel}>Meta de Pasos Diarios</ThemedText>
-              <ThemedText style={[styles.rowValue, { color: colors.accent, fontWeight: 'bold' }]}>{log.stepGoal || 10000} pasos</ThemedText>
+              <ThemedText style={[styles.rowValue, { color: '#FFE259', fontWeight: 'bold' }]}>{log.stepGoal || 10000} pasos</ThemedText>
             </View>
 
             <TouchableOpacity
-              style={{
-                marginTop: 12,
-                backgroundColor: 'rgba(212, 175, 55, 0.12)',
-                borderWidth: 1,
-                borderColor: '#D4AF37',
-                borderRadius: 10,
-                paddingVertical: 12,
-                alignItems: 'center',
-              }}
+              style={styles.calibrateButton}
               onPress={() => setShowOnboardingModal(true)}
             >
-              <ThemedText style={{ color: '#D4AF37', fontSize: 13, fontWeight: 'bold' }}>
-                🏛️ Calibrar Ficha del Prokopton (Escáner IA)
+              <ThemedText style={{ color: '#050507', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
+                ⚡ CALIBRAR FICHA DEL PROKOPTON (ESCÁNER IA)
               </ThemedText>
             </TouchableOpacity>
           </ThemedView>
 
           {/* Sección de Preferencias */}
-          <ThemedView style={[styles.section, { borderColor: colors.backgroundSelected }]}>
+          <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>PREFERENCIAS DE DISCIPLINA</ThemedText>
             
             <View style={styles.switchRow}>
@@ -236,8 +228,8 @@ export default function ProfileScreen() {
               <Switch 
                 value={mementoMoriEnabled} 
                 onValueChange={setMementoMoriEnabled} 
-                trackColor={{ false: '#767577', true: colors.accent }}
-                thumbColor={'#f4f3f4'}
+                trackColor={{ false: '#334155', true: '#D4AF37' }}
+                thumbColor={'#FFF'}
               />
             </View>
 
@@ -249,14 +241,14 @@ export default function ProfileScreen() {
               <Switch 
                 value={fastingEnabled} 
                 onValueChange={setFastingEnabled} 
-                trackColor={{ false: '#767577', true: colors.accent }}
-                thumbColor={'#f4f3f4'}
+                trackColor={{ false: '#334155', true: '#D4AF37' }}
+                thumbColor={'#FFF'}
               />
             </View>
           </ThemedView>
 
           {/* Sección Estado del Guardián */}
-          <ThemedView style={[styles.section, { borderColor: 'rgba(16, 185, 129, 0.25)', marginTop: Spacing.four }]}>
+          <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>ESTADO DEL GUARDIÁN</ThemedText>
 
             {/* Indicador de estado */}
@@ -270,26 +262,24 @@ export default function ProfileScreen() {
               <ThemedText style={styles.rowLabel}>ID del Guardián</ThemedText>
               <TouchableOpacity onPress={handleCopyUID} style={styles.uidButton}>
                 <ThemedText style={styles.uidText}>#{shortUid}...</ThemedText>
-                <Ionicons name="copy-outline" size={12} color="#10B981" />
+                <Ionicons name="copy-outline" size={12} color="#D4AF37" />
               </TouchableOpacity>
             </View>
 
             {/* Advertencia sesión anónima */}
             <View style={styles.warningBox}>
-              <Ionicons name="shield-outline" size={14} color="#FF9800" style={{ marginTop: 1 }} />
+              <Ionicons name="shield-outline" size={14} color="#F59E0B" style={{ marginTop: 1 }} />
               <ThemedText style={styles.warningText}>
-                {'Tu sesión es anónima y está ligada a este dispositivo/navegador. '}
-                {'Si borras los datos del sitio, usas modo incógnito o cambias de dispositivo, '}
-                {'perderás acceso a tu historial en la nube. Anota tu ID de Guardián como respaldo.'}
+                {'Tu sesión está vinculada a este templo y respaldada con tu ID de Guardián.'}
               </ThemedText>
             </View>
           </ThemedView>
 
           {/* Sección de Peligro */}
-          <ThemedView style={[styles.section, { borderColor: colors.backgroundSelected, marginTop: Spacing.four }]}>
-            <TouchableOpacity style={styles.dangerButton} onPress={() => Alert.alert("Destruir Ego", "Esta acción limpiará permanentemente tu cuenta anónima.")}>
+          <ThemedView style={[styles.section, { borderColor: 'rgba(239, 68, 68, 0.35)', marginTop: Spacing.two }]}>
+            <TouchableOpacity style={styles.dangerButton} onPress={() => Alert.alert("Destruir Ego", "Esta acción limpiará permanentemente tu cuenta.")}>
               <Ionicons name="flame-outline" size={20} color="#FF453A" />
-              <ThemedText style={styles.dangerText}>Destruir Ego (Borrar Cuenta)</ThemedText>
+              <ThemedText style={styles.dangerText}>Destruir Ego (Reiniciar Datos)</ThemedText>
             </TouchableOpacity>
           </ThemedView>
 
@@ -298,18 +288,18 @@ export default function ProfileScreen() {
       {/* Modal para Editar Biometría & Datos */}
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.backgroundSelected }]}>
+          <View style={[styles.modalContent, { backgroundColor: '#0A0D16', borderColor: 'rgba(212, 175, 55, 0.45)' }]}>
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>EDITAR BIOMETRÍA & DATOS</ThemedText>
+              <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>EDITAR BIOMETRÍA & DATOS</ThemedText>
               <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={{ maxHeight: 380 }}>
               <ThemedText style={styles.inputLabel}>Nombre o Pseudónimo Estoico</ThemedText>
               <TextInput 
-                style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                 value={nameInput}
                 onChangeText={setNameInput}
               />
@@ -318,7 +308,7 @@ export default function ProfileScreen() {
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.inputLabel}>Edad</ThemedText>
                   <TextInput 
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                     value={ageInput}
                     onChangeText={setAgeInput}
                     keyboardType="numeric"
@@ -328,7 +318,7 @@ export default function ProfileScreen() {
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.inputLabel}>Peso (kg)</ThemedText>
                   <TextInput 
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                     value={weightInput}
                     onChangeText={setWeightInput}
                     keyboardType="numeric"
@@ -338,7 +328,7 @@ export default function ProfileScreen() {
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.inputLabel}>Altura (cm)</ThemedText>
                   <TextInput 
-                    style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                    style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                     value={heightInput}
                     onChangeText={setHeightInput}
                     keyboardType="numeric"
@@ -348,7 +338,7 @@ export default function ProfileScreen() {
 
               <ThemedText style={[styles.inputLabel, { marginTop: Spacing.three }]}>Meta Calórica Diaria (kcal)</ThemedText>
               <TextInput 
-                style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                 value={targetCalInput}
                 onChangeText={setTargetCalInput}
                 keyboardType="numeric"
@@ -356,7 +346,7 @@ export default function ProfileScreen() {
 
               <ThemedText style={[styles.inputLabel, { marginTop: Spacing.three }]}>Meta de Pasos Diarios</ThemedText>
               <TextInput 
-                style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
+                style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                 value={targetStepInput}
                 onChangeText={setTargetStepInput}
                 keyboardType="numeric"
@@ -364,29 +354,32 @@ export default function ProfileScreen() {
             </ScrollView>
 
             <TouchableOpacity 
-              style={[styles.saveBtn, { backgroundColor: colors.accent, marginTop: Spacing.four }]}
-              onPress={handleSaveProfileData}
+              style={[styles.saveBtn, { backgroundColor: '#D4AF37', marginTop: Spacing.three, borderRadius: 10 }]}
+              onPress={handleSaveProfile}
             >
-              <ThemedText style={styles.saveBtnText}>GUARDAR CAMBIOS</ThemedText>
+              <ThemedText style={{ color: '#050507', fontWeight: '900', fontFamily: 'monospace', fontSize: 13 }}>
+                GUARDAR CAMBIOS
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* Modal de Onboarding / Escáner del Prokopton */}
       <StoicOnboardingModal
         visible={showOnboardingModal}
         onClose={() => setShowOnboardingModal(false)}
+        onComplete={(newProfile) => {
+          setShowOnboardingModal(false);
+          Alert.alert("⚡ Perfil Calibrado", "Tu plan estoico y biométrico ha sido configurado con éxito.");
+        }}
       />
-
       </SafeAreaView>
-    </OledBackground>
+    </PearlElectricBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
@@ -394,55 +387,43 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.two,
-    marginBottom: Spacing.four,
+  content: {
+    paddingBottom: Spacing.six,
   },
-  backButton: {
-    marginRight: Spacing.three,
-    padding: Spacing.two,
-    borderRadius: 20,
-    backgroundColor: 'rgba(128,128,128,0.1)'
+  header: {
+    marginTop: Spacing.two,
+    marginBottom: Spacing.three,
   },
   label: {
     fontSize: 10,
     textTransform: 'uppercase',
-    color: '#10B981',
-    letterSpacing: 2,
+    color: '#D4AF37',
+    letterSpacing: 3,
     fontWeight: 'bold',
     fontFamily: 'monospace',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'serif',
-    marginTop: 2,
-    fontWeight: 'bold',
+    marginTop: 4,
+    textTransform: 'uppercase',
+    fontWeight: '900',
+    color: '#FFE259',
   },
-  editBtn: {
-    flexDirection: 'row',
+  avatarHeroCard: {
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
-  editBtnText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 11,
-    fontFamily: 'monospace',
-  },
-  avatarCard: {
-    padding: Spacing.four,
+    paddingVertical: Spacing.four,
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
     borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.25)', // Esmeralda Fit
-    borderRadius: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    alignItems: 'center',
-    marginBottom: Spacing.four,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    borderRadius: 16,
+    marginBottom: Spacing.three,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
   },
-  avatarWrapper: {
+  avatarContainer: {
     position: 'relative',
     marginBottom: Spacing.two,
   },
@@ -451,7 +432,7 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 2,
-    borderColor: '#10B981', // Esmeralda Fit
+    borderColor: '#D4AF37',
   },
   avatarPlaceholder: {
     width: 90,
@@ -460,7 +441,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#10B981',
+    borderColor: '#D4AF37',
   },
   cameraBadge: {
     position: 'absolute',
@@ -472,7 +453,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0B131F',
+    borderColor: '#050507',
   },
   userNameText: {
     fontSize: 18,
@@ -483,7 +464,7 @@ const styles = StyleSheet.create({
   },
   userRoleText: {
     fontSize: 11,
-    color: '#10B981', // Esmeralda Fit
+    color: '#D4AF37',
     fontFamily: 'monospace',
     marginTop: 2,
   },
@@ -494,15 +475,15 @@ const styles = StyleSheet.create({
   presetLabel: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: '#A0A4B0',
+    color: '#94A3B8',
   },
   presetChip: {
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.30)',
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    borderRadius: 4,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
+    borderRadius: 6,
   },
   presetChipText: {
     fontSize: 10,
@@ -513,37 +494,51 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 20,
     marginBottom: Spacing.four,
-    color: '#888',
+    color: '#CBD5E1',
     textAlign: 'center',
   },
   section: {
-    borderWidth: 1,
-    borderRadius: 0,
+    borderWidth: 1.5,
+    borderRadius: 14,
     padding: Spacing.four,
     marginBottom: Spacing.four,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 2,
-    color: '#888',
+    color: '#D4AF37',
     marginBottom: Spacing.three,
     fontFamily: 'monospace',
+  },
+  calibrateButton: {
+    marginTop: 12,
+    backgroundColor: '#D4AF37',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: Spacing.two,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.1)',
+    borderBottomColor: 'rgba(212, 175, 55, 0.15)',
   },
   rowLabel: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#F8FAFC',
   },
   rowValue: {
     fontSize: 14,
-    color: '#888',
+    color: '#CBD5E1',
     fontFamily: 'monospace',
   },
   switchRow: {
@@ -552,11 +547,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.three,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.1)',
+    borderBottomColor: 'rgba(212, 175, 55, 0.15)',
   },
   hint: {
     fontSize: 11,
-    color: '#60646C',
+    color: '#94A3B8',
     marginTop: 2,
   },
   dangerButton: {
@@ -578,10 +573,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 4,
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
+    borderRadius: 6,
     marginBottom: Spacing.three,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
   },
   statusText: {
     fontSize: 10,
@@ -595,15 +592,15 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 2,
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.06)',
-    borderRadius: 4,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.20)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   uidText: {
     fontSize: 12,
     fontFamily: 'monospace',
-    color: '#10B981',
+    color: '#FFE259',
     letterSpacing: 1,
   },
   warningBox: {
@@ -611,21 +608,21 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: Spacing.three,
     padding: Spacing.three,
-    backgroundColor: 'rgba(255,152,0,0.07)',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
     borderLeftWidth: 2,
-    borderLeftColor: '#FF9800',
-    borderRadius: 2,
+    borderLeftColor: '#F59E0B',
+    borderRadius: 4,
   },
   warningText: {
     flex: 1,
     fontSize: 11,
-    color: '#B0824A',
+    color: '#FDE68A',
     lineHeight: 17,
     fontFamily: 'monospace',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(5, 5, 7, 0.90)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.four,
@@ -634,7 +631,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     padding: Spacing.four,
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderRadius: 16,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -651,22 +649,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'monospace',
     marginBottom: 4,
-    color: '#888',
+    color: '#D4AF37',
   },
   input: {
     borderWidth: 1,
     padding: Spacing.two,
     fontFamily: 'monospace',
     fontSize: 14,
+    borderRadius: 8,
   },
   saveBtn: {
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
-  saveBtnText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    fontSize: 12,
-  }
 });

@@ -33,21 +33,21 @@ export default function AppTabs() {
         name="index"
         options={{
           title: 'Hoy',
-          tabBarIcon: ({ color, focused }) => <HomeTabIcon color={focused ? '#0052FF' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <HomeTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="trainer"
         options={{
           title: 'Entreno',
-          tabBarIcon: ({ color, focused }) => <BarbellTabIcon color={focused ? '#0052FF' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <BarbellTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="nutrition"
         options={{
           title: 'Nutrición',
-          tabBarIcon: ({ color, focused }) => <NutritionTabIcon color={focused ? '#0052FF' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NutritionTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -61,7 +61,7 @@ export default function AppTabs() {
         name="progress"
         options={{
           title: 'Historial',
-          tabBarIcon: ({ color, focused }) => <ProgressTabIcon color={focused ? '#0052FF' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <ProgressTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen

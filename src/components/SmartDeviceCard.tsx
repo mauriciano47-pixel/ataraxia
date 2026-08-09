@@ -158,9 +158,9 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       {/* Select Device Modal */}
       <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: '#0F172A', borderColor: 'rgba(0, 82, 255, 0.25)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: '#0A0D16', borderColor: 'rgba(212, 175, 55, 0.45)' }]}>
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>VINCULAR SMARTWATCH / HEALTH API</ThemedText>
+              <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>⚡ VINCULAR SMARTWATCH / HEALTH API</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <ThemedText style={{ color: '#94A3B8', fontSize: 16, fontWeight: 'bold' }}>✕</ThemedText>
               </TouchableOpacity>
@@ -168,9 +168,9 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
 
             {isScanning ? (
               <View style={styles.scanningBox}>
-                <ActivityIndicator color="#0052FF" size="large" />
-                <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', color: '#0052FF', fontSize: 12 }}>
-                  ESTABLECIENDO CONEXIÓN SEGURA...
+                <ActivityIndicator color="#D4AF37" size="large" />
+                <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', color: '#FFE259', fontSize: 12 }}>
+                  ⚡ ESTABLECIENDO CONEXIÓN SEGURA...
                 </ThemedText>
               </View>
             ) : (
@@ -178,20 +178,20 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
                 {AVAILABLE_DEVICES.map(dev => (
                   <TouchableOpacity
                     key={dev.id}
-                    style={[styles.deviceOption, { backgroundColor: 'rgba(255, 255, 255, 0.04)', borderColor: 'rgba(255, 255, 255, 0.08)' }]}
+                    style={[styles.deviceOption, { backgroundColor: 'rgba(212, 175, 55, 0.06)', borderColor: 'rgba(212, 175, 55, 0.20)' }]}
                     onPress={() => handleSelectDevice(dev)}
                   >
                     <View style={{ flex: 1 }}>
                       <ThemedText style={styles.devOptionName}>{dev.name}</ThemedText>
                       <ThemedText style={styles.devOptionBrand}>{dev.brand}</ThemedText>
                     </View>
-                    <ThemedText style={{ color: '#0052FF', fontWeight: 'bold', fontSize: 12 }}>VINCULAR</ThemedText>
+                    <ThemedText style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>VINCULAR</ThemedText>
                   </TouchableOpacity>
                 ))}
 
                 {device.connected && (
                   <TouchableOpacity
-                    style={[styles.disconnectBtn, { borderColor: 'rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}
+                    style={[styles.disconnectBtn, { borderColor: 'rgba(239, 68, 68, 0.35)', backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}
                     onPress={handleDisconnect}
                   >
                     <ThemedText style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 11, fontFamily: 'monospace' }}>
@@ -210,12 +210,16 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(13, 17, 28, 0.94)',
     borderRadius: 16,
     padding: Spacing.three,
     marginBottom: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 82, 255, 0.20)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   header: {
     flexDirection: 'row',
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
   badge: {
     fontSize: 9,
     fontFamily: 'monospace',
-    color: '#0052FF',
+    color: '#D4AF37',
     letterSpacing: 1.5,
     fontWeight: 'bold',
   },
@@ -256,7 +260,7 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#CBD5E1',
     lineHeight: 18,
     marginVertical: Spacing.two,
   },
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.two,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(212, 175, 55, 0.18)',
   },
   metricItem: {
     flexDirection: 'row',
@@ -283,7 +287,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    color: '#F8FAFC',
+    color: '#FFE259',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -307,7 +311,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(7, 11, 25, 0.85)',
+    backgroundColor: 'rgba(5, 5, 7, 0.90)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.four,
@@ -317,7 +321,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     padding: Spacing.four,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   modalHeader: {
     flexDirection: 'row',
