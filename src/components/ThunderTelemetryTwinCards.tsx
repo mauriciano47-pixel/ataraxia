@@ -92,7 +92,7 @@ export function ThunderTelemetryTwinCards({
           </Svg>
 
           {/* Centered Steps Numbers */}
-          <View style={styles.stepsCenterOverlay} pointerEvents="none">
+          <View style={[styles.stepsCenterOverlay, { pointerEvents: 'none' }]}>
             <ThemedText style={styles.stepsCountText}>{steps.toLocaleString()}</ThemedText>
             <ThemedText style={styles.stepsLabelSub}>STEPS</ThemedText>
           </View>

@@ -236,7 +236,7 @@ export function GlowArcGauge({
         </Svg>
 
         {/* 8. CENTER TEXT OVERLAY */}
-        <View style={styles.centerContent} pointerEvents="none">
+        <View style={[styles.centerContent, { pointerEvents: 'none' }]}>
           <View style={styles.calsNumberRow}>
             <ThemedText style={styles.mainCountText}>
               {calories.toLocaleString()}
