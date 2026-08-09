@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, useColorScheme, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { ThemedText } from './themed-text';
-import { Colors, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { SmartDeviceState } from '@/hooks/useDailyLog';
 import { HeartIcon, SettingsIcon } from '@/components/ModuleSvgIcons';
 
@@ -20,9 +20,6 @@ const AVAILABLE_DEVICES = [
 ];
 
 export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: SmartDeviceCardProps) {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = Colors[scheme];
-
   const [isSyncing, setIsSyncing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
