@@ -8,41 +8,41 @@ interface PearlElectricBackgroundProps {
 }
 
 export function PearlElectricBackground({
-  glowColor = 'rgba(255, 145, 0, 0.22)',
+  glowColor = 'rgba(212, 175, 55, 0.25)',
   children,
 }: PearlElectricBackgroundProps) {
   return (
     <View style={styles.container}>
-      {/* Fondo Grafito Oscuro Deportivo (Hypertrophy Power Grid) */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0B0F19' }]} />
+      {/* Fondo Negro Ónix OLED Profundo */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050507' }]} />
 
-      {/* Aura 1: Brillo Ámbar Eléctrico Superior */}
+      {/* Aura 1: Halo de Rayo Dorado Central */}
       <LinearGradient
-        colors={[glowColor, 'rgba(255, 145, 0, 0.04)', 'transparent']}
+        colors={[glowColor, 'rgba(245, 158, 11, 0.08)', 'transparent']}
         style={styles.heroArcGlow}
-        start={{ x: 0.5, y: 0.1 }}
-        end={{ x: 0.5, y: 0.9 }}
+        start={{ x: 0.5, y: 0.05 }}
+        end={{ x: 0.5, y: 0.95 }}
       />
 
-      {/* Aura 2: Resplandor Azul Atletismo Izquierda */}
+      {/* Aura 2: Resplandor Oro Imperial Izquierda */}
       <LinearGradient
-        colors={['rgba(0, 198, 255, 0.15)', 'transparent']}
+        colors={['rgba(212, 175, 55, 0.12)', 'transparent']}
         style={styles.leftCardGlow}
-        start={{ x: 0, y: 0.5 }}
+        start={{ x: 0, y: 0.4 }}
         end={{ x: 0.8, y: 0.8 }}
       />
 
-      {/* Aura 3: Resplandor Derecha Superior Ámbar */}
+      {/* Aura 3: Resplandor Rayo Ámbar Superior Derecha */}
       <LinearGradient
-        colors={['rgba(255, 145, 0, 0.12)', 'transparent']}
+        colors={['rgba(245, 158, 11, 0.15)', 'transparent']}
         style={styles.rightHeaderGlow}
         start={{ x: 1, y: 0 }}
-        end={{ x: 0.3, y: 0.4 }}
+        end={{ x: 0.2, y: 0.5 }}
       />
 
-      {/* Viñeta Inferior */}
+      {/* Viñeta Inferior Negro Ónix */}
       <LinearGradient
-        colors={['transparent', 'rgba(5, 8, 14, 0.95)']}
+        colors={['transparent', 'rgba(5, 5, 7, 0.98)']}
         style={styles.bottomGlow}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
@@ -56,7 +56,7 @@ export function PearlElectricBackground({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0F19',
+    backgroundColor: '#050507',
   },
   heroArcGlow: {
     position: 'absolute',

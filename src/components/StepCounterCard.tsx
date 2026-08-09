@@ -77,20 +77,20 @@ export function StepCounterCard({
 
         <View style={styles.metricsBadgeColumn}>
           <View style={styles.metricBadge}>
-            <MapIcon color="#00C6FF" size={14} />
+            <MapIcon color="#D4AF37" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{km} km</ThemedText>
           </View>
           <View style={styles.metricBadge}>
-            <FlameIcon color="#E2C068" size={14} />
+            <FlameIcon color="#F59E0B" size={14} />
             <ThemedText style={styles.metricBadgeValue}>{caloriesBurned} kcal</ThemedText>
           </View>
         </View>
       </View>
 
-      {/* PROGRESS BAR WITH ROYAL BICOLOR GRADIENT */}
+      {/* PROGRESS BAR WITH IMPERIAL GOLD THUNDER GRADIENT */}
       <View style={styles.progressBarTrack}>
         <LinearGradient
-          colors={['#1D64F2', '#00C6FF', '#E2C068']}
+          colors={['#B45309', '#D4AF37', '#F59E0B', '#FFE066']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.progressBarFill, { width: `${progressPct}%` }]}
@@ -106,7 +106,7 @@ export function StepCounterCard({
         <View style={styles.liveIndicatorDotRow}>
           <View style={[styles.pulseDot, isLiveTracking ? styles.pulseDotActive : styles.pulseDotInactive]} />
           <ThemedText style={[styles.liveBtnText, isLiveTracking && styles.liveBtnTextActive]}>
-            {isLiveTracking ? 'Podómetro en Vivo: ACTIVO 🟢' : 'Activar Podómetro en Vivo ⚪'}
+            {isLiveTracking ? 'Podómetro en Vivo: ACTIVO 🟢' : '⚡ Activar Podómetro en Vivo ⚪'}
           </ThemedText>
         </View>
         {isLiveTracking && (
@@ -132,12 +132,12 @@ export function StepCounterCard({
         </TouchableOpacity>
       </View>
 
-      {/* GOAL ADJUSTMENT MODAL (DARK CYBER-OBSIDIAN STYLE) */}
+      {/* GOAL ADJUSTMENT MODAL (IMPERIAL GOLD & ONYX STYLE) */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>Ajustar Meta Diaria de Pasos</ThemedText>
-            <ThemedText style={styles.modalSub}>Define tu objetivo personal de movilidad activa:</ThemedText>
+            <ThemedText style={styles.modalTitle}>⚡ Ajustar Meta Diaria de Pasos</ThemedText>
+            <ThemedText style={styles.modalSub}>Define tu objetivo personal de movilidad estoica:</ThemedText>
 
             <TextInput
               style={styles.modalInput}
@@ -153,7 +153,7 @@ export function StepCounterCard({
                 <ThemedText style={{ color: '#94A3B8', fontFamily: 'monospace' }}>Cancelar</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={handleSaveGoal} activeOpacity={0.8}>
-                <ThemedText style={{ color: '#070B14', fontWeight: 'bold', fontFamily: 'monospace' }}>Guardar Meta</ThemedText>
+                <ThemedText style={{ color: '#050507', fontWeight: 'bold', fontFamily: 'monospace' }}>Guardar Meta</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -216,16 +216,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(226, 192, 104, 0.08)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.30)',
+    borderColor: 'rgba(212, 175, 55, 0.40)',
   },
   goalButtonText: {
     fontSize: 11,
-    color: '#E2C068',
+    color: '#FDE68A',
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
@@ -237,14 +237,14 @@ const styles = StyleSheet.create({
   },
   bigStepsCount: {
     fontSize: 34,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#FFFFFF',
     lineHeight: 38,
     fontFamily: 'serif',
   },
   stepsTargetSub: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#CBD5E1',
     marginTop: 2,
     fontFamily: 'monospace',
   },
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(13, 17, 28, 0.92)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   metricBadgeValue: {
     fontSize: 11,

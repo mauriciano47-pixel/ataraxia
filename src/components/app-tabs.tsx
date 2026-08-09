@@ -6,7 +6,7 @@ export default function AppTabs() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0052FF', // Azul Cobalto
+        tabBarActiveTintColor: '#D4AF37', // Oro Imperial Cepillado
         tabBarInactiveTintColor: '#64748B',
         tabBarLabelStyle: {
           fontFamily: 'monospace',
@@ -15,16 +15,16 @@ export default function AppTabs() {
           letterSpacing: 0.5,
         },
         tabBarStyle: {
-          backgroundColor: 'rgba(11, 17, 33, 0.96)',
-          borderTopWidth: 1,
-          borderTopColor: 'rgba(0, 82, 255, 0.25)',
+          backgroundColor: 'rgba(8, 10, 16, 0.98)',
+          borderTopWidth: 1.5,
+          borderTopColor: 'rgba(212, 175, 55, 0.35)',
           paddingBottom: 6,
           paddingTop: 6,
           height: 64,
           elevation: 12,
-          shadowColor: '#0052FF',
+          shadowColor: '#D4AF37',
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.2,
+          shadowOpacity: 0.25,
           shadowRadius: 10,
         },
         headerShown: false,

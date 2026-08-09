@@ -82,19 +82,19 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-          <SettingsIcon color={device.connected ? '#0052FF' : '#94A3B8'} size={20} />
+          <SettingsIcon color={device.connected ? '#D4AF37' : '#94A3B8'} size={20} />
           <View>
-            <ThemedText style={styles.badge}>TELEMETRÍA SMART</ThemedText>
+            <ThemedText style={styles.badge}>⚡ TELEMETRÍA SMART</ThemedText>
             <ThemedText style={styles.deviceName} numberOfLines={1}>
               {device.deviceName}
             </ThemedText>
           </View>
         </View>
 
-        <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(0, 82, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
-          <View style={[styles.dot, { backgroundColor: device.connected ? '#0052FF' : '#64748B' }]} />
-          <ThemedText style={[styles.statusText, { color: device.connected ? '#0052FF' : '#94A3B8' }]}>
-            {device.connected ? 'VINCULADO' : 'OFFLINE'}
+        <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
+          <View style={[styles.dot, { backgroundColor: device.connected ? '#D4AF37' : '#64748B' }]} />
+          <ThemedText style={[styles.statusText, { color: device.connected ? '#FDE68A' : '#94A3B8' }]}>
+            {device.connected ? '⚡ VINCULADO' : 'OFFLINE'}
           </ThemedText>
         </View>
       </View>
@@ -126,7 +126,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         </View>
       ) : (
         <ThemedText style={styles.promptText}>
-          Sincroniza tu reloj inteligente o Google Health Connect para medir ritmo cardíaco y pasos automáticamente.
+          Sincroniza tu reloj inteligente o Google Health Connect para medir ritmo cardíaco y pasos automáticamente con la telemetría imperial.
         </ThemedText>
       )}
 
@@ -134,23 +134,25 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       <View style={styles.actionsRow}>
         {device.connected && (
           <TouchableOpacity
-            style={[styles.btn, { backgroundColor: '#0052FF', borderColor: '#0052FF', flex: 2 }]}
+            style={[styles.btn, { backgroundColor: '#D4AF37', borderColor: '#D4AF37', flex: 2 }]}
             onPress={handleSyncNow}
             disabled={isSyncing}
+            activeOpacity={0.8}
           >
             {isSyncing ? (
-              <ActivityIndicator color="#FFF" size="small" />
+              <ActivityIndicator color="#050507" size="small" />
             ) : (
-              <ThemedText style={[styles.btnText, { color: '#FFF' }]}>SINCRONIZAR AHORA</ThemedText>
+              <ThemedText style={[styles.btnText, { color: '#050507', fontWeight: '900' }]}>⚡ SINCRONIZAR AHORA</ThemedText>
             )}
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(0, 82, 255, 0.20)', flex: 1 }]}
+          style={[styles.btn, { backgroundColor: 'rgba(212, 175, 55, 0.10)', borderColor: 'rgba(212, 175, 55, 0.30)', flex: 1 }]}
           onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
         >
-          <ThemedText style={[styles.btnText, { color: '#F8FAFC' }]}>
+          <ThemedText style={[styles.btnText, { color: '#FDE68A' }]}>
             {device.connected ? 'GESTIONAR' : 'CONECTAR'}
           </ThemedText>
         </TouchableOpacity>

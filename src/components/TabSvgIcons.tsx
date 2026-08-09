@@ -7,8 +7,8 @@ interface IconProps {
   focused?: boolean;
 }
 
-export function HomeTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#0052FF';
+export function HomeTabIcon({ color, size = 24, focused }: IconProps) {
+  const colorStr = typeof color === 'string' ? color : '#D4AF37';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -17,14 +17,14 @@ export function HomeTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#0052FF' ? 'rgba(0, 82, 255, 0.12)' : 'none'}
+        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
       />
     </Svg>
   );
 }
 
-export function BarbellTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#0052FF';
+export function BarbellTabIcon({ color, size = 24, focused }: IconProps) {
+  const colorStr = typeof color === 'string' ? color : '#D4AF37';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -33,13 +33,14 @@ export function BarbellTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
       />
     </Svg>
   );
 }
 
-export function NutritionTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#0052FF';
+export function NutritionTabIcon({ color, size = 24, focused }: IconProps) {
+  const colorStr = typeof color === 'string' ? color : '#D4AF37';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -48,7 +49,7 @@ export function NutritionTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#0052FF' ? 'rgba(0, 82, 255, 0.12)' : 'none'}
+        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
       />
       <Path
         d="M12 6V12M12 12L15 9"
@@ -60,8 +61,8 @@ export function NutritionTabIcon({ color, size = 24 }: IconProps) {
   );
 }
 
-export function JournalTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#00C6FF';
+export function JournalTabIcon({ color, size = 24, focused }: IconProps) {
+  const colorStr = typeof color === 'string' ? color : '#D4AF37';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -76,14 +77,14 @@ export function JournalTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={colorStr === '#00C6FF' ? 'rgba(0, 198, 255, 0.12)' : 'none'}
+        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
       />
     </Svg>
   );
 }
 
-export function ProgressTabIcon({ color, size = 24 }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#0052FF';
+export function ProgressTabIcon({ color, size = 24, focused }: IconProps) {
+  const colorStr = typeof color === 'string' ? color : '#D4AF37';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -92,6 +93,7 @@ export function ProgressTabIcon({ color, size = 24 }: IconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
       />
       <Path
         d="M17 6H23V12"

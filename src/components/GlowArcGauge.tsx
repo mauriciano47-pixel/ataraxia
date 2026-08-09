@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, RadialGradient } from 'react-native-svg';
 import { ThemedText } from './themed-text';
 
 export interface GlowArcGaugeProps {
@@ -36,11 +36,11 @@ export function GlowArcGauge({
   const cx = size / 2;
   const cy = size / 2;
 
-  // Outer Arc (Power & Strength - Amber Electric)
+  // Outer Arc (Power & Strength - Imperial Gold Thunder)
   const outerStrokeWidth = 12;
   const outerRadius = (size - outerStrokeWidth - 10) / 2;
 
-  // Inner Arc (Virtue & Recovery - Cyan Blue)
+  // Inner Arc (Virtue & Recovery - Warm Amber Gold)
   const innerStrokeWidth = 9;
   const innerRadius = outerRadius - 22;
 
@@ -80,50 +80,49 @@ export function GlowArcGauge({
 
   const displayLabel =
     activeMode === 'strength'
-      ? 'POTENCIA & SOBRECARGA'
+      ? '⚡ FUERZA & SOBRECARGA'
       : activeMode === 'virtue'
-      ? 'RECUPERACIÓN ESTOICA'
-      : 'POWER GRID INDEX';
+      ? '🏛️ DISCIPLINA & VIRTUD'
+      : '⚡ TRUENO ESTOICO INDEX';
 
-  const displayColor =
-    activeMode === 'strength' ? '#FF9100' : activeMode === 'virtue' ? '#00C6FF' : '#FFAB00';
+  const displayColor = '#D4AF37'; // Oro Imperial Primario
 
   return (
     <View style={styles.container}>
-      {/* MODE CHIPS (POWER GRID ATHLETIC STYLE) */}
+      {/* MODE CHIPS (IMPERIAL GOLD ATHLETIC STYLE) */}
       <View style={styles.modeTabsRow}>
         <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'strength' && styles.tabChipStrengthActive]}
+          style={[styles.tabChip, activeMode === 'strength' && styles.tabChipActive]}
           onPress={() => setActiveMode(activeMode === 'strength' ? 'combined' : 'strength')}
           activeOpacity={0.8}
         >
-          <ThemedText style={[styles.tabChipText, activeMode === 'strength' && styles.tabTextAmber]}>
+          <ThemedText style={[styles.tabChipText, activeMode === 'strength' && styles.tabTextGold]}>
             ⚡ Fuerza: {strengthPct}%
           </ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'combined' && styles.tabChipCombinedActive]}
+          style={[styles.tabChip, activeMode === 'combined' && styles.tabChipActive]}
           onPress={() => setActiveMode('combined')}
           activeOpacity={0.8}
         >
-          <ThemedText style={[styles.tabChipText, activeMode === 'combined' && styles.tabTextGold]}>
-            🏋️‍♂️ Power Grid: {overallPct}%
+          <ThemedText style={[styles.tabChipText, activeMode === 'combined' && styles.tabTextGoldVivid]}>
+            🏛️ Trueno: {overallPct}%
           </ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'virtue' && styles.tabChipVirtueActive]}
+          style={[styles.tabChip, activeMode === 'virtue' && styles.tabChipActive]}
           onPress={() => setActiveMode(activeMode === 'virtue' ? 'combined' : 'virtue')}
           activeOpacity={0.8}
         >
-          <ThemedText style={[styles.tabChipText, activeMode === 'virtue' && styles.tabTextCyan]}>
+          <ThemedText style={[styles.tabChipText, activeMode === 'virtue' && styles.tabTextGold]}>
             🧘 Virtud: {virtuePct}%
           </ThemedText>
         </TouchableOpacity>
       </View>
 
-      {/* DUAL ELECTRIC SPHERE */}
+      {/* DUAL GOLD THUNDER SPHERE */}
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() =>
@@ -133,42 +132,55 @@ export function GlowArcGauge({
       >
         <Svg width={size} height={size} style={styles.svgAbsolute}>
           <Defs>
-            {/* Amber Electric Gradient */}
-            <LinearGradient id="amberPowerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#D97706" />
-              <Stop offset="50%" stopColor="#FF9100" />
-              <Stop offset="100%" stopColor="#FFC107" />
+            {/* Imperial Gold Thunder Gradient */}
+            <LinearGradient id="goldPowerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#B45309" />
+              <Stop offset="40%" stopColor="#D4AF37" />
+              <Stop offset="70%" stopColor="#F59E0B" />
+              <Stop offset="100%" stopColor="#FFE066" />
             </LinearGradient>
 
-            {/* Cyan Athletic Gradient */}
-            <LinearGradient id="cyanAthleticGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#1D64F2" />
-              <Stop offset="50%" stopColor="#2563EB" />
-              <Stop offset="100%" stopColor="#00C6FF" />
+            {/* Warm Amber Gold Gradient */}
+            <LinearGradient id="amberVirtueGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#78350F" />
+              <Stop offset="50%" stopColor="#D4AF37" />
+              <Stop offset="100%" stopColor="#FDE68A" />
             </LinearGradient>
 
-            {/* Dark Graphite Metallic Disc */}
-            <LinearGradient id="graphiteDiscGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#1E293B" />
-              <Stop offset="50%" stopColor="#0F172A" />
-              <Stop offset="100%" stopColor="#0B0F19" />
+            {/* Deep Onyx Black Disc */}
+            <LinearGradient id="onyxDiscGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#131722" />
+              <Stop offset="50%" stopColor="#0A0D15" />
+              <Stop offset="100%" stopColor="#050507" />
             </LinearGradient>
 
             {/* Track Background */}
             <LinearGradient id="bgTrackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="rgba(255, 255, 255, 0.08)" />
-              <Stop offset="100%" stopColor="rgba(255, 255, 255, 0.02)" />
+              <Stop offset="0%" stopColor="rgba(212, 175, 55, 0.12)" />
+              <Stop offset="100%" stopColor="rgba(212, 175, 55, 0.03)" />
             </LinearGradient>
+
+            {/* Radial Glow */}
+            <RadialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="rgba(212, 175, 55, 0.15)" />
+              <Stop offset="100%" stopColor="transparent" />
+            </RadialGradient>
           </Defs>
 
-          {/* Central Graphite Disc */}
+          {/* Central Onyx Disc */}
           <Circle
             cx={cx}
             cy={cy}
             r={innerRadius - 14}
-            fill="url(#graphiteDiscGrad)"
-            stroke="rgba(255, 145, 0, 0.35)"
-            strokeWidth={1.5}
+            fill="url(#onyxDiscGrad)"
+            stroke="rgba(212, 175, 55, 0.40)"
+            strokeWidth={1.8}
+          />
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={innerRadius - 16}
+            fill="url(#centerGlow)"
           />
 
           {/* Outer Arc Background Track */}
@@ -180,18 +192,18 @@ export function GlowArcGauge({
             strokeLinecap="round"
           />
 
-          {/* Outer Arc Progress (Amber) */}
+          {/* Outer Arc Progress (Imperial Gold) */}
           <Path
             d={progressArcOuter}
             fill="none"
-            stroke="url(#amberPowerGrad)"
+            stroke="url(#goldPowerGrad)"
             strokeWidth={outerStrokeWidth}
             strokeLinecap="round"
           />
 
           {/* Outer Cap Glow Dot */}
           {strengthProgress > 0 && (
-            <Circle cx={outerCapPos.x} cy={outerCapPos.y} r={outerStrokeWidth / 2 + 2} fill="#FFC107" />
+            <Circle cx={outerCapPos.x} cy={outerCapPos.y} r={outerStrokeWidth / 2 + 2} fill="#FFE066" />
           )}
 
           {/* Inner Arc Background Track */}
@@ -203,18 +215,18 @@ export function GlowArcGauge({
             strokeLinecap="round"
           />
 
-          {/* Inner Arc Progress (Cyan) */}
+          {/* Inner Arc Progress (Warm Amber Gold) */}
           <Path
             d={progressArcInner}
             fill="none"
-            stroke="url(#cyanAthleticGrad)"
+            stroke="url(#amberVirtueGrad)"
             strokeWidth={innerStrokeWidth}
             strokeLinecap="round"
           />
 
           {/* Inner Cap Glow Dot */}
           {virtueProgress > 0 && (
-            <Circle cx={innerCapPos.x} cy={innerCapPos.y} r={innerStrokeWidth / 2 + 2} fill="#00C6FF" />
+            <Circle cx={innerCapPos.x} cy={innerCapPos.y} r={innerStrokeWidth / 2 + 2} fill="#FDE68A" />
           )}
         </Svg>
 
@@ -228,16 +240,16 @@ export function GlowArcGauge({
             </ThemedText>
           </View>
 
-          {/* ATHLETIC PILL BADGES */}
+          {/* ATHLETIC GOLD PILL BADGES */}
           <View style={styles.pillBadgesRow}>
-            <View style={styles.amberPill}>
-              <ThemedText style={styles.amberPillText}>⚡ {calories} kcal</ThemedText>
+            <View style={styles.goldPill}>
+              <ThemedText style={styles.goldPillText}>⚡ {calories} kcal</ThemedText>
             </View>
-            <View style={styles.cyanPill}>
-              <ThemedText style={styles.cyanPillText}>👟 {steps.toLocaleString()}</ThemedText>
+            <View style={styles.goldPill}>
+              <ThemedText style={styles.goldPillText}>👟 {steps.toLocaleString()}</ThemedText>
             </View>
-            <View style={styles.amberPill}>
-              <ThemedText style={styles.amberPillText}>💧 {waterLitres.toFixed(1)}L</ThemedText>
+            <View style={styles.goldPill}>
+              <ThemedText style={styles.goldPillText}>💧 {waterLitres.toFixed(1)}L</ThemedText>
             </View>
           </View>
 
@@ -245,7 +257,7 @@ export function GlowArcGauge({
             {trainingCompleted ? '🏆 Entreno Completado (RPE 8.5)' : '⏳ Sesión de Fuerza Pendiente'}
           </ThemedText>
 
-          <ThemedText style={styles.goalSubtext}>SOBRECARGA PROGRESIVA • ATHLETIC GRID</ThemedText>
+          <ThemedText style={styles.goalSubtext}>⚡ IMPERIUM THUNDER • ATARAXIA GRID ⚡</ThemedText>
         </View>
       </TouchableOpacity>
     </View>
@@ -262,119 +274,104 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 8,
   },
   tabChip: {
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#0F172A',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 145, 0, 0.25)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(13, 17, 28, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.20)',
   },
-  tabChipStrengthActive: {
-    borderColor: '#FF9100',
-    backgroundColor: 'rgba(255, 145, 0, 0.20)',
-  },
-  tabChipVirtueActive: {
-    borderColor: '#00C6FF',
-    backgroundColor: 'rgba(0, 198, 255, 0.20)',
-  },
-  tabChipCombinedActive: {
-    borderColor: '#FFAB00',
-    backgroundColor: 'rgba(255, 171, 0, 0.15)',
+  tabChipActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderColor: '#D4AF37',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabChipText: {
     fontSize: 11,
-    color: '#94A3B8',
     fontFamily: 'monospace',
     fontWeight: 'bold',
-  },
-  tabTextAmber: {
-    color: '#FF9100',
-  },
-  tabTextCyan: {
-    color: '#00C6FF',
+    color: '#94A3B8',
   },
   tabTextGold: {
-    color: '#FFAB00',
+    color: '#FCD34D',
+  },
+  tabTextGoldVivid: {
+    color: '#D4AF37',
+    fontWeight: '900',
   },
   svgAbsolute: {
     position: 'absolute',
-    top: 0,
   },
   centerContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    paddingHorizontal: 12,
   },
   badgeCategoryText: {
     fontSize: 10,
-    fontFamily: 'monospace',
-    color: '#FF9100',
+    fontWeight: '900',
+    color: '#D4AF37',
     letterSpacing: 2,
-    fontWeight: 'bold',
-    marginBottom: -4,
+    fontFamily: 'monospace',
+    marginBottom: 2,
+    textTransform: 'uppercase',
   },
   percentGlowWrapper: {
-    marginVertical: 2,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 8,
   },
   percentText: {
-    fontSize: 54,
+    fontSize: 52,
     fontWeight: '900',
-    fontFamily: 'sans-serif',
-    letterSpacing: -1.5,
-    textShadowColor: 'rgba(255, 145, 0, 0.50)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    fontFamily: 'monospace',
+    letterSpacing: -1,
+    lineHeight: 56,
   },
   pillBadgesRow: {
     flexDirection: 'row',
-    gap: 5,
-    marginVertical: 4,
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    marginBottom: 8,
   },
-  amberPill: {
-    backgroundColor: 'rgba(255, 145, 0, 0.12)',
-    paddingHorizontal: 8,
+  goldPill: {
     paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 145, 0, 0.35)',
-  },
-  amberPillText: {
-    fontSize: 10,
-    color: '#FFAB00',
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-  },
-  cyanPill: {
-    backgroundColor: 'rgba(0, 198, 255, 0.12)',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 198, 255, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
-  cyanPillText: {
-    fontSize: 10,
-    color: '#00C6FF',
-    fontFamily: 'monospace',
+  goldPillText: {
+    fontSize: 10.5,
     fontWeight: 'bold',
+    fontFamily: 'monospace',
+    color: '#FDE68A',
   },
   subDetailText: {
     fontSize: 11,
-    color: '#F8FAFC',
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    marginTop: 2,
+    color: '#CBD5E1',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   goalSubtext: {
-    fontSize: 9,
-    color: '#FF9100',
+    fontSize: 8.5,
     fontFamily: 'monospace',
-    marginTop: 4,
-    letterSpacing: 1.5,
     fontWeight: 'bold',
+    color: '#D4AF37',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
 });

@@ -87,9 +87,10 @@ export function CalorieIndexCard({
         <TouchableOpacity 
           style={styles.calcButton} 
           onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
         >
-          <SettingsIcon color="#0052FF" size={14} />
-          <ThemedText style={styles.calcButtonText}>Calcular TDEE</ThemedText>
+          <SettingsIcon color="#D4AF37" size={14} />
+          <ThemedText style={styles.calcButtonText}>⚡ Calcular TDEE</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -133,15 +134,15 @@ export function CalorieIndexCard({
       <View style={styles.macroSplitRow}>
         <View style={styles.macroItem}>
           <ThemedText style={styles.macroLabel}>Proteína</ThemedText>
-          <ThemedText style={styles.macroValue}>{consumedMacros.protein}g / {fitnessCalc.macros.protein}g</ThemedText>
+          <ThemedText style={[styles.macroValue, { color: '#FDE68A' }]}>{consumedMacros.protein}g / {fitnessCalc.macros.protein}g</ThemedText>
         </View>
         <View style={styles.macroItem}>
           <ThemedText style={styles.macroLabel}>Carbohidratos</ThemedText>
-          <ThemedText style={styles.macroValue}>{consumedMacros.carbs}g / {fitnessCalc.macros.carbs}g</ThemedText>
+          <ThemedText style={[styles.macroValue, { color: '#FCD34D' }]}>{consumedMacros.carbs}g / {fitnessCalc.macros.carbs}g</ThemedText>
         </View>
         <View style={styles.macroItem}>
           <ThemedText style={styles.macroLabel}>Grasas</ThemedText>
-          <ThemedText style={styles.macroValue}>{consumedMacros.fats}g / {fitnessCalc.macros.fats}g</ThemedText>
+          <ThemedText style={[styles.macroValue, { color: '#D4AF37' }]}>{consumedMacros.fats}g / {fitnessCalc.macros.fats}g</ThemedText>
         </View>
       </View>
 

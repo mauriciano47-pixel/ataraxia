@@ -51,7 +51,7 @@ export default function HoyScreen() {
   const currentCalories = log.totalCalories || Math.round(currentSteps * 0.04);
 
   return (
-    <PearlElectricBackground glowColor="rgba(29, 100, 242, 0.22)">
+    <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.25)">
       <SafeAreaView style={styles.safeArea}>
         <Animated.ScrollView
           style={styles.container}
@@ -63,8 +63,7 @@ export default function HoyScreen() {
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* HEADER STOIC ROYAL */}
-          {/* HEADER HYPERTROPHY POWER GRID (CONCEPT 4) */}
+          {/* HEADER STOIC ROYAL IMPERIAL GOLD & THUNDER */}
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.push('/profile')} activeOpacity={0.8} style={styles.laurelLogoBtn}>
               <View style={styles.laurelRing}>
@@ -74,18 +73,18 @@ export default function HoyScreen() {
 
             <View style={styles.titleCenterGroup}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <ThemedText style={{ fontSize: 20, color: '#10B981' }}>🏛️</ThemedText>
+                <ThemedText style={{ fontSize: 20, color: '#D4AF37' }}>🏛️</ThemedText>
                 <ThemedText style={styles.brandTitle}>ATARAXIA</ThemedText>
               </View>
-              <ThemedText style={styles.brandSubtitle}>POWER GRID • ATHLETIC</ThemedText>
+              <ThemedText style={styles.brandSubtitle}>IMPERIAL THUNDER • ATHLETIC</ThemedText>
             </View>
 
             <View style={styles.headerRightActions}>
               <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.push('/journal')}>
-                <ThemedText style={{ fontSize: 16, color: '#FF9100' }}>⚡</ThemedText>
+                <ThemedText style={{ fontSize: 16, color: '#D4AF37' }}>⚡</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.push('/trainer')}>
-                <ThemedText style={{ fontSize: 16, color: '#00C6FF' }}>🏋️‍♂️</ThemedText>
+                <ThemedText style={{ fontSize: 16, color: '#F59E0B' }}>🏋️‍♂️</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -100,7 +99,7 @@ export default function HoyScreen() {
           {/* PWA INSTALL BUTTON IF APPLICABLE */}
           <PwaInstallButton />
 
-          {/* 1. HERO SECTION: EXACT PROPOSAL 1 SPHERE GAUGE */}
+          {/* 1. HERO SECTION: GLOW ARC GAUGE (IMPERIAL GOLD & THUNDER) */}
           <View style={styles.heroGaugeSection}>
             <GlowArcGauge
               strengthProgress={strengthProgress}
@@ -119,7 +118,7 @@ export default function HoyScreen() {
 
           {/* 2. DOCK DE ACCIONES RÁPIDAS (Quick Action Dock) */}
           <View style={styles.quickDockCard}>
-            <ThemedText style={styles.dockHeaderTitle}>ACCIONES RÁPIDAS EN VIVO</ThemedText>
+            <ThemedText style={styles.dockHeaderTitle}>ACCIONES RÁPIDAS • RAYO DE FUERZA</ThemedText>
             <View style={styles.dockButtonsRow}>
               <TouchableOpacity
                 style={styles.dockChipBtn}
@@ -134,8 +133,8 @@ export default function HoyScreen() {
                 onPress={toggleTraining}
                 activeOpacity={0.8}
               >
-                <ThemedText style={styles.dockChipText}>
-                  {log.trainingCompleted ? '🏋️‍♂️ Entrenado ✓' : '🏋️‍♂️ Entrenar'}
+                <ThemedText style={[styles.dockChipText, log.trainingCompleted && styles.dockChipTextActive]}>
+                  {log.trainingCompleted ? '🏆 Entrenado ✓' : '🏋️‍♂️ Entrenar'}
                 </ThemedText>
               </TouchableOpacity>
 
@@ -176,9 +175,9 @@ export default function HoyScreen() {
             <View style={styles.twoColRow}>
               {/* Entrena */}
               <View style={styles.halfCard}>
-                <ThemedText style={styles.cardHeaderGoldText}>RESISTENCIA FÍSICA</ThemedText>
+                <ThemedText style={styles.cardHeaderGoldText}>⚡ RESISTENCIA FÍSICA</ThemedText>
 
-                <View style={styles.workoutCobaltBox}>
+                <View style={styles.workoutGoldBox}>
                   <ThemedText style={styles.workoutTitleText}>Rutina de Hoy</ThemedText>
                   <ThemedText style={styles.workoutMetaText}>55 mins | 720 kcal</ThemedText>
                 </View>
@@ -189,13 +188,13 @@ export default function HoyScreen() {
                   style={styles.startButtonTouch}
                 >
                   <LinearGradient
-                    colors={['#E2C068', '#C5A869']}
+                    colors={['#D4AF37', '#F59E0B', '#B45309']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.startButtonGradient}
                   >
                     <ThemedText style={styles.startButtonText}>
-                      {log.trainingCompleted ? 'Completado ✓' : 'Iniciar'}
+                      {log.trainingCompleted ? '🏆 Completado ✓' : '⚡ Iniciar Sesión'}
                     </ThemedText>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -203,9 +202,9 @@ export default function HoyScreen() {
 
               {/* Filosofía Estoica */}
               <View style={styles.halfCard}>
-                <ThemedText style={styles.cardHeaderGoldText}>PRINCIPIO ESTOICO</ThemedText>
+                <ThemedText style={styles.cardHeaderGoldText}>🏛️ PRINCIPIO ESTOICO</ThemedText>
                 <ThemedText style={styles.stoicQuoteText}>
-                  {'"Focus on what you can control, to control forms..."'}
+                  {'"Enfócate en lo que puedes controlar, forja tu propia fuerza..."'}
                 </ThemedText>
                 <ThemedText style={styles.stoicAuthorText}>— Marco Aurelio</ThemedText>
               </View>
@@ -222,9 +221,9 @@ export default function HoyScreen() {
             {/* Hábito de Meditación */}
             <View style={styles.meditationCard}>
               <View style={styles.meditationLeft}>
-                <ThemedText style={styles.cardHeaderGoldText}>RACHA DE MEDITACIÓN</ThemedText>
+                <ThemedText style={styles.cardHeaderGoldText}>RACHA DE DISCIPLINA</ThemedText>
                 <View style={styles.streakRow}>
-                  <FlameIcon color="#E2C068" size={28} />
+                  <FlameIcon color="#D4AF37" size={28} />
                   <ThemedText style={styles.streakNumberText}>14</ThemedText>
                   <View style={styles.streakSubCol}>
                     <ThemedText style={styles.streakDayText}>Días</ThemedText>
@@ -485,28 +484,30 @@ const styles = StyleSheet.create({
   },
   halfCard: {
     flex: 1,
-    backgroundColor: 'rgba(14, 20, 36, 0.88)',
+    backgroundColor: 'rgba(13, 17, 28, 0.92)',
     borderRadius: 16,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     justifyContent: 'space-between',
     gap: 8,
   },
-  workoutCobaltBox: {
-    backgroundColor: '#1D64F2',
+  workoutGoldBox: {
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     borderRadius: 12,
     padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.40)',
     gap: 2,
   },
   workoutTitleText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FDE68A',
   },
   workoutMetaText: {
     fontSize: 11,
-    color: '#BFDBFE',
+    color: '#D4AF37',
     fontFamily: 'monospace',
   },
   startButtonTouch: {
@@ -517,11 +518,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
   startButtonText: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#070B14',
+    fontWeight: '900',
+    color: '#050507',
     letterSpacing: 0.5,
   },
   stoicQuoteText: {
