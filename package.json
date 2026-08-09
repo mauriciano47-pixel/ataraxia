@@ -43,6 +43,9 @@
   },
   "scripts": {
     "start": "expo start",
+    "build": "expo export",
+    "export:web": "expo export",
+    "postexport": "node -e \"const fs=require('fs'); if(fs.existsSync('dist/index.html')){ fs.copyFileSync('dist/index.html', 'dist/200.html'); fs.copyFileSync('dist/index.html', 'dist/404.html'); console.log('SPA fallbacks generated: 200.html & 404.html'); }\"",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",

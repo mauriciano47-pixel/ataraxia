@@ -71,6 +71,13 @@ export default function AppTabs() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="+not-found"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }
