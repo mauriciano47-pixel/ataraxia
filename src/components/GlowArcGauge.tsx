@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle, RadialGradient } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, RadialGradient, G, Polygon } from 'react-native-svg';
 import { ThemedText } from './themed-text';
 
 export interface GlowArcGaugeProps {
@@ -12,38 +12,42 @@ export interface GlowArcGaugeProps {
   stepGoal?: number;
   km?: number;
   calories?: number;
+  targetCalories?: number;
   waterLitres?: number;
   trainingCompleted?: boolean;
   streakDays?: number;
 }
 
 export function GlowArcGauge({
-  strengthProgress = 0.85,
+  strengthProgress = 0.82,
   virtueProgress = 0.80,
-  overallProgress = 0.83,
-  size = 310,
-  steps = 8450,
-  calories = 520,
-  waterLitres = 2.4,
+  overallProgress = 0.82,
+  size = 320,
+  calories = 2840,
+  targetCalories = 3500,
+  steps = 14892,
   trainingCompleted = true,
 }: GlowArcGaugeProps) {
-  const [activeMode, setActiveMode] = useState<'combined' | 'strength' | 'virtue'>('combined');
+  const [activeMetric, setActiveMetric] = useState<'calories' | 'strength' | 'virtue'>('calories');
 
+  const burnPct = Math.round((calories / targetCalories) * 100);
   const strengthPct = Math.round(Math.min(1, Math.max(0, strengthProgress)) * 100);
   const virtuePct = Math.round(Math.min(1, Math.max(0, virtueProgress)) * 100);
-  const overallPct = Math.round(Math.min(1, Math.max(0, overallProgress)) * 100);
+
+  const displayPct = activeMetric === 'calories' ? burnPct : activeMetric === 'strength' ? strengthPct : virtuePct;
+  const currentRatio = Math.min(1, Math.max(0, displayPct / 100));
 
   const cx = size / 2;
   const cy = size / 2;
 
-  // Outer Arc (Power & Strength - Imperial Gold Thunder)
-  const outerStrokeWidth = 12;
-  const outerRadius = (size - outerStrokeWidth - 10) / 2;
+  // Outer 3D Gold Bezel
+  const bezelRadius = (size - 18) / 2;
+  
+  // Power Progress Arc
+  const arcStrokeWidth = 14;
+  const arcRadius = bezelRadius - 20;
 
-  // Inner Arc (Virtue & Recovery - Warm Amber Gold)
-  const innerStrokeWidth = 9;
-  const innerRadius = outerRadius - 22;
-
+  // Angles: 135deg (bottom-left) to 405deg (bottom-right) => 270deg sweep
   const startAngle = 135;
   const endAngle = 405;
   const totalAngle = endAngle - startAngle;
@@ -63,201 +67,193 @@ export function GlowArcGauge({
     return ['M', start.x, start.y, 'A', r, r, 0, largeArcFlag, 0, end.x, end.y].join(' ');
   };
 
-  const backgroundArcOuter = describeArc(cx, cy, outerRadius, startAngle, endAngle);
-  const backgroundArcInner = describeArc(cx, cy, innerRadius, startAngle, endAngle);
+  const currentAngle = startAngle + totalAngle * currentRatio;
+  const bgArc = describeArc(cx, cy, arcRadius, startAngle, endAngle);
+  const progressArc = describeArc(cx, cy, arcRadius, startAngle, currentAngle);
 
-  const strengthAngle = startAngle + totalAngle * Math.min(1, Math.max(0, strengthProgress));
-  const virtueAngle = startAngle + totalAngle * Math.min(1, Math.max(0, virtueProgress));
-
-  const progressArcOuter = describeArc(cx, cy, outerRadius, startAngle, strengthAngle);
-  const progressArcInner = describeArc(cx, cy, innerRadius, startAngle, virtueAngle);
-
-  const outerCapPos = polarToCartesian(cx, cy, outerRadius, strengthAngle);
-  const innerCapPos = polarToCartesian(cx, cy, innerRadius, virtueAngle);
-
-  const displayPercent =
-    activeMode === 'strength' ? strengthPct : activeMode === 'virtue' ? virtuePct : overallPct;
-
-  const displayLabel =
-    activeMode === 'strength'
-      ? '⚡ FUERZA & SOBRECARGA'
-      : activeMode === 'virtue'
-      ? '🏛️ DISCIPLINA & VIRTUD'
-      : '⚡ TRUENO ESTOICO INDEX';
-
-  const displayColor = '#D4AF37'; // Oro Imperial Primario
+  const capPos = polarToCartesian(cx, cy, arcRadius, currentAngle);
+  const pctBadgePos = polarToCartesian(cx, cy, arcRadius + 22, Math.min(endAngle - 15, currentAngle + 12));
 
   return (
     <View style={styles.container}>
-      {/* MODE CHIPS (IMPERIAL GOLD ATHLETIC STYLE) */}
-      <View style={styles.modeTabsRow}>
-        <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'strength' && styles.tabChipActive]}
-          onPress={() => setActiveMode(activeMode === 'strength' ? 'combined' : 'strength')}
-          activeOpacity={0.8}
-        >
-          <ThemedText style={[styles.tabChipText, activeMode === 'strength' && styles.tabTextGold]}>
-            ⚡ Fuerza: {strengthPct}%
-          </ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'combined' && styles.tabChipActive]}
-          onPress={() => setActiveMode('combined')}
-          activeOpacity={0.8}
-        >
-          <ThemedText style={[styles.tabChipText, activeMode === 'combined' && styles.tabTextGoldVivid]}>
-            🏛️ Trueno: {overallPct}%
-          </ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabChip, activeMode === 'virtue' && styles.tabChipActive]}
-          onPress={() => setActiveMode(activeMode === 'virtue' ? 'combined' : 'virtue')}
-          activeOpacity={0.8}
-        >
-          <ThemedText style={[styles.tabChipText, activeMode === 'virtue' && styles.tabTextGold]}>
-            🧘 Virtud: {virtuePct}%
-          </ThemedText>
-        </TouchableOpacity>
-      </View>
-
-      {/* DUAL GOLD THUNDER SPHERE */}
+      {/* 3D LUXURY GOLD & THUNDER DIAL */}
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.92}
         onPress={() =>
-          setActiveMode((prev) => (prev === 'combined' ? 'strength' : prev === 'strength' ? 'virtue' : 'combined'))
+          setActiveMetric((prev) => (prev === 'calories' ? 'strength' : prev === 'strength' ? 'virtue' : 'calories'))
         }
-        style={{ width: size, height: size - 10, alignItems: 'center', justifyContent: 'center' }}
+        style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
       >
         <Svg width={size} height={size} style={styles.svgAbsolute}>
           <Defs>
-            {/* Imperial Gold Thunder Gradient */}
-            <LinearGradient id="goldPowerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#B45309" />
+            {/* 3D Metallic Gold Bezel Gradient */}
+            <LinearGradient id="metallicBezel3D" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFF3B0" />
+              <Stop offset="25%" stopColor="#D4AF37" />
+              <Stop offset="50%" stopColor="#8A6615" />
+              <Stop offset="75%" stopColor="#F59E0B" />
+              <Stop offset="100%" stopColor="#FFF3B0" />
+            </LinearGradient>
+
+            {/* Glowing Thunder Gold Arc Gradient */}
+            <LinearGradient id="thunderGlowArc" x1="0%" y1="100%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#F59E0B" />
               <Stop offset="40%" stopColor="#D4AF37" />
-              <Stop offset="70%" stopColor="#F59E0B" />
-              <Stop offset="100%" stopColor="#FFE066" />
+              <Stop offset="75%" stopColor="#FFE259" />
+              <Stop offset="100%" stopColor="#FFF7C2" />
             </LinearGradient>
 
-            {/* Warm Amber Gold Gradient */}
-            <LinearGradient id="amberVirtueGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#78350F" />
-              <Stop offset="50%" stopColor="#D4AF37" />
-              <Stop offset="100%" stopColor="#FDE68A" />
+            {/* 3D Central Bolt Gradient */}
+            <LinearGradient id="bolt3DGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFFDE0" />
+              <Stop offset="40%" stopColor="#FFE259" />
+              <Stop offset="70%" stopColor="#D4AF37" />
+              <Stop offset="100%" stopColor="#B45309" />
             </LinearGradient>
 
-            {/* Deep Onyx Black Disc */}
-            <LinearGradient id="onyxDiscGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#131722" />
-              <Stop offset="50%" stopColor="#0A0D15" />
+            {/* Onyx Disc Background */}
+            <RadialGradient id="onyxPlate" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="#141824" />
+              <Stop offset="65%" stopColor="#0A0D15" />
               <Stop offset="100%" stopColor="#050507" />
-            </LinearGradient>
-
-            {/* Track Background */}
-            <LinearGradient id="bgTrackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="rgba(212, 175, 55, 0.12)" />
-              <Stop offset="100%" stopColor="rgba(212, 175, 55, 0.03)" />
-            </LinearGradient>
-
-            {/* Radial Glow */}
-            <RadialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor="rgba(212, 175, 55, 0.15)" />
-              <Stop offset="100%" stopColor="transparent" />
             </RadialGradient>
+
+            {/* Sparkle Gold Mini Bolts */}
+            <LinearGradient id="sparkleBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFF3B0" />
+              <Stop offset="100%" stopColor="#D4AF37" />
+            </LinearGradient>
           </Defs>
 
-          {/* Central Onyx Disc */}
+          {/* 1. OUTER 3D METALLIC GOLD RIM */}
           <Circle
             cx={cx}
             cy={cy}
-            r={innerRadius - 14}
-            fill="url(#onyxDiscGrad)"
-            stroke="rgba(212, 175, 55, 0.40)"
-            strokeWidth={1.8}
+            r={bezelRadius}
+            stroke="url(#metallicBezel3D)"
+            strokeWidth={10}
+            fill="none"
           />
+          {/* Inner Golden Rim Line */}
           <Circle
             cx={cx}
             cy={cy}
-            r={innerRadius - 16}
-            fill="url(#centerGlow)"
-          />
-
-          {/* Outer Arc Background Track */}
-          <Path
-            d={backgroundArcOuter}
+            r={bezelRadius - 6}
+            stroke="rgba(255, 243, 176, 0.40)"
+            strokeWidth={1.5}
             fill="none"
-            stroke="url(#bgTrackGrad)"
-            strokeWidth={outerStrokeWidth}
-            strokeLinecap="round"
           />
-
-          {/* Outer Arc Progress (Imperial Gold) */}
-          <Path
-            d={progressArcOuter}
+          {/* Outer Specular Highlight */}
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={bezelRadius + 5}
+            stroke="rgba(212, 175, 55, 0.25)"
+            strokeWidth={1}
             fill="none"
-            stroke="url(#goldPowerGrad)"
-            strokeWidth={outerStrokeWidth}
-            strokeLinecap="round"
           />
 
-          {/* Outer Cap Glow Dot */}
-          {strengthProgress > 0 && (
-            <Circle cx={outerCapPos.x} cy={outerCapPos.y} r={outerStrokeWidth / 2 + 2} fill="#FFE066" />
-          )}
+          {/* 2. INNER ONYX DISK */}
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={bezelRadius - 8}
+            fill="url(#onyxPlate)"
+          />
 
-          {/* Inner Arc Background Track */}
+          {/* 3. TRACK BACKGROUND (INACTIVE ARC) */}
           <Path
-            d={backgroundArcInner}
-            fill="none"
-            stroke="url(#bgTrackGrad)"
-            strokeWidth={innerStrokeWidth}
+            d={bgArc}
+            stroke="rgba(212, 175, 55, 0.14)"
+            strokeWidth={arcStrokeWidth}
             strokeLinecap="round"
+            fill="none"
           />
 
-          {/* Inner Arc Progress (Warm Amber Gold) */}
+          {/* 4. ACTIVE POWER ARC (GLOWING GOLD) */}
           <Path
-            d={progressArcInner}
-            fill="none"
-            stroke="url(#amberVirtueGrad)"
-            strokeWidth={innerStrokeWidth}
+            d={progressArc}
+            stroke="url(#thunderGlowArc)"
+            strokeWidth={arcStrokeWidth}
             strokeLinecap="round"
+            fill="none"
           />
 
-          {/* Inner Cap Glow Dot */}
-          {virtueProgress > 0 && (
-            <Circle cx={innerCapPos.x} cy={innerCapPos.y} r={innerStrokeWidth / 2 + 2} fill="#FDE68A" />
-          )}
+          {/* 5. GLOWING CAP AT PROGRESS TIP */}
+          <Circle
+            cx={capPos.x}
+            cy={capPos.y}
+            r={arcStrokeWidth / 2 + 2}
+            fill="#FFF7C2"
+          />
+          <Circle
+            cx={capPos.x}
+            cy={capPos.y}
+            r={arcStrokeWidth / 2 + 6}
+            fill="rgba(255, 226, 89, 0.35)"
+          />
+
+          {/* 6. FLOATING MINI LIGHTNING BOLTS INSIDE ARC */}
+          <Path
+            d="M86 120 L78 132 L84 133 L76 145"
+            stroke="url(#sparkleBoltGrad)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          <Path
+            d="M60 178 L52 190 L58 191 L50 203"
+            stroke="url(#sparkleBoltGrad)"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          <Path
+            d="M234 116 L242 128 L236 129 L244 141"
+            stroke="url(#sparkleBoltGrad)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+
+          {/* 7. CENTRAL 3D GOLD MONUMENTAL THUNDERBOLT */}
+          <G transform={`translate(${cx - 24}, ${cy - 86})`}>
+            <Polygon
+              points="28,0 8,36 24,36 12,68 44,26 28,26"
+              fill="rgba(180, 83, 9, 0.5)"
+              transform="translate(2, 2)"
+            />
+            <Polygon
+              points="28,0 8,36 24,36 12,68 44,26 28,26"
+              fill="url(#bolt3DGrad)"
+              stroke="#FFFDE0"
+              strokeWidth={1}
+            />
+          </G>
         </Svg>
 
-        {/* CENTER OVERLAY CONTENT */}
-        <View style={styles.centerContent}>
-          <ThemedText style={styles.badgeCategoryText}>{displayLabel}</ThemedText>
-
-          <View style={styles.percentGlowWrapper}>
-            <ThemedText style={[styles.percentText, { color: displayColor }]}>
-              {displayPercent}%
+        {/* 8. CENTER TEXT OVERLAY */}
+        <View style={styles.centerContent} pointerEvents="none">
+          <View style={styles.calsNumberRow}>
+            <ThemedText style={styles.mainCountText}>
+              {calories.toLocaleString()}
             </ThemedText>
-          </View>
-
-          {/* ATHLETIC GOLD PILL BADGES */}
-          <View style={styles.pillBadgesRow}>
-            <View style={styles.goldPill}>
-              <ThemedText style={styles.goldPillText}>⚡ {calories} kcal</ThemedText>
-            </View>
-            <View style={styles.goldPill}>
-              <ThemedText style={styles.goldPillText}>👟 {steps.toLocaleString()}</ThemedText>
-            </View>
-            <View style={styles.goldPill}>
-              <ThemedText style={styles.goldPillText}>💧 {waterLitres.toFixed(1)}L</ThemedText>
+            <ThemedText style={styles.targetDividerText}> / {targetCalories.toLocaleString()}</ThemedText>
+            <View style={styles.unitBadgeCol}>
+              <ThemedText style={styles.kcalUnitText}>Kcal</ThemedText>
             </View>
           </View>
 
-          <ThemedText style={styles.subDetailText}>
-            {trainingCompleted ? '🏆 Entreno Completado (RPE 8.5)' : '⏳ Sesión de Fuerza Pendiente'}
-          </ThemedText>
+          <ThemedText style={styles.dailyPowerTitle}>DAILY POWER</ThemedText>
+          <ThemedText style={styles.dailyBurnTitle}>BURN</ThemedText>
+        </View>
 
-          <ThemedText style={styles.goalSubtext}>⚡ IMPERIUM THUNDER • ATARAXIA GRID ⚡</ThemedText>
+        {/* 9. PERCENT BADGE */}
+        <View style={[styles.percentFloatingBadge, { top: pctBadgePos.y - 12, left: pctBadgePos.x - 18 }]}>
+          <ThemedText style={styles.percentFloatingText}>{displayPct}%</ThemedText>
         </View>
       </TouchableOpacity>
     </View>
@@ -268,44 +264,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 4,
-  },
-  modeTabsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  tabChip: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(13, 17, 28, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.20)',
-  },
-  tabChipActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.18)',
-    borderColor: '#D4AF37',
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  tabChipText: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#94A3B8',
-  },
-  tabTextGold: {
-    color: '#FCD34D',
-  },
-  tabTextGoldVivid: {
-    color: '#D4AF37',
-    fontWeight: '900',
+    marginVertical: 6,
   },
   svgAbsolute: {
     position: 'absolute',
@@ -313,65 +272,74 @@ const styles = StyleSheet.create({
   centerContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    marginTop: 48,
   },
-  badgeCategoryText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#D4AF37',
-    letterSpacing: 2,
-    fontFamily: 'monospace',
-    marginBottom: 2,
-    textTransform: 'uppercase',
-  },
-  percentGlowWrapper: {
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  percentText: {
-    fontSize: 52,
-    fontWeight: '900',
-    fontFamily: 'monospace',
-    letterSpacing: -1,
-    lineHeight: 56,
-  },
-  pillBadgesRow: {
+  calsNumberRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
-    marginBottom: 8,
-  },
-  goldPill: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
-  },
-  goldPillText: {
-    fontSize: 10.5,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    color: '#FDE68A',
-  },
-  subDetailText: {
-    fontSize: 11,
-    color: '#CBD5E1',
-    fontWeight: '600',
-    textAlign: 'center',
+    alignItems: 'baseline',
+    justifyContent: 'center',
     marginBottom: 4,
   },
-  goalSubtext: {
-    fontSize: 8.5,
+  mainCountText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'serif',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(212, 175, 55, 0.60)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  targetDividerText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#CBD5E1',
+    fontFamily: 'serif',
+    letterSpacing: -0.5,
+  },
+  unitBadgeCol: {
+    marginLeft: 6,
+  },
+  kcalUnitText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#94A3B8',
     fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#D4AF37',
-    letterSpacing: 1.2,
+    letterSpacing: 0.5,
+  },
+  dailyPowerTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FDE68A',
+    fontFamily: 'sans-serif',
+    letterSpacing: 3,
     textTransform: 'uppercase',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  dailyBurnTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FDE68A',
+    fontFamily: 'sans-serif',
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  percentFloatingBadge: {
+    position: 'absolute',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(5, 5, 7, 0.90)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 226, 89, 0.45)',
+  },
+  percentFloatingText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'monospace',
   },
 });
