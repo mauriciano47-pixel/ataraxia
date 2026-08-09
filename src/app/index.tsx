@@ -35,6 +35,12 @@ export default function HoyScreen() {
 
   // Lectura 100% Real de Virtud (Stoic Discipline):
   const waterLitres = log.waterLitres || 2.4;
+  const waterRatio = Math.min(1, waterLitres / 3.0);
+  const meditationRatio = log.checkInDone ? 1 : 0.8;
+  const checkInRatio = log.checkInDone ? 1 : 0.5;
+  const virtueProgress = (waterRatio * 0.35) + (meditationRatio * 0.35) + (checkInRatio * 0.30);
+  const overallProgress = (strengthProgress * 0.55) + (virtueProgress * 0.45);
+
   const currentKm = Number((currentSteps * 0.00075).toFixed(1));
   const currentCalories = log.totalCalories || 2840;
   const targetCalories = 3500;

@@ -26,32 +26,21 @@ export function ThunderTelemetryTwinCards({
   onSyncHeartRate,
 }: ThunderTelemetryTwinCardsProps) {
   // Semicircle Steps Progress
-  const stepRatio = Math.min(1, steps / stepGoal);
+  const safeGoal = stepGoal > 0 ? stepGoal : 15000;
+  const rawRatio = (steps || 0) / safeGoal;
+  const safeStepRatio = Math.max(0.02, Math.min(1, rawRatio));
   const size = 130;
   const cx = size / 2;
   const cy = size - 14;
   const radius = 48;
   const strokeWidth = 8;
 
-  // Arc from 180deg (left) to 0deg (right)
-  const startAngle = 180;
-  const endAngle = 0;
-  const currentAngle = 180 - 180 * stepRatio;
-
-  const polarToCartesian = (centerX: number, centerY: number, r: number, angleInDegrees: number) => {
-    const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
-    return {
-      x: centerX - r * Math.cos(angleInRadians),
-      y: centerY - r * Math.sin(angleInRadians),
-    };
-  };
-
   const bgSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
   
-  // Progress semi-arc
-  const capX = cx - radius * Math.cos((180 * (1 - stepRatio) * Math.PI) / 180);
-  const capY = cy - radius * Math.sin((180 * (1 - stepRatio) * Math.PI) / 180);
-  const progressSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${capX} ${capY}`;
+  // Progress semi-arc calculation
+  const capX = cx - radius * Math.cos((180 * (1 - safeStepRatio) * Math.PI) / 180);
+  const capY = cy - radius * Math.sin((180 * (1 - safeStepRatio) * Math.PI) / 180);
+  const progressSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${capX.toFixed(2)} ${capY.toFixed(2)}`;
 
   return (
     <View style={styles.twinCardsRow}>
