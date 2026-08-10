@@ -129,7 +129,16 @@ export default function ProfileScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           
           <View style={styles.header}>
-            <ThemedText style={styles.label}>⚡ TEMPLO PERSONAL</ThemedText>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 6 }}>
+              <TouchableOpacity
+                onPress={() => router.push('/')}
+                style={styles.backBtn}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={styles.backBtnText}>← Volver al Santuario</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.label}>⚡ TEMPLO PERSONAL</ThemedText>
+            </View>
             <ThemedText style={styles.title}>Perfil Estoico</ThemedText>
           </View>
 
@@ -393,6 +402,20 @@ const styles = StyleSheet.create({
   header: {
     marginTop: Spacing.two,
     marginBottom: Spacing.three,
+  },
+  backBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+  },
+  backBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FFE259',
+    fontFamily: 'monospace',
   },
   label: {
     fontSize: 10,
