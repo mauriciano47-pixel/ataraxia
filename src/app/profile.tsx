@@ -131,7 +131,7 @@ export default function ProfileScreen() {
           <View style={styles.header}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 6 }}>
               <TouchableOpacity
-                onPress={() => router.push('/')}
+                onPress={() => router.navigate('/')}
                 style={styles.backBtn}
                 activeOpacity={0.8}
               >

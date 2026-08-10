@@ -60,7 +60,7 @@ export default function HoyScreen() {
         >
           {/* HEADER STOIC ROYAL IMPERIAL (EXACT TO REFERENCE PHOTO) */}
           <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => router.push('/profile')} activeOpacity={0.8} style={styles.laurelLogoBtn}>
+            <TouchableOpacity onPress={() => router.navigate('/profile')} activeOpacity={0.8} style={styles.laurelLogoBtn}>
               <View style={styles.laurelRing}>
                 <ThemedText style={styles.laurelLetter}>⚡</ThemedText>
               </View>
@@ -71,10 +71,10 @@ export default function HoyScreen() {
             </View>
 
             <View style={styles.headerRightActions}>
-              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.push('/journal')}>
+              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/journal')}>
                 <ThemedText style={{ fontSize: 16, color: '#D4AF37' }}>📖</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.push('/trainer')}>
+              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/trainer')}>
                 <ThemedText style={{ fontSize: 16, color: '#F59E0B' }}>🏋️‍♂️</ThemedText>
               </TouchableOpacity>
             </View>
@@ -146,7 +146,7 @@ export default function HoyScreen() {
 
               <TouchableOpacity
                 style={styles.dockChipBtn}
-                onPress={() => router.push('/journal')}
+                onPress={() => router.navigate('/journal')}
                 activeOpacity={0.8}
               >
                 <ThemedText style={styles.dockChipText}>📖 Check-In</ThemedText>
@@ -234,7 +234,7 @@ export default function HoyScreen() {
                 <TouchableOpacity
                   style={styles.continuePillBtn}
                   activeOpacity={0.7}
-                  onPress={() => router.push('/journal')}
+                  onPress={() => router.navigate('/journal')}
                 >
                   <ThemedText style={styles.continuePillText}>Continuar ⚡</ThemedText>
                 </TouchableOpacity>
