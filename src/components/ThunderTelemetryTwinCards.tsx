@@ -1,8 +1,7 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
-import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { ThemedText } from './themed-text';
 
 interface ThunderTelemetryTwinCardsProps {
   steps?: number;
@@ -36,7 +35,7 @@ export function ThunderTelemetryTwinCards({
   const strokeWidth = 8;
 
   const bgSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
-  
+
   // Progress semi-arc calculation
   const capX = cx - radius * Math.cos((180 * (1 - safeStepRatio) * Math.PI) / 180);
   const capY = cy - radius * Math.sin((180 * (1 - safeStepRatio) * Math.PI) / 180);
