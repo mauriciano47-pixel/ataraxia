@@ -481,6 +481,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
+  actionGrid: {
+    gap: 12,
+  },
   actionBtnTouch: {
     borderRadius: 14,
     overflow: 'hidden',

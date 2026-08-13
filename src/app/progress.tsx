@@ -1,17 +1,15 @@
-import { StyleSheet, ActivityIndicator, useColorScheme, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
+import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 
 export default function ProgressScreen() {
   const { log, loading } = useDailyLog();
   const { historyMap, loadingHistory } = useHistoryLog();
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   
   if (loading || loadingHistory) {
     return (

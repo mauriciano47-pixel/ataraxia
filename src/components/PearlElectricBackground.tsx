@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#050507',
   },
   lightningLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.85,
   },
   heroArcGlow: {

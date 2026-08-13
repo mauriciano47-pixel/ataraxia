@@ -1,11 +1,11 @@
-import { View, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
+import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CustomExercise } from '@/types/onboarding';
@@ -28,8 +28,6 @@ const CALISTENIA_MOCK: CustomExercise[] = [
 
 export default function TrainerScreen() {
   const { log, toggleTraining, saveReadinessScore, updateEffectiveSets, setCustomRoutine } = useDailyLog();
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = Colors[scheme];
 
   const activeRoutine = log.customRoutine && log.customRoutine.length > 0 ? log.customRoutine : RUTINA_MOCK;
   const [ejercicios, setEjercicios] = useState<CustomExercise[]>(activeRoutine);
@@ -316,6 +314,17 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                   {[1,3,5,7,8,9,10].map(v => (
                     <TouchableOpacity key={`sl_${v}`} style={[styles.miniBtn, sleepScore === v && {backgroundColor: '#D4AF37', borderColor: '#D4AF37'}]} onPress={() => setSleepScore(v)}>
                       <ThemedText style={sleepScore === v ? {color: '#050507', fontWeight: 'bold'} : {color: '#94A3B8'}}>{v}</ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.sliderRow}>
+                <ThemedText style={styles.sliderLabel}>Estrés / Carga Mental (1-10): {stressScore}</ThemedText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap: 4}}>
+                  {[1,3,5,7,8,9,10].map(v => (
+                    <TouchableOpacity key={`st_${v}`} style={[styles.miniBtn, stressScore === v && {backgroundColor: '#D4AF37', borderColor: '#D4AF37'}]} onPress={() => setStressScore(v)}>
+                      <ThemedText style={stressScore === v ? {color: '#050507', fontWeight: 'bold'} : {color: '#94A3B8'}}>{v}</ThemedText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

@@ -23,7 +23,7 @@ try {
       shouldShowList: true,
     }),
   });
-} catch (e) {
+} catch {
   // Ignorar en entornos que no soporten notificaciones
 }
 

@@ -9,10 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
 import {
   ProkoptonProfile,
   StoicFocus,
@@ -27,12 +25,11 @@ import { useDailyLog } from '@/hooks/useDailyLog';
 interface Props {
   visible: boolean;
   onClose: () => void;
+  onComplete?: (profile: ProkoptonProfile) => void;
 }
 
-export function StoicOnboardingModal({ visible, onClose }: Props) {
+export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
   const { saveOnboardingProfile } = useDailyLog();
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = Colors[scheme];
 
   const [step, setStep] = useState<number>(1);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -148,6 +145,7 @@ export function StoicOnboardingModal({ visible, onClose }: Props) {
 
       saveOnboardingProfile(profile, routine, targetCals);
       setIsAnalyzing(false);
+      onComplete?.(profile);
       onClose();
     }, 500);
   };
@@ -168,6 +166,7 @@ export function StoicOnboardingModal({ visible, onClose }: Props) {
       completedAt: new Date().toISOString(),
     };
     saveOnboardingProfile(profile, routine, targetCals);
+    onComplete?.(profile);
     onClose();
   };
 

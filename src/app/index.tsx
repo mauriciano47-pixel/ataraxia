@@ -39,7 +39,6 @@ export default function HoyScreen() {
   const meditationRatio = log.checkInDone ? 1 : 0.8;
   const checkInRatio = log.checkInDone ? 1 : 0.5;
   const virtueProgress = (waterRatio * 0.35) + (meditationRatio * 0.35) + (checkInRatio * 0.30);
-  const overallProgress = (strengthProgress * 0.55) + (virtueProgress * 0.45);
 
   const currentKm = Number((currentSteps * 0.00075).toFixed(1));
   const currentCalories = log.totalCalories || 2840;
@@ -636,6 +635,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#F8FAFC',
     fontFamily: 'monospace',
+  },
+  dockChipTextActive: {
+    color: '#E2C068',
+    fontWeight: 'bold',
   },
   pillarSectionGroup: {
     gap: Spacing.three,

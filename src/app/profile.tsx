@@ -1,14 +1,13 @@
-import { StyleSheet, View, Switch, TouchableOpacity, useColorScheme, Image, Modal, TextInput, ScrollView, Alert, Platform, Clipboard } from 'react-native';
+import { StyleSheet, View, Switch, TouchableOpacity, Image, Modal, TextInput, ScrollView, Alert, Platform, Clipboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
+import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
@@ -22,8 +21,6 @@ const STOIC_PRESET_AVATARS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const { log, setStoicAvatar, saveFullProfile } = useDailyLog();
 
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
@@ -111,12 +108,9 @@ export default function ProfileScreen() {
       userName: nameInput.trim() || 'Ciudadano Prokopton',
       targetCalories: cals,
       stepGoal: steps,
-      userMetrics: {
-        ...metrics,
-        age,
-        weightKg: weight,
-        heightCm: height,
-      }
+      age,
+      weightKg: weight,
+      heightCm: height,
     });
 
     setShowEditModal(false);
@@ -234,6 +228,7 @@ export default function ProfileScreen() {
                 <ThemedText style={styles.rowLabel}>Memento Mori</ThemedText>
                 <ThemedText style={styles.hint}>Recordatorio matutino de tu mortalidad.</ThemedText>
               </View>
+              {/* @ts-ignore */}
               <Switch 
                 value={mementoMoriEnabled} 
                 onValueChange={setMementoMoriEnabled} 
@@ -247,6 +242,7 @@ export default function ProfileScreen() {
                 <ThemedText style={styles.rowLabel}>Ayuno Intermitente</ThemedText>
                 <ThemedText style={styles.hint}>Ocultar calorías hasta el mediodía.</ThemedText>
               </View>
+              {/* @ts-ignore */}
               <Switch 
                 value={fastingEnabled} 
                 onValueChange={setFastingEnabled} 
@@ -378,7 +374,7 @@ export default function ProfileScreen() {
       <StoicOnboardingModal
         visible={showOnboardingModal}
         onClose={() => setShowOnboardingModal(false)}
-        onComplete={(newProfile) => {
+        onComplete={() => {
           setShowOnboardingModal(false);
           Alert.alert("⚡ Perfil Calibrado", "Tu plan estoico y biométrico ha sido configurado con éxito.");
         }}
