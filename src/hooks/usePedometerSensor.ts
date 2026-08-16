@@ -13,7 +13,7 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
   // Check DeviceMotion sensor availability (Web & Mobile Browsers)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'DeviceMotionEvent' in window) {
-      setIsAvailable(true);
+      setTimeout(() => setIsAvailable(true), 0);
     }
   }, []);
 
@@ -75,3 +75,4 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     toggleLiveTracking,
   };
 }
+
