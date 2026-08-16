@@ -263,8 +263,10 @@ export default function HoyScreen() {
                 <View style={styles.metricDividerLine} />
 
                 <View style={styles.metricCol}>
-                  <ThemedText style={styles.metricLabelText}>Sueño Profundo</ThemedText>
-                  <ThemedText style={styles.metricValText}>6h 32m</ThemedText>
+                  <ThemedText style={styles.metricLabelText}>Sueño & Recup.</ThemedText>
+                  <ThemedText style={styles.metricValText}>
+                    {log.readinessScore?.sleep ? `${log.readinessScore.sleep}h / 8h` : log.sleepQuality ? `${log.sleepQuality * 1.5}h / 8h` : '6.5h / 8h'}
+                  </ThemedText>
                 </View>
 
                 <View style={styles.metricDividerLine} />
