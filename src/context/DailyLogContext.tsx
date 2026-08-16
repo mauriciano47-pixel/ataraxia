@@ -244,6 +244,11 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
                 targetCalories: cloudProfile.targetCalories || current.targetCalories,
                 stepGoal: cloudProfile.stepGoal || current.stepGoal,
                 stoicAvatarUri: cloudProfile.stoicAvatarUri || current.stoicAvatarUri,
+                hasCompletedOnboarding: cloudProfile.hasCompletedOnboarding ?? current.hasCompletedOnboarding ?? false,
+                prokoptonProfile: cloudProfile.prokoptonProfile || current.prokoptonProfile,
+                customRoutine: (cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0)
+                  ? cloudProfile.customRoutine
+                  : current.customRoutine,
                 smartDevice: cloudProfile.smartDevice
                   ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
                   : current.smartDevice,
@@ -286,6 +291,11 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         ? local.userName
         : (remote.userName || DEFAULT_LOG.userName),
       stoicAvatarUri: local.stoicAvatarUri || remote.stoicAvatarUri || '',
+      hasCompletedOnboarding: Boolean(local.hasCompletedOnboarding || remote.hasCompletedOnboarding),
+      prokoptonProfile: local.prokoptonProfile || remote.prokoptonProfile,
+      customRoutine: (local.customRoutine && local.customRoutine.length > 0)
+        ? local.customRoutine
+        : (remote.customRoutine || undefined),
       userMetrics: {
         ...DEFAULT_USER_METRICS,
         ...(remote.userMetrics || {}),
@@ -498,7 +508,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       heightCm: profile.heightCm,
       age: profile.age,
       gender: 'male',
-      activityLevel: 'moderate',
+      activityLevel: profile.daysPerWeek >= 5 ? 'active' : profile.daysPerWeek >= 4 ? 'moderate' : 'light',
       goal: profile.dietPreference === 'deficit' ? 'deficit' : profile.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
     };
 
@@ -515,6 +525,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       userName: profile.userName,
       userMetrics: updatedMetrics,
       targetCalories: targetCals,
+      hasCompletedOnboarding: true,
+      prokoptonProfile: profile,
+      customRoutine: routine,
     });
   };
 

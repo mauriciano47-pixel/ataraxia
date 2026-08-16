@@ -61,61 +61,91 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
 
     const targetCals = Math.max(1400, tdee);
 
-    // Build routine according to equipment & sessionDuration
+    // Build routine according to equipment, focus & sessionDuration
     let routine: CustomExercise[] = [];
 
     if (equipment === 'gym') {
-      if (sessionDuration <= 30) {
-        routine = [
-          { id: 'g1', n: 'Sentadilla Hack / Búlgaras', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'g2', n: 'Press de Banca Plano con Barra', s: '3x8', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'g3', n: 'Jalón al Pecho / Remó con Barra', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
-        ];
-      } else if (sessionDuration <= 45) {
-        routine = [
-          { id: 'g1', n: 'Sentadilla Libre con Barra', s: '4x8', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'g2', n: 'Press de Banca Inclinado', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'g3', n: 'Peso Muerto Rumano', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
-          { id: 'g4', n: 'Remo en Polea Baja / Mancuerna', s: '3x12', targetRpe: 7, done: false, rpe: null, muscleGroup: 'Espalda' },
-        ];
+      if (focus === 'strength') {
+        if (sessionDuration <= 30) {
+          routine = [
+            { id: 'gs1', n: 'Sentadilla Trasera Pesada con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+            { id: 'gs2', n: 'Press de Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+            { id: 'gs3', n: 'Remo Pendlay con Barra Olímpica', s: '3x6 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
+          ];
+        } else if (sessionDuration <= 45) {
+          routine = [
+            { id: 'gs1', n: 'Sentadilla Libre con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+            { id: 'gs2', n: 'Press de Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+            { id: 'gs3', n: 'Peso Muerto Convencional / Rumano', s: '3x5 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Cadena Posterior' },
+            { id: 'gs4', n: 'Press Militar de Hombros de Pie', s: '3x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
+          ];
+        } else {
+          routine = [
+            { id: 'gs1', n: 'Sentadilla Trasera con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+            { id: 'gs2', n: 'Press Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+            { id: 'gs3', n: 'Peso Muerto Rumano', s: '4x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
+            { id: 'gs4', n: 'Dominadas Lastradas o Jalón al Pecho', s: '4x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
+            { id: 'gs5', n: 'Press Militar con Barra', s: '3x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
+            { id: 'gs6', n: 'Curl de Bíceps con Barra Z', s: '3x10 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Brazos' },
+          ];
+        }
+      } else if (focus === 'fat_loss') {
+        if (sessionDuration <= 30) {
+          routine = [
+            { id: 'gf1', n: 'Sentadilla Hack en Máquina', s: '4x12 (Tempo 3-0-1)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
+            { id: 'gf2', n: 'Press Inclinado con Mancuernas', s: '4x12 (Densidad)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
+            { id: 'gf3', n: 'Remo Gironda en Polea Baja', s: '4x12 + Drop Set', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+          ];
+        } else {
+          routine = [
+            { id: 'gf1', n: 'Prensa 45° con Pies Altos', s: '4x15 (Ardor Metabólico)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+            { id: 'gf2', n: 'Press Plano en Máquina Convergente', s: '4x12 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+            { id: 'gf3', n: 'Jalón al Pecho Agarre Neutro', s: '4x12 (Controlado)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
+            { id: 'gf4', n: 'Elevaciones Laterales en Polea', s: '3x15 (Bombeo)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Hombros' },
+            { id: 'gf5', n: 'Plancha Abdominal con Disco', s: '3x45 seg (Core Activo)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
+          ];
+        }
       } else {
+        // longevity or mental
         routine = [
-          { id: 'g1', n: 'Sentadilla Trasera con Barra', s: '4x8', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'g2', n: 'Press Banca con Mancuernas', s: '4x8', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'g3', n: 'Dominadas o Jalón al Pecho', s: '4x8', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
-          { id: 'g4', n: 'Press Militar de Hombros', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
-          { id: 'g5', n: 'Curl de Bíceps + Tríceps Polea', s: '3x12 (Superserie)', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Brazos' },
+          { id: 'gl1', n: 'Sentadilla Goblet Profunda', s: '4x10 (Pausa 2s abajo)', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'gl2', n: 'Press de Banca con Mancuernas', s: '3x10 (Control articular)', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'gl3', n: 'Remo Unilateral con Mancuerna', s: '3x10 por lado', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+          { id: 'gl4', n: 'Face Pulls en Polea Alta', s: '3x15 (Salud Manguito)', targetRpe: 7, done: false, rpe: null, muscleGroup: 'Postura' },
+          { id: 'gl5', n: 'Paseo del Granjero (Farmer Walk)', s: '3x40 metros', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Agarre/Core' },
         ];
       }
     } else if (equipment === 'home_dumbbell') {
-      if (sessionDuration <= 30) {
+      if (focus === 'strength') {
         routine = [
-          { id: 'h1', n: 'Goblet Squat con Mancuerna', s: '3x12', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'h2', n: 'Press de Pecho en Suelo (Floor Press)', s: '3x12', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'h3', n: 'Remo Unilateral con Mancuerna', s: '3x12', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
+          { id: 'hd1', n: 'Goblet Squat Pesado', s: '4x10 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'hd2', n: 'Press de Pecho en Suelo (Floor Press)', s: '4x10 (Pesado)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'hd3', n: 'Peso Muerto Rumano con Mancuernas', s: '4x10 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
+          { id: 'hd4', n: 'Press Militar de Hombros de Pie', s: '3x10 (Estricto)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
         ];
       } else {
         routine = [
-          { id: 'h1', n: 'Goblet Squat con Mancuerna', s: '4x12', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'h2', n: 'Press de Hombros de Pie con Mancuernas', s: '3x10', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
-          { id: 'h3', n: 'Peso Muerto Rumano con Mancuernas', s: '3x12', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
-          { id: 'h4', n: 'Flexiones (Push-ups) con Mancuernas', s: '3x15', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'hd1', n: 'Zancadas Dinámicas con Mancuernas', s: '4x12 por pierna', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'hd2', n: 'Flexiones (Push-ups) sobre Mancuernas', s: '4x15', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'hd3', n: 'Remo Renegado con Mancuerna', s: '3x10 por lado', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda/Core' },
+          { id: 'hd4', n: 'Elevaciones Laterales + Pájaros', s: '3x15 (Superserie)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
         ];
       }
     } else {
       // Calistenia Pura
-      if (sessionDuration <= 30) {
+      if (focus === 'strength') {
         routine = [
-          { id: 'c1', n: 'Flexiones Espartanas / Diamante', s: '4 al fallo', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-          { id: 'c2', n: 'Sentadillas Profundas de Calistenia', s: '4x20', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'c3', n: 'Plancha Abdominal Estoica', s: '3x60 seg', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
+          { id: 'c1', n: 'Dominadas Estrictas Pronadas (Pull-ups)', s: '4x6-8 (Control)', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Espalda' },
+          { id: 'c2', n: 'Fondos en Paralelas / Barra (Dips)', s: '4x8-10 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+          { id: 'c3', n: 'Pistol Squats o Zancadas Explosivas', s: '4x8 por pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'c4', n: 'Flexiones Espartanas / Diamante', s: '3x al fallo técnico', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Pecho' },
         ];
       } else {
         routine = [
-          { id: 'c1', n: 'Dominadas Estrictas (Pull-ups)', s: '4x max', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Espalda' },
-          { id: 'c2', n: 'Fondos en Paralelas / Silla', s: '4x12', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-          { id: 'c3', n: 'Pistol Squats o Zancadas Explosivas', s: '3x10 por pierna', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'c4', n: 'Elevación de Piernas Colgado / Suelo', s: '3x15', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
+          { id: 'c1', n: 'Flexiones Militares Espartanas', s: '4x15 (Cadencia 2-1-1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+          { id: 'c2', n: 'Sentadillas Profundas de Calistenia', s: '4x25 (Ritmo Fluido)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'c3', n: 'Elevación de Piernas en Barra / Suelo', s: '4x15 (Core Imperial)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Core' },
+          { id: 'c4', n: 'Plancha Abdominal Estoica', s: '3x60 seg (Temple Mental)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
         ];
       }
     }

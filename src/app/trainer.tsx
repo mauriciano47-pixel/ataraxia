@@ -29,9 +29,12 @@ const CALISTENIA_MOCK: CustomExercise[] = [
 export default function TrainerScreen() {
   const { log, toggleTraining, saveReadinessScore, updateEffectiveSets, setCustomRoutine } = useDailyLog();
 
-  const activeRoutine = log.customRoutine && log.customRoutine.length > 0 ? log.customRoutine : RUTINA_MOCK;
-  const [ejercicios, setEjercicios] = useState<CustomExercise[]>(activeRoutine);
+  const [amorFatiEjercicios, setAmorFatiEjercicios] = useState<CustomExercise[]>(CALISTENIA_MOCK);
   const [isAmorFati, setIsAmorFati] = useState(false);
+
+  // Derivar siempre la rutina activa directamente de log.customRoutine (100% reactivo sin desincronización)
+  const activeRoutine = (log.customRoutine && log.customRoutine.length > 0) ? log.customRoutine : RUTINA_MOCK;
+  const ejercicios = isAmorFati ? amorFatiEjercicios : activeRoutine;
 
   // Readiness State
   const [sleepScore, setSleepScore] = useState(log.readinessScore?.sleep || 8);
@@ -41,34 +44,22 @@ export default function TrainerScreen() {
 
   // AI Workout Generator State
   const [showGeneratorModal, setShowGeneratorModal] = useState(false);
-  const [selectedTime, setSelectedTime] = useState<number>(45);
-  const [selectedFocus, setSelectedFocus] = useState<string>('Full Body / Fuerza');
-  const [selectedEquip, setSelectedEquip] = useState<string>('Gimnasio');
+  const [selectedTime, setSelectedTime] = useState<number>(log.prokoptonProfile?.sessionDurationMinutes || 45);
+  const [selectedFocus, setSelectedFocus] = useState<string>(
+    log.prokoptonProfile?.focus === 'fat_loss' ? 'Recomposición / Grasa' :
+    log.prokoptonProfile?.focus === 'longevity' ? 'Longevidad / Resistencia' :
+    log.prokoptonProfile?.focus === 'mental' ? 'Disciplina / Temple' :
+    'Full Body / Fuerza'
+  );
+  const [selectedEquip, setSelectedEquip] = useState<string>(
+    log.prokoptonProfile?.equipment === 'calisthenics' ? 'Peso Corporal' :
+    log.prokoptonProfile?.equipment === 'home_dumbbell' ? 'Mancuernas en Casa' :
+    'Gimnasio'
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedRoutine, setGeneratedRoutine] = useState<{ title: string; exercises: CustomExercise[] } | null>(null);
 
-  const toggleDone = (id: string) => {
-    setEjercicios(prev => {
-      const updated = prev.map(e => {
-        if (e.id === id) {
-          return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null };
-        }
-        return e;
-      });
-      calculateEffectiveSets(updated);
-      return updated;
-    });
-  };
-
-  const setRPE = (id: string, value: number) => {
-    setEjercicios(prev => {
-      const updated = prev.map(e => e.id === id ? { ...e, rpe: value, done: true } : e);
-      calculateEffectiveSets(updated);
-      return updated;
-    });
-  };
-
-  const calculateEffectiveSets = (list: typeof ejercicios) => {
+  const calculateEffectiveSets = (list: CustomExercise[]) => {
     let totalEffective = 0;
     list.filter(e => e.done && (e.rpe || 0) >= 7).forEach(e => {
       const setsMatch = e.s.match(/^(\d+)/);
@@ -76,6 +67,40 @@ export default function TrainerScreen() {
       totalEffective += numSets;
     });
     updateEffectiveSets(totalEffective);
+  };
+
+  const toggleDone = (id: string) => {
+    if (isAmorFati) {
+      const updated = amorFatiEjercicios.map(e => {
+        if (e.id === id) {
+          return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null };
+        }
+        return e;
+      });
+      setAmorFatiEjercicios(updated);
+      calculateEffectiveSets(updated);
+    } else {
+      const updated = activeRoutine.map(e => {
+        if (e.id === id) {
+          return { ...e, done: !e.done, rpe: !e.done ? (e.rpe || 7) : null };
+        }
+        return e;
+      });
+      setCustomRoutine(updated);
+      calculateEffectiveSets(updated);
+    }
+  };
+
+  const setRPE = (id: string, value: number) => {
+    if (isAmorFati) {
+      const updated = amorFatiEjercicios.map(e => e.id === id ? { ...e, rpe: value, done: true } : e);
+      setAmorFatiEjercicios(updated);
+      calculateEffectiveSets(updated);
+    } else {
+      const updated = activeRoutine.map(e => e.id === id ? { ...e, rpe: value, done: true } : e);
+      setCustomRoutine(updated);
+      calculateEffectiveSets(updated);
+    }
   };
 
   const handleSaveReadiness = () => {
@@ -113,9 +138,9 @@ export default function TrainerScreen() {
   };
 
   const toggleAmorFati = () => {
-    setIsAmorFati(!isAmorFati);
-    setEjercicios(!isAmorFati ? CALISTENIA_MOCK : activeRoutine);
-    Alert.alert("Amor Fati", !isAmorFati ? "No controlas tu entorno, pero controlas tu reacción. Rutina adaptada a peso corporal." : "Volviendo a tu rutina de gimnasio.");
+    const nextAmorFati = !isAmorFati;
+    setIsAmorFati(nextAmorFati);
+    Alert.alert("Amor Fati", nextAmorFati ? "No controlas tu entorno, pero controlas tu reacción. Rutina adaptada a peso corporal." : "Volviendo a tu rutina personalizada.");
   };
 
   // AI GENERATOR LOGIC
@@ -227,15 +252,40 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
   const handleApplyAIRoutine = () => {
     if (!generatedRoutine) return;
-    setEjercicios(generatedRoutine.exercises);
     setCustomRoutine(generatedRoutine.exercises);
+    if (isAmorFati) setIsAmorFati(false);
     setShowGeneratorModal(false);
     Alert.alert("⚡ Rutina IA Cargada", `"${generatedRoutine.title}" ha sido cargada como tu sesión activa de hoy.`);
   };
 
   const durationMin = log.prokoptonProfile?.sessionDurationMinutes || selectedTime || 45;
-  const equipName = isAmorFati ? 'Calistenia' : (log.prokoptonProfile?.equipment === 'gym' ? 'Gimnasio' : 'Mancuernas');
+  const daysFreq = log.prokoptonProfile?.daysPerWeek || 4;
 
+  const getEquipmentLabel = () => {
+    if (isAmorFati) return 'Calistenia (Amor Fati)';
+    if (!log.prokoptonProfile) return 'Gimnasio';
+    switch (log.prokoptonProfile.equipment) {
+      case 'gym': return 'Gimnasio';
+      case 'home_dumbbell': return 'Mancuernas en Casa';
+      case 'calisthenics': return 'Calistenia';
+      default: return 'Gimnasio';
+    }
+  };
+
+  const getFocusLabel = () => {
+    if (isAmorFati) return 'Calistenia Espartana';
+    if (!log.prokoptonProfile) return '⚡ Rutina Imperial IA';
+    switch (log.prokoptonProfile.focus) {
+      case 'strength': return '⚡ Fuerza Espartana & Hipertrofia';
+      case 'fat_loss': return '🔥 Recomposición & Definición';
+      case 'longevity': return '🏛️ Resistencia & Longevidad';
+      case 'mental': return '🧠 Disciplina & Temple Mental';
+      default: return '⚡ Rutina Imperial IA';
+    }
+  };
+
+  const equipName = getEquipmentLabel();
+  const focusTitle = getFocusLabel();
   const completedCount = ejercicios.filter(e => e.done).length;
   const effectiveSetsToday = log.effectiveSets || 0;
 
@@ -247,11 +297,11 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         {/* Header de la Sesión */}
         <View style={styles.header}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-            <View>
+            <View style={{flex: 1, paddingRight: 8}}>
               <ThemedText style={styles.label}>HOY — {equipName.toUpperCase()}</ThemedText>
-              <ThemedText style={styles.title}>{isAmorFati ? "Calistenia Espartana" : "⚡ Rutina Imperial IA"}</ThemedText>
+              <ThemedText style={styles.title}>{focusTitle}</ThemedText>
               <ThemedText style={{fontSize: 12, color: '#D4AF37', marginTop: 2, fontWeight: 'bold'}}>
-                ⏱️ {durationMin} min | {completedCount}/{ejercicios.length} ejercicios
+                ⏱️ {durationMin} min | {completedCount}/{ejercicios.length} ejercicios completados
               </ThemedText>
             </View>
             <TouchableOpacity 
@@ -262,6 +312,26 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* BANNER DE PLAN PERSONALIZADO (PROKOPTON) */}
+        {log.prokoptonProfile && (
+          <View style={styles.prokoptonBanner}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+              <ThemedText style={{fontSize: 20}}>🏛️</ThemedText>
+              <View style={{flex: 1}}>
+                <ThemedText style={styles.prokoptonBannerTitle}>
+                  PLAN PERSONALIZADO • {(log.userName || 'PROKOPTON').toUpperCase()}
+                </ThemedText>
+                <ThemedText style={styles.prokoptonBannerSub}>
+                  {equipName} • {daysFreq} días/sem • {durationMin} min por sesión
+                </ThemedText>
+              </View>
+              <View style={styles.prokoptonTag}>
+                <ThemedText style={styles.prokoptonTagText}>CALIBRADO</ThemedText>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* BOTÓN PRINCIPAL GENERADOR DE RUTINAS IA */}
         <TouchableOpacity
@@ -900,5 +970,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     marginTop: 4,
+  },
+  prokoptonBanner: {
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: Spacing.two,
+  },
+  prokoptonBannerTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'serif',
+    letterSpacing: 0.5,
+  },
+  prokoptonBannerSub: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    marginTop: 1,
+  },
+  prokoptonTag: {
+    backgroundColor: '#D4AF37',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  prokoptonTagText: {
+    color: '#050507',
+    fontSize: 9,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
   },
 });

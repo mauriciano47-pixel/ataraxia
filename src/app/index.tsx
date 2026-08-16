@@ -68,6 +68,11 @@ export default function HoyScreen() {
 
             <View style={styles.titleCenterGroup}>
               <ThemedText style={styles.brandTitleClassic}>ATARAXIA</ThemedText>
+              <ThemedText style={styles.brandSubtitle}>
+                {log.userName && log.userName !== 'Ciudadano Prokopton'
+                  ? `⚔️ ${log.userName.toUpperCase()}`
+                  : 'TEMPLO DEL AUTODOMINIO'}
+              </ThemedText>
             </View>
 
             <View style={styles.headerRightActions}>

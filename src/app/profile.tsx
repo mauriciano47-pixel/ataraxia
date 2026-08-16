@@ -209,6 +209,30 @@ export default function ProfileScreen() {
               <ThemedText style={[styles.rowValue, { color: '#FFE259', fontWeight: 'bold' }]}>{log.stepGoal || 10000} pasos</ThemedText>
             </View>
 
+            {log.prokoptonProfile && (
+              <>
+                <View style={styles.row}>
+                  <ThemedText style={styles.rowLabel}>Enfoque del Prokopton</ThemedText>
+                  <ThemedText style={[styles.rowValue, { color: '#FFE259' }]}>
+                    {log.prokoptonProfile.focus === 'strength' ? 'Fuerza & Masa' :
+                     log.prokoptonProfile.focus === 'fat_loss' ? 'Recomposición' :
+                     log.prokoptonProfile.focus === 'longevity' ? 'Longevidad' : 'Mente Estoica'}
+                  </ThemedText>
+                </View>
+                <View style={styles.row}>
+                  <ThemedText style={styles.rowLabel}>Equipo / Duración</ThemedText>
+                  <ThemedText style={styles.rowValue}>
+                    {log.prokoptonProfile.equipment === 'gym' ? 'Gimnasio' :
+                     log.prokoptonProfile.equipment === 'home_dumbbell' ? 'Mancuernas' : 'Calistenia'} ({log.prokoptonProfile.sessionDurationMinutes} min)
+                  </ThemedText>
+                </View>
+                <View style={styles.row}>
+                  <ThemedText style={styles.rowLabel}>Frecuencia Semanal</ThemedText>
+                  <ThemedText style={styles.rowValue}>{log.prokoptonProfile.daysPerWeek} días / sem</ThemedText>
+                </View>
+              </>
+            )}
+
             <TouchableOpacity
               style={styles.calibrateButton}
               onPress={() => setShowOnboardingModal(true)}

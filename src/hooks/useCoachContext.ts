@@ -114,9 +114,18 @@ export function useCoachContext(): CoachContext {
     lines.push(`Entrenamiento: ${log.trainingCompleted ? 'COMPLETADO' : 'PENDIENTE'}`);
     lines.push(`Agua: ${log.waterLitres.toFixed(1)}L (meta: 2L)`);
     lines.push(`Comidas registradas: ${log.mealsLogged} (meta: 3)`);
-    lines.push(`Calorías: ${log.totalCalories} (meta: ${log.targetCalories || 2100})`);
+    lines.push(`Calorías consumidas: ${log.totalCalories} (meta: ${log.targetCalories || 2100} kcal)`);
     if (log.macros) {
       lines.push(`Macros: P:${log.macros.protein}g C:${log.macros.carbs}g G:${log.macros.fats}g`);
+    }
+    const currentSteps = log.steps || 0;
+    const currentStepGoal = log.stepGoal || 10000;
+    const stepKm = (currentSteps * 0.00078).toFixed(2);
+    const stepCals = Math.round(currentSteps * 0.045);
+    lines.push(`Pasos activos (Podómetro): ${currentSteps.toLocaleString()} / ${currentStepGoal.toLocaleString()} pasos (${stepKm} km)`);
+    lines.push(`Gasto activo por caminata (NeAT): ~${stepCals} kcal quemadas`);
+    if (log.smartDevice?.connected) {
+      lines.push(`Smartwatch Conectado: ${log.smartDevice.deviceName} | Ritmo Cardíaco: ${log.smartDevice.heartRateBpm} BPM`);
     }
     if (log.checkInDone) {
       lines.push(`Check-in: Energía ${log.energyLevel}/5, Sueño ${log.sleepQuality}/5`);
