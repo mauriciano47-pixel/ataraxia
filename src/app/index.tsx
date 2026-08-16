@@ -26,23 +26,24 @@ export default function HoyScreen() {
   const scrollY = useState(() => new Animated.Value(0))[0];
 
   // Lectura 100% Real de Fuerza (Physical Power):
-  const currentSteps = log.steps || 14892;
-  const currentGoal = log.stepGoal || 15000;
-  const stepRatio = Math.min(1, currentSteps / currentGoal);
+  const currentSteps = log.steps ?? 0;
+  const currentGoal = log.stepGoal ?? 10000;
+  const stepRatio = currentGoal > 0 ? Math.min(1, currentSteps / currentGoal) : 0;
   const trainingRatio = log.trainingCompleted ? 1 : 0;
-  const nutritionRatio = Math.min(1, (log.mealsLogged || 0) / 3);
+  const nutritionRatio = Math.min(1, (log.mealsLogged ?? 0) / 3);
   const strengthProgress = (trainingRatio * 0.40) + (stepRatio * 0.40) + (nutritionRatio * 0.20);
 
   // Lectura 100% Real de Virtud (Stoic Discipline):
-  const waterLitres = log.waterLitres || 2.4;
+  const waterLitres = log.waterLitres ?? 0;
   const waterRatio = Math.min(1, waterLitres / 3.0);
-  const meditationRatio = log.checkInDone ? 1 : 0.8;
-  const checkInRatio = log.checkInDone ? 1 : 0.5;
-  const virtueProgress = (waterRatio * 0.35) + (meditationRatio * 0.35) + (checkInRatio * 0.30);
+  const meditationRatio = log.checkInDone ? 1 : 0.5;
+  const checkInRatio = log.checkInDone ? 1 : 0;
+  const virtueProgress = (waterRatio * 0.40) + (meditationRatio * 0.30) + (checkInRatio * 0.30);
 
   const currentKm = Number((currentSteps * 0.00075).toFixed(1));
-  const currentCalories = log.totalCalories || 2840;
-  const targetCalories = 3500;
+  const currentCalories = log.totalCalories ?? 0;
+  const targetCalories = log.targetCalories ?? 2200;
+  const activeStreak = log.trainingCompleted || log.checkInDone ? 15 : 14;
 
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
@@ -86,6 +87,7 @@ export default function HoyScreen() {
           <View style={styles.heroGaugeSection}>
             <GlowArcGauge
               strengthProgress={strengthProgress}
+              virtueProgress={virtueProgress}
               size={320}
               steps={currentSteps}
               stepGoal={currentGoal}
@@ -94,7 +96,7 @@ export default function HoyScreen() {
               targetCalories={targetCalories}
               waterLitres={waterLitres}
               trainingCompleted={log.trainingCompleted}
-              streakDays={14}
+              streakDays={activeStreak}
             />
           </View>
 
@@ -103,7 +105,7 @@ export default function HoyScreen() {
             steps={currentSteps}
             stepGoal={currentGoal}
             km={currentKm}
-            heartRateBpm={log.smartDevice?.heartRateBpm || 78}
+            heartRateBpm={log.smartDevice?.heartRateBpm || 72}
             avgBpm={68}
             peakBpm={145}
             onAddSteps={addSteps}
@@ -221,7 +223,7 @@ export default function HoyScreen() {
                 <ThemedText style={styles.cardHeaderGoldText}>RACHA DE DISCIPLINA</ThemedText>
                 <View style={styles.streakRow}>
                   <FlameIcon color="#D4AF37" size={28} />
-                  <ThemedText style={styles.streakNumberText}>14</ThemedText>
+                  <ThemedText style={styles.streakNumberText}>{activeStreak}</ThemedText>
                   <View style={styles.streakSubCol}>
                     <ThemedText style={styles.streakDayText}>Días</ThemedText>
                     <ThemedText style={styles.streakLabelText}>Racha Activa</ThemedText>

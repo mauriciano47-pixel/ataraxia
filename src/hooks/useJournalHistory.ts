@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { SafeStorage } from '@/utils/safeStorage';
 
 export interface JournalMessage {
   text: string;
@@ -14,19 +15,45 @@ export interface JournalEntry {
   messages: JournalMessage[];
 }
 
-/**
- * Hook que persiste y recupera las conversaciones del Diario en Firestore.
- * - Carga la conversación del día actual al montar
- * - Guarda cada mensaje en tiempo real
- * - Recupera las últimas 3 conversaciones pasadas para contexto del coach
- */
-export function useJournalHistory() {
-  const [messages, setMessages] = useState<JournalMessage[]>([]);
-  const [pastEntries, setPastEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(Boolean(auth && db));
-  const [disclaimerShown, setDisclaimerShown] = useState(false);
+const JOURNAL_DATES_KEY = 'ataraxia_journal_dates_list';
 
+function loadLocalJournal(dateStr: string): JournalMessage[] {
+  try {
+    const saved = SafeStorage.getItem(`ataraxia_journal_${dateStr}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function loadLocalPastEntries(todayStr: string): JournalEntry[] {
+  try {
+    const datesSaved = SafeStorage.getItem(JOURNAL_DATES_KEY);
+    if (datesSaved) {
+      const dates: string[] = JSON.parse(datesSaved);
+      const entries: JournalEntry[] = [];
+      for (const d of dates) {
+        if (d !== todayStr) {
+          const msgs = loadLocalJournal(d);
+          if (msgs.length > 0) {
+            entries.push({ date: d, messages: msgs });
+          }
+        }
+      }
+      return entries.slice(0, 3);
+    }
+  } catch {}
+  return [];
+}
+
+export function useJournalHistory() {
   const today = new Date().toISOString().split('T')[0];
+  const [messages, setMessages] = useState<JournalMessage[]>(() => loadLocalJournal(today));
+  const [pastEntries, setPastEntries] = useState<JournalEntry[]>(() => loadLocalPastEntries(today));
+  const [loading, setLoading] = useState(Boolean(auth && db));
+  const [disclaimerShown, setDisclaimerShown] = useState(() => messages.length > 0);
 
   // Cargar conversación del día actual + entradas pasadas
   useEffect(() => {
@@ -45,14 +72,15 @@ export function useJournalHistory() {
         const unsubSnapshot = onSnapshot(todayRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as JournalEntry;
-            setMessages(data.messages || []);
             if (data.messages && data.messages.length > 0) {
+              setMessages(data.messages);
               setDisclaimerShown(true);
+              SafeStorage.setItem(`ataraxia_journal_${today}`, JSON.stringify(data.messages));
             }
           }
           setLoading(false);
         }, (error) => {
-          console.error("Error cargando journal de hoy:", error);
+          console.warn("Firestore snapshot journal fallback local:", error);
           setLoading(false);
         });
 
@@ -63,7 +91,9 @@ export function useJournalHistory() {
         );
         const snapshot = await getDocs(pastQuery);
         const entries: JournalEntry[] = [];
+        const dateList: string[] = [];
         snapshot.forEach((docSnap) => {
+          dateList.push(docSnap.id);
           if (docSnap.id !== today) {
             entries.push({
               date: docSnap.id,
@@ -72,10 +102,11 @@ export function useJournalHistory() {
           }
         });
         setPastEntries(entries.slice(0, 3));
+        SafeStorage.setItem(JOURNAL_DATES_KEY, JSON.stringify(dateList));
 
         return () => unsubSnapshot();
       } catch (error) {
-        console.error("Error en useJournalHistory:", error);
+        console.warn("Error en useJournalHistory, usando caché local:", error);
         setLoading(false);
       }
     });
@@ -84,6 +115,18 @@ export function useJournalHistory() {
   }, [today]);
 
   const saveMessages = useCallback(async (updatedMessages: JournalMessage[]) => {
+    // 1. Guardar siempre en SafeStorage de manera inmediata (Offline-first)
+    SafeStorage.setItem(`ataraxia_journal_${today}`, JSON.stringify(updatedMessages));
+    try {
+      const datesSaved = SafeStorage.getItem(JOURNAL_DATES_KEY);
+      const dates: string[] = datesSaved ? JSON.parse(datesSaved) : [];
+      if (!dates.includes(today)) {
+        dates.unshift(today);
+        SafeStorage.setItem(JOURNAL_DATES_KEY, JSON.stringify(dates.slice(0, 10)));
+      }
+    } catch {}
+
+    // 2. Sincronizar en la nube si hay usuario conectado
     if (!auth || !db || !auth.currentUser) return;
 
     const docRef = doc(db, `users/${auth.currentUser.uid}/journal_entries/${today}`);
@@ -93,7 +136,7 @@ export function useJournalHistory() {
         messages: updatedMessages,
       }, { merge: true });
     } catch (error) {
-      console.error("Error guardando mensaje de journal:", error);
+      console.warn("Error guardando mensaje de journal en Firestore:", error);
     }
   }, [today]);
 

@@ -36,9 +36,10 @@ export function ThunderTelemetryTwinCards({
 
   const bgSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
 
-  // Progress semi-arc calculation
-  const capX = cx - radius * Math.cos((180 * (1 - safeStepRatio) * Math.PI) / 180);
-  const capY = cy - radius * Math.sin((180 * (1 - safeStepRatio) * Math.PI) / 180);
+  // Progress semi-arc calculation (0% en la izquierda 180°, 100% en la derecha 0°)
+  const angleRad = (1 - safeStepRatio) * Math.PI;
+  const capX = cx + radius * Math.cos(angleRad);
+  const capY = cy - radius * Math.sin(angleRad);
   const progressSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${capX.toFixed(2)} ${capY.toFixed(2)}`;
 
   return (
@@ -97,10 +98,10 @@ export function ThunderTelemetryTwinCards({
           </View>
         </View>
 
-        {/* Card Footer: Goal & Miles/Km */}
+        {/* Card Footer: Goal & Km */}
         <View style={styles.cardFooter}>
           <ThemedText style={styles.footerGoalText}>Goal: {stepGoal.toLocaleString()}</ThemedText>
-          <ThemedText style={styles.footerMilesText}>{km} miles</ThemedText>
+          <ThemedText style={styles.footerMilesText}>{km} km</ThemedText>
         </View>
       </TouchableOpacity>
 

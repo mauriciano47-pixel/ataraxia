@@ -211,7 +211,8 @@ export function CalorieIndexCard({
                   { id: 'sedentary', label: 'Sedentario (Oficina / Poco ejercicio)' },
                   { id: 'light', label: 'Ligero (1-3 días entreno/sem)' },
                   { id: 'moderate', label: 'Moderado (3-5 días entreno/sem)' },
-                  { id: 'very_active', label: 'Muy Activo (6-7 días entreno int)' },
+                  { id: 'active', label: 'Activo (6-7 días entreno/sem)' },
+                  { id: 'athlete', label: 'Atleta / Alto Rendimiento (Doble sesión)' },
                 ].map(opt => (
                   <TouchableOpacity
                     key={opt.id}

@@ -184,10 +184,16 @@ Devuelve EXCLUSIVAMENTE un JSON válido con esta estructura:
 
   const handleConfirmAnalysis = () => {
     if (!lastAnalysis) return;
-    const finalCals = parseInt(editCalories, 10) || lastAnalysis.calories;
-    const finalProtein = parseInt(editProtein, 10) || lastAnalysis.protein;
-    const finalCarbs = parseInt(editCarbs, 10) || lastAnalysis.carbs;
-    const finalFats = parseInt(editFats, 10) || lastAnalysis.fats;
+    const parsedCals = parseInt(editCalories, 10);
+    const parsedProtein = parseInt(editProtein, 10);
+    const parsedCarbs = parseInt(editCarbs, 10);
+    const parsedFats = parseInt(editFats, 10);
+
+    const finalCals = !isNaN(parsedCals) ? Math.max(0, parsedCals) : lastAnalysis.calories;
+    const finalProtein = !isNaN(parsedProtein) ? Math.max(0, parsedProtein) : lastAnalysis.protein;
+    const finalCarbs = !isNaN(parsedCarbs) ? Math.max(0, parsedCarbs) : lastAnalysis.carbs;
+    const finalFats = !isNaN(parsedFats) ? Math.max(0, parsedFats) : lastAnalysis.fats;
+
     logMealWithEnrichedMacros(finalCals, finalProtein, finalCarbs, finalFats, lastAnalysis.nutrientDensityScore || 8, lastAnalysis.verdict);
     Alert.alert("Comida Sincronizada", `¡${lastAnalysis.dishName} registrado!`);
     setLastAnalysis(null);
