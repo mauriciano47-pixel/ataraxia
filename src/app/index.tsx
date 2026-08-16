@@ -16,12 +16,17 @@ import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCards';
+import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 
 export default function HoyScreen() {
   const { log, toggleTraining, addSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
   const [onboardingVisible, setOnboardingVisible] = useState<boolean>(!log.hasCompletedOnboarding);
+  const [quoteOffset, setQuoteOffset] = useState<number>(0);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const currentPrinciple = getDailyStoicPrinciple(todayStr, quoteOffset);
 
   const scrollY = useState(() => new Animated.Value(0))[0];
 
@@ -204,14 +209,23 @@ export default function HoyScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Filosofía Estoica */}
-              <View style={styles.halfCard}>
-                <ThemedText style={styles.cardHeaderGoldText}>🏛️ PRINCIPIO ESTOICO</ThemedText>
+              {/* Filosofía Estoica (Rotación Diaria No Repetitiva & Táctil) */}
+              <TouchableOpacity
+                style={styles.halfCard}
+                activeOpacity={0.8}
+                onPress={() => setQuoteOffset(prev => prev + 1)}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <ThemedText style={styles.cardHeaderGoldText}>🏛️ PRINCIPIO ESTOICO</ThemedText>
+                  <ThemedText style={{ fontSize: 9, color: '#D4AF37', opacity: 0.8, fontFamily: 'monospace' }}>⚡ Toca</ThemedText>
+                </View>
                 <ThemedText style={styles.stoicQuoteText}>
-                  {'"Enfócate en lo que puedes controlar, forja tu propia fuerza..."'}
+                  {`"${currentPrinciple.quote}"`}
                 </ThemedText>
-                <ThemedText style={styles.stoicAuthorText}>— Marco Aurelio</ThemedText>
-              </View>
+                <ThemedText style={styles.stoicAuthorText}>
+                  — {currentPrinciple.author}{currentPrinciple.work ? ` (${currentPrinciple.work})` : ''}
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
 
