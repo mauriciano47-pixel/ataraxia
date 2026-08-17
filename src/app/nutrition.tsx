@@ -144,8 +144,11 @@ Devuelve EXCLUSIVAMENTE un JSON válido con esta estructura:
       );
 
       const apiCall = ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64Image } }] }],
+        config: {
+          responseMimeType: 'application/json'
+        }
       });
 
       const response = await Promise.race([apiCall, timeoutPromise]);
@@ -290,7 +293,7 @@ Devuelve EXCLUSIVAMENTE un JSON válido con esta estructura:
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color="#D4AF37" />
               <ThemedText style={{ marginTop: 12, fontSize: 13, color: '#FFE259', fontFamily: 'monospace', fontWeight: 'bold' }}>
-                ⚡ Analizando macronutrientes con Gemini 2.5 Vision...
+                ⚡ Analizando macronutrientes con Gemini 3.5 Flash...
               </ThemedText>
             </View>
           )}

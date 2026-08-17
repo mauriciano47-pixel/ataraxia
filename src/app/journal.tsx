@@ -240,7 +240,7 @@ export default function JournalScreen() {
 
           // Intento: Modelo primario gemini-2.0-flash con timeout defensivo
           const apiCall = ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             contents: fullPrompt,
             config: {
               systemInstruction: systemPrompt,
