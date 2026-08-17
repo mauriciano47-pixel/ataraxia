@@ -46,6 +46,7 @@
     "build": "expo export",
     "export:web": "expo export",
     "postexport": "node -e \"const fs=require('fs'); if(fs.existsSync('dist/index.html')){ fs.copyFileSync('dist/index.html', 'dist/200.html'); fs.copyFileSync('dist/index.html', 'dist/404.html'); console.log('SPA fallbacks generated: 200.html & 404.html'); }\"",
+    "deploy": "expo export && npx firebase-tools deploy --only hosting",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
