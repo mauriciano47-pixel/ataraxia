@@ -712,14 +712,15 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     fontSize: 11,
-    color: '#FDE6  modalOverlay: {
+    color: '#FDE68A',
+    lineHeight: 17,
+    fontFamily: 'monospace',
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 5, 7, 0.90)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.four,
-  },
-  modalContent: {ms: 'center',
     padding: Spacing.four,
   },
   modalContent: {
