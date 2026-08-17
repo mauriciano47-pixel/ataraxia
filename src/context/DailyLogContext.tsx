@@ -3,7 +3,7 @@ import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
-import { ProkoptonProfile, CustomExercise } from '@/types/onboarding';
+import { ProkoptonProfile, CustomExercise, CoachArchetype } from '@/types/onboarding';
 
 export interface UserMetrics {
   weightKg: number;
@@ -40,6 +40,7 @@ export interface DailyLog {
   prokoptonProfile?: ProkoptonProfile;
   customRoutine?: CustomExercise[];
   hasCompletedOnboarding?: boolean;
+  coachArchetype?: CoachArchetype;
   macros: {
     protein: number;
     carbs: number;
@@ -78,6 +79,7 @@ export const DEFAULT_LOG: DailyLog = {
   stoicAvatarUri: '',
   userName: 'Ciudadano Prokopton',
   hasCompletedOnboarding: false,
+  coachArchetype: 'stoic_mentor',
   smartDevice: {
     connected: false,
     deviceName: 'Ninguno (Desconectado)',
@@ -106,6 +108,7 @@ type UserProfile = {
   hasCompletedOnboarding?: boolean;
   prokoptonProfile?: ProkoptonProfile;
   customRoutine?: CustomExercise[];
+  coachArchetype?: CoachArchetype;
 };
 
 interface DailyLogContextType {
@@ -120,6 +123,7 @@ interface DailyLogContextType {
     targetCalories: number;
     stepGoal: number;
     stoicAvatarUri?: string;
+    coachArchetype?: CoachArchetype;
   }) => void;
   logMealWithMacros: (cals: number, protein?: number, carbs?: number, fats?: number) => void;
   addWater: (amount?: number) => void;
@@ -134,6 +138,7 @@ interface DailyLogContextType {
   updateUserMetrics: (metrics: Partial<UserMetrics>, targetCals?: number) => void;
   setStoicAvatar: (uri: string) => void;
   setUserName: (name: string) => void;
+  setCoachArchetype: (archetype: CoachArchetype) => void;
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
   saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
   resetOnboarding: () => void;
@@ -188,6 +193,7 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
       hasCompletedOnboarding: currentLog.hasCompletedOnboarding,
       prokoptonProfile: currentLog.prokoptonProfile,
       customRoutine: currentLog.customRoutine,
+      coachArchetype: currentLog.coachArchetype || 'stoic_mentor',
     };
     SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
 
@@ -249,6 +255,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
                 customRoutine: (cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0)
                   ? cloudProfile.customRoutine
                   : current.customRoutine,
+                coachArchetype: cloudProfile.coachArchetype || current.coachArchetype || 'stoic_mentor',
                 smartDevice: cloudProfile.smartDevice
                   ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
                   : current.smartDevice,
@@ -296,6 +303,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       customRoutine: (local.customRoutine && local.customRoutine.length > 0)
         ? local.customRoutine
         : (remote.customRoutine || undefined),
+      coachArchetype: local.coachArchetype || remote.coachArchetype || 'stoic_mentor',
       userMetrics: {
         ...DEFAULT_USER_METRICS,
         ...(remote.userMetrics || {}),
@@ -393,6 +401,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     targetCalories: number;
     stepGoal: number;
     stoicAvatarUri?: string;
+    coachArchetype?: CoachArchetype;
   }) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const newMetrics: UserMetrics = {
@@ -407,6 +416,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       targetCalories: data.targetCalories,
       stepGoal: data.stepGoal,
       ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
+      ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
     });
     saveProfileToFirestore({
       userName: data.userName.trim() || 'Ciudadano Prokopton',
@@ -414,6 +424,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       targetCalories: data.targetCalories,
       stepGoal: data.stepGoal,
       ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
+      ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
     });
   };
 
@@ -493,6 +504,11 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const setUserName = (name: string) => {
     updateLog({ userName: name });
     saveProfileToFirestore({ userName: name });
+  };
+
+  const setCoachArchetype = (archetype: CoachArchetype) => {
+    updateLog({ coachArchetype: archetype });
+    saveProfileToFirestore({ coachArchetype: archetype });
   };
 
   const updateSmartDevice = (deviceUpdates: Partial<SmartDeviceState>) => {
@@ -592,6 +608,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         updateUserMetrics,
         setStoicAvatar,
         setUserName,
+        setCoachArchetype,
         updateSmartDevice,
         saveOnboardingProfile,
         resetOnboarding,

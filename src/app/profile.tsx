@@ -12,6 +12,7 @@ import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
+import { COACH_ARCHETYPES, CoachArchetype } from '@/types/onboarding';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -21,7 +22,7 @@ const STOIC_PRESET_AVATARS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { log, setStoicAvatar, saveFullProfile } = useDailyLog();
+  const { log, setStoicAvatar, saveFullProfile, setCoachArchetype } = useDailyLog();
 
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
@@ -241,6 +242,58 @@ export default function ProfileScreen() {
                 ⚡ CALIBRAR FICHA DEL PROKOPTON (ESCÁNER IA)
               </ThemedText>
             </TouchableOpacity>
+          </ThemedView>
+
+          {/* Sección Arquetipo del Coach I.A. */}
+          <ThemedView style={styles.section}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <ThemedText style={styles.sectionTitle}>ARQUETIPO DEL COACH I.A.</ThemedText>
+              <ThemedText style={{ fontSize: 9.5, color: '#D4AF37', fontFamily: 'monospace', fontWeight: 'bold' }}>ORÁCULO ACTIVO</ThemedText>
+            </View>
+            <ThemedText style={styles.hint}>
+              Elige la personalidad, vocabulario y nivel de exigencia con la que el Coach te guiará.
+            </ThemedText>
+
+            <View style={{ gap: 8, marginTop: 10 }}>
+              {(Object.keys(COACH_ARCHETYPES) as CoachArchetype[]).map((key) => {
+                const item = COACH_ARCHETYPES[key];
+                const isSelected = (log.coachArchetype || 'stoic_mentor') === item.id;
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.archetypeOptionCard,
+                      isSelected && styles.archetypeOptionCardSelected,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setCoachArchetype(item.id);
+                      Alert.alert("Arquetipo Actualizado", `El Coach ahora te guiará como ${item.name}.`);
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={[styles.archetypeOptionIconRing, isSelected && { borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.20)' }]}>
+                        <ThemedText style={{ fontSize: 18 }}>{item.icon}</ThemedText>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <ThemedText style={[styles.archetypeOptionName, isSelected && { color: '#FFE259' }]}>
+                            {item.name}
+                          </ThemedText>
+                          {isSelected && (
+                            <View style={styles.selectedPillBadge}>
+                              <ThemedText style={styles.selectedPillText}>ACTIVO</ThemedText>
+                            </View>
+                          )}
+                        </View>
+                        <ThemedText style={styles.archetypeOptionTagline}>{item.tagline}</ThemedText>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </ThemedView>
 
           {/* Sección de Preferencias */}
@@ -659,15 +712,14 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     fontSize: 11,
-    color: '#FDE68A',
-    lineHeight: 17,
-    fontFamily: 'monospace',
-  },
-  modalOverlay: {
+    color: '#FDE6  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 5, 7, 0.90)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: Spacing.four,
+  },
+  modalContent: {ms: 'center',
     padding: Spacing.four,
   },
   modalContent: {
@@ -704,5 +756,49 @@ const styles = StyleSheet.create({
   saveBtn: {
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  archetypeOptionCard: {
+    backgroundColor: 'rgba(13, 17, 28, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.22)',
+    borderRadius: 12,
+    padding: Spacing.three,
+  },
+  archetypeOptionCardSelected: {
+    borderColor: '#D4AF37',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1.5,
+  },
+  archetypeOptionIconRing: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  archetypeOptionName: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#FFF',
+  },
+  selectedPillBadge: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  selectedPillText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+  },
+  archetypeOptionTagline: {
+    fontSize: 10.5,
+    color: '#CBD5E1',
+    marginTop: 2,
   },
 });

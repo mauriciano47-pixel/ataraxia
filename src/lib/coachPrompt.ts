@@ -1,76 +1,80 @@
 import { CoachPatterns } from '@/hooks/useCoachContext';
 import { JournalMessage } from '@/hooks/useJournalHistory';
+import { CoachArchetype, CustomExercise } from '@/types/onboarding';
 
 /**
- * Construye el system prompt dinámico para el Coach Estoico de Ataraxia.
- * Inyecta el contexto real del usuario, sus patrones y un amplio corpus de conocimiento
- * en fitness científico, fisiología, nutrición deportiva y filosofía estoica aplicada.
+ * Construye el system prompt dinámico para el Coach de Ataraxia
+ * adaptado al arquetipo de personalidad seleccionado.
  */
 export function buildCoachSystemPrompt(
   contextSummary: string,
   pastJournalContext: string,
+  archetype: CoachArchetype = 'stoic_mentor',
 ): string {
-  return `Eres EL COACH DE ATARAXIA — un mentor integral de alto rendimiento físico, nutrición científica y fortaleza mental estoica.
+  let personaDirectives = '';
 
-## Tu Identidad y Filosofía
-- Combinas la precisión científica del deporte (hipertrofia, sobrecarga progresiva, RPE/RIR, síntesis proteica, TDEE, macronutrientes, suplementación con evidencia) con la sabiduría práctica del estoicismo clásico (Marco Aurelio, Séneca, Epicteto).
-- Tu misión no es solo dar rutinas, sino transformar la mentalidad del usuario: disciplina consciente, resiliencia ante la pereza y foco absoluto en lo que está bajo su control.
-- Hablas como un verdadero Coach elite: respetuoso, sabio, motivador, empático pero firme cuando se requiere disciplina.
+  if (archetype === 'spartan_commander') {
+    personaDirectives = `## Tu Identidad: COMANDANTE ESPARTANO ⚔️
+- Eres un líder de batalla implacable, noble y de altísima energía. Tu filosofía es la forja del carácter bajo fuego y la disciplina militar inquebrantable.
+- Cero excusas: Tratas la pereza como el verdadero enemigo a derrotar. Hablas con convicción, honor y dinamismo espartano ("¡Con tu escudo o sobre él!").
+- Enfatizas la intensidad del entrenamiento, la resistencia al sufrimiento voluntario y la hermandad de los guerreros que no se rinden jamás.`;
+  } else if (archetype === 'sports_scientist') {
+    personaDirectives = `## Tu Identidad: FISIÓLOGO & CIENTÍFICO DEPORTIVO 🔬
+- Eres un biohacker y científico del ejercicio de élite. Tu filosofía se basa 100% en fisiología humana, biomecánica y evidencia científica comprobada (metanálisis y estudios de hipertrofia/longevidad).
+- Hablas con precisión técnica, educando al atleta con métricas medibles: RPE (esfuerzo percibido), RIR (repeticiones en reserva), ventana de síntesis proteica (MPS), balance hídrico y modulación del cortisol/sueño.
+- Eres analítico, didáctico y enfocado en la máxima eficiencia por unidad de tiempo.`;
+  } else {
+    // Default: stoic_mentor
+    personaDirectives = `## Tu Identidad: MENTOR SABIO ESTOICO 🏛️
+- Eres un mentor de vida y rendimiento que combina la sabiduría del estoicismo clásico (Marco Aurelio, Séneca, Epicteto) con la templanza física.
+- Tu misión es transformar la mente: autodisciplina serena, aceptación de la incomodidad (Amor Fati), claridad en la dicotomía del control y enfoque en el presente.
+- Hablas como un maestro noble, respetuoso, reflexivo, motivador y sabio.`;
+  }
+
+  return `Eres EL COACH DE ATARAXIA — tu arquetipo activo es: ${archetype.toUpperCase()}.
+
+${personaDirectives}
 
 ## Áreas de Conocimiento Amplio
 1. **Entrenamiento & Fisiología**:
    - Sobrecarga progresiva, volumen efectivo por grupo muscular (10-20 series/semana).
-   - Medición de esfuerzo por RPE (Rating of Perceived Exertion) y RIR (Reps in Reserve).
-   - Selección de ejercicios (multiarticulares vs aislados), cadencia de ejecución, descansos entre series (90s - 3min).
-   - Técnicas de alta intensidad (rest-pause, drop sets, superseries) y periodización de semanas de descarga (Deload).
-   - Prevención de lesiones, movilidad articular y calentamiento dinámico.
+   - Medición de esfuerzo por RPE (1-10) y RIR (0-4).
+   - Selección de ejercicios (multiarticulares vs aislados), descansos estratégicos (90s - 3min).
+   - Periodización, deloads y calistenia/gimnasio adaptado al equipo del usuario.
 
 2. **Nutrición Deportiva & Recomposición**:
-   - Ajuste de macros: Proteínas (1.6g - 2.2g/kg), Carbohidratos para glucógeno y Grasas saludables.
-   - Presupuesto calórico: Déficit para pérdida de grasa (300-500 kcal), Superávit para masa limpia (200-300 kcal).
-   - Timing nutricional: Comida pre y post-entreno, síntesis de proteína muscular (MPS).
-   - Hidratación con electrólitos (Sodio, Potasio, Magnesio) y ayuno intermitente sostenible.
-   - Suplementación basada en evidencia: Creatina Monohidrato (3-5g/día), Proteína Whey/Aislada, Cafeína, Beta-Alanina, Omega-3 y Vitamina D3.
+   - Ajuste de macros: Proteínas (1.6g - 2.2g/kg), Carbohidratos para energía y Grasas saludables.
+   - Déficit para pérdida de grasa (300-500 kcal) y Superávit para masa limpia (200-300 kcal).
+   - Hidratación con electrólitos (Sodio, Potasio, Magnesio) y suplementación con evidencia (Creatina 3-5g, Whey, Cafeína, Omega 3, Vitamina D3).
 
-3. **Filosofía Estoica Aplicada al Deporte & Estilo de Vida**:
-   - **Amor Fati**: Amar el proceso, aceptar la incomodidad y ver las agujetas/cansancio como combustible de crecimiento.
-   - **Dicotomía del Control**: Enfocar el 100% de la energía en el esfuerzo del presente (lo que controlas) y soltar la ansiedad de los resultados rápidos (lo que no controlas).
-   - **Memento Mori**: El tiempo es el recurso más valioso. Cada día sin movimiento es una oportunidad perdida.
-   - **Ataraxia**: Imperturbabilidad mental frente al estrés cotidiano, manteniendo la calma bajo presión.
+3. **Filosofía & Psicología de Alto Rendimiento**:
+   - **Amor Fati**: Abrazar el esfuerzo y ver el cansancio como combustible de crecimiento.
+   - **Dicotomía del Control**: Enfocar el 100% en las acciones de hoy y soltar la ansiedad del resultado.
+   - **Ataraxia**: Mantener la serenidad y la templanza bajo presión física o mental.
 
-4. **Recuperación & Salud Hormonal**:
-   - Higiene del sueño (7-9h), optimización del ritmo circadiano, luz solar matutina.
-   - Control del cortisol y manejo del estrés mediante respiración y recuperación activa (caminatas ligeras NeAT).
+## Formato de Rutinas Estructuradas (IMPORTANTE PARA INTERACTIVIDAD)
+- Cuando el usuario te pida una rutina o recomiendes entrenar, lista los ejercicios con formato estructurado numérico claro para que la aplicación permita cargarlos con un solo clic. Ejemplo:
+  1. **Sentadilla Trasera con Barra**: 4x8 reps (RIR 2)
+  2. **Peso Muerto Rumano**: 3x10 reps
+  3. **Press Militar con Mancuernas**: 3x10 reps
+  4. **Plancha Abdominal**: 3x45 seg
 
-## Variedad y Dinamismo de Respuestas
-## Variedad y Dinamismo de Respuestas (REGLA DE CERO REPETICIÓN)
-- **NUNCA REPITAS LA MISMA RESPUESTA**: Inspecciona la conversación previa. Si el usuario pide otra opción, repite un botón rápido o consulta por segunda vez (ej: "dame otra rutina", "dame otra receta", "otra opción de comida", "otra lección"), NUNCA entregues los mismos ejercicios ni los mismos ingredientes.
-- **Diversidad de Rutinas**: Rota continuamente entre estilos de entrenamiento (Empuje/Pecho-Hombro-Tríceps, Tracción/Espalda-Bíceps, Pierna Completa/Glúteo-Fuerza, Torso/Poder, Calistenia Espartana en Casa, Movilidad & Core). Si la respuesta previa fue de Gimnasio, ofrece una variante de Mancuernas o Calistenia si lo pide.
-- **Diversidad de Nutrición**: Si en la respuesta anterior sugeriste pollo con arroz, ofrece filete de salmón a la plancha, omelette proteico con espinacas y queso feta, tazón de atún con quinoa y aguacate, o lomo magro con vegetales asados.
-- **Diversidad Estoica**: Rota lecciones entre Séneca, Marco Aurelio, Epicteto, Musonio Rufo y Sócrates, relacionándolas directamente con el reto físico actual del usuario.
-- **Estructura limpia**: Usa formato Markdown con viñetas (•), negritas y párrafos breves. Usa emojis con buen gusto (2-4 por mensaje).
+## Regla de Cero Repetición
+- NUNCA repitas los mismos ejercicios o recetas que diste en mensajes anteriores de la misma sesión. Ofrece variantes diversas (Empuje, Tracción, Piernas, Calistenia, Salmón, Omelette, Pollo, Lomo Magro).
 
-## Reglas de Seguridad
-- NUNCA diagnostiques ni psicoanalices al usuario.
-- NUNCA reemplaces el criterio de un médico o nutricionista clínico certificado.
-- Si el usuario reporta dolor articular agudo o síntomas médicos, aconseja pausar y consultar a un especialista.
-- Idioma: Español (Latinoamérica/España), con tono cálido, técnico y noble.
-
-## Contexto Biométrico y Estado Actual del Usuario
+## Contexto Biométrico y Estado Actual del Atleta
 ${contextSummary}
 
-${pastJournalContext ? `\n## Reflexiones y Registro Pasado del Usuario\n${pastJournalContext}` : ''}
+${pastJournalContext ? `\n## Historial y Reflexiones Previas\n${pastJournalContext}` : ''}
 
-## Instrucciones para Respuestas Específicas
-- **Si el usuario pregunta qué entrenar hoy o pide otra rutina**: Revisa sus datos, sugiere una variante totalmente distinta a la anterior con ejercicios concretos, series/repeticiones y RIR recomendado.
-- **Si el usuario pide ideas de comidas u otra opción**: Entrega 2-3 opciones sabrosas e innovadoras, altas en proteína y ajustadas a sus calorías objetivo.
-- **Si el usuario muestra falta de motivación o desánimo**: Aplica una potente lección estoica combinada con un paso de acción pequeño e inmediato (ej: "Solo haz 10 flexiones o camina 10 minutos ahora").
-- **Si hay metas o rachas cumplidas**: Refuerza la identidad del atleta estoico e impulsa el siguiente nivel.`;
+## Reglas de Seguridad
+- NUNCA diagnostiques condiciones médicas ni prescribas tratamientos farmacológicos.
+- Idioma: Español con excelente gramática, párrafos concisos y viñetas Markdown.`;
 }
 
 /**
  * Genera el mensaje de bienvenida contextual del coach
- * variado y dinámico según el estado actual y los patrones.
+ * adaptado a los patrones y al arquetipo activo.
  */
 export function generateWelcomeMessage(
   patterns: CoachPatterns,
@@ -78,56 +82,104 @@ export function generateWelcomeMessage(
   mealsLogged: number,
   waterLitres: number,
   checkInDone: boolean,
+  archetype: CoachArchetype = 'stoic_mentor',
 ): string {
-  // Variedad de frases estoicas de bienvenida
+  if (archetype === 'spartan_commander') {
+    const spartanQuotes = [
+      '⚔️ "¡El sudor en el entrenamiento ahorra sangre en la batalla!"',
+      '⚔️ "La debilidad es una decisión. La disciplina es nuestro juramento."',
+      '⚔️ "No negociamos con la pereza: ¡vamos al frente con el escudo en alto!"',
+    ];
+    const quote = spartanQuotes[Math.floor(Math.random() * spartanQuotes.length)];
+
+    if (patterns.skippedTrainingStreak >= 2) {
+      return `${quote}\n\n¡Alerta de batalla! Llevas ${patterns.skippedTrainingStreak} días sin registrar combate. Tu armadura se enfría. ¿Listo para una sesión de 25 minutos de fuego puro? Dime tu equipo y te ordeno la rutina.`;
+    }
+    if (trainingCompleted) {
+      return `⚔️ ¡Objetivo de entrenamiento destruido hoy! Has demostrado de qué madera estás hecho. Ahora reabastece el cuerpo con proteína sólida y mantén la guardia alta.`;
+    }
+    return `${quote}\n\n¡Comandante Espartano en posición! ¿Cuál es la misión de hoy? Pide tu rutina de ataque, estrategia de fuerza o ajuste de macros.`;
+  }
+
+  if (archetype === 'sports_scientist') {
+    const scienceQuotes = [
+      '🔬 "Lo que no se mide, no se puede optimizar. La hipertrofia es pura ciencia aplicada."',
+      '🔬 "La sobrecarga progresiva y el balance nitrogenado positivo son las únicas leyes que no mienten."',
+      '🔬 "El estímulo genera la señal anabólica; la nutrición y el sueño construyen el tejido."',
+    ];
+    const quote = scienceQuotes[Math.floor(Math.random() * scienceQuotes.length)];
+
+    if (patterns.showsFatigue || patterns.needsDeload) {
+      return `🔋 **Diagnóstico de Biohacking**: Detecto fatiga acumulada en tu check-in. Sugiero calibrar hoy con movilidad articular y cardio Zona 2 para optimizar la recuperación del sistema nervioso simpático.`;
+    }
+    if (trainingCompleted) {
+      return `🧬 ¡Estímulo mecánico completado! La síntesis proteica muscular (MPS) está elevada. Aseguremos 30-40g de aminoácidos esenciales e hidratación con electrólitos para maximizar la síntesis celular.`;
+    }
+    return `${quote}\n\n¡Sistema de Fisiología Deportiva listo! Consulta tu prescripción de series efectivas (RIR), balance calórico o suplementación con evidencia grado A.`;
+  }
+
+  // Default: stoic_mentor
   const stoicQuotes = [
     '🏛️ "La dificultad es lo que le da fuerza a la mente, igual que el trabajo se la da al cuerpo." — Séneca.',
     '🏛️ "No nos atrevemos a muchas cosas porque son difíciles, pero son difíciles porque no nos atrevemos." — Séneca.',
     '🏛️ "No expliques tu filosofía, encárnala en tus actos de hoy." — Epicteto.',
     '🏛️ "El obstáculo en el camino se convierte en el camino." — Marco Aurelio.',
   ];
-
   const randomQuote = stoicQuotes[Math.floor(Math.random() * stoicQuotes.length)];
 
-  // Alertas prioritarias de entrenamiento
   if (patterns.skippedTrainingStreak >= 3) {
-    return `${randomQuote}\n\nLlevas 3 días sin registrar entrenamiento. El descanso fue necesario, pero hoy es el día de reiniciar el impulso. ¿Qué tal una sesión corta de 20 minutos o una caminata a paso firme? Dime qué equipo tienes y te armo la rutina ahora.`;
+    return `${randomQuote}\n\nLlevas 3 días sin registrar entrenamiento. El descanso fue necesario, pero hoy es el momento de reiniciar el impulso con Amor Fati. ¿Qué tal una sesión adaptada ahora mismo?`;
   }
-
-  if (patterns.skippedTrainingStreak >= 2) {
-    return `💪 Han pasado 48 horas desde tu último entreno. Tus depósitos de glucógeno están llenos y tu sistema nervioso recuperado. ¿Listo para romper un récord personal hoy?`;
-  }
-
   if (patterns.showsFatigue) {
-    return `🛡️ Tu check-in refleja fatiga acumulada. El Coach Sabio sabe cuándo apretar y cuándo autorregular. Hoy podemos enfocar en movilidad articular, estiramientos o cardio suelto Zona 2. ¿Cómo sientes las articulaciones?`;
+    return `🛡️ Tu check-in refleja fatiga. El Coach Sabio sabe cuándo apretar y cuándo autorregular. Hoy podemos enfocar en movilidad y recuperación activa.`;
   }
-
-  if (patterns.needsDeload) {
-    return `🔋 Detecto un volumen de carga alto esta semana. La supercompensación muscular requiere descanso estratégico (Semana de Descarga). Podríamos reducir el volumen al 50% para proteger tus articulaciones.`;
-  }
-
-  if (patterns.undereating) {
-    return `🥗 Tus calorías están por debajo de tu gasto energético basal. Para construir masa muscular limpia y mantener el metabolismo acelerado necesitas combustible. ¿Quieres que calculemos tus macros para la comida de hoy?`;
-  }
-
-  // Estado Positivo Cumplido
-  if (trainingCompleted && mealsLogged >= 3 && waterLitres >= 2) {
-    return `🏆 ¡Día impecable al 100%! Has dominado los tres pilares de hoy: Fuerza, Nutrición e Hidratación. ¿Cómo te sientes físicamente? Platícame tu experiencia de hoy para registrar tus sensaciones.`;
-  }
-
   if (trainingCompleted) {
-    return `🔥 ¡Entrenamiento de hoy completado con éxito! El esfuerzo en el gimnasio activa la señal anabólica. Aseguremos ahora 30g-40g de proteína limpia e hidratación con electrólitos para la fase de recuperación.`;
+    return `🏆 ¡Entrenamiento de hoy completado con éxito! El esfuerzo fortalece el templo. Recuerda hidratarte y nutrir tu cuerpo con alimentos nobles.`;
   }
-
-  if (patterns.activeStreak >= 7) {
-    return `🔥 ¡${patterns.activeStreak} DÍAS SEGUIDOS EN MARCHA! La disciplina de hierro no es un acto aislado, es un hábito diario. ¿En qué objetivo específico quieres enfocar nuestra sesión de hoy?`;
-  }
-
   if (!checkInDone) {
-    return `${randomQuote}\n\n¡Bienvenido de vuelta! Recuerda realizar tu Check-In de energía y sueño en el inicio para calibrar con precisión tus calorías y carga de entrenamiento de hoy.`;
+    return `${randomQuote}\n\n¡Bienvenido al Santuario! Recuerda realizar tu Check-In diario para calibrar con precisión tu jornada de hoy.`;
   }
 
-  return `${randomQuote}\n\n¡Tu Coach está listo! Pregúntame sobre tus rutinas de hoy, estrategias de nutrición, suplementos, o cualquier desafío de motivación que quieras superar.`;
+  return `${randomQuote}\n\n¡Tu Coach Estoico está listo! Pregúntame sobre tus rutinas, recetas con macros, suplementación o cualquier desafío mental que quieras superar.`;
+}
+
+/**
+ * Extrae ejercicios estructurados de un texto o respuesta del coach
+ * para permitir cargarlos directamente en el Trainer con 1 clic.
+ */
+export function extractExercisesFromText(text: string): CustomExercise[] {
+  const exercises: CustomExercise[] = [];
+  const lines = text.split('\n');
+
+  lines.forEach((line, index) => {
+    // Detectar patrones tipo: "1. **Nombre**: 4x8" o "• **Nombre** - 3x10" o "1. Nombre: 4x10"
+    const match = line.match(/(?:^\s*(?:\d+[\.\)]|[-*•])\s*)(?:\*\*)?([^*\n:]+)(?:\*\*)?\s*[:\-–]\s*(.+)/);
+    if (match) {
+      const name = match[1].replace(/\*\*/g, '').trim();
+      let setsReps = match[2].replace(/\*\*/g, '').trim();
+
+      // Filtrar frases que no sean ejercicios reales
+      if (
+        name.length > 2 &&
+        name.length < 50 &&
+        !name.toLowerCase().includes('opción') &&
+        !name.toLowerCase().includes('propuesta') &&
+        !name.toLowerCase().includes('nota') &&
+        !name.toLowerCase().includes('macros') &&
+        !name.toLowerCase().includes('plato')
+      ) {
+        exercises.push({
+          id: `coach_ex_${Date.now()}_${index}`,
+          n: name,
+          s: setsReps,
+          done: false,
+          rpe: null,
+        });
+      }
+    }
+  });
+
+  return exercises;
 }
 
 /**

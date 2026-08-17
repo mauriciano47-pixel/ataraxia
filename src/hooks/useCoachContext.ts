@@ -98,6 +98,7 @@ export function useCoachContext(): CoachContext {
 
     lines.push('=== FICHA TÉCNICA DEL ATLETA PROKOPTON ===');
     lines.push(`Nombre: ${log.userName || 'Ciudadano Prokopton'}`);
+    lines.push(`Arquetipo del Coach: ${log.coachArchetype === 'spartan_commander' ? 'Comandante Espartano ⚔️' : log.coachArchetype === 'sports_scientist' ? 'Fisiólogo & Científico Deportivo 🔬' : 'Mentor Sabio Estoico 🏛️'}`);
     if (log.prokoptonProfile) {
       const p = log.prokoptonProfile;
       lines.push(`Enfoque Principal: ${p.focus === 'strength' ? 'Fuerza Espartana & Hipertrofia' : p.focus === 'fat_loss' ? 'Recomposición & Déficit' : p.focus === 'longevity' ? 'Resistencia & Longevidad' : 'Claridad Mental & Estoicismo'}`);
