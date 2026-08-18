@@ -41,7 +41,7 @@
       ]
     ],
     "experiments": {
-      "baseUrl": "",
+      "baseUrl": "/ataraxia",
       "typedRoutes": true,
       "reactCompiler": true
     }

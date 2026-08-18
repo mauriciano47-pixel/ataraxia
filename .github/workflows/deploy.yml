@@ -29,8 +29,11 @@ jobs:
           EXPO_PUBLIC_GEMINI_API_KEY: ${{ secrets.EXPO_PUBLIC_GEMINI_API_KEY }}
         run: npx expo export
 
-      - name: Add .nojekyll
-        run: touch dist/.nojekyll
+      - name: Add .nojekyll and SPA Fallbacks
+        run: |
+          touch dist/.nojekyll
+          cp dist/index.html dist/404.html
+          cp dist/index.html dist/200.html
 
       - name: Deploy to gh-pages Branch
         uses: peaceiris/actions-gh-pages@v3
