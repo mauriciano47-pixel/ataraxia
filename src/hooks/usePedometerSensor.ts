@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Pedometer } from 'expo-sensors';
 import { SafeStorage } from '@/utils/safeStorage';
 
 const PEDOMETER_AUTO_KEY = 'ataraxia_pedometer_auto_active';
@@ -9,7 +10,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
   const [isLiveTracking, setIsLiveTracking] = useState<boolean>(() => {
     try {
       const saved = SafeStorage.getItem(PEDOMETER_AUTO_KEY);
-      // Por defecto siempre ACTIVO (true) a menos que el usuario lo haya pausado explícitamente
       return saved !== null ? saved === 'true' : true;
     } catch {
       return true;
@@ -21,15 +21,75 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
   const lastStepTime = useRef<number>(0);
   const liveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRealSensorEmitting = useRef<boolean>(false);
+  const pedometerSubscription = useRef<any>(null);
+  const lastNativeStepCount = useRef<number>(0);
 
-  // Check DeviceMotion sensor availability (Web & Mobile Browsers)
-  useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && 'DeviceMotionEvent' in window) {
-      setTimeout(() => setIsAvailable(true), 0);
+  // 1. Sincronización de Pasos Nativos 24h desde las 00:00 (Hardware Coprocessor)
+  const syncNativeHistoricalSteps = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+
+    try {
+      const available = await Pedometer.isAvailableAsync();
+      setIsAvailable(available);
+
+      if (available) {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const now = new Date();
+
+        const result = await Pedometer.getStepCountAsync(startOfDay, now);
+        if (result && typeof result.steps === 'number') {
+          const delta = lastNativeStepCount.current === 0 
+            ? result.steps 
+            : Math.max(0, result.steps - lastNativeStepCount.current);
+
+          lastNativeStepCount.current = result.steps;
+
+          if (delta > 0) {
+            setLiveSessionSteps((prev) => prev + delta);
+            onStepDetected(delta);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[usePedometerSensor] Error sincronizando podómetro nativo:', e);
     }
-  }, []);
+  }, [onStepDetected]);
 
-  // Motion Sensor Listener for Device Motion / Accelerometer
+  // 2. Comprobar disponibilidad e iniciar sensores en el montaje
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'DeviceMotionEvent' in window) {
+        setTimeout(() => setIsAvailable(true), 0);
+      }
+    } else {
+      // Plataforma Nativa (Android / iOS): Sincronizar historial 24h del chip de movimiento
+      syncNativeHistoricalSteps();
+
+      // Iniciar Watcher Nativo en Vivo
+      if (isLiveTracking) {
+        try {
+          pedometerSubscription.current = Pedometer.watchStepCount((result) => {
+            if (result && typeof result.steps === 'number' && result.steps > 0) {
+              setLiveSessionSteps((prev) => prev + 1);
+              onStepDetected(1);
+            }
+          });
+        } catch (err) {
+          console.warn('[usePedometerSensor] Error iniciando watchStepCount:', err);
+        }
+      }
+    }
+
+    return () => {
+      if (pedometerSubscription.current) {
+        pedometerSubscription.current.remove();
+        pedometerSubscription.current = null;
+      }
+    };
+  }, [isLiveTracking, syncNativeHistoricalSteps, onStepDetected]);
+
+  // 3. Sensor Web de Acelerómetro (Fallback para Navegadores)
   useEffect(() => {
     if (!isLiveTracking || Platform.OS !== 'web' || typeof window === 'undefined') return;
 
@@ -40,14 +100,13 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
       const mag = Math.sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
       const now = Date.now();
 
-      // Si el dispositivo emite eventos reales de acelerómetro, cancelar simulación
       isRealSensorEmitting.current = true;
       if (liveIntervalRef.current) {
         clearInterval(liveIntervalRef.current);
         liveIntervalRef.current = null;
       }
 
-      // Peak Detection Algorithm for Real Steps (Threshold > 11.8 m/s², min 320ms gap)
+      // Peak Detection Algorithm (Threshold > 11.8 m/s², min 320ms gap)
       if (mag > 11.8 && lastAccelMagnitude.current <= 11.8 && now - lastStepTime.current > 320) {
         lastStepTime.current = now;
         setLiveSessionSteps((prev) => prev + 1);
@@ -56,7 +115,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
       lastAccelMagnitude.current = mag;
     };
 
-    // Solicitar permisos en iOS Safari si es necesario
     if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
       (DeviceMotionEvent as any).requestPermission().then((permissionState: string) => {
         if (permissionState === 'granted') {
@@ -72,20 +130,24 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     };
   }, [isLiveTracking, onStepDetected]);
 
-  // Manejo de visibilidad / segundo plano: reanudar conteo en caliente
+  // 4. Manejo de Ciclo de Vida: Reanudar y Sincronizar Pasos al regresar de Segundo Plano
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active' && isLiveTracking) {
-        // App regresa al primer plano: verificar acelerómetro
-        lastStepTime.current = Date.now();
+      if (nextAppState === 'active') {
+        if (Platform.OS !== 'web') {
+          // En móvil nativo: Consultar de inmediato los pasos acumulados en segundo plano
+          syncNativeHistoricalSteps();
+        } else {
+          lastStepTime.current = Date.now();
+        }
       }
     };
 
     const sub = AppState.addEventListener('change', handleAppStateChange);
     return () => sub.remove();
-  }, [isLiveTracking]);
+  }, [syncNativeHistoricalSteps]);
 
-  // Alternar rastreo manual (si el usuario desea pausar el podómetro automático)
+  // 5. Alternar rastreo manual
   const toggleLiveTracking = () => {
     const nextState = !isLiveTracking;
     setIsLiveTracking(nextState);
@@ -94,13 +156,27 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     } catch {}
 
     if (nextState) {
-      if (!isRealSensorEmitting.current) {
+      if (Platform.OS !== 'web') {
+        syncNativeHistoricalSteps();
+        if (!pedometerSubscription.current) {
+          pedometerSubscription.current = Pedometer.watchStepCount((result) => {
+            if (result && typeof result.steps === 'number') {
+              setLiveSessionSteps((prev) => prev + 1);
+              onStepDetected(1);
+            }
+          });
+        }
+      } else if (!isRealSensorEmitting.current) {
         liveIntervalRef.current = setInterval(() => {
           setLiveSessionSteps((prev) => prev + 1);
           onStepDetected(1);
         }, 2000);
       }
     } else {
+      if (pedometerSubscription.current) {
+        pedometerSubscription.current.remove();
+        pedometerSubscription.current = null;
+      }
       if (liveIntervalRef.current) {
         clearInterval(liveIntervalRef.current);
         liveIntervalRef.current = null;

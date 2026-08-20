@@ -8,9 +8,18 @@
     "scheme": "ataraxia",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.ataraxia.app",
+      "infoPlist": {
+        "NSMotionUsageDescription": "Ataraxia requiere acceso a tus sensores de movimiento para registrar tus pasos y calcular tu gasto de energía diario las 24 horas."
+      }
     },
     "android": {
+      "package": "com.ataraxia.app",
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.BODY_SENSORS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#050505",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,6 +40,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Ataraxia requiere acceso a tus sensores de movimiento para registrar tus pasos y calcular tu gasto de energía diario las 24 horas."
+        }
+      ],
       [
         "expo-splash-screen",
         {
