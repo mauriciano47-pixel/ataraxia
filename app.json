@@ -59,6 +59,12 @@
       "baseUrl": "/ataraxia",
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e6631a9a-b2f5-4f3a-8601-fa5c54a251f1"
+      }
     }
   }
 }
