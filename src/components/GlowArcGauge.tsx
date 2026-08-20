@@ -86,44 +86,80 @@ export function GlowArcGauge({
       >
         <Svg width={size} height={size} style={styles.svgAbsolute}>
           <Defs>
+            {/* Ambient Electric Atmosphere Halo */}
+            <RadialGradient id="ambientBackglow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="rgba(245, 158, 11, 0.45)" />
+              <Stop offset="50%" stopColor="rgba(255, 226, 89, 0.20)" />
+              <Stop offset="85%" stopColor="rgba(212, 175, 55, 0.06)" />
+              <Stop offset="100%" stopColor="rgba(0, 0, 0, 0)" />
+            </RadialGradient>
+
             {/* 3D Metallic Gold Bezel Gradient */}
             <LinearGradient id="metallicBezel3D" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#FFF3B0" />
-              <Stop offset="25%" stopColor="#D4AF37" />
-              <Stop offset="50%" stopColor="#8A6615" />
-              <Stop offset="75%" stopColor="#F59E0B" />
-              <Stop offset="100%" stopColor="#FFF3B0" />
+              <Stop offset="0%" stopColor="#FFFDE0" />
+              <Stop offset="20%" stopColor="#FFE259" />
+              <Stop offset="45%" stopColor="#D4AF37" />
+              <Stop offset="70%" stopColor="#8A6615" />
+              <Stop offset="88%" stopColor="#F59E0B" />
+              <Stop offset="100%" stopColor="#FFFBEB" />
             </LinearGradient>
 
-            {/* Glowing Thunder Gold Arc Gradient */}
+            {/* Hyper-Luminous Thunder Gold Arc Gradient */}
             <LinearGradient id="thunderGlowArc" x1="0%" y1="100%" x2="100%" y2="0%">
               <Stop offset="0%" stopColor="#F59E0B" />
-              <Stop offset="40%" stopColor="#D4AF37" />
-              <Stop offset="75%" stopColor="#FFE259" />
-              <Stop offset="100%" stopColor="#FFF7C2" />
+              <Stop offset="30%" stopColor="#D4AF37" />
+              <Stop offset="65%" stopColor="#FFE259" />
+              <Stop offset="90%" stopColor="#FFFBEB" />
+              <Stop offset="100%" stopColor="#FFFFFF" />
             </LinearGradient>
+
+            {/* Central Bolt Corona Flare */}
+            <RadialGradient id="boltBloomGrad" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="rgba(255, 255, 255, 0.95)" />
+              <Stop offset="25%" stopColor="rgba(255, 226, 89, 0.75)" />
+              <Stop offset="65%" stopColor="rgba(245, 158, 11, 0.35)" />
+              <Stop offset="100%" stopColor="rgba(245, 158, 11, 0.00)" />
+            </RadialGradient>
 
             {/* 3D Central Bolt Gradient */}
             <LinearGradient id="bolt3DGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#FFFDE0" />
-              <Stop offset="40%" stopColor="#FFE259" />
-              <Stop offset="70%" stopColor="#D4AF37" />
+              <Stop offset="0%" stopColor="#FFFFFF" />
+              <Stop offset="20%" stopColor="#FFFDE0" />
+              <Stop offset="45%" stopColor="#FFE259" />
+              <Stop offset="75%" stopColor="#F59E0B" />
               <Stop offset="100%" stopColor="#B45309" />
+            </LinearGradient>
+
+            {/* Inner Chisel Highlight for 3D Bolt */}
+            <LinearGradient id="boltChiselGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+              <Stop offset="60%" stopColor="#FFE259" stopOpacity="0.80" />
+              <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0.30" />
             </LinearGradient>
 
             {/* Onyx Disc Background */}
             <RadialGradient id="onyxPlate" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor="#141824" />
-              <Stop offset="65%" stopColor="#0A0D15" />
-              <Stop offset="100%" stopColor="#050507" />
+              <Stop offset="0%" stopColor="#1E2333" />
+              <Stop offset="55%" stopColor="#0F131E" />
+              <Stop offset="85%" stopColor="#080A10" />
+              <Stop offset="100%" stopColor="#040406" />
             </RadialGradient>
 
             {/* Sparkle Gold Mini Bolts */}
             <LinearGradient id="sparkleBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#FFF3B0" />
-              <Stop offset="100%" stopColor="#D4AF37" />
+              <Stop offset="0%" stopColor="#FFFFFF" />
+              <Stop offset="40%" stopColor="#FFF3B0" />
+              <Stop offset="100%" stopColor="#F59E0B" />
             </LinearGradient>
           </Defs>
+
+          {/* 0. AMBIENT ELECTRIC ATMOSPHERE GLOW */}
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={bezelRadius + 14}
+            fill="url(#ambientBackglow)"
+          />
 
           {/* 1. OUTER 3D METALLIC GOLD RIM */}
           <Circle
@@ -131,7 +167,7 @@ export function GlowArcGauge({
             cy={cy}
             r={bezelRadius}
             stroke="url(#metallicBezel3D)"
-            strokeWidth={10}
+            strokeWidth={11}
             fill="none"
           />
           {/* Inner Golden Rim Line */}
@@ -139,17 +175,17 @@ export function GlowArcGauge({
             cx={cx}
             cy={cy}
             r={bezelRadius - 6}
-            stroke="rgba(255, 243, 176, 0.40)"
-            strokeWidth={1.5}
+            stroke="rgba(255, 253, 224, 0.65)"
+            strokeWidth={1.8}
             fill="none"
           />
           {/* Outer Specular Highlight */}
           <Circle
             cx={cx}
             cy={cy}
-            r={bezelRadius + 5}
-            stroke="rgba(212, 175, 55, 0.25)"
-            strokeWidth={1}
+            r={bezelRadius + 6}
+            stroke="rgba(255, 226, 89, 0.40)"
+            strokeWidth={1.2}
             fill="none"
           />
 
@@ -164,13 +200,31 @@ export function GlowArcGauge({
           {/* 3. TRACK BACKGROUND (INACTIVE ARC) */}
           <Path
             d={bgArc}
-            stroke="rgba(212, 175, 55, 0.14)"
+            stroke="rgba(212, 175, 55, 0.16)"
             strokeWidth={arcStrokeWidth}
             strokeLinecap="round"
             fill="none"
           />
 
-          {/* 4. ACTIVE POWER ARC (GLOWING GOLD) */}
+          {/* 4. ACTIVE POWER ARC GLOW BLOOM (LAYER 1: WIDE DIFFUSE) */}
+          <Path
+            d={progressArc}
+            stroke="rgba(245, 158, 11, 0.28)"
+            strokeWidth={arcStrokeWidth + 16}
+            strokeLinecap="round"
+            fill="none"
+          />
+
+          {/* 4. ACTIVE POWER ARC GLOW BLOOM (LAYER 2: INTENSE NEON) */}
+          <Path
+            d={progressArc}
+            stroke="rgba(255, 226, 89, 0.55)"
+            strokeWidth={arcStrokeWidth + 8}
+            strokeLinecap="round"
+            fill="none"
+          />
+
+          {/* 4. ACTIVE POWER ARC (CORE HYPER-BRIGHT GOLD & WHITE) */}
           <Path
             d={progressArc}
             stroke="url(#thunderGlowArc)"
@@ -179,25 +233,34 @@ export function GlowArcGauge({
             fill="none"
           />
 
-          {/* 5. GLOWING CAP AT PROGRESS TIP */}
+          {/* 5. MULTI-LAYER GLOWING CAP AT PROGRESS TIP */}
+          {/* Outer Bloom */}
           <Circle
             cx={capPos.x}
             cy={capPos.y}
-            r={arcStrokeWidth / 2 + 2}
-            fill="#FFF7C2"
+            r={arcStrokeWidth / 2 + 10}
+            fill="rgba(245, 158, 11, 0.35)"
           />
+          {/* Mid Intense Bloom */}
           <Circle
             cx={capPos.x}
             cy={capPos.y}
-            r={arcStrokeWidth / 2 + 6}
-            fill="rgba(255, 226, 89, 0.35)"
+            r={arcStrokeWidth / 2 + 5}
+            fill="rgba(255, 226, 89, 0.80)"
+          />
+          {/* White-Hot Core Spark */}
+          <Circle
+            cx={capPos.x}
+            cy={capPos.y}
+            r={arcStrokeWidth / 2 + 1}
+            fill="#FFFFFF"
           />
 
           {/* 6. FLOATING MINI LIGHTNING BOLTS INSIDE ARC */}
           <Path
             d="M86 120 L78 132 L84 133 L76 145"
             stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2}
+            strokeWidth={2.4}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
@@ -205,7 +268,7 @@ export function GlowArcGauge({
           <Path
             d="M60 178 L52 190 L58 191 L50 203"
             stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2.2}
+            strokeWidth={2.6}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
@@ -213,24 +276,48 @@ export function GlowArcGauge({
           <Path
             d="M234 116 L242 128 L236 129 L244 141"
             stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2}
+            strokeWidth={2.4}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
+          {/* Extra Electric Sparkles */}
+          <Circle cx={88} cy={122} r={1.5} fill="#FFFFFF" />
+          <Circle cx={58} cy={180} r={1.8} fill="#FFFFFF" />
+          <Circle cx={232} cy={118} r={1.5} fill="#FFFFFF" />
 
-          {/* 7. CENTRAL 3D GOLD MONUMENTAL THUNDERBOLT */}
+          {/* 7. CENTRAL 3D GOLD MONUMENTAL THUNDERBOLT (HIGH GLOW) */}
           <G transform={`translate(${cx - 24}, ${cy - 86})`}>
+            {/* Back Corona Flare */}
+            <Circle cx={26} cy={34} r={42} fill="url(#boltBloomGrad)" />
+
+            {/* Ambient Bolt Glow Outline */}
             <Polygon
               points="28,0 8,36 24,36 12,68 44,26 28,26"
-              fill="rgba(180, 83, 9, 0.5)"
-              transform="translate(2, 2)"
+              fill="rgba(245, 158, 11, 0.40)"
+              stroke="rgba(255, 226, 89, 0.70)"
+              strokeWidth={5}
             />
+
+            {/* Deep Warm Amber Drop Shadow */}
+            <Polygon
+              points="28,0 8,36 24,36 12,68 44,26 28,26"
+              fill="rgba(180, 83, 9, 0.65)"
+              transform="translate(2, 2.5)"
+            />
+
+            {/* 3D Faceted Body */}
             <Polygon
               points="28,0 8,36 24,36 12,68 44,26 28,26"
               fill="url(#bolt3DGrad)"
-              stroke="#FFFDE0"
-              strokeWidth={1}
+              stroke="#FFFFFF"
+              strokeWidth={1.4}
+            />
+
+            {/* Specular Inner Chisel Highlight (Left Facet) */}
+            <Polygon
+              points="28,2 10,34 23,34 14,64 24,34 16,34 28,6"
+              fill="url(#boltChiselGrad)"
             />
           </G>
         </Svg>
@@ -281,19 +368,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   mainCountText: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '900',
-    color: '#FFE259',
+    color: '#FFFFFF',
     fontFamily: 'serif',
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(212, 175, 55, 0.60)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowColor: 'rgba(255, 226, 89, 0.95)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
   },
   targetDividerText: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#CBD5E1',
+    color: '#E2E8F0',
     fontFamily: 'serif',
     letterSpacing: -0.5,
   },
@@ -303,43 +390,60 @@ const styles = StyleSheet.create({
   kcalUnitText: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#94A3B8',
+    color: '#FDE68A',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(245, 158, 11, 0.60)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   dailyPowerTitle: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#FDE68A',
+    color: '#FFE259',
     fontFamily: 'sans-serif',
-    letterSpacing: 3,
+    letterSpacing: 3.5,
     textTransform: 'uppercase',
     textAlign: 'center',
     lineHeight: 20,
+    textShadowColor: 'rgba(245, 158, 11, 0.70)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
   },
   dailyBurnTitle: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#FDE68A',
+    color: '#FFFBEB',
     fontFamily: 'sans-serif',
-    letterSpacing: 4,
+    letterSpacing: 4.5,
     textTransform: 'uppercase',
     textAlign: 'center',
     lineHeight: 20,
+    textShadowColor: 'rgba(245, 158, 11, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
   percentFloatingBadge: {
     position: 'absolute',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: 'rgba(5, 5, 7, 0.90)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 226, 89, 0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: 'rgba(8, 10, 16, 0.95)',
+    borderWidth: 1.5,
+    borderColor: '#FFE259',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 10,
+    elevation: 6,
   },
   percentFloatingText: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#FFE259',
+    color: '#FFFDE0',
     fontFamily: 'monospace',
+    textShadowColor: 'rgba(245, 158, 11, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
 });

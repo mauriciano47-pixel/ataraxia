@@ -64,8 +64,9 @@ export function ThunderTelemetryTwinCards({
             <Defs>
               <LinearGradient id="stepsArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <Stop offset="0%" stopColor="#F59E0B" />
-                <Stop offset="60%" stopColor="#FFE259" />
-                <Stop offset="100%" stopColor="#FFF3B0" />
+                <Stop offset="50%" stopColor="#FFE259" />
+                <Stop offset="90%" stopColor="#FFFDE0" />
+                <Stop offset="100%" stopColor="#FFFFFF" />
               </LinearGradient>
             </Defs>
 
@@ -74,6 +75,15 @@ export function ThunderTelemetryTwinCards({
               d={bgSemiArc}
               stroke="rgba(212, 175, 55, 0.16)"
               strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              fill="none"
+            />
+
+            {/* Active Progress Track (Under-layer Glow Bloom) */}
+            <Path
+              d={progressSemiArc}
+              stroke="rgba(255, 226, 89, 0.45)"
+              strokeWidth={strokeWidth + 6}
               strokeLinecap="round"
               fill="none"
             />
@@ -87,8 +97,10 @@ export function ThunderTelemetryTwinCards({
               fill="none"
             />
 
-            {/* Glowing Cap */}
-            <Circle cx={capX} cy={capY} r={strokeWidth / 2 + 1} fill="#FFFDE0" />
+            {/* Glowing Cap with Multi-Layer Glow */}
+            <Circle cx={capX} cy={capY} r={strokeWidth / 2 + 4} fill="rgba(245, 158, 11, 0.40)" />
+            <Circle cx={capX} cy={capY} r={strokeWidth / 2 + 2} fill="rgba(255, 226, 89, 0.85)" />
+            <Circle cx={capX} cy={capY} r={strokeWidth / 2 - 1} fill="#FFFFFF" />
           </Svg>
 
           {/* Centered Steps Numbers */}
@@ -132,10 +144,10 @@ export function ThunderTelemetryTwinCards({
               <LinearGradient id="ecgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <Stop offset="0%" stopColor="#F59E0B" />
                 <Stop offset="50%" stopColor="#FFE259" />
-                <Stop offset="100%" stopColor="#FFF3B0" />
+                <Stop offset="100%" stopColor="#FFFFFF" />
               </LinearGradient>
               <LinearGradient id="ecgAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor="rgba(255, 226, 89, 0.20)" />
+                <Stop offset="0%" stopColor="rgba(255, 226, 89, 0.28)" />
                 <Stop offset="100%" stopColor="rgba(255, 226, 89, 0.00)" />
               </LinearGradient>
             </Defs>
@@ -146,11 +158,21 @@ export function ThunderTelemetryTwinCards({
               fill="url(#ecgAreaGrad)"
             />
 
+            {/* Line Glow Bloom */}
+            <Path
+              d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
+              stroke="rgba(255, 226, 89, 0.40)"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+
             {/* Line Stroke */}
             <Path
               d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
               stroke="url(#ecgGrad)"
-              strokeWidth="2.2"
+              strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"
@@ -177,16 +199,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: 'rgba(13, 17, 28, 0.94)',
+    backgroundColor: 'rgba(11, 15, 26, 0.96)',
     borderRadius: 20,
     padding: Spacing.three,
-    borderWidth: 1.2,
-    borderColor: 'rgba(212, 175, 55, 0.38)',
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20,
-    shadowRadius: 10,
-    elevation: 4,
+    borderWidth: 1.4,
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
     justifyContent: 'space-between',
     minHeight: 180,
   },
@@ -199,14 +221,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     fontFamily: 'monospace',
-    color: '#94A3B8',
+    color: '#CBD5E1',
     letterSpacing: 1.5,
   },
   headerIconWrapper: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 226, 89, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -222,14 +246,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepsCountText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
     color: '#FFFFFF',
     fontFamily: 'sans-serif',
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(212, 175, 55, 0.50)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(255, 226, 89, 0.85)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   stepsLabelSub: {
     fontSize: 9,
@@ -238,6 +262,9 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     letterSpacing: 1.5,
     marginTop: -2,
+    textShadowColor: 'rgba(245, 158, 11, 0.60)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   bpmRow: {
     flexDirection: 'row',
@@ -246,16 +273,19 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   bpmNumberText: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '900',
-    color: '#FFE259',
+    color: '#FFFFFF',
     fontFamily: 'serif',
     letterSpacing: -1,
+    textShadowColor: 'rgba(255, 226, 89, 0.90)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   bpmUnitText: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#94A3B8',
+    color: '#FDE68A',
     fontFamily: 'monospace',
     letterSpacing: 1,
   },
@@ -264,7 +294,7 @@ const styles = StyleSheet.create({
   },
   cardFooter: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingTop: 6,
   },
   footerGoalText: {
@@ -274,8 +304,8 @@ const styles = StyleSheet.create({
   },
   footerMilesText: {
     fontSize: 10.5,
-    color: '#CBD5E1',
-    fontWeight: '600',
+    color: '#E2E8F0',
+    fontWeight: '700',
     marginTop: 1,
   },
   footerEcgText: {
