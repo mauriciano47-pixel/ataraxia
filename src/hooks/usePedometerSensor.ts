@@ -1,14 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
+import { SafeStorage } from '@/utils/safeStorage';
+
+const PEDOMETER_AUTO_KEY = 'ataraxia_pedometer_auto_active';
 
 export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void) {
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
-  const [isLiveTracking, setIsLiveTracking] = useState<boolean>(false);
+  const [isLiveTracking, setIsLiveTracking] = useState<boolean>(() => {
+    try {
+      const saved = SafeStorage.getItem(PEDOMETER_AUTO_KEY);
+      // Por defecto siempre ACTIVO (true) a menos que el usuario lo haya pausado explícitamente
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
   const [liveSessionSteps, setLiveSessionSteps] = useState<number>(0);
 
   const lastAccelMagnitude = useRef<number>(0);
   const lastStepTime = useRef<number>(0);
   const liveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isRealSensorEmitting = useRef<boolean>(false);
 
   // Check DeviceMotion sensor availability (Web & Mobile Browsers)
   useEffect(() => {
@@ -28,13 +40,14 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
       const mag = Math.sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
       const now = Date.now();
 
-      // Si el dispositivo emite eventos reales de acelerómetro, cancelar simulación por temporizador
+      // Si el dispositivo emite eventos reales de acelerómetro, cancelar simulación
+      isRealSensorEmitting.current = true;
       if (liveIntervalRef.current) {
         clearInterval(liveIntervalRef.current);
         liveIntervalRef.current = null;
       }
 
-      // Simple Peak Detection Algorithm for Real Steps (Threshold > 11.8 m/s², min 300ms gap)
+      // Peak Detection Algorithm for Real Steps (Threshold > 11.8 m/s², min 320ms gap)
       if (mag > 11.8 && lastAccelMagnitude.current <= 11.8 && now - lastStepTime.current > 320) {
         lastStepTime.current = now;
         setLiveSessionSteps((prev) => prev + 1);
@@ -43,23 +56,50 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
       lastAccelMagnitude.current = mag;
     };
 
-    window.addEventListener('devicemotion', handleMotion);
+    // Solicitar permisos en iOS Safari si es necesario
+    if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
+      (DeviceMotionEvent as any).requestPermission().then((permissionState: string) => {
+        if (permissionState === 'granted') {
+          window.addEventListener('devicemotion', handleMotion);
+        }
+      }).catch(() => {});
+    } else {
+      window.addEventListener('devicemotion', handleMotion);
+    }
+
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
     };
   }, [isLiveTracking, onStepDetected]);
 
-  // Live Auto-Walker Simulation (Para navegadores de escritorio sin acelerómetro físico)
+  // Manejo de visibilidad / segundo plano: reanudar conteo en caliente
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active' && isLiveTracking) {
+        // App regresa al primer plano: verificar acelerómetro
+        lastStepTime.current = Date.now();
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => sub.remove();
+  }, [isLiveTracking]);
+
+  // Alternar rastreo manual (si el usuario desea pausar el podómetro automático)
   const toggleLiveTracking = () => {
     const nextState = !isLiveTracking;
     setIsLiveTracking(nextState);
+    try {
+      SafeStorage.setItem(PEDOMETER_AUTO_KEY, String(nextState));
+    } catch {}
 
     if (nextState) {
-      // Inicia un pulso sutil cada 2s para simulación desktop que se apaga si hay acelerómetro real
-      liveIntervalRef.current = setInterval(() => {
-        setLiveSessionSteps((prev) => prev + 1);
-        onStepDetected(1);
-      }, 2000);
+      if (!isRealSensorEmitting.current) {
+        liveIntervalRef.current = setInterval(() => {
+          setLiveSessionSteps((prev) => prev + 1);
+          onStepDetected(1);
+        }, 2000);
+      }
     } else {
       if (liveIntervalRef.current) {
         clearInterval(liveIntervalRef.current);
@@ -81,4 +121,5 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     toggleLiveTracking,
   };
 }
+
 

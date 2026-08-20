@@ -97,7 +97,7 @@ export function StepCounterCard({
         />
       </View>
 
-      {/* LIVE PEDOMETER TOGGLE BUTTON */}
+      {/* LIVE AUTO-PEDOMETER TOGGLE BUTTON */}
       <TouchableOpacity
         style={[styles.livePedometerBtn, isLiveTracking && styles.livePedometerBtnActive]}
         onPress={toggleLiveTracking}
@@ -106,12 +106,12 @@ export function StepCounterCard({
         <View style={styles.liveIndicatorDotRow}>
           <View style={[styles.pulseDot, isLiveTracking ? styles.pulseDotActive : styles.pulseDotInactive]} />
           <ThemedText style={[styles.liveBtnText, isLiveTracking && styles.liveBtnTextActive]}>
-            {isLiveTracking ? 'Podómetro en Vivo: ACTIVO 🟢' : '⚡ Activar Podómetro en Vivo ⚪'}
+            {isLiveTracking ? '⚡ Podómetro Automático: ACTIVO 🟢' : '⏸️ Podómetro en Pausa (Toca para reanudar)'}
           </ThemedText>
         </View>
         {isLiveTracking && (
           <ThemedText style={styles.liveSessionSubtext}>
-            +{liveSessionSteps} pasos detectados en tiempo real
+            +{liveSessionSteps} pasos sincronizados automáticamente en esta sesión
           </ThemedText>
         )}
       </TouchableOpacity>
