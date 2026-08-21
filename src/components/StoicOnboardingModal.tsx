@@ -8,6 +8,7 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Dimensions,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +20,13 @@ import {
   SessionDurationMinutes,
   DietPreference,
   CustomExercise,
+  LegendaryPath,
+  LEGENDARY_PATHS,
 } from '@/types/onboarding';
 import { useDailyLog } from '@/hooks/useDailyLog';
+import { Spacing } from '@/constants/theme';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface Props {
   visible: boolean;
@@ -29,474 +35,431 @@ interface Props {
 }
 
 export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
-  const { saveOnboardingProfile } = useDailyLog();
+  const { saveOnboardingProfile, selectLegendaryPath } = useDailyLog();
 
   const [step, setStep] = useState<number>(1);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
-  // Form state
-  const [userName, setUserName] = useState<string>('Prokopton');
-  const [focus, setFocus] = useState<StoicFocus>('strength');
+  // Senda elegida (Paso 1)
+  const [selectedPath, setSelectedPath] = useState<LegendaryPath>('spartan');
+
+  // Calibración Biométrica & Equipamiento (Paso 2)
+  const [userName, setUserName] = useState<string>('Guerrero');
   const [equipment, setEquipment] = useState<EquipmentType>('gym');
   const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(4);
   const [sessionDuration, setSessionDuration] = useState<SessionDurationMinutes>(45);
-  const [dietPreference, setDietPreference] = useState<DietPreference>('deficit');
-  const [age, setAge] = useState<string>('26');
-  const [weightKg, setWeightKg] = useState<string>('75');
-  const [targetWeightKg, setTargetWeightKg] = useState<string>('70');
-  const [heightCm, setHeightCm] = useState<string>('175');
+  const [age, setAge] = useState<string>('28');
+  const [weightKg, setWeightKg] = useState<string>('78');
+  const [heightCm, setHeightCm] = useState<string>('176');
 
-  const generateCalculatedPlan = (): { routine: CustomExercise[]; targetCals: number } => {
-    const ageNum = parseInt(age, 10) || 26;
-    const weightNum = parseFloat(weightKg) || 75;
-    const heightNum = parseFloat(heightCm) || 175;
+  // Cálculo del Plan Personalizado
+  const generateCalculatedPlan = (): {
+    routine: CustomExercise[];
+    targetCals: number;
+    proteinGrams: number;
+    carbsGrams: number;
+    fatsGrams: number;
+    stepGoal: number;
+  } => {
+    const ageNum = parseInt(age, 10) || 28;
+    const weightNum = parseFloat(weightKg) || 78;
+    const heightNum = parseFloat(heightCm) || 176;
+    const pathInfo = LEGENDARY_PATHS[selectedPath];
 
-    // Mifflin-St Jeor BMR
+    // BMR Fórmula Mifflin-St Jeor
     const bmr = 10 * weightNum + 6.25 * heightNum - 5 * ageNum + 5;
     const activityMult = daysPerWeek >= 5 ? 1.55 : daysPerWeek >= 4 ? 1.4 : 1.25;
-    let tdee = Math.round(bmr * activityMult);
+    const tdee = Math.round(bmr * activityMult);
+    const targetCals = Math.max(1450, tdee + pathInfo.recommendedCalsDelta);
 
-    if (dietPreference === 'deficit') tdee -= 400;
-    else if (dietPreference === 'surplus') tdee += 350;
+    // Macros
+    const proteinGrams = Math.round(weightNum * pathInfo.targetProteinGPerKg);
+    const fatsGrams = Math.round((targetCals * 0.25) / 9);
+    const remainingCals = targetCals - (proteinGrams * 4) - (fatsGrams * 9);
+    const carbsGrams = Math.max(80, Math.round(remainingCals / 4));
 
-    const targetCals = Math.max(1400, tdee);
+    // Meta de Pasos según la Senda
+    const stepGoal = selectedPath === 'hoplite' ? 12000 : selectedPath === 'apollo' ? 10000 : selectedPath === 'spartan' ? 8000 : 9000;
 
-    // Build routine according to equipment, focus & sessionDuration
+    // Rutina adaptada a la Senda + Equipamiento + Tiempo
     let routine: CustomExercise[] = [];
 
-    if (equipment === 'gym') {
-      if (focus === 'strength') {
-        if (sessionDuration <= 30) {
-          routine = [
-            { id: 'gs1', n: 'Sentadilla Trasera Pesada con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-            { id: 'gs2', n: 'Press de Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-            { id: 'gs3', n: 'Remo Pendlay con Barra Olímpica', s: '3x6 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
-          ];
-        } else if (sessionDuration <= 45) {
-          routine = [
-            { id: 'gs1', n: 'Sentadilla Libre con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-            { id: 'gs2', n: 'Press de Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-            { id: 'gs3', n: 'Peso Muerto Convencional / Rumano', s: '3x5 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Cadena Posterior' },
-            { id: 'gs4', n: 'Press Militar de Hombros de Pie', s: '3x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
-          ];
-        } else {
-          routine = [
-            { id: 'gs1', n: 'Sentadilla Trasera con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-            { id: 'gs2', n: 'Press Banca Plano con Barra', s: '4x6 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-            { id: 'gs3', n: 'Peso Muerto Rumano', s: '4x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
-            { id: 'gs4', n: 'Dominadas Lastradas o Jalón al Pecho', s: '4x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
-            { id: 'gs5', n: 'Press Militar con Barra', s: '3x8 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
-            { id: 'gs6', n: 'Curl de Bíceps con Barra Z', s: '3x10 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Brazos' },
-          ];
-        }
-      } else if (focus === 'fat_loss') {
-        if (sessionDuration <= 30) {
-          routine = [
-            { id: 'gf1', n: 'Sentadilla Hack en Máquina', s: '4x12 (Tempo 3-0-1)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-            { id: 'gf2', n: 'Press Inclinado con Mancuernas', s: '4x12 (Densidad)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Pecho' },
-            { id: 'gf3', n: 'Remo Gironda en Polea Baja', s: '4x12 + Drop Set', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-          ];
-        } else {
-          routine = [
-            { id: 'gf1', n: 'Prensa 45° con Pies Altos', s: '4x15 (Ardor Metabólico)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-            { id: 'gf2', n: 'Press Plano en Máquina Convergente', s: '4x12 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-            { id: 'gf3', n: 'Jalón al Pecho Agarre Neutro', s: '4x12 (Controlado)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda' },
-            { id: 'gf4', n: 'Elevaciones Laterales en Polea', s: '3x15 (Bombeo)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Hombros' },
-            { id: 'gf5', n: 'Plancha Abdominal con Disco', s: '3x45 seg (Core Activo)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
-          ];
-        }
-      } else {
-        // longevity or mental
+    if (selectedPath === 'spartan') {
+      if (equipment === 'gym') {
         routine = [
-          { id: 'gl1', n: 'Sentadilla Goblet Profunda', s: '4x10 (Pausa 2s abajo)', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'gl2', n: 'Press de Banca con Mancuernas', s: '3x10 (Control articular)', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'gl3', n: 'Remo Unilateral con Mancuerna', s: '3x10 por lado', targetRpe: 7.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-          { id: 'gl4', n: 'Face Pulls en Polea Alta', s: '3x15 (Salud Manguito)', targetRpe: 7, done: false, rpe: null, muscleGroup: 'Postura' },
-          { id: 'gl5', n: 'Paseo del Granjero (Farmer Walk)', s: '3x40 metros', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Agarre/Core' },
+          { id: 'sp1', n: 'Sentadilla Trasera con Barra Olímpica', s: '4x6 (Pesado RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'sp2', n: 'Press de Banca Plano con Barra', s: '4x6 (Sobrecarga Progresiva)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'sp3', n: 'Peso Muerto Convencional', s: '3x5 (Poder Espartano)', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+          { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3x8 (Estricto)', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+          { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4x8 (Espalda Densa)', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
         ];
-      }
-    } else if (equipment === 'home_dumbbell') {
-      if (focus === 'strength') {
+      } else if (equipment === 'home_dumbbell') {
         routine = [
-          { id: 'hd1', n: 'Goblet Squat Pesado', s: '4x10 (RIR 2)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'hd2', n: 'Press de Pecho en Suelo (Floor Press)', s: '4x10 (Pesado)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'hd3', n: 'Peso Muerto Rumano con Mancuernas', s: '4x10 (RIR 2)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Isquios' },
-          { id: 'hd4', n: 'Press Militar de Hombros de Pie', s: '3x10 (Estricto)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
+          { id: 'sph1', n: 'Goblet Squat Pesado con Pausa', s: '4x10 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'sph2', n: 'Press de Pecho en Suelo (Floor Press)', s: '4x10 (Pesado)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'sph3', n: 'Peso Muerto Rumano con Mancuernas', s: '4x10 (Cadena Posterior)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Isquios' },
+          { id: 'sph4', n: 'Press Militar con Mancuernas de Pie', s: '3x10 (Hombros)', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
         ];
       } else {
         routine = [
-          { id: 'hd1', n: 'Zancadas Dinámicas con Mancuernas', s: '4x12 por pierna', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'hd2', n: 'Flexiones (Push-ups) sobre Mancuernas', s: '4x15', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-          { id: 'hd3', n: 'Remo Renegado con Mancuerna', s: '3x10 por lado', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Espalda/Core' },
-          { id: 'hd4', n: 'Elevaciones Laterales + Pájaros', s: '3x15 (Superserie)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Hombros' },
+          { id: 'spc1', n: 'Dominadas Lastradas / Isométricas', s: '4x6 (Fuerza)', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+          { id: 'spc2', n: 'Fondos en Paralelas / Dips', s: '4x8 (Pecho/Tríceps)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+          { id: 'spc3', n: 'Pistol Squats (Sentadillas a 1 pierna)', s: '4x6 por pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+          { id: 'spc4', n: 'Flexiones Diamante Espartanas', s: '3x al fallo técnico', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Tríceps' },
         ];
       }
+    } else if (selectedPath === 'hoplite') {
+      routine = [
+        { id: 'hop1', n: 'Circuito de Resistencia Hoplita (Burpees + Zancadas)', s: '4 rondas x 45 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Full Body' },
+        { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 minutos continuos', targetRpe: 7.0, done: false, rpe: null, muscleGroup: 'Cardiovascular' },
+        { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4x15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4x8 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3x60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
+    } else if (selectedPath === 'apollo') {
+      routine = [
+        { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4x10-12 (Ardor)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4x15 (Bombeo)', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+        { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro (Tempo 3-1-1)', s: '4x10 (Espalda)', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3x12 por pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ap5', n: 'Elevación de Piernas Colgado (V-Cut Abs)', s: '4x15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
     } else {
-      // Calistenia Pura
-      if (focus === 'strength') {
-        routine = [
-          { id: 'c1', n: 'Dominadas Estrictas Pronadas (Pull-ups)', s: '4x6-8 (Control)', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Espalda' },
-          { id: 'c2', n: 'Fondos en Paralelas / Barra (Dips)', s: '4x8-10 (RIR 1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-          { id: 'c3', n: 'Pistol Squats o Zancadas Explosivas', s: '4x8 por pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'c4', n: 'Flexiones Espartanas / Diamante', s: '3x al fallo técnico', targetRpe: 9, done: false, rpe: null, muscleGroup: 'Pecho' },
-        ];
-      } else {
-        routine = [
-          { id: 'c1', n: 'Flexiones Militares Espartanas', s: '4x15 (Cadencia 2-1-1)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-          { id: 'c2', n: 'Sentadillas Profundas de Calistenia', s: '4x25 (Ritmo Fluido)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Piernas' },
-          { id: 'c3', n: 'Elevación de Piernas en Barra / Suelo', s: '4x15 (Core Imperial)', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Core' },
-          { id: 'c4', n: 'Plancha Abdominal Estoica', s: '3x60 seg (Temple Mental)', targetRpe: 8, done: false, rpe: null, muscleGroup: 'Core' },
-        ];
-      }
+      // Filósofo Guerrero (Calistenia + Temple)
+      routine = [
+        { id: 'ph1', n: 'Dominadas Estrictas en Barra (Autodominio)', s: '4x10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ph2', n: 'Flexiones en Suelo Militares (Cadencia 2-1-1)', s: '4x15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'ph3', n: 'Sentadillas Profundas de Calistenia', s: '4x25 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ph4', n: 'Elevación de Piernas en Barra', s: '4x12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Core' },
+        { id: 'ph5', n: 'Plancha Abdominal Estoica (Respiración Calmada)', s: '3x60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Mente/Core' },
+      ];
     }
 
-    return { routine, targetCals };
+    return { routine, targetCals, proteinGrams, carbsGrams, fatsGrams, stepGoal };
   };
 
   const handleFinish = async () => {
     setIsAnalyzing(true);
 
     setTimeout(() => {
-      const { routine, targetCals } = generateCalculatedPlan();
+      const plan = generateCalculatedPlan();
+      const pathInfo = LEGENDARY_PATHS[selectedPath];
 
       const profile: ProkoptonProfile = {
-        userName: userName.trim() || 'Ciudadano Prokopton',
-        focus,
+        userName: userName.trim() || 'Guerrero',
+        focus: pathInfo.focus,
         equipment,
         daysPerWeek,
         sessionDurationMinutes: sessionDuration,
-        dietPreference,
-        age: parseInt(age, 10) || 26,
-        weightKg: parseFloat(weightKg) || 75,
-        targetWeightKg: parseFloat(targetWeightKg) || 70,
-        heightCm: parseFloat(heightCm) || 175,
+        dietPreference: pathInfo.dietPreference,
+        age: parseInt(age, 10) || 28,
+        weightKg: parseFloat(weightKg) || 78,
+        targetWeightKg: selectedPath === 'spartan' ? (parseFloat(weightKg) + 3) : (parseFloat(weightKg) - 3),
+        heightCm: parseFloat(heightCm) || 176,
         completedAt: new Date().toISOString(),
+        legendaryPath: selectedPath,
       };
 
-      saveOnboardingProfile(profile, routine, targetCals);
+      saveOnboardingProfile(profile, plan.routine, plan.targetCals);
+      selectLegendaryPath(selectedPath);
+
+      if (onComplete) onComplete(profile);
       setIsAnalyzing(false);
-      onComplete?.(profile);
       onClose();
-    }, 500);
+    }, 1200);
   };
 
-  const handleSkip = () => {
-    const { routine, targetCals } = generateCalculatedPlan();
-    const profile: ProkoptonProfile = {
-      userName: userName.trim() || 'Ciudadano Prokopton',
-      focus,
-      equipment,
-      daysPerWeek,
-      sessionDurationMinutes: sessionDuration,
-      dietPreference,
-      age: 26,
-      weightKg: 75,
-      targetWeightKg: 70,
-      heightCm: 175,
-      completedAt: new Date().toISOString(),
-    };
-    saveOnboardingProfile(profile, routine, targetCals);
-    onComplete?.(profile);
-    onClose();
-  };
+  const pathsKeys: LegendaryPath[] = ['spartan', 'hoplite', 'apollo', 'philosopher'];
+  const activePathInfo = LEGENDARY_PATHS[selectedPath];
+  const calculatedPlan = generateCalculatedPlan();
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <View style={styles.modalCard}>
-          {/* Header */}
+        <View style={styles.cardContainer}>
+          {/* HEADER PRINCIPAL */}
           <View style={styles.headerRow}>
-            <View style={styles.badgeGold}>
-              <Text style={styles.badgeGoldText}>🏛️ ESCÁNER DEL PROKOPTON</Text>
+            <View>
+              <Text style={styles.badgeTop}>🏛️ INICIACIÓN ESTOICA • CICLO DE 30 DÍAS</Text>
+              <Text style={styles.titleMain}>
+                {step === 1 && 'ELIGE TU SENDA LEGENDARIA'}
+                {step === 2 && 'CALIBRACIÓN BIOMÉTRICA'}
+                {step === 3 && 'FORJA DE TU DESTINO'}
+              </Text>
             </View>
-            <TouchableOpacity onPress={handleSkip} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#94A3B8" />
-            </TouchableOpacity>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepBadgeText}>Paso {step}/3</Text>
+            </View>
           </View>
 
-          {/* Steps Progress Indicator */}
-          <View style={styles.progressRow}>
-            {[1, 2, 3, 4].map((stepNum) => (
-              <View
-                key={stepNum}
-                style={[
-                  styles.stepDot,
-                  step >= stepNum && styles.stepDotActive,
-                  step === stepNum && styles.stepDotCurrent,
-                ]}
-              />
-            ))}
-          </View>
-
-          <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-            {isAnalyzing ? (
-              <View style={styles.analyzingContainer}>
-                <ActivityIndicator size="large" color="#D4AF37" />
-                <Text style={styles.analyzingTitle}>Sincronizando con el Oráculo IA...</Text>
-                <Text style={styles.analyzingSub}>
-                  Calibrando tiempo de sesión ({sessionDuration} min), presupuesto calórico y rutina de sobrecarga...
-                </Text>
-              </View>
-            ) : step === 1 ? (
-              /* PASO 1: Identidad & Foco Estoico */
-              <View>
-                <Text style={styles.stepTitle}>Paso 1: Identidad & Enfoque Estoico</Text>
-                <Text style={styles.stepSubtitle}>
-                  ¿Cómo responderás al llamado del autodominio físico y mental?
+          {/* CONTENIDO SEGÚN EL PASO */}
+          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+            {/* ========================================================================= */}
+            {/* PASO 1: ELECCIÓN DE LA SENDA LEGENDARIA */}
+            {/* ========================================================================= */}
+            {step === 1 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepDescription}>
+                  Tu elección forjará tu rutina mensual, tus calorías y la severidad del Coach. Al Día 30 serás juzgado: <Text style={{ color: '#FFE259', fontWeight: 'bold' }}>ascenso o reprensión</Text>.
                 </Text>
 
-                <Text style={styles.label}>Tu Nombre o Alias Atleta:</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={userName}
-                  onChangeText={setUserName}
-                  placeholder="Ej: Marco, Prokopton, Atleta"
-                  placeholderTextColor="#64748B"
-                />
+                {pathsKeys.map((key) => {
+                  const p = LEGENDARY_PATHS[key];
+                  const isSelected = selectedPath === key;
 
-                <Text style={styles.label}>Enfoque Principal de Vida:</Text>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, focus === 'strength' && styles.optionCardActive]}
-                  onPress={() => setFocus('strength')}
-                >
-                  <Ionicons name="barbell-outline" size={24} color={focus === 'strength' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, focus === 'strength' && styles.textGold]}>Fuerza Espartana & Hipertrofia</Text>
-                    <Text style={styles.optionDesc}>Desarrollar masa muscular sólida y fuerza máxima.</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, focus === 'fat_loss' && styles.optionCardActive]}
-                  onPress={() => setFocus('fat_loss')}
-                >
-                  <Ionicons name="flame-outline" size={24} color={focus === 'fat_loss' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, focus === 'fat_loss' && styles.textGold]}>Recomposición & Definición</Text>
-                    <Text style={styles.optionDesc}>Reducir porcentaje de grasa manteniendo el músculo.</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, focus === 'longevity' && styles.optionCardActive]}
-                  onPress={() => setFocus('longevity')}
-                >
-                  <Ionicons name="heart-outline" size={24} color={focus === 'longevity' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, focus === 'longevity' && styles.textGold]}>Resistencia & Longevidad</Text>
-                    <Text style={styles.optionDesc}>Salud cardiovascular, vitalidad y energía ilimitada.</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, focus === 'mental' && styles.optionCardActive]}
-                  onPress={() => setFocus('mental')}
-                >
-                  <Ionicons name="sparkles-outline" size={24} color={focus === 'mental' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, focus === 'mental' && styles.textGold]}>Claridad Mental & Estoicismo</Text>
-                    <Text style={styles.optionDesc}>Disciplina diaria, temple mental y ataraxia.</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            ) : step === 2 ? (
-              /* PASO 2: Biometría & Nutrición */
-              <View>
-                <Text style={styles.stepTitle}>Paso 2: Biometría & Estrategia Nutricional</Text>
-                <Text style={styles.stepSubtitle}>
-                  Para calcular tus calorías objetivo exactas y macronutrientes.
-                </Text>
-
-                <View style={styles.rowInputs}>
-                  <View style={styles.flex1}>
-                    <Text style={styles.label}>Edad:</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={age}
-                      onChangeText={setAge}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={styles.flex1}>
-                    <Text style={styles.label}>Altura (cm):</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={heightCm}
-                      onChangeText={setHeightCm}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.rowInputs}>
-                  <View style={styles.flex1}>
-                    <Text style={styles.label}>Peso Actual (kg):</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={weightKg}
-                      onChangeText={setWeightKg}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={styles.flex1}>
-                    <Text style={styles.label}>Peso Meta (kg):</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={targetWeightKg}
-                      onChangeText={setTargetWeightKg}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-
-                <Text style={styles.label}>Estrategia de Nutrición:</Text>
-                <View style={styles.grid2Row}>
-                  <TouchableOpacity
-                    style={[styles.chipBtn, dietPreference === 'deficit' && styles.chipBtnActive]}
-                    onPress={() => setDietPreference('deficit')}
-                  >
-                    <Text style={[styles.chipText, dietPreference === 'deficit' && styles.textGold]}>🔥 Déficit Calórico</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.chipBtn, dietPreference === 'maintenance' && styles.chipBtnActive]}
-                    onPress={() => setDietPreference('maintenance')}
-                  >
-                    <Text style={[styles.chipText, dietPreference === 'maintenance' && styles.textGold]}>⚖️ Mantenimiento</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.grid2Row}>
-                  <TouchableOpacity
-                    style={[styles.chipBtn, dietPreference === 'surplus' && styles.chipBtnActive]}
-                    onPress={() => setDietPreference('surplus')}
-                  >
-                    <Text style={[styles.chipText, dietPreference === 'surplus' && styles.textGold]}>💪 Volumen Limpio</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.chipBtn, dietPreference === 'intermittent_fasting' && styles.chipBtnActive]}
-                    onPress={() => setDietPreference('intermittent_fasting')}
-                  >
-                    <Text style={[styles.chipText, dietPreference === 'intermittent_fasting' && styles.textGold]}>⏳ Ayuno 16/8</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : step === 3 ? (
-              /* PASO 3: Equipamiento & Entorno */
-              <View>
-                <Text style={styles.stepTitle}>Paso 3: Equipamiento Disponible</Text>
-                <Text style={styles.stepSubtitle}>
-                  La rutina se adaptará al equipo real que tienes a tu alcance.
-                </Text>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, equipment === 'gym' && styles.optionCardActive]}
-                  onPress={() => setEquipment('gym')}
-                >
-                  <Ionicons name="fitness-outline" size={24} color={equipment === 'gym' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, equipment === 'gym' && styles.textGold]}>Gimnasio Completo</Text>
-                    <Text style={styles.optionDesc}>Barras, Discos, Poleas, Máquinas de aislamiento.</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, equipment === 'home_dumbbell' && styles.optionCardActive]}
-                  onPress={() => setEquipment('home_dumbbell')}
-                >
-                  <Ionicons name="home-outline" size={24} color={equipment === 'home_dumbbell' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, equipment === 'home_dumbbell' && styles.textGold]}>Casa con Mancuernas</Text>
-                    <Text style={styles.optionDesc}>Par de mancuernas, banco o bandas de resistencia.</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, equipment === 'calisthenics' && styles.optionCardActive]}
-                  onPress={() => setEquipment('calisthenics')}
-                >
-                  <Ionicons name="body-outline" size={24} color={equipment === 'calisthenics' ? '#D4AF37' : '#94A3B8'} />
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, equipment === 'calisthenics' && styles.textGold]}>Calistenia (Peso Corporal)</Text>
-                    <Text style={styles.optionDesc}>Sin pesas. Solo barra de dominadas y gravedad.</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              /* PASO 4: Tiempo de Ejecución & Frecuencia */
-              <View>
-                <Text style={styles.stepTitle}>Paso 4: Tiempo & Frecuencia</Text>
-                <Text style={styles.stepSubtitle}>
-                  Construimos tu rutina ajustada a tus minutos reales de disponibilidad.
-                </Text>
-
-                <Text style={styles.label}>Frecuencia (Días a la semana):</Text>
-                <View style={styles.daysRow}>
-                  {([3, 4, 5, 6] as DaysPerWeek[]).map((d) => (
+                  return (
                     <TouchableOpacity
-                      key={d}
-                      style={[styles.dayBtn, daysPerWeek === d && styles.dayBtnActive]}
-                      onPress={() => setDaysPerWeek(d)}
+                      key={key}
+                      style={[styles.pathOptionCard, isSelected && styles.pathOptionSelected]}
+                      onPress={() => setSelectedPath(key)}
+                      activeOpacity={0.85}
                     >
-                      <Text style={[styles.dayText, daysPerWeek === d && styles.textGold]}>{d} Días</Text>
+                      <View style={styles.pathHeaderRow}>
+                        <View style={[styles.pathIconCircle, isSelected && styles.pathIconCircleActive]}>
+                          <Text style={{ fontSize: 20 }}>{p.icon}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.pathTitleText, isSelected && styles.pathTitleTextActive]}>
+                            {p.name}
+                          </Text>
+                          <Text style={styles.pathSubText}>{p.subtitle}</Text>
+                        </View>
+                        <View style={[styles.radioCircle, isSelected && styles.radioCircleActive]}>
+                          {isSelected && <View style={styles.radioInner} />}
+                        </View>
+                      </View>
+
+                      <Text style={styles.pathDescBody}>{p.description}</Text>
+
+                      <View style={styles.pathMottoBox}>
+                        <Text style={styles.pathMottoText}>{p.motto}</Text>
+                      </View>
                     </TouchableOpacity>
-                  ))}
+                  );
+                })}
+              </View>
+            )}
+
+            {/* ========================================================================= */}
+            {/* PASO 2: CALIBRACIÓN BIOMÉTRICA & EQUIPAMIENTO */}
+            {/* ========================================================================= */}
+            {step === 2 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepDescription}>
+                  Ajusta tus parámetros físicos reales para que el motor calcule tus calorías exactas y adapte los ejercicios a tu entorno.
+                </Text>
+
+                {/* Nombre */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>NOMBRE DE GUERRERO / USUARIO</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={userName}
+                    onChangeText={setUserName}
+                    placeholder="Ej. Marco"
+                    placeholderTextColor="#64748B"
+                  />
                 </View>
 
-                <Text style={styles.label}>Tiempo Exacto por Sesión:</Text>
-                <View style={styles.grid2Row}>
-                  {([30, 45, 60, 90] as SessionDurationMinutes[]).map((m) => (
+                {/* Equipamiento */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>EQUIPAMIENTO DISPONIBLE</Text>
+                  <View style={styles.buttonRow}>
                     <TouchableOpacity
-                      key={m}
-                      style={[styles.chipBtn, sessionDuration === m && styles.chipBtnActive]}
-                      onPress={() => setSessionDuration(m)}
+                      style={[styles.choiceBtn, equipment === 'gym' && styles.choiceBtnActive]}
+                      onPress={() => setEquipment('gym')}
                     >
-                      <Text style={[styles.chipText, sessionDuration === m && styles.textGold]}>
-                        ⏱️ {m} Minutos
+                      <Text style={[styles.choiceBtnText, equipment === 'gym' && styles.choiceBtnTextActive]}>
+                        🏋️ Gimnasio
                       </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.choiceBtn, equipment === 'home_dumbbell' && styles.choiceBtnActive]}
+                      onPress={() => setEquipment('home_dumbbell')}
+                    >
+                      <Text style={[styles.choiceBtnText, equipment === 'home_dumbbell' && styles.choiceBtnTextActive]}>
+                        🏠 Mancuernas
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.choiceBtn, equipment === 'calisthenics' && styles.choiceBtnActive]}
+                      onPress={() => setEquipment('calisthenics')}
+                    >
+                      <Text style={[styles.choiceBtnText, equipment === 'calisthenics' && styles.choiceBtnTextActive]}>
+                        🤸 Calistenia
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Tiempo por Sesión */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>TIEMPO DISPONIBLE POR SESIÓN</Text>
+                  <View style={styles.buttonRow}>
+                    {[30, 45, 60].map((mins) => (
+                      <TouchableOpacity
+                        key={mins}
+                        style={[styles.choiceBtn, sessionDuration === mins && styles.choiceBtnActive]}
+                        onPress={() => setSessionDuration(mins as SessionDurationMinutes)}
+                      >
+                        <Text style={[styles.choiceBtnText, sessionDuration === mins && styles.choiceBtnTextActive]}>
+                          ⏱️ {mins} mins
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Días por Semana */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>FRECUENCIA SEMANAL DE ENTRENO</Text>
+                  <View style={styles.buttonRow}>
+                    {[3, 4, 5, 6].map((days) => (
+                      <TouchableOpacity
+                        key={days}
+                        style={[styles.choiceBtn, daysPerWeek === days && styles.choiceBtnActive]}
+                        onPress={() => setDaysPerWeek(days as DaysPerWeek)}
+                      >
+                        <Text style={[styles.choiceBtnText, daysPerWeek === days && styles.choiceBtnTextActive]}>
+                          {days} días
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Métricas Corporales: Peso, Altura, Edad */}
+                <View style={styles.metricsRow}>
+                  <View style={styles.metricInputCol}>
+                    <Text style={styles.inputLabel}>PESO (KG)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      value={weightKg}
+                      onChangeText={setWeightKg}
+                    />
+                  </View>
+                  <View style={styles.metricInputCol}>
+                    <Text style={styles.inputLabel}>ALTURA (CM)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      value={heightCm}
+                      onChangeText={setHeightCm}
+                    />
+                  </View>
+                  <View style={styles.metricInputCol}>
+                    <Text style={styles.inputLabel}>EDAD</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      value={age}
+                      onChangeText={setAge}
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* ========================================================================= */}
+            {/* PASO 3: FORJA Y RESUMEN DEL PACTO DE 30 DÍAS */}
+            {/* ========================================================================= */}
+            {step === 3 && (
+              <View style={styles.stepContent}>
+                {/* Banner de la Senda */}
+                <View style={styles.summarySendaBanner}>
+                  <View style={styles.summaryIconBox}>
+                    <Text style={{ fontSize: 26 }}>{activePathInfo.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.summarySendaName}>{activePathInfo.name}</Text>
+                    <Text style={styles.summarySendaSub}>{activePathInfo.subtitle}</Text>
+                  </View>
+                </View>
+
+                {/* Panel de Métricas Forjadas */}
+                <View style={styles.summaryStatsGrid}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statBoxLabel}>CALORÍAS DIARIAS</Text>
+                    <Text style={styles.statBoxValue}>{calculatedPlan.targetCals} <Text style={styles.statUnit}>kcal</Text></Text>
+                  </View>
+
+                  <View style={styles.statBox}>
+                    <Text style={styles.statBoxLabel}>META DE PROTEÍNA</Text>
+                    <Text style={styles.statBoxValue}>{calculatedPlan.proteinGrams}g <Text style={styles.statUnit}>/ día</Text></Text>
+                  </View>
+
+                  <View style={styles.statBox}>
+                    <Text style={styles.statBoxLabel}>META DE PASOS</Text>
+                    <Text style={styles.statBoxValue}>{calculatedPlan.stepGoal.toLocaleString()} <Text style={styles.statUnit}>pasos</Text></Text>
+                  </View>
+
+                  <View style={styles.statBox}>
+                    <Text style={styles.statBoxLabel}>SESIONES/SEM</Text>
+                    <Text style={styles.statBoxValue}>{daysPerWeek} <Text style={styles.statUnit}>días x {sessionDuration}m</Text></Text>
+                  </View>
+                </View>
+
+                {/* Vista Previa de la Rutina Base */}
+                <View style={styles.routinePreviewBox}>
+                  <Text style={styles.routinePreviewTitle}>⚔️ RUTINA INICIAL FORJADA ({calculatedPlan.routine.length} EJERCICIOS)</Text>
+                  {calculatedPlan.routine.map((ex, idx) => (
+                    <View key={ex.id || idx} style={styles.routinePreviewItem}>
+                      <Text style={styles.routineExIndex}>{idx + 1}.</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.routineExName}>{ex.n}</Text>
+                        <Text style={styles.routineExSets}>{ex.s} • {ex.muscleGroup || 'Full Body'}</Text>
+                      </View>
+                    </View>
                   ))}
                 </View>
 
-                <View style={styles.summaryBox}>
-                  <Text style={styles.summaryTitle}>🏛️ Resumen de Ficha del Prokopton</Text>
-                  <Text style={styles.summaryItem}>• Atleta: {userName}</Text>
-                  <Text style={styles.summaryItem}>
-                    • Meta: {focus === 'strength' ? 'Fuerza & Masa' : focus === 'fat_loss' ? 'Definición' : focus === 'longevity' ? 'Longevidad' : 'Mente'}
+                {/* Advertencia del Juicio del Día 30 */}
+                <View style={styles.pactNoticeBox}>
+                  <Text style={styles.pactNoticeTitle}>⚖️ PACTO SAGRADO DEL DÍA 30</Text>
+                  <Text style={styles.pactNoticeBody}>
+                    Al completar los 30 días con más del 80% de disciplina en Entreno, Pasos, Agua y Nutrición, serás promovido de rango. Cada día cuenta.
                   </Text>
-                  <Text style={styles.summaryItem}>• Equipo: {equipment === 'gym' ? 'Gimnasio' : equipment === 'home_dumbbell' ? 'Mancuernas en Casa' : 'Calistenia'}</Text>
-                  <Text style={styles.summaryItem}>• Sesión: {daysPerWeek} días x {sessionDuration} min</Text>
                 </View>
               </View>
             )}
           </ScrollView>
 
-          {/* Navigation Buttons */}
-          {!isAnalyzing && (
-            <View style={styles.footerRow}>
-              {step > 1 ? (
-                <TouchableOpacity style={styles.btnSecondary} onPress={() => setStep(step - 1)}>
-                  <Text style={styles.btnSecondaryText}>Atrás</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity style={styles.btnSecondary} onPress={handleSkip}>
-                  <Text style={styles.btnSecondaryText}>Omitir por ahora</Text>
-                </TouchableOpacity>
-              )}
+          {/* BOTONES DE NAVEGACIÓN INFERIOR */}
+          <View style={styles.footerRow}>
+            {step > 1 && (
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => setStep((prev) => prev - 1)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.backBtnText}>← Atrás</Text>
+              </TouchableOpacity>
+            )}
 
-              {step < 4 ? (
-                <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep(step + 1)}>
-                  <Text style={styles.btnPrimaryText}>Siguiente →</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity style={styles.btnGold} onPress={handleFinish}>
-                  <Text style={styles.btnGoldText}>⚡ ESCANEAR CON IA</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+            {step < 3 ? (
+              <TouchableOpacity
+                style={styles.nextBtn}
+                onPress={() => setStep((prev) => prev + 1)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.nextBtnText}>Continuar →</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.finishBtn}
+                onPress={handleFinish}
+                disabled={isAnalyzing}
+                activeOpacity={0.85}
+              >
+                {isAnalyzing ? (
+                  <ActivityIndicator color="#04060A" size="small" />
+                ) : (
+                  <Text style={styles.finishBtnText}>⚡ CONSAGRAR PACTO Y COMENZAR</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     </Modal>
@@ -506,282 +469,375 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(5, 5, 8, 0.88)',
+    backgroundColor: 'rgba(2, 3, 6, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: Spacing.three,
   },
-  modalCard: {
+  cardContainer: {
     width: '100%',
-    maxWidth: 500,
-    maxHeight: '90%',
-    backgroundColor: '#0A0D16',
-    borderRadius: 20,
+    maxWidth: 520,
+    maxHeight: '92%',
+    backgroundColor: 'rgba(10, 14, 24, 0.98)',
+    borderRadius: 22,
     borderWidth: 1.5,
     borderColor: 'rgba(212, 175, 55, 0.45)',
-    padding: 20,
-
-    ...Platform.select({
-      ios: {
-        shadowColor: '#D4AF37',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 16,
-      },
-      android: { elevation: 10 },
-      web: { boxShadow: '0 8px 32px rgba(212, 175, 55, 0.25)' },
-    }),
+    padding: Spacing.four,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212, 175, 55, 0.20)',
+    paddingBottom: Spacing.three,
+    marginBottom: Spacing.three,
   },
-  badgeGold: {
+  badgeTop: {
+    fontSize: 9.5,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    color: '#D4AF37',
+    letterSpacing: 1.5,
+  },
+  titleMain: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginTop: 2,
+    letterSpacing: -0.3,
+  },
+  stepBadge: {
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#D4AF37',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
-  badgeGoldText: {
-    color: '#FFE259',
-    fontSize: 12,
+  stepBadgeText: {
+    fontSize: 11,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 16,
-  },
-  stepDot: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-  },
-  stepDotActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.40)',
-  },
-  stepDotCurrent: {
-    backgroundColor: '#FFE259',
-  },
-  scrollArea: {
-    maxHeight: 420,
-  },
-  scrollContent: {
-    paddingBottom: 10,
-  },
-  stepTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFE259',
-    marginBottom: 4,
-    fontFamily: 'serif',
-  },
-  stepSubtitle: {
-    fontSize: 13,
-    color: '#94A3B8',
-    marginBottom: 16,
-    lineHeight: 18,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#D4AF37',
-    marginTop: 10,
-    marginBottom: 6,
     fontFamily: 'monospace',
-  },
-  textInput: {
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-    borderRadius: 10,
-    padding: 12,
-    color: '#F8FAFC',
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.20)',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
-  },
-  optionCardActive: {
-    borderColor: '#D4AF37',
-    backgroundColor: 'rgba(212, 175, 55, 0.18)',
-  },
-  optionTextCol: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FDE68A',
-    marginBottom: 2,
-  },
-  optionDesc: {
-    fontSize: 12,
-    color: '#CBD5E1',
-  },
-  textGold: {
-    color: '#D4AF37',
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  flex1: {
-    flex: 1,
-  },
-  grid2Row: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-  },
-  chipBtn: {
-    flex: 1,
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.20)',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-  },
-  chipBtnActive: {
-    borderColor: '#D4AF37',
-    backgroundColor: 'rgba(212, 175, 55, 0.25)',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#CBD5E1',
-  },
-  daysRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  dayBtn: {
-    flex: 1,
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.20)',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  dayBtnActive: {
-    borderColor: '#D4AF37',
-    backgroundColor: 'rgba(212, 175, 55, 0.25)',
-  },
-  dayText: {
-    fontSize: 13,
-    fontWeight: 'bold',
     color: '#FFE259',
   },
-  summaryBox: {
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.30)',
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 12,
+  scrollBody: {
+    maxHeight: 460,
   },
-  summaryTitle: {
-    color: '#FFE259',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    fontFamily: 'serif',
+  stepContent: {
+    gap: Spacing.three,
   },
-  summaryItem: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    marginBottom: 3,
-  },
-  analyzingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  analyzingTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFE259',
-    marginTop: 16,
-    marginBottom: 8,
-    fontFamily: 'serif',
-  },
-  analyzingSub: {
-    fontSize: 13,
-    color: '#CBD5E1',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 175, 55, 0.25)',
-  },
-  btnSecondary: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  btnSecondaryText: {
+  stepDescription: {
+    fontSize: 12.5,
     color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '600',
+    lineHeight: 18,
+    marginBottom: 4,
   },
-  btnPrimary: {
-    backgroundColor: '#D4AF37',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+  pathOptionCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 14,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    padding: Spacing.three,
+  },
+  pathOptionSelected: {
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderColor: '#D4AF37',
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  btnPrimaryText: {
-    color: '#050507',
-    fontSize: 14,
-    fontWeight: '900',
-    fontFamily: 'monospace',
-  },
-  btnGold: {
-    backgroundColor: '#D4AF37',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
     shadowRadius: 8,
   },
-  btnGoldText: {
-    color: '#050508',
+  pathHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  pathIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pathIconCircleActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    borderWidth: 1,
+    borderColor: '#FFE259',
+  },
+  pathTitleText: {
     fontSize: 14,
     fontWeight: '900',
+    color: '#E2E8F0',
+  },
+  pathTitleTextActive: {
+    color: '#FFE259',
+  },
+  pathSubText: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioCircleActive: {
+    borderColor: '#FFE259',
+  },
+  radioInner: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#FFE259',
+  },
+  pathDescBody: {
+    fontSize: 11.5,
+    color: '#CBD5E1',
+    lineHeight: 16,
+    marginTop: 8,
+  },
+  pathMottoBox: {
+    marginTop: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    borderRadius: 6,
+    borderLeftWidth: 2,
+    borderLeftColor: '#D4AF37',
+  },
+  pathMottoText: {
+    fontSize: 10.5,
+    fontStyle: 'italic',
+    color: '#FDE68A',
+  },
+  inputGroup: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: '900',
     fontFamily: 'monospace',
+    color: '#D4AF37',
+    letterSpacing: 1,
+  },
+  textInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.30)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  choiceBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  choiceBtnActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderColor: '#D4AF37',
+  },
+  choiceBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#94A3B8',
+  },
+  choiceBtnTextActive: {
+    color: '#FFE259',
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  metricInputCol: {
+    flex: 1,
+    gap: 6,
+  },
+  summarySendaBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderRadius: 14,
+    borderWidth: 1.2,
+    borderColor: '#D4AF37',
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  summaryIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summarySendaName: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#FFE259',
+  },
+  summarySendaSub: {
+    fontSize: 11,
+    color: '#CBD5E1',
+  },
+  summaryStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statBox: {
+    flex: 1,
+    minWidth: '46%',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.20)',
+    padding: 10,
+  },
+  statBoxLabel: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    fontWeight: 'bold',
+  },
+  statBoxValue: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginTop: 2,
+  },
+  statUnit: {
+    fontSize: 10,
+    color: '#FFE259',
+    fontWeight: 'normal',
+  },
+  routinePreviewBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: Spacing.three,
+    gap: 8,
+  },
+  routinePreviewTitle: {
+    fontSize: 10.5,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    color: '#D4AF37',
+    letterSpacing: 1,
+  },
+  routinePreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  routineExIndex: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#F59E0B',
+    fontFamily: 'monospace',
+  },
+  routineExName: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#F8FAFC',
+  },
+  routineExSets: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+  },
+  pactNoticeBox: {
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderRadius: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#D4AF37',
+    padding: 10,
+    gap: 4,
+  },
+  pactNoticeTitle: {
+    fontSize: 10.5,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'monospace',
+  },
+  pactNoticeBody: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    lineHeight: 16,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  backBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backBtnText: {
+    color: '#94A3B8',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  nextBtn: {
+    flex: 2,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#D4AF37',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextBtnText: {
+    color: '#04060A',
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    fontSize: 12.5,
+  },
+  finishBtn: {
+    flex: 2,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFE259',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  finishBtnText: {
+    color: '#04060A',
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    fontSize: 12,
     letterSpacing: 0.5,
   },
 });
