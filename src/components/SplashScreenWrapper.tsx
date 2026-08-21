@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,7 +10,6 @@ import {
 import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
-import { ZEUS_EMBLEM_URI } from '@/constants/zeusEmblemBase64';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -22,17 +21,17 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     setIsDismissing(true);
     setTimeout(() => {
       setShowSplash(false);
-    }, 350);
+    }, 300);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
-  // Tamaño óptimo y majestuoso del medallón
-  const emblemSize = Platform.OS === 'web'
-    ? Math.min(SCREEN_WIDTH * 0.75, 290)
-    : Math.min(SCREEN_WIDTH * 0.72, 260);
+  // Dimensiones del medallón en px
+  const emblemDim = Platform.OS === 'web'
+    ? Math.min(Math.round(SCREEN_WIDTH * 0.75), 280)
+    : Math.min(Math.round(SCREEN_WIDTH * 0.72), 250);
 
   return (
     <View style={styles.rootContainer}>
@@ -68,25 +67,27 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             {/* CONTENEDOR PRINCIPAL */}
             <View style={styles.mainContentBlock}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (INQUEBRANTABLE EN WEB Y MÓVIL) */}
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (100% GARANTIZADO) */}
               <View
                 style={[
                   styles.emblemWrapper,
                   {
-                    width: emblemSize,
-                    height: emblemSize,
+                    width: emblemDim,
+                    height: emblemDim,
                   },
                 ]}
               >
                 {Platform.OS === 'web' ? (
-                  <div
+                  <img
+                    src="/zeus_emblem.png"
+                    alt="El Gran Rayo de Zeus"
+                    width={emblemDim}
+                    height={emblemDim}
                     style={{
-                      width: emblemSize,
-                      height: emblemSize,
-                      backgroundImage: `url(${ZEUS_EMBLEM_URI})`,
-                      backgroundSize: 'contain',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'center',
+                      width: `${emblemDim}px`,
+                      height: `${emblemDim}px`,
+                      objectFit: 'contain',
+                      display: 'block',
                       filter: 'drop-shadow(0 0 24px rgba(255, 226, 89, 0.45))',
                       userSelect: 'none',
                       pointerEvents: 'none',
@@ -95,7 +96,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 ) : (
                   <Image
                     source={require('../../assets/images/zeus_master_emblem_transparent.png')}
-                    style={{ width: emblemSize, height: emblemSize }}
+                    style={{ width: emblemDim, height: emblemDim }}
                     resizeMode="contain"
                   />
                 )}
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   },
   splashOverlayFadeOut: {
     opacity: 0,
-    transitionDuration: '350ms',
+    transitionDuration: '300ms',
   } as any,
   touchContainer: {
     flex: 1,
