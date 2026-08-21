@@ -17,9 +17,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
-  // Animaciones de entrada
+  // Animaciones
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const emblemScale = useRef(new Animated.Value(0.88)).current;
+  const emblemScale = useRef(new Animated.Value(0.9)).current;
   const emblemPulse = useRef(new Animated.Value(1)).current;
   const buttonPulse = useRef(new Animated.Value(1)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
@@ -45,7 +45,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
 
-    // Entrada suave de todo el contenido
+    // Entrada suave y majestuosa
     Animated.parallel([
       Animated.timing(contentOpacity, {
         toValue: 1,
@@ -60,23 +60,23 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       }),
     ]).start();
 
-    // Respiración del Rayo
+    // Respiración del Rayo de Zeus
     Animated.loop(
       Animated.sequence([
         Animated.timing(emblemPulse, {
-          toValue: 1.035,
-          duration: 1300,
+          toValue: 1.03,
+          duration: 1400,
           useNativeDriver: true,
         }),
         Animated.timing(emblemPulse, {
           toValue: 0.98,
-          duration: 1300,
+          duration: 1400,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // Pulsación del Botón
+    // Pulsación suave del Botón
     Animated.loop(
       Animated.sequence([
         Animated.timing(buttonPulse, {
@@ -92,6 +92,11 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       ])
     ).start();
   }, []);
+
+  // Dimensiones dinámicas del emblema para máxima presencia y proporción áurea
+  const emblemSize = Platform.OS === 'web' 
+    ? Math.min(SCREEN_WIDTH * 0.72, SCREEN_HEIGHT * 0.38, 330)
+    : Math.min(SCREEN_WIDTH * 0.75, SCREEN_HEIGHT * 0.36, 290);
 
   return (
     <View style={styles.rootContainer}>
@@ -116,24 +121,27 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             <View style={styles.ambientGlowBackground}>
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
-                  <RadialGradient id="cosmicDawn" cx="50%" cy="38%" r="60%">
+                  <RadialGradient id="cosmicDawn" cx="50%" cy="36%" r="60%">
                     <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.25" />
                     <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.12" />
                     <Stop offset="70%" stopColor="#F59E0B" stopOpacity="0.04" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
                 </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.38} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
+                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.36} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
               </Svg>
             </View>
 
-            {/* CONTENIDO PRINCIPAL: MEDALLÓN + TEXTOS + FRASES TOTALMENTE VISIBLES */}
+            {/* CONTENEDOR PRINCIPAL */}
             <Animated.View style={[styles.mainContentBlock, { opacity: contentOpacity }]}>
-              {/* MEDALLÓN DE ZEUS TRANSPARENTE */}
+              
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (1:1 SIN APLASTAR) */}
               <Animated.View
                 style={[
                   styles.emblemWrapper,
                   {
+                    width: emblemSize,
+                    height: emblemSize,
                     transform: [
                       { scale: emblemScale },
                       { scale: emblemPulse }
@@ -148,8 +156,9 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 />
               </Animated.View>
 
-              {/* TÍTULO MONUMENTAL */}
+              {/* SECCIÓN DE TÍTULO, MENCIONES Y SABIDURÍA ESTOICA */}
               <View style={styles.titleSection}>
+                {/* TÍTULO MONUMENTAL */}
                 <View style={styles.titleWingsRow}>
                   <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
                   <ThemedText style={styles.divineMainTitle}>ATARAXIA</ThemedText>
@@ -163,7 +172,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   </ThemedText>
                 </View>
 
-                {/* TRÍADA DE VIRTUDES ESTOICAS (MENCIONES) */}
+                {/* TRÍADA DE VIRTUDES (MENCIONES EN CHIPS DORADOS) */}
                 <View style={styles.triadRow}>
                   <View style={styles.triadChip}>
                     <ThemedText style={styles.triadChipText}>⚔️ FUERZA</ThemedText>
@@ -178,7 +187,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   </View>
                 </View>
 
-                {/* FRASE Y LEMA DE MARCO AURELIO (ALTA VISIBILIDAD Y CONTRASTE) */}
+                {/* LEMA ORACULAR DE MARCO AURELIO */}
                 <View style={styles.quoteCardContainer}>
                   <ThemedText style={styles.stoicQuoteText}>
                     &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
@@ -190,7 +199,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </View>
             </Animated.View>
 
-            {/* BOTÓN DE INGRESO TÁCTIL */}
+            {/* BOTÓN INFERIOR TÁCTIL */}
             <Animated.View
               style={[
                 styles.bottomActionsBlock,
@@ -235,8 +244,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 24 : 44,
-    paddingBottom: Platform.OS === 'web' ? 24 : 36,
+    paddingTop: Platform.OS === 'web' ? 20 : 40,
+    paddingBottom: Platform.OS === 'web' ? 20 : 32,
   },
   ambientGlowBackground: {
     position: 'absolute',
@@ -256,10 +265,8 @@ const styles = StyleSheet.create({
   emblemWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: Platform.OS === 'web' ? 250 : 220,
-    height: Platform.OS === 'web' ? 250 : 220,
-    marginBottom: 4,
     backgroundColor: 'transparent',
+    marginBottom: 6,
   },
   masterEmblemImage: {
     width: '100%',
@@ -269,8 +276,7 @@ const styles = StyleSheet.create({
   titleSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 2,
+    gap: 6,
     width: '100%',
     maxWidth: 480,
   },
@@ -281,14 +287,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   divineSparkleWing: {
-    fontSize: 22,
+    fontSize: 20,
     color: '#FFE259',
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 14,
   },
   divineMainTitle: {
-    fontSize: Platform.OS === 'web' ? 44 : 38,
+    fontSize: Platform.OS === 'web' ? 42 : 36,
     fontWeight: '900',
     color: '#FFFDE0',
     letterSpacing: Platform.OS === 'web' ? 8 : 6,
@@ -304,14 +310,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 226, 89, 0.55)',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingVertical: 3.5,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
   },
   divineBadgeText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '900',
     color: '#FFE259',
     letterSpacing: 2.2,
@@ -331,7 +337,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.35)',
     borderRadius: 12,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2.5,
   },
   triadChipText: {
     fontSize: 9.5,
@@ -347,18 +353,18 @@ const styles = StyleSheet.create({
   quoteCardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
-    gap: 3,
+    marginTop: 4,
+    paddingHorizontal: 16,
+    gap: 2,
     backgroundColor: 'rgba(9, 12, 22, 0.55)',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.25)',
-    borderRadius: 16,
-    paddingVertical: 10,
-    width: '90%',
+    borderRadius: 14,
+    paddingVertical: 8,
+    width: '92%',
   },
   stoicQuoteText: {
-    fontSize: 14.5,
+    fontSize: 13.5,
     fontStyle: 'italic',
     fontWeight: '700',
     fontFamily: 'serif',
@@ -366,22 +372,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textShadowColor: 'rgba(212, 175, 55, 0.5)',
     textShadowRadius: 6,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   stoicAuthorText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: 'monospace',
     color: '#FFE259',
     fontWeight: '800',
     letterSpacing: 1.2,
-    marginTop: 2,
+    marginTop: 1,
   },
   bottomActionsBlock: {
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
-    gap: 5,
-    marginTop: 6,
+    gap: 4,
   },
   enterButtonPill: {
     flexDirection: 'row',
@@ -393,7 +398,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFE259',
     borderRadius: 22,
     paddingHorizontal: 24,
-    paddingVertical: 11,
+    paddingVertical: 10,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
@@ -404,14 +409,14 @@ const styles = StyleSheet.create({
     color: '#FFE259',
   },
   enterButtonText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '900',
     color: '#FFFDE0',
     letterSpacing: 2,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'monospace',
     color: 'rgba(212, 175, 55, 0.75)',
     letterSpacing: 1.2,
