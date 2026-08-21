@@ -1,14 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  Animated,
   Dimensions,
   TouchableOpacity,
   Platform,
   Image,
 } from 'react-native';
-import Svg, { RadialGradient, Defs, Stop, Circle, Image as SvgImage, G } from 'react-native-svg';
+import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
 import { ZEUS_EMBLEM_URI } from '@/constants/zeusEmblemBase64';
@@ -17,75 +16,20 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState<boolean>(true);
-
-  // Animaciones
-  const contentOpacity = useRef(new Animated.Value(0)).current;
-  const emblemPulse = useRef(new Animated.Value(1)).current;
-  const buttonPulse = useRef(new Animated.Value(1)).current;
-  const containerOpacity = useRef(new Animated.Value(1)).current;
-  const containerScale = useRef(new Animated.Value(1)).current;
+  const [isDismissing, setIsDismissing] = useState<boolean>(false);
 
   const dismissSplash = () => {
-    Animated.parallel([
-      Animated.timing(containerOpacity, {
-        toValue: 0,
-        duration: 380,
-        useNativeDriver: true,
-      }),
-      Animated.timing(containerScale, {
-        toValue: 1.03,
-        duration: 380,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    setIsDismissing(true);
+    setTimeout(() => {
       setShowSplash(false);
-    });
+    }, 350);
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
-
-    // Entrada suave
-    Animated.timing(contentOpacity, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-
-    // Respiración del Rayo de Zeus
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(emblemPulse, {
-          toValue: 1.035,
-          duration: 1400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(emblemPulse, {
-          toValue: 0.98,
-          duration: 1400,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Pulsación del Botón
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(buttonPulse, {
-          toValue: 1.04,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(buttonPulse, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
   }, []);
 
-  // Tamaño del medallón
+  // Tamaño óptimo y majestuoso del medallón
   const emblemSize = Platform.OS === 'web'
     ? Math.min(SCREEN_WIDTH * 0.75, 290)
     : Math.min(SCREEN_WIDTH * 0.72, 260);
@@ -95,13 +39,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       {children}
 
       {showSplash && (
-        <Animated.View
+        <View
           style={[
             styles.splashOverlay,
-            {
-              opacity: containerOpacity,
-              transform: [{ scale: containerScale }],
-            },
+            isDismissing && styles.splashOverlayFadeOut,
           ]}
         >
           <TouchableOpacity
@@ -125,39 +66,40 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             </View>
 
             {/* CONTENEDOR PRINCIPAL */}
-            <Animated.View style={[styles.mainContentBlock, { opacity: contentOpacity }]}>
+            <View style={styles.mainContentBlock}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (TRIPLE RENDERIZADO GARANTIZADO) */}
-              <Animated.View
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (INQUEBRANTABLE EN WEB Y MÓVIL) */}
+              <View
                 style={[
                   styles.emblemWrapper,
                   {
                     width: emblemSize,
                     height: emblemSize,
-                    transform: [{ scale: emblemPulse }],
                   },
                 ]}
               >
-                {/* 1. RENDERIZADOR SVG VECTORIAL UNIVERSAL (COMPATIBLE 100% CON TODOS LOS NAVEGADORES) */}
-                <Svg width={emblemSize} height={emblemSize} viewBox="0 0 512 512">
-                  <Defs>
-                    <RadialGradient id="emblemHalo" cx="50%" cy="50%" r="50%">
-                      <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.30" />
-                      <Stop offset="60%" stopColor="#D4AF37" stopOpacity="0.10" />
-                      <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
-                    </RadialGradient>
-                  </Defs>
-                  <Circle cx="256" cy="256" r="240" fill="url(#emblemHalo)" />
-                  <SvgImage
-                    href={ZEUS_EMBLEM_URI}
-                    x="0"
-                    y="0"
-                    width="512"
-                    height="512"
-                    preserveAspectRatio="xMidYMid meet"
+                {Platform.OS === 'web' ? (
+                  <div
+                    style={{
+                      width: emblemSize,
+                      height: emblemSize,
+                      backgroundImage: `url(${ZEUS_EMBLEM_URI})`,
+                      backgroundSize: 'contain',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'center',
+                      filter: 'drop-shadow(0 0 24px rgba(255, 226, 89, 0.45))',
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                    }}
                   />
-                </Svg>
-              </Animated.View>
+                ) : (
+                  <Image
+                    source={require('../../assets/images/zeus_master_emblem_transparent.png')}
+                    style={{ width: emblemSize, height: emblemSize }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
 
               {/* SECCIÓN DE TÍTULO, MENCIONES Y SABIDURÍA ESTOICA */}
               <View style={styles.titleSection}>
@@ -200,27 +142,19 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   </ThemedText>
                 </View>
               </View>
-            </Animated.View>
+            </View>
 
             {/* BOTÓN INFERIOR TÁCTIL */}
-            <Animated.View
-              style={[
-                styles.bottomActionsBlock,
-                {
-                  opacity: contentOpacity,
-                  transform: [{ scale: buttonPulse }],
-                },
-              ]}
-            >
+            <View style={styles.bottomActionsBlock}>
               <View style={styles.enterButtonPill}>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
                 <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
               <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para comenzar</ThemedText>
-            </Animated.View>
+            </View>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -239,7 +173,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#040406',
     zIndex: 99999,
+    opacity: 1,
   },
+  splashOverlayFadeOut: {
+    opacity: 0,
+    transitionDuration: '350ms',
+  } as any,
   touchContainer: {
     flex: 1,
     width: '100%',
