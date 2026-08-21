@@ -2,76 +2,34 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   Platform,
   Image,
 } from 'react-native';
-import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
+import Svg, { RadialGradient, Defs, Stop, Rect } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
-import { GreekParchmentPact } from './GreekParchmentPact';
-import { LegendaryPathSelector } from './LegendaryPathSelector';
-import { useDailyLog } from '@/context/DailyLogContext';
-import { LegendaryPath } from '@/types/onboarding';
-import { SafeStorage } from '@/utils/safeStorage';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-type SplashStage = 'parchment' | 'lightning' | 'path_selection' | 'none';
 
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-  const { selectLegendaryPath } = useDailyLog();
-  const [stage, setStage] = useState<SplashStage>('parchment');
+  const [showSplash, setShowSplash] = useState<boolean>(true);
   const [isDismissing, setIsDismissing] = useState<boolean>(false);
+
+  const dismissSplash = () => {
+    setIsDismissing(true);
+    setTimeout(() => {
+      setShowSplash(false);
+    }, 300);
+  };
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
-  const handleAcceptPact = () => {
-    SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
-    setStage('lightning');
-  };
-
-  const handleEnterFromLightning = () => {
-    const hasChosenPath = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true';
-    if (hasChosenPath) {
-      dismissSplash();
-    } else {
-      setStage('path_selection');
-    }
-  };
-
-  const handleSelectPath = (path: LegendaryPath) => {
-    selectLegendaryPath(path);
-    SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
-    dismissSplash();
-  };
-
-  const dismissSplash = () => {
-    setIsDismissing(true);
-    setTimeout(() => {
-      setStage('none');
-    }, 300);
-  };
-
-  // Dimensiones del medallón en px
-  const emblemDim = Platform.OS === 'web'
-    ? Math.min(Math.round(SCREEN_WIDTH * 0.75), 280)
-    : Math.min(Math.round(SCREEN_WIDTH * 0.72), 250);
-
   return (
     <View style={styles.rootContainer}>
       {children}
 
-      {/* 1. ETAPA PAPIRO GRIEGO DEL JURAMENTO */}
-      {stage === 'parchment' && (
-        <GreekParchmentPact onAcceptPact={handleAcceptPact} />
-      )}
-
-      {/* 2. ETAPA RAYO GLORIOSO DE ZEUS */}
-      {stage === 'lightning' && (
+      {showSplash && (
         <View
           style={[
             styles.splashOverlay,
@@ -80,12 +38,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
         >
           <TouchableOpacity
             activeOpacity={0.96}
-            onPress={handleEnterFromLightning}
+            onPress={dismissSplash}
             style={styles.touchContainer}
           >
-            {/* AMBIENTE AURORA CELESTIAL */}
-            <View style={styles.ambientGlowBackground}>
-              <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
+            {/* AMBIENTE AURORA CELESTIAL (100% RESPONSIVO EN SSR Y CLIENTE) */}
+            <View style={StyleSheet.absoluteFill}>
+              <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
                 <Defs>
                   <RadialGradient id="cosmicDawn" cx="50%" cy="34%" r="60%">
                     <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.25" />
@@ -94,35 +52,29 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
                 </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.34} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#cosmicDawn)" />
               </Svg>
             </View>
 
             {/* CONTENEDOR PRINCIPAL */}
             <View style={styles.mainContentBlock}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO */}
-              <View
-                style={[
-                  styles.emblemWrapper,
-                  {
-                    width: emblemDim,
-                    height: emblemDim,
-                  },
-                ]}
-              >
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (DIMENSIÓN FIJA INMUNE A SSR) */}
+              <View style={styles.emblemWrapper}>
                 {Platform.OS === 'web' ? (
                   <img
                     src="/zeus_emblem.png"
                     alt="El Gran Rayo de Zeus"
-                    width={emblemDim}
-                    height={emblemDim}
+                    width={280}
+                    height={280}
                     style={{
-                      width: `${emblemDim}px`,
-                      height: `${emblemDim}px`,
+                      width: '280px',
+                      height: '280px',
+                      maxWidth: '75vw',
+                      maxHeight: '36vh',
                       objectFit: 'contain',
                       display: 'block',
-                      filter: 'drop-shadow(0 0 24px rgba(255, 226, 89, 0.45))',
+                      filter: 'drop-shadow(0 0 24px rgba(255, 226, 89, 0.50))',
                       userSelect: 'none',
                       pointerEvents: 'none',
                     }}
@@ -130,7 +82,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 ) : (
                   <Image
                     source={require('../../assets/images/zeus_master_emblem_transparent.png')}
-                    style={{ width: emblemDim, height: emblemDim }}
+                    style={styles.nativeEmblemImage}
                     resizeMode="contain"
                   />
                 )}
@@ -152,7 +104,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   </ThemedText>
                 </View>
 
-                {/* TRÍADA DE VIRTUDES */}
+                {/* TRÍADA DE VIRTUDES (MENCIONES EN CHIPS DORADOS) */}
                 <View style={styles.triadRow}>
                   <View style={styles.triadChip}>
                     <ThemedText style={styles.triadChipText}>⚔️ FUERZA</ThemedText>
@@ -183,18 +135,13 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             <View style={styles.bottomActionsBlock}>
               <View style={styles.enterButtonPill}>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
-                <ThemedText style={styles.enterButtonText}>TOCA PARA CONTINUAR</ThemedText>
+                <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
-              <ThemedText style={styles.touchHintText}>Toca para elegir tu Senda de Ataraxia</ThemedText>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para comenzar</ThemedText>
             </View>
           </TouchableOpacity>
         </View>
-      )}
-
-      {/* 3. ETAPA SELECTOR DE LAS 4 SENDAS LEGENDARIAS */}
-      {stage === 'path_selection' && (
-        <LegendaryPathSelector onSelectPath={handleSelectPath} />
       )}
     </View>
   );
@@ -217,7 +164,8 @@ const styles = StyleSheet.create({
   },
   splashOverlayFadeOut: {
     opacity: 0,
-  },
+    transitionDuration: '300ms',
+  } as any,
   touchContainer: {
     flex: 1,
     width: '100%',
@@ -225,17 +173,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 20 : 40,
-    paddingBottom: Platform.OS === 'web' ? 20 : 32,
-  },
-  ambientGlowBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingTop: Platform.OS === 'web' ? 18 : 38,
+    paddingBottom: Platform.OS === 'web' ? 18 : 30,
   },
   mainContentBlock: {
     alignItems: 'center',
@@ -244,10 +183,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emblemWrapper: {
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  nativeEmblemImage: {
+    width: 280,
+    height: 280,
   },
   titleSection: {
     alignItems: 'center',
@@ -281,19 +226,19 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Cinzel' : 'serif',
   },
   divineBadgeContainer: {
-    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    backgroundColor: 'rgba(212, 175, 55, 0.16)',
     borderWidth: 1.2,
-    borderColor: 'rgba(255, 226, 89, 0.45)',
+    borderColor: 'rgba(255, 226, 89, 0.55)',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 3.5,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
   },
   divineBadgeText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '900',
     color: '#FFE259',
     letterSpacing: 2.2,
@@ -308,68 +253,76 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   triadChip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.35)',
     borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
   },
   triadChipText: {
     fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FDE047',
     fontFamily: 'monospace',
-    color: '#FDE68A',
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    letterSpacing: 1.1,
   },
   triadDivider: {
-    fontSize: 10,
-    color: '#D4AF37',
+    color: 'rgba(212, 175, 55, 0.6)',
+    fontSize: 12,
   },
   quoteCardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 2,
+    backgroundColor: 'rgba(9, 12, 22, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderRadius: 14,
+    paddingVertical: 8,
+    width: '92%',
   },
   stoicQuoteText: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontStyle: 'italic',
+    fontWeight: '700',
     fontFamily: 'serif',
-    color: '#E2E8F0',
+    color: '#FFFDE0',
     textAlign: 'center',
-    textShadowColor: 'rgba(212, 175, 55, 0.35)',
-    textShadowRadius: 5,
-    lineHeight: 17,
+    textShadowColor: 'rgba(212, 175, 55, 0.5)',
+    textShadowRadius: 6,
+    lineHeight: 18,
   },
   stoicAuthorText: {
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontFamily: 'monospace',
-    color: '#D4AF37',
-    fontWeight: '700',
-    letterSpacing: 1.1,
+    color: '#FFE259',
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginTop: 1,
   },
   bottomActionsBlock: {
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
-    gap: 5,
+    gap: 4,
   },
   enterButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(212, 175, 55, 0.20)',
+    backgroundColor: 'rgba(212, 175, 55, 0.22)',
     borderWidth: 1.4,
     borderColor: '#FFE259',
     borderRadius: 22,
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     paddingVertical: 10,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.75,
+    shadowOpacity: 0.8,
     shadowRadius: 14,
   },
   enterButtonSparkle: {
@@ -380,13 +333,13 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '900',
     color: '#FFFDE0',
-    letterSpacing: 1.8,
+    letterSpacing: 2,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
     fontSize: 9.5,
     fontFamily: 'monospace',
-    color: 'rgba(212, 175, 55, 0.65)',
+    color: 'rgba(212, 175, 55, 0.75)',
     letterSpacing: 1.2,
   },
 });
