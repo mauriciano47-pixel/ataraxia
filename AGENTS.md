@@ -13,6 +13,7 @@ Read the exact versioned Expo docs at <https://docs.expo.dev/versions/v57.0.0/> 
 - **Garantía de Compilación Sin Warnings (Zero-Warning Standard)**: Antes de finalizar cualquier tarea o hacer commit de Git, el agente DEBE ejecutar la validación de compilación (`npx expo export` o `npm run build`) y corregir proactivamente todo error de TypeScript y alertas de linter.
 - **Resiliencia y Fallback Graceful**: Toda integración de APIs de terceros o servicios de IA debe contar con un mecanismo de fallback o simulación guiada para evitar cierres inesperados o pantallas congeladas en caso de fallos de red o límite de cuotas.
 - **Estándar de Diseño Cyber-Obsidian Royal**: Mantener coherencia estética en todos los prototipos y aplicaciones (modos oscuros OLED, paleta de acentos azul eléctrico y esmeralda, fuentes cuidadas y maquetación adaptada a dispositivos móviles y escritorio).
+- **Blindaje de Renderizado SSR & Web (Anti-Zero Dimension Standard)**: En exportaciones web/estáticas (`expo export`), `Dimensions.get('window')` devuelve `0`. Todo cálculo de tamaño para imágenes, SVGs o contenedores DEBE contar con valores de respaldo estáticos no nulos (`SCREEN_WIDTH || 390`) o restricciones responsivas CSS (`vw`, `vh`, `clamp`). Además, los recursos visuales críticos deben tener opacidad base `1` y unidades `'px'` explícitas para evitar bloqueos durante la hidratación SSR.
 
 ## 🚀 Flujo Automatizado & Despliegue
 
