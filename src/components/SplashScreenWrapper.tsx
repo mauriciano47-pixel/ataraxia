@@ -26,15 +26,16 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
   // Valores animados
-  const boltScale = useRef(new Animated.Value(0.3)).current;
+  const boltScale = useRef(new Animated.Value(0.4)).current;
   const boltOpacity = useRef(new Animated.Value(0)).current;
-  const boltGlowPulse = useRef(new Animated.Value(0.8)).current;
+  const boltGlowPulse = useRef(new Animated.Value(0.85)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleTranslateY = useRef(new Animated.Value(30)).current;
+  const titleTranslateY = useRef(new Animated.Value(25)).current;
   const badgeOpacity = useRef(new Animated.Value(0)).current;
   const quoteOpacity = useRef(new Animated.Value(0)).current;
   const triadOpacity = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const buttonPulse = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
 
@@ -42,12 +43,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     Animated.parallel([
       Animated.timing(containerOpacity, {
         toValue: 0,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }),
       Animated.timing(containerScale, {
         toValue: 1.05,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -59,100 +60,105 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     // Ocultar splash screen nativo de Expo
     SplashScreen.hideAsync().catch(() => {});
 
-    // 1. Entrada Majestuosa del Rayo Divino (0 a 1.2s)
+    // 1. Entrada Majestuosa del Rayo Divino (0 a 0.8s)
     Animated.parallel([
       Animated.spring(boltScale, {
         toValue: 1,
         friction: 6,
-        tension: 40,
+        tension: 42,
         useNativeDriver: true,
       }),
       Animated.timing(boltOpacity, {
         toValue: 1,
-        duration: 900,
+        duration: 700,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Pulso de Resplandor Neón Divino (Loop continuo)
+    // 2. Pulso de Resplandor Neón Divino (Loop infinito continuo)
     Animated.loop(
       Animated.sequence([
         Animated.timing(boltGlowPulse, {
-          toValue: 1.28,
-          duration: 900,
+          toValue: 1.25,
+          duration: 1100,
           useNativeDriver: true,
         }),
         Animated.timing(boltGlowPulse, {
           toValue: 0.85,
-          duration: 900,
+          duration: 1100,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // 3. Revelación del Título Monumental ATARAXIA (1.0s a 2.2s)
+    // 3. Revelación del Título Monumental ATARAXIA (0.5s a 1.2s)
     setTimeout(() => {
       Animated.parallel([
         Animated.timing(titleOpacity, {
           toValue: 1,
-          duration: 900,
+          duration: 700,
           useNativeDriver: true,
         }),
         Animated.spring(titleTranslateY, {
           toValue: 0,
           friction: 7,
-          tension: 35,
+          tension: 38,
           useNativeDriver: true,
         }),
       ]).start();
-    }, 900);
+    }, 500);
 
-    // 4. Revelación de la Insignia Imperial (2.0s a 3.0s)
+    // 4. Revelación de la Insignia Imperial (0.9s a 1.5s)
     setTimeout(() => {
       Animated.timing(badgeOpacity, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }).start();
-    }, 1800);
+    }, 900);
 
-    // 5. Revelación del Lema Oracular Estoico (3.0s a 4.5s)
+    // 5. Revelación del Lema Oracular Estoico (1.3s a 1.9s)
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
         toValue: 1,
-        duration: 900,
+        duration: 600,
         useNativeDriver: true,
       }).start();
-    }, 2800);
+    }, 1300);
 
-    // 6. Revelación de la Tríada de los Dioses (4.5s a 6.0s)
+    // 6. Revelación de la Tríada de los Dioses (1.7s a 2.3s)
     setTimeout(() => {
       Animated.timing(triadOpacity, {
         toValue: 1,
-        duration: 900,
+        duration: 600,
         useNativeDriver: true,
       }).start();
-    }, 4200);
+    }, 1700);
 
-    // 7. Barra de Carga Divina a lo largo de 7.5 segundos
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 7500,
-      useNativeDriver: false,
-    }).start();
+    // 7. Revelación y Pulsación del Botón de Entrada (2.0s en adelante)
+    setTimeout(() => {
+      Animated.timing(buttonOpacity, {
+        toValue: 1,
+        duration: 700,
+        useNativeDriver: true,
+      }).start();
 
-    // 8. Transición Cinemática y Fade-Out a los 8 segundos
-    const timer = setTimeout(() => {
-      dismissSplash();
-    }, 8000);
-
-    return () => clearTimeout(timer);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(buttonPulse, {
+            toValue: 1.05,
+            duration: 850,
+            useNativeDriver: true,
+          }),
+          Animated.timing(buttonPulse, {
+            toValue: 1,
+            duration: 850,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 2000);
   }, []);
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
 
   return (
     <View style={styles.rootContainer}>
@@ -169,7 +175,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           ]}
         >
           <TouchableOpacity
-            activeOpacity={1}
+            activeOpacity={0.9}
             onPress={dismissSplash}
             style={styles.touchContainer}
           >
@@ -391,20 +397,23 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </Animated.View>
             </Animated.View>
 
-            {/* BARRA DE PROGRESO / INVOCACIÓN DIVINA */}
-            <View style={styles.progressTrackWrapper}>
-              <View style={styles.progressTrack}>
-                <Animated.View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: progressWidth,
-                    },
-                  ]}
-                />
+            {/* BOTÓN MAJESTUOSO: TOCA PARA INGRESAR AL TEMPLO */}
+            <Animated.View
+              style={[
+                styles.enterButtonWrapper,
+                {
+                  opacity: buttonOpacity,
+                  transform: [{ scale: buttonPulse }],
+                },
+              ]}
+            >
+              <View style={styles.enterButtonPill}>
+                <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
+                <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR AL TEMPLO</ThemedText>
+                <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
-              <ThemedText style={styles.touchHintText}>Toca para ingresar ⚡</ThemedText>
-            </View>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar de la pantalla</ThemedText>
+            </Animated.View>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -435,6 +444,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 32,
   },
   ambientGlowBackground: {
     position: 'absolute',
@@ -448,7 +458,7 @@ const styles = StyleSheet.create({
   boltCenterWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -30,
+    marginTop: -20,
   },
   pulsingHalo: {
     position: 'absolute',
@@ -464,7 +474,7 @@ const styles = StyleSheet.create({
   titleSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: 14,
     gap: 8,
   },
   titleWingsRow: {
@@ -515,7 +525,7 @@ const styles = StyleSheet.create({
   quoteContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
+    marginTop: 12,
     paddingHorizontal: 20,
     gap: 4,
   },
@@ -541,7 +551,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 10,
+    marginTop: 8,
   },
   triadPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -558,31 +568,40 @@ const styles = StyleSheet.create({
     color: '#FFE259',
     letterSpacing: 1.2,
   },
-  progressTrackWrapper: {
+  enterButtonWrapper: {
     position: 'absolute',
-    bottom: 48,
+    bottom: 40,
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 40,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  enterButtonPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 10,
-  },
-  progressTrack: {
-    width: '100%',
-    maxWidth: 240,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#FFE259',
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderWidth: 1.5,
+    borderColor: '#FFE259',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
     shadowColor: '#FFE259',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+  },
+  enterButtonSparkle: {
+    fontSize: 16,
+    color: '#FFE259',
+  },
+  enterButtonText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFFDE0',
+    letterSpacing: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
     fontSize: 10,
