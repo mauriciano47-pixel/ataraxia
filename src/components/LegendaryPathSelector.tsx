@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Animated,
   Dimensions,
   Platform,
 } from 'react-native';
@@ -20,56 +19,13 @@ interface Props {
 
 export function LegendaryPathSelector({ onSelectPath }: Props) {
   const [selectedPath, setSelectedPath] = useState<LegendaryPath>('spartan');
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.94)).current;
-  const buttonPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(buttonPulse, {
-          toValue: 1.03,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(buttonPulse, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [fadeAnim, scaleAnim, buttonPulse]);
-
   const pathsList: LegendaryPath[] = ['spartan', 'hoplite', 'apollo', 'philosopher'];
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* FONDO AURORA DORADA */}
-      <View style={styles.backgroundCanvas}>
-        <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFill}>
+        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
           <Defs>
             <RadialGradient id="pathGlow" cx="50%" cy="30%" r="65%">
               <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.22" />
@@ -78,7 +34,7 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
               <Stop offset="100%" stopColor="#020204" stopOpacity="1" />
             </RadialGradient>
           </Defs>
-          <Rect x="0" y="0" width={SCREEN_WIDTH} height={SCREEN_HEIGHT} fill="url(#pathGlow)" />
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#pathGlow)" />
         </Svg>
       </View>
 
@@ -155,7 +111,7 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
           </View>
 
           {/* BOTÓN DE CONSAGRACIÓN */}
-          <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: buttonPulse }] }]}>
+          <View style={styles.buttonWrapper}>
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={() => onSelectPath(selectedPath)}
@@ -172,10 +128,10 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
             <ThemedText style={styles.confirmHint}>
               Inicia tu Ciclo de 30 Días en el Templo del Autodominio
             </ThemedText>
-          </Animated.View>
+          </View>
         </ScrollView>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -193,25 +149,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
     paddingVertical: Platform.OS === 'web' ? 24 : 36,
   },
-  backgroundCanvas: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   mainCard: {
     width: '100%',
     maxWidth: 540,
     height: '100%',
     maxHeight: 780,
-    backgroundColor: 'rgba(9, 12, 22, 0.96)',
+    backgroundColor: 'rgba(9, 12, 22, 0.98)',
     borderRadius: 20,
     borderWidth: 1.8,
-    borderColor: 'rgba(212, 175, 55, 0.60)',
+    borderColor: 'rgba(212, 175, 55, 0.65)',
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.40,
+    shadowOpacity: 0.45,
     shadowRadius: 20,
     elevation: 10,
     overflow: 'hidden',
@@ -274,7 +223,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   pathCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     borderRadius: 14,
     borderWidth: 1.3,
     borderColor: 'rgba(255, 255, 255, 0.12)',
@@ -282,11 +231,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pathCardSelected: {
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    backgroundColor: 'rgba(212, 175, 55, 0.16)',
     borderColor: '#FFE259',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.40,
+    shadowOpacity: 0.45,
     shadowRadius: 10,
   },
   cardHeaderRow: {
@@ -305,7 +254,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   iconBoxSelected: {
-    backgroundColor: 'rgba(212, 175, 55, 0.20)',
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
     borderColor: '#FFE259',
   },
   cardIcon: {
@@ -351,7 +300,7 @@ const styles = StyleSheet.create({
     lineHeight: 16.5,
   },
   mottoBox: {
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    backgroundColor: 'rgba(212, 175, 55, 0.10)',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
@@ -365,10 +314,10 @@ const styles = StyleSheet.create({
     fontFamily: 'serif',
   },
   warningBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
+    borderColor: 'rgba(212, 175, 55, 0.40)',
     padding: 12,
     gap: 6,
     marginTop: 4,
@@ -405,7 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.70,
+    shadowOpacity: 0.75,
     shadowRadius: 14,
     elevation: 8,
   },

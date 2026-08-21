@@ -1,14 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Animated,
   Dimensions,
   Platform,
 } from 'react-native';
-import Svg, { Path, Rect, Defs, LinearGradient, Stop, RadialGradient, Circle } from 'react-native-svg';
+import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { ThemedText } from './themed-text';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -18,54 +17,11 @@ interface Props {
 }
 
 export function GreekParchmentPact({ onAcceptPact }: Props) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.92)).current;
-  const buttonPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(buttonPulse, {
-          toValue: 1.03,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(buttonPulse, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [fadeAnim, scaleAnim, buttonPulse]);
-
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* FONDO AURORA HELÉNICA OSCURA */}
-      <View style={styles.backgroundCanvas}>
-        <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFill}>
+        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
           <Defs>
             <RadialGradient id="parchmentGlow" cx="50%" cy="40%" r="65%">
               <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.18" />
@@ -74,7 +30,7 @@ export function GreekParchmentPact({ onAcceptPact }: Props) {
               <Stop offset="100%" stopColor="#020204" stopOpacity="1" />
             </RadialGradient>
           </Defs>
-          <Rect x="0" y="0" width={SCREEN_WIDTH} height={SCREEN_HEIGHT} fill="url(#parchmentGlow)" />
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#parchmentGlow)" />
         </Svg>
       </View>
 
@@ -153,7 +109,7 @@ export function GreekParchmentPact({ onAcceptPact }: Props) {
           </View>
 
           {/* BOTÓN SOLEMNE DE ACEPTACIÓN DEL PACTO */}
-          <Animated.View style={[styles.actionWrapper, { transform: [{ scale: buttonPulse }] }]}>
+          <View style={styles.actionWrapper}>
             <TouchableOpacity
               style={styles.acceptButton}
               onPress={onAcceptPact}
@@ -168,10 +124,10 @@ export function GreekParchmentPact({ onAcceptPact }: Props) {
             <ThemedText style={styles.oathFooterHint}>
               Toca para sellar el pacto y despertar el rayo de tu jornada
             </ThemedText>
-          </Animated.View>
+          </View>
         </ScrollView>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -187,27 +143,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
-    paddingVertical: Platform.OS === 'web' ? 32 : 44,
-  },
-  backgroundCanvas: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    paddingVertical: Platform.OS === 'web' ? 24 : 36,
   },
   parchmentCard: {
     width: '100%',
     maxWidth: 520,
     height: '100%',
     maxHeight: 740,
-    backgroundColor: 'rgba(9, 12, 22, 0.95)',
+    backgroundColor: 'rgba(9, 12, 22, 0.98)',
     borderRadius: 20,
     borderWidth: 1.8,
-    borderColor: 'rgba(212, 175, 55, 0.55)',
+    borderColor: 'rgba(212, 175, 55, 0.65)',
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.45,
     shadowRadius: 20,
     elevation: 10,
     position: 'relative',
@@ -241,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFE259',
     fontWeight: '900',
-    opacity: 0.8,
+    opacity: 0.9,
   },
   scrollView: {
     flex: 1,
@@ -261,7 +210,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.20)',
     borderWidth: 2,
     borderColor: '#FFE259',
     alignItems: 'center',
@@ -269,7 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
+    shadowOpacity: 0.8,
     shadowRadius: 10,
   },
   sealEmblem: {
@@ -313,7 +262,7 @@ const styles = StyleSheet.create({
     color: '#FFE259',
     textAlign: 'center',
     lineHeight: 19,
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
@@ -339,10 +288,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   coachCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderRadius: 14,
     borderWidth: 1.2,
-    borderColor: 'rgba(212, 175, 55, 0.40)',
+    borderColor: 'rgba(212, 175, 55, 0.45)',
     padding: 14,
     gap: 8,
     marginTop: 4,
@@ -368,7 +317,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   coachCallout: {
-    backgroundColor: 'rgba(212, 175, 55, 0.10)',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
     borderRadius: 8,
     padding: 10,
     borderLeftWidth: 3,
@@ -410,13 +359,13 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#D4AF37',
     borderRadius: 14,
-    paddingVertical: 13,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.7,
+    shadowOpacity: 0.75,
     shadowRadius: 14,
     elevation: 8,
   },

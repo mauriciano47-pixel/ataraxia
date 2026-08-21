@@ -75,6 +75,15 @@ export default function TabLayout() {
 
   useEffect(() => {
     scheduleMorningNotification();
+
+    // Auto-actualizador de caché en navegadores web / PWA móvil
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.update().catch(() => {});
+        }
+      }).catch(() => {});
+    }
   }, []);
 
   if (!loaded && !error) {
