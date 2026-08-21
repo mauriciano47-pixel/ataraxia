@@ -33,6 +33,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   const titleTranslateY = useRef(new Animated.Value(30)).current;
   const badgeOpacity = useRef(new Animated.Value(0)).current;
   const quoteOpacity = useRef(new Animated.Value(0)).current;
+  const triadOpacity = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
@@ -41,12 +42,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     Animated.parallel([
       Animated.timing(containerOpacity, {
         toValue: 0,
-        duration: 450,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.timing(containerScale, {
-        toValue: 1.06,
-        duration: 450,
+        toValue: 1.05,
+        duration: 600,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -58,82 +59,92 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     // Ocultar splash screen nativo de Expo
     SplashScreen.hideAsync().catch(() => {});
 
-    // 1. Entrada del Rayo Divino (0 a 0.7s)
+    // 1. Entrada Majestuosa del Rayo Divino (0 a 1.2s)
     Animated.parallel([
       Animated.spring(boltScale, {
         toValue: 1,
         friction: 6,
-        tension: 45,
+        tension: 40,
         useNativeDriver: true,
       }),
       Animated.timing(boltOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 900,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Pulso de Resplandor Neón Divino (Loop suave)
+    // 2. Pulso de Resplandor Neón Divino (Loop continuo)
     Animated.loop(
       Animated.sequence([
         Animated.timing(boltGlowPulse, {
-          toValue: 1.25,
-          duration: 700,
+          toValue: 1.28,
+          duration: 900,
           useNativeDriver: true,
         }),
         Animated.timing(boltGlowPulse, {
           toValue: 0.85,
-          duration: 700,
+          duration: 900,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // 3. Revelación del Título Monumental ATARAXIA (0.6s a 1.4s)
+    // 3. Revelación del Título Monumental ATARAXIA (1.0s a 2.2s)
     setTimeout(() => {
       Animated.parallel([
         Animated.timing(titleOpacity, {
           toValue: 1,
-          duration: 700,
+          duration: 900,
           useNativeDriver: true,
         }),
         Animated.spring(titleTranslateY, {
           toValue: 0,
           friction: 7,
-          tension: 40,
+          tension: 35,
           useNativeDriver: true,
         }),
       ]).start();
-    }, 550);
+    }, 900);
 
-    // 4. Revelación de la Insignia y Lema de los Dioses (1.1s a 1.8s)
+    // 4. Revelación de la Insignia Imperial (2.0s a 3.0s)
     setTimeout(() => {
       Animated.timing(badgeOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
       }).start();
-    }, 1000);
+    }, 1800);
 
+    // 5. Revelación del Lema Oracular Estoico (3.0s a 4.5s)
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 900,
         useNativeDriver: true,
       }).start();
-    }, 1300);
+    }, 2800);
 
-    // 5. Barra de Carga Divina (0 a 2.8s)
+    // 6. Revelación de la Tríada de los Dioses (4.5s a 6.0s)
+    setTimeout(() => {
+      Animated.timing(triadOpacity, {
+        toValue: 1,
+        duration: 900,
+        useNativeDriver: true,
+      }).start();
+    }, 4200);
+
+    // 7. Barra de Carga Divina a lo largo de 7.5 segundos
     Animated.timing(progressAnim, {
       toValue: 1,
-      duration: 2700,
+      duration: 7500,
       useNativeDriver: false,
     }).start();
 
-    // 6. Transición Cinemática y Fade-Out a los 3 segundos
+    // 8. Transición Cinemática y Fade-Out a los 8 segundos
     const timer = setTimeout(() => {
       dismissSplash();
-    }, 3100);
+    }, 8000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -167,14 +178,14 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
                   <RadialGradient id="cosmicDawn" cx="50%" cy="45%" r="60%">
-                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.32" />
-                    <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.18" />
-                    <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.08" />
+                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.35" />
+                    <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.20" />
+                    <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.09" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
                   <LinearGradient id="divineLightBeam" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.25" />
-                    <Stop offset="40%" stopColor="#D4AF37" stopOpacity="0.10" />
+                    <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.28" />
+                    <Stop offset="40%" stopColor="#D4AF37" stopOpacity="0.12" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </LinearGradient>
                 </Defs>
@@ -247,7 +258,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   stroke="url(#bezelRingGrad)"
                   strokeWidth={3}
                   fill="none"
-                  opacity={0.7}
+                  opacity={0.75}
                 />
                 <Circle
                   cx={110}
@@ -364,6 +375,19 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 <ThemedText style={styles.stoicAuthorText}>
                   — Marco Aurelio (Emperador Estoico)
                 </ThemedText>
+              </Animated.View>
+
+              {/* TRÍADA DE LOS DIOSES: VIRTUD • DISCIPLINA • SERENIDAD */}
+              <Animated.View style={[styles.triadRow, { opacity: triadOpacity }]}>
+                <View style={styles.triadPill}>
+                  <ThemedText style={styles.triadText}>⚔️ FUERZA</ThemedText>
+                </View>
+                <View style={styles.triadPill}>
+                  <ThemedText style={styles.triadText}>🏛️ DISCIPLINA</ThemedText>
+                </View>
+                <View style={styles.triadPill}>
+                  <ThemedText style={styles.triadText}>⚡ SERENIDAD</ThemedText>
+                </View>
               </Animated.View>
             </Animated.View>
 
@@ -510,6 +534,28 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     color: '#D4AF37',
     fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  triadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
+  triadPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.30)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  triadText: {
+    fontSize: 9.5,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#FFE259',
     letterSpacing: 1.2,
   },
   progressTrackWrapper: {
