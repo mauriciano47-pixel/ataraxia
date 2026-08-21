@@ -56,7 +56,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     Animated.loop(
       Animated.sequence([
         Animated.timing(emblemPulse, {
-          toValue: 1.03,
+          toValue: 1.035,
           duration: 1400,
           useNativeDriver: true,
         }),
@@ -68,7 +68,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       ])
     ).start();
 
-    // Pulsación suave del Botón
+    // Pulsación del Botón
     Animated.loop(
       Animated.sequence([
         Animated.timing(buttonPulse, {
@@ -85,10 +85,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     ).start();
   }, []);
 
-  // Tamaño del medallón para máxima presencia y proporción
+  // Tamaño del medallón
   const emblemWidth = Platform.OS === 'web'
-    ? Math.min(SCREEN_WIDTH * 0.75, 300)
-    : Math.min(SCREEN_WIDTH * 0.72, 270);
+    ? Math.min(SCREEN_WIDTH * 0.75, 290)
+    : Math.min(SCREEN_WIDTH * 0.72, 260);
 
   return (
     <View style={styles.rootContainer}>
@@ -127,7 +127,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             {/* CONTENEDOR PRINCIPAL */}
             <Animated.View style={[styles.mainContentBlock, { opacity: contentOpacity }]}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (100% GARANTIZADO EN WEB Y MÓVIL) */}
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (RENDER NATIVO WEB Y MÓVIL) */}
               <Animated.View
                 style={[
                   styles.emblemWrapper,
@@ -138,11 +138,27 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   },
                 ]}
               >
-                <Image
-                  source={{ uri: ZEUS_EMBLEM_URI }}
-                  style={[styles.masterEmblemImage, { width: emblemWidth, height: emblemWidth }]}
-                  resizeMode="contain"
-                />
+                {Platform.OS === 'web' ? (
+                  <img
+                    src={ZEUS_EMBLEM_URI}
+                    alt="El Gran Rayo de Zeus"
+                    style={{
+                      width: emblemWidth,
+                      height: emblemWidth,
+                      objectFit: 'contain',
+                      display: 'block',
+                      filter: 'drop-shadow(0 0 20px rgba(255, 226, 89, 0.4))',
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                ) : (
+                  <Image
+                    source={{ uri: ZEUS_EMBLEM_URI }}
+                    style={{ width: emblemWidth, height: emblemWidth }}
+                    resizeMode="contain"
+                  />
+                )}
               </Animated.View>
 
               {/* SECCIÓN DE TÍTULO, MENCIONES Y SABIDURÍA ESTOICA */}
@@ -256,9 +272,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     marginBottom: 4,
-  },
-  masterEmblemImage: {
-    backgroundColor: 'transparent',
   },
   titleSection: {
     alignItems: 'center',
