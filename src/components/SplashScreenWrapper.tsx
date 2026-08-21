@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Platform,
   ImageBackground,
-  Image,
 } from 'react-native';
+import Svg, { RadialGradient, Defs, Stop, Rect } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
 
@@ -17,9 +17,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
-  // Animaciones de entrada y pulsación
+  // Animaciones de entrada cinematográfica
   const contentFade = useRef(new Animated.Value(0)).current;
-  const contentScale = useRef(new Animated.Value(0.96)).current;
+  const contentScale = useRef(new Animated.Value(0.97)).current;
   const buttonPulse = useRef(new Animated.Value(1)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
 
@@ -36,32 +36,32 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
 
-    // Aparición suave y gloriosa de la pantalla completa
+    // Entrada cinematográfica suave
     Animated.parallel([
       Animated.timing(contentFade, {
         toValue: 1,
-        duration: 800,
+        duration: 900,
         useNativeDriver: true,
       }),
       Animated.spring(contentScale, {
         toValue: 1,
-        friction: 7,
-        tension: 40,
+        friction: 8,
+        tension: 35,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Pulsación sutil del botón inferior
+    // Pulsación suave del botón
     Animated.loop(
       Animated.sequence([
         Animated.timing(buttonPulse, {
-          toValue: 1.04,
-          duration: 1000,
+          toValue: 1.035,
+          duration: 1100,
           useNativeDriver: true,
         }),
         Animated.timing(buttonPulse, {
           toValue: 1,
-          duration: 1000,
+          duration: 1100,
           useNativeDriver: true,
         }),
       ])
@@ -86,7 +86,21 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             onPress={dismissSplash}
             style={styles.touchArea}
           >
-            {/* CONTENEDOR CENTRAL DE LA PANTALLA CANÓNICA DE ZEUS */}
+            {/* FONDO OSCURO CON VIGNETTE RADIAL PARA INTEGRACIÓN TOTAL */}
+            <View style={StyleSheet.absoluteFill}>
+              <Svg width="100%" height="100%">
+                <Defs>
+                  <RadialGradient id="bgVignette" cx="50%" cy="50%" r="50%">
+                    <Stop offset="0%" stopColor="#0B0905" stopOpacity="1" />
+                    <Stop offset="65%" stopColor="#020203" stopOpacity="1" />
+                    <Stop offset="100%" stopColor="#000000" stopOpacity="1" />
+                  </RadialGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#bgVignette)" />
+              </Svg>
+            </View>
+
+            {/* CONTENEDOR CENTRAL FLUIDO SIN BORDES VISIBLES */}
             <Animated.View
               style={[
                 styles.artFrame,
@@ -97,11 +111,11 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               ]}
             >
               <ImageBackground
-                source={require('../../assets/images/zeus_canon_splash.jpg')}
+                source={require('../../assets/images/zeus_canon_splash.png')}
                 style={styles.fullArtworkBackground}
-                resizeMode="cover"
+                resizeMode="contain"
               >
-                {/* GRADIENTE INFERIOR SUTIL PARA DESTACAR EL BOTÓN DE ACCESO */}
+                {/* ZONA INFERIOR DESPEJADA PARA EL BOTÓN TÁCTIL */}
                 <View style={styles.bottomOverlayArea}>
                   <Animated.View
                     style={[
@@ -141,8 +155,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#000000',
     zIndex: 99999,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   touchArea: {
     flex: 1,
@@ -154,13 +166,13 @@ const styles = StyleSheet.create({
   },
   artFrame: {
     width: '100%',
-    maxWidth: 480,
+    maxWidth: 520,
     height: '100%',
-    backgroundColor: '#000000',
-    overflow: 'hidden',
+    maxHeight: 920,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fullArtworkBackground: {
-    flex: 1,
     width: '100%',
     height: '100%',
     justifyContent: 'flex-end',
@@ -169,44 +181,43 @@ const styles = StyleSheet.create({
   bottomOverlayArea: {
     width: '100%',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'web' ? 36 : 48,
+    paddingBottom: Platform.OS === 'web' ? 40 : 54,
     paddingHorizontal: 20,
     gap: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    paddingTop: 20,
   },
   enterButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(18, 14, 8, 0.85)',
+    gap: 10,
+    backgroundColor: 'rgba(18, 14, 8, 0.88)',
     borderWidth: 1.5,
     borderColor: '#EAB308',
-    borderRadius: 24,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
+    borderRadius: 26,
+    paddingHorizontal: 30,
+    paddingVertical: 13,
     shadowColor: '#FBBF24',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
-    shadowRadius: 15,
+    shadowRadius: 18,
   },
   enterButtonSparkle: {
     fontSize: 14,
     color: '#FDE047',
   },
   enterButtonText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '900',
     color: '#FFFDE0',
     letterSpacing: 2.2,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontFamily: 'monospace',
     color: 'rgba(253, 224, 71, 0.75)',
     letterSpacing: 1.1,
     textAlign: 'center',
+    marginTop: 2,
   },
 });
