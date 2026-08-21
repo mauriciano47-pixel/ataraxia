@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity, Animated } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, RadialGradient, G, Polygon } from 'react-native-svg';
 import { ThemedText } from './themed-text';
 
@@ -11,8 +11,10 @@ export interface GlowArcGaugeProps {
   steps?: number;
   stepGoal?: number;
   km?: number;
-  calories?: number;
-  targetCalories?: number;
+  calories?: number;               // Kcal Quemadas Activas (Daily Power Burn)
+  targetCalories?: number;         // Meta de Kcal Quemadas
+  consumedCalories?: number;       // Kcal Ingeridas
+  targetConsumedCalories?: number; // Meta Nutricional
   waterLitres?: number;
   trainingCompleted?: boolean;
   streakDays?: number;
@@ -21,21 +23,63 @@ export interface GlowArcGaugeProps {
 export function GlowArcGauge({
   strengthProgress = 0.82,
   virtueProgress = 0.80,
-  overallProgress = 0.82,
   size = 320,
-  calories = 2840,
-  targetCalories = 3500,
-  steps = 14892,
+  calories = 2450,
+  targetCalories = 2800,
+  consumedCalories = 1850,
+  targetConsumedCalories = 2200,
+  steps = 10000,
   trainingCompleted = true,
 }: GlowArcGaugeProps) {
-  const [activeMetric, setActiveMetric] = useState<'calories' | 'strength' | 'virtue'>('calories');
+  const [activeMetric, setActiveMetric] = useState<'burn' | 'nutrition' | 'power'>('burn');
 
-  const burnPct = Math.round((calories / targetCalories) * 100);
-  const strengthPct = Math.round(Math.min(1, Math.max(0, strengthProgress)) * 100);
-  const virtuePct = Math.round(Math.min(1, Math.max(0, virtueProgress)) * 100);
+  // Animaciones Eléctricas de Alta Tensión
+  const electricFlickerAnim = useRef(new Animated.Value(0.6)).current;
+  const boltPulseAnim = useRef(new Animated.Value(1)).current;
+  const sparkRotationAnim = useRef(new Animated.Value(0)).current;
 
-  const displayPct = activeMetric === 'calories' ? burnPct : activeMetric === 'strength' ? strengthPct : virtuePct;
-  const currentRatio = Math.min(1, Math.max(0, displayPct / 100));
+  useEffect(() => {
+    // 1. Chisporroteo Eléctrico (Flicker)
+    const flickerLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(electricFlickerAnim, { toValue: 1.0, duration: 120, useNativeDriver: true }),
+        Animated.timing(electricFlickerAnim, { toValue: 0.35, duration: 80, useNativeDriver: true }),
+        Animated.timing(electricFlickerAnim, { toValue: 0.95, duration: 160, useNativeDriver: true }),
+        Animated.timing(electricFlickerAnim, { toValue: 0.50, duration: 100, useNativeDriver: true }),
+        Animated.timing(electricFlickerAnim, { toValue: 1.0, duration: 200, useNativeDriver: true }),
+      ])
+    );
+    flickerLoop.start();
+
+    // 2. Pulso de Plasma del Rayo Central
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(boltPulseAnim, { toValue: 1.14, duration: 900, useNativeDriver: true }),
+        Animated.timing(boltPulseAnim, { toValue: 1.0, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    pulseLoop.start();
+
+    // 3. Rotación de Chispas del Halo
+    const rotateLoop = Animated.loop(
+      Animated.timing(sparkRotationAnim, { toValue: 1, duration: 8000, useNativeDriver: true })
+    );
+    rotateLoop.start();
+
+    return () => {
+      flickerLoop.stop();
+      pulseLoop.stop();
+      rotateLoop.stop();
+    };
+  }, [electricFlickerAnim, boltPulseAnim, sparkRotationAnim]);
+
+  // Cálculos de Porcentajes según la métrica activa
+  const burnPct = Math.round((calories / Math.max(1, targetCalories)) * 100);
+  const nutritionPct = Math.round((consumedCalories / Math.max(1, targetConsumedCalories)) * 100);
+  const overallPowerPct = Math.round(((strengthProgress * 0.6) + (virtueProgress * 0.4)) * 100);
+
+  const displayPct = activeMetric === 'burn' ? burnPct : activeMetric === 'nutrition' ? nutritionPct : overallPowerPct;
+  const currentRatio = Math.min(1, Math.max(0.02, displayPct / 100));
 
   const cx = size / 2;
   const cy = size / 2;
@@ -74,13 +118,19 @@ export function GlowArcGauge({
   const capPos = polarToCartesian(cx, cy, arcRadius, currentAngle);
   const pctBadgePos = polarToCartesian(cx, cy, arcRadius + 22, Math.min(endAngle - 15, currentAngle + 12));
 
+  // Generación de Chispas Eléctricas Dinámicas a lo largo del arco activo
+  const midAngle1 = startAngle + (totalAngle * currentRatio * 0.35);
+  const midAngle2 = startAngle + (totalAngle * currentRatio * 0.70);
+  const sparkPos1 = polarToCartesian(cx, cy, arcRadius, midAngle1);
+  const sparkPos2 = polarToCartesian(cx, cy, arcRadius, midAngle2);
+
   return (
     <View style={styles.container}>
       {/* 3D LUXURY GOLD & THUNDER DIAL */}
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() =>
-          setActiveMetric((prev) => (prev === 'calories' ? 'strength' : prev === 'strength' ? 'virtue' : 'calories'))
+          setActiveMetric((prev) => (prev === 'burn' ? 'nutrition' : prev === 'nutrition' ? 'power' : 'burn'))
         }
         style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
       >
@@ -88,9 +138,9 @@ export function GlowArcGauge({
           <Defs>
             {/* Ambient Electric Atmosphere Halo */}
             <RadialGradient id="ambientBackglow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor="rgba(245, 158, 11, 0.45)" />
-              <Stop offset="50%" stopColor="rgba(255, 226, 89, 0.20)" />
-              <Stop offset="85%" stopColor="rgba(212, 175, 55, 0.06)" />
+              <Stop offset="0%" stopColor="rgba(245, 158, 11, 0.50)" />
+              <Stop offset="45%" stopColor="rgba(255, 226, 89, 0.22)" />
+              <Stop offset="80%" stopColor="rgba(212, 175, 55, 0.08)" />
               <Stop offset="100%" stopColor="rgba(0, 0, 0, 0)" />
             </RadialGradient>
 
@@ -115,9 +165,9 @@ export function GlowArcGauge({
 
             {/* Central Bolt Corona Flare */}
             <RadialGradient id="boltBloomGrad" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor="rgba(255, 255, 255, 0.95)" />
-              <Stop offset="25%" stopColor="rgba(255, 226, 89, 0.75)" />
-              <Stop offset="65%" stopColor="rgba(245, 158, 11, 0.35)" />
+              <Stop offset="0%" stopColor="rgba(255, 255, 255, 0.98)" />
+              <Stop offset="25%" stopColor="rgba(255, 226, 89, 0.85)" />
+              <Stop offset="65%" stopColor="rgba(245, 158, 11, 0.45)" />
               <Stop offset="100%" stopColor="rgba(245, 158, 11, 0.00)" />
             </RadialGradient>
 
@@ -145,10 +195,10 @@ export function GlowArcGauge({
               <Stop offset="100%" stopColor="#040406" />
             </RadialGradient>
 
-            {/* Sparkle Gold Mini Bolts */}
-            <LinearGradient id="sparkleBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* Electric Spark Gradient */}
+            <LinearGradient id="electricSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <Stop offset="0%" stopColor="#FFFFFF" />
-              <Stop offset="40%" stopColor="#FFF3B0" />
+              <Stop offset="50%" stopColor="#FFE259" />
               <Stop offset="100%" stopColor="#F59E0B" />
             </LinearGradient>
           </Defs>
@@ -179,15 +229,6 @@ export function GlowArcGauge({
             strokeWidth={1.8}
             fill="none"
           />
-          {/* Outer Specular Highlight */}
-          <Circle
-            cx={cx}
-            cy={cy}
-            r={bezelRadius + 6}
-            stroke="rgba(255, 226, 89, 0.40)"
-            strokeWidth={1.2}
-            fill="none"
-          />
 
           {/* 2. INNER ONYX DISK */}
           <Circle
@@ -206,25 +247,25 @@ export function GlowArcGauge({
             fill="none"
           />
 
-          {/* 4. ACTIVE POWER ARC GLOW BLOOM (LAYER 1: WIDE DIFFUSE) */}
+          {/* 4. ACTIVE POWER ARC GLOW BLOOM (CAPA 1: DIFUSA AMPLIA) */}
           <Path
             d={progressArc}
-            stroke="rgba(245, 158, 11, 0.28)"
-            strokeWidth={arcStrokeWidth + 16}
+            stroke="rgba(245, 158, 11, 0.35)"
+            strokeWidth={arcStrokeWidth + 18}
             strokeLinecap="round"
             fill="none"
           />
 
-          {/* 4. ACTIVE POWER ARC GLOW BLOOM (LAYER 2: INTENSE NEON) */}
+          {/* 4. ACTIVE POWER ARC GLOW BLOOM (CAPA 2: NEÓN INTENSO) */}
           <Path
             d={progressArc}
-            stroke="rgba(255, 226, 89, 0.55)"
-            strokeWidth={arcStrokeWidth + 8}
+            stroke="rgba(255, 226, 89, 0.65)"
+            strokeWidth={arcStrokeWidth + 9}
             strokeLinecap="round"
             fill="none"
           />
 
-          {/* 4. ACTIVE POWER ARC (CORE HYPER-BRIGHT GOLD & WHITE) */}
+          {/* 4. ACTIVE POWER ARC (NÚCLEO ÁUREO INCANDESCENTE) */}
           <Path
             d={progressArc}
             stroke="url(#thunderGlowArc)"
@@ -233,22 +274,51 @@ export function GlowArcGauge({
             fill="none"
           />
 
-          {/* 5. MULTI-LAYER GLOWING CAP AT PROGRESS TIP */}
-          {/* Outer Bloom */}
+          {/* 5. ARCO DE DESCARGA ELÉCTRICA EN TIEMPO REAL (CHISPAS DE ALTA TENSIÓN) */}
+          {currentRatio > 0.15 && (
+            <>
+              {/* Relámpago de Chispa 1 */}
+              <Path
+                d={`M ${sparkPos1.x - 6} ${sparkPos1.y - 8} L ${sparkPos1.x} ${sparkPos1.y} L ${sparkPos1.x - 3} ${sparkPos1.y + 1} L ${sparkPos1.x + 5} ${sparkPos1.y + 8}`}
+                stroke="#FFFFFF"
+                strokeWidth={2.4}
+                strokeLinecap="round"
+                fill="none"
+              />
+              <Circle cx={sparkPos1.x} cy={sparkPos1.y} r={3} fill="#FFE259" />
+            </>
+          )}
+
+          {currentRatio > 0.50 && (
+            <>
+              {/* Relámpago de Chispa 2 */}
+              <Path
+                d={`M ${sparkPos2.x - 8} ${sparkPos2.y - 6} L ${sparkPos2.x - 2} ${sparkPos2.y} L ${sparkPos2.x - 6} ${sparkPos2.y + 2} L ${sparkPos2.x + 6} ${sparkPos2.y + 7}`}
+                stroke="#FFFFFF"
+                strokeWidth={2.6}
+                strokeLinecap="round"
+                fill="none"
+              />
+              <Circle cx={sparkPos2.x} cy={sparkPos2.y} r={3.5} fill="#FFFFFF" />
+            </>
+          )}
+
+          {/* 6. PUNTA DE DESCARGA ELÉCTRICA MULTI-CAPA */}
+          {/* Halo Exterior Expandido */}
           <Circle
             cx={capPos.x}
             cy={capPos.y}
-            r={arcStrokeWidth / 2 + 10}
-            fill="rgba(245, 158, 11, 0.35)"
+            r={arcStrokeWidth / 2 + 12}
+            fill="rgba(245, 158, 11, 0.45)"
           />
-          {/* Mid Intense Bloom */}
+          {/* Resplandor Eléctrico */}
           <Circle
             cx={capPos.x}
             cy={capPos.y}
-            r={arcStrokeWidth / 2 + 5}
-            fill="rgba(255, 226, 89, 0.80)"
+            r={arcStrokeWidth / 2 + 6}
+            fill="rgba(255, 226, 89, 0.90)"
           />
-          {/* White-Hot Core Spark */}
+          {/* Núcleo Blanco Incandescente */}
           <Circle
             cx={capPos.x}
             cy={capPos.y}
@@ -256,65 +326,35 @@ export function GlowArcGauge({
             fill="#FFFFFF"
           />
 
-          {/* 6. FLOATING MINI LIGHTNING BOLTS INSIDE ARC */}
-          <Path
-            d="M86 120 L78 132 L84 133 L76 145"
-            stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2.4}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <Path
-            d="M60 178 L52 190 L58 191 L50 203"
-            stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2.6}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <Path
-            d="M234 116 L242 128 L236 129 L244 141"
-            stroke="url(#sparkleBoltGrad)"
-            strokeWidth={2.4}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          {/* Extra Electric Sparkles */}
-          <Circle cx={88} cy={122} r={1.5} fill="#FFFFFF" />
-          <Circle cx={58} cy={180} r={1.8} fill="#FFFFFF" />
-          <Circle cx={232} cy={118} r={1.5} fill="#FFFFFF" />
-
-          {/* 7. CENTRAL 3D GOLD MONUMENTAL THUNDERBOLT (HIGH GLOW) */}
+          {/* 7. RELÁMPAGO MONUMENTAL CENTRAL 3D */}
           <G transform={`translate(${cx - 24}, ${cy - 86})`}>
-            {/* Back Corona Flare */}
-            <Circle cx={26} cy={34} r={42} fill="url(#boltBloomGrad)" />
+            {/* Corona Trasera de Plasma */}
+            <Circle cx={26} cy={34} r={46} fill="url(#boltBloomGrad)" />
 
-            {/* Ambient Bolt Glow Outline */}
+            {/* Resplandor Eléctrico de Borde */}
             <Polygon
               points="28,0 8,36 24,36 12,68 44,26 28,26"
-              fill="rgba(245, 158, 11, 0.40)"
-              stroke="rgba(255, 226, 89, 0.70)"
-              strokeWidth={5}
+              fill="rgba(245, 158, 11, 0.45)"
+              stroke="rgba(255, 226, 89, 0.85)"
+              strokeWidth={6}
             />
 
-            {/* Deep Warm Amber Drop Shadow */}
+            {/* Sombra Cálida 3D */}
             <Polygon
               points="28,0 8,36 24,36 12,68 44,26 28,26"
-              fill="rgba(180, 83, 9, 0.65)"
+              fill="rgba(180, 83, 9, 0.70)"
               transform="translate(2, 2.5)"
             />
 
-            {/* 3D Faceted Body */}
+            {/* Cuerpo Facetado en Oro y Platino */}
             <Polygon
               points="28,0 8,36 24,36 12,68 44,26 28,26"
               fill="url(#bolt3DGrad)"
               stroke="#FFFFFF"
-              strokeWidth={1.4}
+              strokeWidth={1.5}
             />
 
-            {/* Specular Inner Chisel Highlight (Left Facet) */}
+            {/* Arista Cincelada de Luz */}
             <Polygon
               points="28,2 10,34 23,34 14,64 24,34 16,34 28,6"
               fill="url(#boltChiselGrad)"
@@ -322,23 +362,43 @@ export function GlowArcGauge({
           </G>
         </Svg>
 
-        {/* 8. CENTER TEXT OVERLAY */}
+        {/* 8. LECTURA NUMÉRICA CENTRAL Y MODO */}
         <View style={[styles.centerContent, { pointerEvents: 'none' }]}>
           <View style={styles.calsNumberRow}>
             <ThemedText style={styles.mainCountText}>
-              {calories.toLocaleString()}
+              {activeMetric === 'burn'
+                ? calories.toLocaleString()
+                : activeMetric === 'nutrition'
+                ? consumedCalories.toLocaleString()
+                : `${displayPct}%`}
             </ThemedText>
-            <ThemedText style={styles.targetDividerText}> / {targetCalories.toLocaleString()}</ThemedText>
+
+            {activeMetric !== 'power' && (
+              <ThemedText style={styles.targetDividerText}>
+                {' '}/ {activeMetric === 'burn' ? targetCalories.toLocaleString() : targetConsumedCalories.toLocaleString()}
+              </ThemedText>
+            )}
+
             <View style={styles.unitBadgeCol}>
-              <ThemedText style={styles.kcalUnitText}>Kcal</ThemedText>
+              <ThemedText style={styles.kcalUnitText}>
+                {activeMetric === 'power' ? 'DISCIPLINA' : 'Kcal'}
+              </ThemedText>
             </View>
           </View>
 
-          <ThemedText style={styles.dailyPowerTitle}>DAILY POWER</ThemedText>
-          <ThemedText style={styles.dailyBurnTitle}>BURN</ThemedText>
+          <ThemedText style={styles.dailyPowerTitle}>
+            {activeMetric === 'burn' ? 'DAILY POWER BURN' : activeMetric === 'nutrition' ? 'INGESTA NUTRICIONAL' : 'PODER ESTOICO'}
+          </ThemedText>
+          <ThemedText style={styles.dailyBurnSub}>
+            {activeMetric === 'burn'
+              ? '⚡ GASTO ENERGÉTICO ACTIVO'
+              : activeMetric === 'nutrition'
+              ? '🥗 COMIDAS REGISTRADAS'
+              : '🏛️ FUERZA & TEMPLE'}
+          </ThemedText>
         </View>
 
-        {/* 9. PERCENT BADGE */}
+        {/* 9. INSIGNIA FLOTANTE DE PORCENTAJE EN LA PUNTA */}
         <View style={[styles.percentFloatingBadge, { top: pctBadgePos.y - 12, left: pctBadgePos.x - 18 }]}>
           <ThemedText style={styles.percentFloatingText}>{displayPct}%</ThemedText>
         </View>
@@ -375,12 +435,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    textShadowRadius: 18,
   },
   targetDividerText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
-    color: '#E2E8F0',
+    color: '#CBD5E1',
     fontFamily: 'serif',
     letterSpacing: -0.5,
   },
@@ -388,62 +448,54 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   kcalUnitText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '900',
     color: '#FDE68A',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(245, 158, 11, 0.60)',
+    textShadowColor: 'rgba(245, 158, 11, 0.70)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 6,
   },
   dailyPowerTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
     color: '#FFE259',
     fontFamily: 'sans-serif',
-    letterSpacing: 3.5,
+    letterSpacing: 3,
     textTransform: 'uppercase',
     textAlign: 'center',
-    lineHeight: 20,
-    textShadowColor: 'rgba(245, 158, 11, 0.70)',
+    lineHeight: 18,
+    textShadowColor: 'rgba(245, 158, 11, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
-  dailyBurnTitle: {
-    fontSize: 16,
+  dailyBurnSub: {
+    fontSize: 9.5,
     fontWeight: '900',
-    color: '#FFFBEB',
-    fontFamily: 'sans-serif',
-    letterSpacing: 4.5,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    lineHeight: 20,
-    textShadowColor: 'rgba(245, 158, 11, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 10,
+    color: '#CBD5E1',
+    fontFamily: 'monospace',
+    letterSpacing: 1.2,
+    marginTop: 2,
   },
   percentFloatingBadge: {
     position: 'absolute',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    backgroundColor: 'rgba(8, 10, 16, 0.95)',
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(10, 14, 24, 0.94)',
+    borderWidth: 1.4,
     borderColor: '#FFE259',
-    shadowColor: '#F59E0B',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.85,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowRadius: 6,
+    elevation: 5,
   },
   percentFloatingText: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '900',
-    color: '#FFFDE0',
     fontFamily: 'monospace',
-    textShadowColor: 'rgba(245, 158, 11, 0.8)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
+    color: '#FFFFFF',
   },
 });

@@ -32,7 +32,7 @@ export default function HoyScreen() {
 
   const scrollY = useState(() => new Animated.Value(0))[0];
 
-  // Lectura 100% Real de Fuerza (Physical Power):
+  // 1. Lectura 100% Real de Fuerza (Physical Power):
   const currentSteps = log.steps ?? 0;
   const currentGoal = log.stepGoal ?? 10000;
   const stepRatio = currentGoal > 0 ? Math.min(1, currentSteps / currentGoal) : 0;
@@ -40,7 +40,7 @@ export default function HoyScreen() {
   const nutritionRatio = Math.min(1, (log.mealsLogged ?? 0) / 3);
   const strengthProgress = (trainingRatio * 0.40) + (stepRatio * 0.40) + (nutritionRatio * 0.20);
 
-  // Lectura 100% Real de Virtud (Stoic Discipline):
+  // 2. Lectura 100% Real de Virtud (Stoic Discipline):
   const waterLitres = log.waterLitres ?? 0;
   const waterRatio = Math.min(1, waterLitres / 3.0);
   const meditationRatio = log.checkInDone ? 1 : 0.5;
@@ -51,6 +51,17 @@ export default function HoyScreen() {
   const currentCalories = log.totalCalories ?? 0;
   const targetCalories = log.targetCalories ?? 2200;
   const activeStreak = log.trainingCompleted || log.checkInDone ? 15 : 14;
+
+  // 3. Fisiología Dinámica del Gasto Calórico Activo (Daily Power Burn):
+  const metrics = log.userMetrics || { weightKg: 78, heightCm: 176, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
+  const bmr = (10 * metrics.weightKg) + (6.25 * metrics.heightCm) - (5 * metrics.age) + 5;
+  const now = new Date();
+  const dayFraction = Math.max(0.25, (now.getHours() * 60 + now.getMinutes()) / 1440);
+  const basalBurn = Math.round(bmr * dayFraction);
+  const stepsBurn = Math.round(currentSteps * 0.045);
+  const workoutBurn = log.trainingCompleted ? 480 : (log.effectiveSets ? log.effectiveSets * 25 : 0);
+  const totalBurnedCalories = basalBurn + stepsBurn + workoutBurn;
+  const targetBurnCalories = Math.max(2200, Math.round(bmr * 1.45));
 
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
@@ -110,8 +121,10 @@ export default function HoyScreen() {
               steps={currentSteps}
               stepGoal={currentGoal}
               km={currentKm}
-              calories={currentCalories}
-              targetCalories={targetCalories}
+              calories={totalBurnedCalories}
+              targetCalories={targetBurnCalories}
+              consumedCalories={currentCalories}
+              targetConsumedCalories={targetCalories}
               waterLitres={waterLitres}
               trainingCompleted={log.trainingCompleted}
               streakDays={activeStreak}
