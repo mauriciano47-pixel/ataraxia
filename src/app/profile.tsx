@@ -12,7 +12,9 @@ import { auth } from '@/lib/firebase';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
-import { COACH_ARCHETYPES, CoachArchetype } from '@/types/onboarding';
+import { GreekParchmentPact } from '@/components/GreekParchmentPact';
+import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
+import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath } from '@/types/onboarding';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -22,12 +24,14 @@ const STOIC_PRESET_AVATARS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { log, setStoicAvatar, saveFullProfile, setCoachArchetype } = useDailyLog();
+  const { log, setStoicAvatar, saveFullProfile, setCoachArchetype, selectLegendaryPath } = useDailyLog();
 
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showParchmentModal, setShowParchmentModal] = useState(false);
+  const [showPathModal, setShowPathModal] = useState(false);
 
   // Editable fields
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
@@ -329,6 +333,43 @@ export default function ProfileScreen() {
             </View>
           </ThemedView>
 
+          {/* Sección Senda Legendaria & Juramento */}
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>SENDA & JURAMENTO SAGRADO</ThemedText>
+
+            <TouchableOpacity 
+              style={styles.actionRow}
+              onPress={() => setShowPathModal(true)}
+            >
+              <View style={styles.actionRowLeft}>
+                <Ionicons name="compass-outline" size={20} color="#FFE259" />
+                <View>
+                  <ThemedText style={styles.rowLabel}>Senda Legendaria Activa</ThemedText>
+                  <ThemedText style={styles.hint}>
+                    {log.legendaryPath === 'spartan' ? '⚔️ Senda del Espartano' :
+                     log.legendaryPath === 'hoplite' ? '🛡️ Senda del Hoplita' :
+                     log.legendaryPath === 'apollo' ? '⚡ Senda de Apolo' : '🧘‍♂️ Senda del Filósofo Guerrero'}
+                  </ThemedText>
+                </View>
+              </View>
+              <ThemedText style={styles.changeLinkText}>CAMBIAR</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionRow, { borderTopWidth: 1, borderTopColor: 'rgba(212, 175, 55, 0.15)', marginTop: 8, paddingTop: 10 }]}
+              onPress={() => setShowParchmentModal(true)}
+            >
+              <View style={styles.actionRowLeft}>
+                <Ionicons name="document-text-outline" size={20} color="#D4AF37" />
+                <View>
+                  <ThemedText style={styles.rowLabel}>Pacto del Templo de Ataraxia</ThemedText>
+                  <ThemedText style={styles.hint}>Releer el juramento solemne y advertencias</ThemedText>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#D4AF37" />
+            </TouchableOpacity>
+          </ThemedView>
+
           {/* Sección Estado del Guardián */}
           <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>ESTADO DEL GUARDIÁN</ThemedText>
@@ -456,6 +497,24 @@ export default function ProfileScreen() {
           Alert.alert("⚡ Perfil Calibrado", "Tu plan estoico y biométrico ha sido configurado con éxito.");
         }}
       />
+
+      {/* Modal para Releer el Papiro Griego del Juramento */}
+      {showParchmentModal && (
+        <View style={StyleSheet.absoluteFill}>
+          <GreekParchmentPact onAcceptPact={() => setShowParchmentModal(false)} />
+        </View>
+      )}
+
+      {/* Modal para Cambiar la Senda Legendaria */}
+      {showPathModal && (
+        <View style={StyleSheet.absoluteFill}>
+          <LegendaryPathSelector onSelectPath={(newPath) => {
+            selectLegendaryPath(newPath);
+            setShowPathModal(false);
+            Alert.alert("⚡ Senda Consagrada", `Has activado la senda con éxito.`);
+          }} />
+        </View>
+      )}
       </SafeAreaView>
     </PearlElectricBackground>
   );
