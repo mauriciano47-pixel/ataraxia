@@ -16,7 +16,6 @@ import Svg, {
   Circle,
   G,
   Polygon,
-  Rect,
 } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
@@ -27,15 +26,14 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
   // Valores animados
-  const boltScale = useRef(new Animated.Value(0.35)).current;
+  const boltScale = useRef(new Animated.Value(0.4)).current;
   const boltOpacity = useRef(new Animated.Value(0)).current;
   const boltGlowPulse = useRef(new Animated.Value(0.9)).current;
-  const sunburstRotate = useRef(new Animated.Value(0)).current;
+  const haloRotate = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleTranslateY = useRef(new Animated.Value(25)).current;
+  const titleTranslateY = useRef(new Animated.Value(20)).current;
   const badgeOpacity = useRef(new Animated.Value(0)).current;
   const quoteOpacity = useRef(new Animated.Value(0)).current;
-  const triadOpacity = useRef(new Animated.Value(0)).current;
   const buttonPulse = useRef(new Animated.Value(1)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
@@ -45,12 +43,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     Animated.parallel([
       Animated.timing(containerOpacity, {
         toValue: 0,
-        duration: 500,
+        duration: 450,
         useNativeDriver: true,
       }),
       Animated.timing(containerScale, {
-        toValue: 1.05,
-        duration: 500,
+        toValue: 1.04,
+        duration: 450,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -62,116 +60,106 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     // Ocultar splash screen nativo de Expo
     SplashScreen.hideAsync().catch(() => {});
 
-    // 1. Entrada Majestuosa del Rayo Divino
+    // 1. Entrada Majestuosa del Rayo
     Animated.parallel([
       Animated.spring(boltScale, {
         toValue: 1,
         friction: 6,
-        tension: 40,
+        tension: 45,
         useNativeDriver: true,
       }),
       Animated.timing(boltOpacity, {
         toValue: 1,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Pulso de Resplandor Neón Divino (Loop continuo)
+    // 2. Pulso de Resplandor Neón Divino
     Animated.loop(
       Animated.sequence([
         Animated.timing(boltGlowPulse, {
-          toValue: 1.28,
-          duration: 1100,
+          toValue: 1.22,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(boltGlowPulse, {
           toValue: 0.88,
-          duration: 1100,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // 3. Rotación Lenta y Celestial del Sol Invicto (40 segundos por vuelta)
+    // 3. Rotación Lenta del Halo Sagrado
     Animated.loop(
-      Animated.timing(sunburstRotate, {
+      Animated.timing(haloRotate, {
         toValue: 1,
-        duration: 40000,
+        duration: 30000,
         useNativeDriver: true,
       })
     ).start();
 
-    // 4. Revelación del Título Monumental ATARAXIA (0.5s a 1.2s)
+    // 4. Revelación del Título Monumental
     setTimeout(() => {
       Animated.parallel([
         Animated.timing(titleOpacity, {
           toValue: 1,
-          duration: 700,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.spring(titleTranslateY, {
           toValue: 0,
           friction: 7,
-          tension: 38,
+          tension: 40,
           useNativeDriver: true,
         }),
       ]).start();
-    }, 500);
+    }, 450);
 
-    // 5. Revelación de la Insignia Imperial (0.9s a 1.5s)
+    // 5. Revelación de la Insignia y Cita
     setTimeout(() => {
       Animated.timing(badgeOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }).start();
-    }, 900);
+    }, 750);
 
-    // 6. Revelación del Lema Oracular Estoico (1.3s a 1.9s)
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }).start();
-    }, 1300);
+    }, 1050);
 
-    // 7. Revelación de la Tríada de los Dioses (1.7s a 2.3s)
-    setTimeout(() => {
-      Animated.timing(triadOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }).start();
-    }, 1700);
-
-    // 8. Revelación y Pulsación del Botón de Entrada (2.0s en adelante)
+    // 6. Revelación y Pulsación del Botón
     setTimeout(() => {
       Animated.timing(buttonOpacity, {
         toValue: 1,
-        duration: 700,
+        duration: 600,
         useNativeDriver: true,
       }).start();
 
       Animated.loop(
         Animated.sequence([
           Animated.timing(buttonPulse, {
-            toValue: 1.05,
-            duration: 850,
+            toValue: 1.04,
+            duration: 800,
             useNativeDriver: true,
           }),
           Animated.timing(buttonPulse, {
             toValue: 1,
-            duration: 850,
+            duration: 800,
             useNativeDriver: true,
           }),
         ])
       ).start();
-    }, 2000);
+    }, 1350);
   }, []);
 
-  const spinInterpolate = sunburstRotate.interpolate({
+  const haloSpin = haloRotate.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
@@ -191,316 +179,208 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           ]}
         >
           <TouchableOpacity
-            activeOpacity={0.9}
+            activeOpacity={0.95}
             onPress={dismissSplash}
             style={styles.touchContainer}
           >
-            {/* AMBIENTE AURORA CELESTIAL DE FONDO */}
+            {/* AMBIENTE AURORA CELESTIAL */}
             <View style={styles.ambientGlowBackground}>
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
-                  <RadialGradient id="cosmicDawn" cx="50%" cy="42%" r="65%">
-                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.38" />
-                    <Stop offset="30%" stopColor="#D4AF37" stopOpacity="0.22" />
-                    <Stop offset="60%" stopColor="#F59E0B" stopOpacity="0.10" />
+                  <RadialGradient id="cosmicDawn" cx="50%" cy="38%" r="60%">
+                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.32" />
+                    <Stop offset="30%" stopColor="#D4AF37" stopOpacity="0.18" />
+                    <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.07" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
-                  <LinearGradient id="lightningColumn" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.35" />
-                    <Stop offset="30%" stopColor="#FFE259" stopOpacity="0.15" />
-                    <Stop offset="80%" stopColor="#F59E0B" stopOpacity="0.05" />
-                    <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
-                  </LinearGradient>
                 </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.38} r={SCREEN_WIDTH * 0.8} fill="url(#cosmicDawn)" />
-                <Rect x={SCREEN_WIDTH / 2 - 60} y={0} width={120} height={SCREEN_HEIGHT * 0.7} fill="url(#lightningColumn)" opacity={0.6} />
+                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.38} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
               </Svg>
             </View>
 
-            {/* CENTRO: EL ESCUDO IMPERIAL Y EL GRAN RAYO 3D DE ZEUS */}
-            <Animated.View
-              style={[
-                styles.boltCenterWrapper,
-                {
-                  opacity: boltOpacity,
-                  transform: [{ scale: boltScale }],
-                },
-              ]}
-            >
-              {/* HALO DE RESPLANDOR NEÓN PULSANTE */}
+            {/* SECCIÓN SUPERIOR Y CENTRAL: EL RAYO ICÓNICO CLÁSICO Y EL TÍTULO */}
+            <View style={styles.mainContentBlock}>
+              {/* CONTENEDOR DEL RAYO 3D DE ORO PURO */}
               <Animated.View
                 style={[
-                  styles.pulsingHalo,
+                  styles.boltCenterWrapper,
                   {
-                    transform: [{ scale: boltGlowPulse }],
-                  },
-                ]}
-              />
-
-              {/* ROTACIÓN DEL SOL INVICTO Y RAYOS RADIALES */}
-              <Animated.View
-                style={[
-                  styles.rotatingSunburst,
-                  {
-                    transform: [{ rotate: spinInterpolate }],
+                    opacity: boltOpacity,
+                    transform: [{ scale: boltScale }],
                   },
                 ]}
               >
-                <Svg width={320} height={320} viewBox="0 0 320 320">
+                {/* HALO DE RESPLANDOR NEÓN PULSANTE */}
+                <Animated.View
+                  style={[
+                    styles.pulsingHalo,
+                    {
+                      transform: [{ scale: boltGlowPulse }],
+                    },
+                  ]}
+                />
+
+                {/* HALO SAGRADO ROTATIVO */}
+                <Animated.View
+                  style={[
+                    styles.rotatingHaloWrapper,
+                    {
+                      transform: [{ rotate: haloSpin }],
+                    },
+                  ]}
+                >
+                  <Svg width={250} height={250} viewBox="0 0 250 250">
+                    <Defs>
+                      <LinearGradient id="haloRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.8" />
+                        <Stop offset="30%" stopColor="#FFE259" stopOpacity="0.5" />
+                        <Stop offset="70%" stopColor="#D4AF37" stopOpacity="0.3" />
+                        <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0.7" />
+                      </LinearGradient>
+                    </Defs>
+                    {/* Anillos Celestiales */}
+                    <Circle cx={125} cy={125} r={112} stroke="url(#haloRingGrad)" strokeWidth={2} fill="none" />
+                    <Circle cx={125} cy={125} r={118} stroke="rgba(255, 226, 89, 0.3)" strokeWidth={1.2} strokeDasharray="6, 5" fill="none" />
+                    <Circle cx={125} cy={125} r={104} stroke="rgba(212, 175, 55, 0.2)" strokeWidth={1} fill="none" />
+
+                    {/* 4 Chispas en los Puntos Cardinales */}
+                    <Circle cx={125} cy={13} r={2.8} fill="#FFFFFF" />
+                    <Circle cx={237} cy={125} r={2.8} fill="#FFE259" />
+                    <Circle cx={125} cy={237} r={2.8} fill="#FFFFFF" />
+                    <Circle cx={13} cy={125} r={2.8} fill="#FFE259" />
+                  </Svg>
+                </Animated.View>
+
+                {/* EL RAYO ICÓNICO DE ORO 3D (FORMA CLÁSICA AFILADA IMPECABLE) */}
+                <Svg width={250} height={250} viewBox="0 0 250 250">
                   <Defs>
-                    <LinearGradient id="sunRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.6" />
-                      <Stop offset="60%" stopColor="#D4AF37" stopOpacity="0.2" />
-                      <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+                    {/* Gradiente Faceta Izquierda: Oro Diamante Incandescente */}
+                    <LinearGradient id="pureGoldFacetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <Stop offset="0%" stopColor="#FFFFFF" />
+                      <Stop offset="25%" stopColor="#FFFDE0" />
+                      <Stop offset="55%" stopColor="#FFE259" />
+                      <Stop offset="85%" stopColor="#D4AF37" />
+                      <Stop offset="100%" stopColor="#F59E0B" />
                     </LinearGradient>
+
+                    {/* Gradiente Faceta Derecha: Oro Profundo / Sombra Biselada */}
+                    <LinearGradient id="pureGoldFacetRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <Stop offset="0%" stopColor="#FFE259" />
+                      <Stop offset="30%" stopColor="#D4AF37" />
+                      <Stop offset="65%" stopColor="#B45309" />
+                      <Stop offset="90%" stopColor="#78350F" />
+                      <Stop offset="100%" stopColor="#451A03" />
+                    </LinearGradient>
+
+                    {/* Columna Vertebral de Plasma Blanco */}
+                    <LinearGradient id="plasmaSpine" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                      <Stop offset="50%" stopColor="#FFFDE0" stopOpacity="0.9" />
+                      <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
+                    </LinearGradient>
+
+                    {/* Resplandor Aureo Trasero */}
+                    <RadialGradient id="backBloom" cx="50%" cy="50%" r="50%">
+                      <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+                      <Stop offset="30%" stopColor="#FFE259" stopOpacity="0.6" />
+                      <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.25" />
+                      <Stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
+                    </RadialGradient>
                   </Defs>
-                  {/* 16 Rayos de Sol Divino Geométricos */}
-                  {[0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5].map((deg, i) => (
-                    <G key={i} transform={`rotate(${deg} 160 160)`}>
-                      <Polygon
-                        points="160,25 163,80 157,80"
-                        fill="url(#sunRayGrad)"
-                        opacity={i % 2 === 0 ? 0.9 : 0.45}
-                      />
-                    </G>
-                  ))}
-                  {/* Anillo de Micro-Marcas de Compás */}
-                  <Circle cx={160} cy={160} r={148} stroke="rgba(255, 226, 89, 0.35)" strokeWidth={1} strokeDasharray="3, 7" fill="none" />
-                </Svg>
-              </Animated.View>
 
-              {/* EL GRAN RAYO MONUMENTAL 3D HYPER-DETALLADO */}
-              <Svg width={320} height={320} viewBox="0 0 320 320">
-                <Defs>
-                  {/* Gradiente Bisel 3D Oro Diamante */}
-                  <LinearGradient id="bezel3DGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFDE0" />
-                    <Stop offset="20%" stopColor="#FFE259" />
-                    <Stop offset="45%" stopColor="#D4AF37" />
-                    <Stop offset="70%" stopColor="#8A6615" />
-                    <Stop offset="88%" stopColor="#F59E0B" />
-                    <Stop offset="100%" stopColor="#FFFBEB" />
-                  </LinearGradient>
+                  {/* 1. Resplandor Trasero */}
+                  <Circle cx={125} cy={125} r={75} fill="url(#backBloom)" />
 
-                  {/* Gradiente Cuerpo Faceta Izquierda (Luz Incandescente) */}
-                  <LinearGradient id="boltFacetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFFFF" />
-                    <Stop offset="25%" stopColor="#FFFBEB" />
-                    <Stop offset="55%" stopColor="#FFE259" />
-                    <Stop offset="85%" stopColor="#F59E0B" />
-                    <Stop offset="100%" stopColor="#B45309" />
-                  </LinearGradient>
-
-                  {/* Gradiente Cuerpo Faceta Derecha (Sombra Oro Profundo) */}
-                  <LinearGradient id="boltFacetRight" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFE259" />
-                    <Stop offset="30%" stopColor="#D4AF37" />
-                    <Stop offset="65%" stopColor="#B45309" />
-                    <Stop offset="90%" stopColor="#78350F" />
-                    <Stop offset="100%" stopColor="#451A03" />
-                  </LinearGradient>
-
-                  {/* Gradiente Chisel Specular White Core */}
-                  <LinearGradient id="boltSpineCore" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
-                    <Stop offset="40%" stopColor="#FFFDE0" stopOpacity="0.9" />
-                    <Stop offset="80%" stopColor="#FFE259" stopOpacity="0.8" />
-                    <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
-                  </LinearGradient>
-
-                  {/* Halo Aureo Explosivo */}
-                  <RadialGradient id="zeusNovaBloom" cx="50%" cy="50%" r="50%">
-                    <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-                    <Stop offset="25%" stopColor="#FFE259" stopOpacity="0.75" />
-                    <Stop offset="60%" stopColor="#F59E0B" stopOpacity="0.30" />
-                    <Stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-                  </RadialGradient>
-
-                  {/* Disco de Ónix Profundo */}
-                  <RadialGradient id="onyxPlateCenter" cx="50%" cy="50%" r="50%">
-                    <Stop offset="0%" stopColor="#1E2338" />
-                    <Stop offset="55%" stopColor="#0F1322" />
-                    <Stop offset="85%" stopColor="#080A14" />
-                    <Stop offset="100%" stopColor="#030408" />
-                  </RadialGradient>
-
-                  {/* Gradiente de Rama Eléctrica */}
-                  <LinearGradient id="branchBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFFFF" />
-                    <Stop offset="50%" stopColor="#FFE259" />
-                    <Stop offset="100%" stopColor="#F59E0B" />
-                  </LinearGradient>
-                </Defs>
-
-                {/* 1. DISCO DE ÓNYX SAGRADO Y BISEL 3D */}
-                <Circle cx={160} cy={160} r={142} fill="url(#onyxPlateCenter)" />
-                <Circle cx={160} cy={160} r={142} stroke="url(#bezel3DGrad)" strokeWidth={8} fill="none" />
-                <Circle cx={160} cy={160} r={136} stroke="rgba(255, 253, 224, 0.75)" strokeWidth={1.5} fill="none" />
-                <Circle cx={160} cy={160} r={146} stroke="rgba(255, 226, 89, 0.45)" strokeWidth={1.2} fill="none" />
-
-                {/* Corona Sagrada de Puntos Celestiales */}
-                <Circle cx={160} cy={160} r={126} stroke="rgba(212, 175, 55, 0.25)" strokeWidth={1} strokeDasharray="4, 6" fill="none" />
-
-                {/* 2. ARCOS Y RAMIFICACIONES DE RELÁMPAGO SECUNDARIO (TESLA FORKS) */}
-                {/* Arco Izquierdo */}
-                <Path
-                  d="M 125 105 L 95 130 L 105 133 L 75 165 L 85 168 L 55 205"
-                  stroke="url(#branchBoltGrad)"
-                  strokeWidth={2.4}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity={0.85}
-                />
-                {/* Arco Derecho Superior */}
-                <Path
-                  d="M 195 90 L 230 115 L 220 118 L 255 145 L 245 148 L 275 180"
-                  stroke="url(#branchBoltGrad)"
-                  strokeWidth={2.4}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity={0.85}
-                />
-                {/* Arco Derecho Inferior */}
-                <Path
-                  d="M 185 190 L 220 220 L 210 223 L 240 255"
-                  stroke="url(#branchBoltGrad)"
-                  strokeWidth={2.0}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity={0.75}
-                />
-
-                {/* 3. ESTRELLAS Y CHISPAS VIVAS DE TRUENO */}
-                {/* Starburst Superior */}
-                <G transform="translate(160, 48)">
-                  <Polygon points="0,-12 3,-3 12,0 3,3 0,12 -3,3 -12,0 -3,-3" fill="#FFFFFF" opacity={0.95} />
-                  <Circle cx={0} cy={0} r={3} fill="#FFE259" />
-                </G>
-                {/* Starburst Punta Inferior */}
-                <G transform="translate(132, 276)">
-                  <Polygon points="0,-14 3.5,-3.5 14,0 3.5,3.5 0,14 -3.5,3.5 -14,0 -3.5,-3.5" fill="#FFFFFF" opacity={1} />
-                  <Circle cx={0} cy={0} r={4} fill="#FFE259" />
-                </G>
-                {/* Chispas flotantes */}
-                <Circle cx={68} cy={110} r={2.5} fill="#FFFFFF" opacity={0.9} />
-                <Circle cx={255} cy={105} r={2.8} fill="#FFE259" opacity={0.95} />
-                <Circle cx={268} cy={205} r={2.2} fill="#FFFFFF" opacity={0.85} />
-                <Circle cx={52} cy={220} r={2.4} fill="#FFE259" opacity={0.9} />
-                <Circle cx={160} cy={285} r={3} fill="#FFFFFF" opacity={0.95} />
-
-                {/* 4. EL GRAN RAYO MONUMENTAL 3D ESCULPIDO DE ZEUS */}
-                <G transform="translate(45, 20)">
-                  {/* Aura Flare Trasera Gigante */}
-                  <Circle cx={115} cy={135} r={95} fill="url(#zeusNovaBloom)" />
-
-                  {/* Resplandor Neón de Impacto Exterior (Borde Grueso Dorado) */}
+                  {/* 2. Sombra de Relieve 3D en Bronce */}
                   <Polygon
-                    points="115,22 75,120 108,120 62,205 102,205 48,272 188,142 142,142 182,75 138,75"
-                    fill="rgba(245, 158, 11, 0.45)"
+                    points="148,18 78,136 124,136 88,238 174,116 132,116"
+                    fill="rgba(120, 53, 15, 0.9)"
+                    transform="translate(3, 4)"
+                  />
+
+                  {/* 3. Borde Neón Brillante Exterior */}
+                  <Polygon
+                    points="148,18 78,136 124,136 88,238 174,116 132,116"
+                    fill="rgba(245, 158, 11, 0.35)"
                     stroke="rgba(255, 226, 89, 0.95)"
-                    strokeWidth={8}
+                    strokeWidth={5}
                     strokeLinejoin="round"
                   />
 
-                  {/* Sombra de Relieve de Titanio / Bronce Profundo */}
+                  {/* 4. Faceta Derecha (Sombra de Oro 3D) */}
                   <Polygon
-                    points="115,22 75,120 108,120 62,205 102,205 48,272 188,142 142,142 182,75 138,75"
-                    fill="rgba(120, 53, 15, 0.95)"
-                    transform="translate(3.5, 4.5)"
-                  />
-
-                  {/* Faceta Derecha (Sombra Oro Cepillado) */}
-                  <Polygon
-                    points="115,22 138,75 182,75 142,142 188,142 48,272 102,205 115,160 115,22"
-                    fill="url(#boltFacetRight)"
+                    points="148,18 130,136 88,238 174,116 132,116"
+                    fill="url(#pureGoldFacetRight)"
                     stroke="#D4AF37"
-                    strokeWidth={1}
+                    strokeWidth={0.8}
                     strokeLinejoin="round"
                   />
 
-                  {/* Faceta Izquierda (Luz Oro Diamante Incandescente) */}
+                  {/* 5. Faceta Izquierda (Luz Incandescente de Oro Diamante) */}
                   <Polygon
-                    points="115,22 75,120 108,120 62,205 102,205 48,272 115,160 115,22"
-                    fill="url(#boltFacetLeft)"
+                    points="148,18 78,136 124,136 88,238 130,136"
+                    fill="url(#pureGoldFacetLeft)"
                     stroke="#FFFFFF"
-                    strokeWidth={1.5}
+                    strokeWidth={1.2}
                     strokeLinejoin="round"
                   />
 
-                  {/* Columna Vertebral Central (Cresta de Plasma Blanco/Oro) */}
+                  {/* 6. Línea Divisoria de la Columna Vertebral 3D */}
                   <Path
-                    d="M 115 24 L 98 120 L 105 120 L 84 205 L 102 205 L 48 272"
-                    stroke="url(#boltSpineCore)"
-                    strokeWidth={3.5}
+                    d="M 148 18 L 130 136 L 88 238"
+                    stroke="url(#plasmaSpine)"
+                    strokeWidth={2.4}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
                   />
 
-                  {/* Chisel Specular Flashes en las Puntas */}
-                  <Polygon
-                    points="115,24 82,118 106,118 68,202 100,202 52,268 96,204 66,204 104,122 78,122 115,28"
-                    fill="#FFFFFF"
-                    opacity={0.7}
-                  />
-                </G>
-              </Svg>
-            </Animated.View>
+                  {/* 7. Destello Especular en el Vértice Superior */}
+                  <Circle cx={148} cy={18} r={3} fill="#FFFFFF" />
+                  {/* Destello Especular en la Punta Inferior */}
+                  <Circle cx={88} cy={238} r={3.5} fill="#FFFFFF" />
+                </Svg>
+              </Animated.View>
 
-            {/* TITULO MONUMENTAL DIGNO DE LOS DIOSES: ATARAXIA */}
+              {/* SECCIÓN DEL TÍTULO ATARAXIA */}
+              <Animated.View
+                style={[
+                  styles.titleSection,
+                  {
+                    opacity: titleOpacity,
+                    transform: [{ translateY: titleTranslateY }],
+                  },
+                ]}
+              >
+                <View style={styles.titleWingsRow}>
+                  <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
+                  <ThemedText style={styles.divineMainTitle}>ATARAXIA</ThemedText>
+                  <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
+                </View>
+
+                {/* INSIGNIA CELESTIAL DORADA */}
+                <Animated.View style={[styles.divineBadgeContainer, { opacity: badgeOpacity }]}>
+                  <ThemedText style={styles.divineBadgeText}>
+                    TEMPLO DEL AUTODOMINIO
+                  </ThemedText>
+                </Animated.View>
+
+                {/* LEMA ORACULAR ESTOICO */}
+                <Animated.View style={[styles.quoteContainer, { opacity: quoteOpacity }]}>
+                  <ThemedText style={styles.stoicMottoText}>
+                    &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
+                  </ThemedText>
+                  <ThemedText style={styles.stoicAuthorText}>
+                    — Marco Aurelio
+                  </ThemedText>
+                </Animated.View>
+              </Animated.View>
+            </View>
+
+            {/* SECCIÓN INFERIOR: BOTÓN DE ACCESO TÁCTIL (SIN SUPERPOSICIÓN) */}
             <Animated.View
               style={[
-                styles.titleSection,
-                {
-                  opacity: titleOpacity,
-                  transform: [{ translateY: titleTranslateY }],
-                },
-              ]}
-            >
-              <View style={styles.titleWingsRow}>
-                <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
-                <ThemedText style={styles.divineMainTitle}>ATARAXIA</ThemedText>
-                <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
-              </View>
-
-              {/* INSIGNIA CELESTIAL DORADA */}
-              <Animated.View style={[styles.divineBadgeContainer, { opacity: badgeOpacity }]}>
-                <ThemedText style={styles.divineBadgeText}>
-                  TEMPLO DEL AUTODOMINIO • FUERZA & VIRTUD
-                </ThemedText>
-              </Animated.View>
-
-              {/* LEMA ORACULAR ESTOICO */}
-              <Animated.View style={[styles.quoteContainer, { opacity: quoteOpacity }]}>
-                <ThemedText style={styles.stoicMottoText}>
-                  &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
-                </ThemedText>
-                <ThemedText style={styles.stoicAuthorText}>
-                  — Marco Aurelio (Emperador Estoico)
-                </ThemedText>
-              </Animated.View>
-
-              {/* TRÍADA DE LOS DIOSES: VIRTUD • DISCIPLINA • SERENIDAD */}
-              <Animated.View style={[styles.triadRow, { opacity: triadOpacity }]}>
-                <View style={styles.triadPill}>
-                  <ThemedText style={styles.triadText}>⚔️ FUERZA</ThemedText>
-                </View>
-                <View style={styles.triadPill}>
-                  <ThemedText style={styles.triadText}>🏛️ DISCIPLINA</ThemedText>
-                </View>
-                <View style={styles.triadPill}>
-                  <ThemedText style={styles.triadText}>⚡ SERENIDAD</ThemedText>
-                </View>
-              </Animated.View>
-            </Animated.View>
-
-            {/* BOTÓN MAJESTUOSO: TOCA PARA INGRESAR AL TEMPLO */}
-            <Animated.View
-              style={[
-                styles.enterButtonWrapper,
+                styles.bottomActionsBlock,
                 {
                   opacity: buttonOpacity,
                   transform: [{ scale: buttonPulse }],
@@ -509,7 +389,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             >
               <View style={styles.enterButtonPill}>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
-                <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR AL TEMPLO</ThemedText>
+                <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
               <ThemedText style={styles.touchHintText}>Toca en cualquier lugar de la pantalla</ThemedText>
@@ -534,17 +414,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#040406',
     zIndex: 99999,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   touchContainer: {
     flex: 1,
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: Platform.OS === 'web' ? 40 : 50,
+    paddingBottom: Platform.OS === 'web' ? 30 : 40,
   },
   ambientGlowBackground: {
     position: 'absolute',
@@ -555,59 +434,65 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  mainContentBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    flex: 1,
+  },
   boltCenterWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -10,
-    width: 320,
-    height: 320,
+    width: 250,
+    height: 250,
+    marginBottom: 8,
   },
   pulsingHalo: {
     position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255, 226, 89, 0.20)',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255, 226, 89, 0.18)',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 50,
+    shadowOpacity: 0.85,
+    shadowRadius: 40,
   },
-  rotatingSunburst: {
+  rotatingHaloWrapper: {
     position: 'absolute',
-    width: 320,
-    height: 320,
+    width: 250,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titleSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
     gap: 8,
+    marginTop: 4,
   },
   titleWingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 10,
   },
   divineSparkleWing: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#FFE259',
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    textShadowRadius: 14,
   },
   divineMainTitle: {
-    fontSize: Platform.OS === 'web' ? 44 : 38,
+    fontSize: Platform.OS === 'web' ? 42 : 36,
     fontWeight: '900',
     color: '#FFFDE0',
-    letterSpacing: Platform.OS === 'web' ? 9 : 7,
+    letterSpacing: Platform.OS === 'web' ? 8 : 6,
     textTransform: 'uppercase',
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 28,
+    textShadowRadius: 24,
     fontFamily: Platform.OS === 'ios' ? 'Cinzel' : 'serif',
   },
   divineBadgeContainer: {
@@ -616,106 +501,82 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 226, 89, 0.45)',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 5,
-    marginTop: 2,
+    paddingVertical: 4,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowRadius: 8,
   },
   divineBadgeText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '900',
     color: '#FFE259',
-    letterSpacing: 2.6,
+    letterSpacing: 2.4,
     textTransform: 'uppercase',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   quoteContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    paddingHorizontal: 20,
+    marginTop: 6,
+    paddingHorizontal: 24,
     gap: 3,
   },
   stoicMottoText: {
-    fontSize: 13.5,
+    fontSize: 13,
     fontStyle: 'italic',
     fontFamily: 'serif',
     color: '#E2E8F0',
     textAlign: 'center',
-    textShadowColor: 'rgba(212, 175, 55, 0.40)',
-    textShadowRadius: 6,
-    lineHeight: 19,
+    textShadowColor: 'rgba(212, 175, 55, 0.35)',
+    textShadowRadius: 5,
+    lineHeight: 18,
   },
   stoicAuthorText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontFamily: 'monospace',
     color: '#D4AF37',
     fontWeight: '700',
     letterSpacing: 1.2,
   },
-  triadRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 6,
-  },
-  triadPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.30)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  triadText: {
-    fontSize: 9.5,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#FFE259',
-    letterSpacing: 1.2,
-  },
-  enterButtonWrapper: {
-    position: 'absolute',
-    bottom: 32,
+  bottomActionsBlock: {
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     gap: 6,
+    marginTop: 12,
   },
   enterButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(212, 175, 55, 0.20)',
-    borderWidth: 1.5,
+    gap: 8,
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderWidth: 1.4,
     borderColor: '#FFE259',
-    borderRadius: 24,
-    paddingHorizontal: 22,
-    paddingVertical: 11,
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.75,
-    shadowRadius: 16,
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
   },
   enterButtonSparkle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#FFE259',
   },
   enterButtonText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '900',
     color: '#FFFDE0',
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'monospace',
     color: 'rgba(212, 175, 55, 0.65)',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
   },
 });
