@@ -16,13 +16,15 @@ import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCards';
+import { StepCalibrationModal } from '@/components/StepCalibrationModal';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
+  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(false);
+  const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -124,6 +126,7 @@ export default function HoyScreen() {
             heartRateBpm={log.smartDevice?.heartRateBpm || 72}
             avgBpm={68}
             peakBpm={142}
+            onOpenStepDetails={() => setShowStepCalibration(true)}
             onAddSteps={addSteps}
             onSyncHeartRate={(measuredBpm) => {
               const bpm = measuredBpm || 74;
@@ -331,6 +334,16 @@ export default function HoyScreen() {
         <StoicOnboardingModal
           visible={!log.hasCompletedOnboarding && !onboardingDismissed}
           onClose={() => setOnboardingDismissed(true)}
+        />
+
+        <StepCalibrationModal
+          visible={showStepCalibration}
+          onClose={() => setShowStepCalibration(false)}
+          currentSteps={currentSteps}
+          stepGoal={currentGoal}
+          onSetSteps={setSteps}
+          onAddSteps={addSteps}
+          onSetStepGoal={setStepGoal}
         />
       </SafeAreaView>
     </PearlElectricBackground>

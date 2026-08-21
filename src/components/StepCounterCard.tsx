@@ -116,19 +116,19 @@ export function StepCounterCard({
         )}
       </TouchableOpacity>
 
-      {/* QUICK ADD STEP CHIPS */}
+      {/* QUICK ADD STEP CHIPS (CALIBRADOS REALISTAS) */}
       <View style={styles.quickAddRow}>
+        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(100)} activeOpacity={0.8}>
+          <ThemedText style={styles.chipText}>+100</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(250)} activeOpacity={0.8}>
+          <ThemedText style={styles.chipText}>+250 paseo</ThemedText>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(500)} activeOpacity={0.8}>
           <ThemedText style={styles.chipText}>+500</ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(1000)} activeOpacity={0.8}>
-          <ThemedText style={styles.chipText}>+1.000</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addStepChip} onPress={() => onAddSteps(2500)} activeOpacity={0.8}>
-          <ThemedText style={styles.chipText}>+2.500</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.addStepChip, styles.addStepChipAccent]} onPress={() => onAddSteps(5000)} activeOpacity={0.8}>
-          <ThemedText style={[styles.chipText, styles.chipTextAccent]}>+5.000</ThemedText>
+        <TouchableOpacity style={[styles.addStepChip, styles.addStepChipAccent]} onPress={() => onAddSteps(1000)} activeOpacity={0.8}>
+          <ThemedText style={[styles.chipText, styles.chipTextAccent]}>+1.000 caminata</ThemedText>
         </TouchableOpacity>
       </View>
 

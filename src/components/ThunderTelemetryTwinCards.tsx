@@ -96,7 +96,7 @@ export function ThunderTelemetryTwinCards({
       <TouchableOpacity
         style={styles.card}
         activeOpacity={0.88}
-        onPress={() => onOpenStepDetails ? onOpenStepDetails() : (onAddSteps && onAddSteps(500))}
+        onPress={() => onOpenStepDetails && onOpenStepDetails()}
       >
         {/* Card Header */}
         <View style={styles.cardHeader}>
