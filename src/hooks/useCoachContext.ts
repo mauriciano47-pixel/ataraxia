@@ -98,6 +98,8 @@ export function useCoachContext(): CoachContext {
 
     lines.push('=== FICHA TÉCNICA DEL ATLETA PROKOPTON ===');
     lines.push(`Nombre: ${log.userName || 'Ciudadano Prokopton'}`);
+    lines.push(`Senda Legendaria: ${log.legendaryPath === 'spartan' ? '⚔️ Senda del Espartano (Fuerza & Hipertrofia)' : log.legendaryPath === 'hoplite' ? '🛡️ Senda del Hoplita (Resistencia & Longevidad)' : log.legendaryPath === 'apollo' ? '⚡ Senda de Apolo (Estética & Definición)' : '🧘‍♂️ Senda del Filósofo Guerrero (Calistenia & Mente)'}`);
+    lines.push(`Ciclo de 30 Días: Día ${log.monthlyCycle?.currentDay || 1}/30 | Rango: ${log.monthlyCycle?.tier || 'Novicio de Esparta'}`);
     lines.push(`Arquetipo del Coach: ${log.coachArchetype === 'spartan_commander' ? 'Comandante Espartano ⚔️' : log.coachArchetype === 'sports_scientist' ? 'Fisiólogo & Científico Deportivo 🔬' : 'Mentor Sabio Estoico 🏛️'}`);
     if (log.prokoptonProfile) {
       const p = log.prokoptonProfile;
