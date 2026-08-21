@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%">
+  <defs>
+    <radialGradient id="oledGlow" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#241a05" stop-opacity="0.9" />
+      <stop offset="45%" stop-color="#0e0b04" stop-opacity="0.98" />
+      <stop offset="100%" stop-color="#040406" stop-opacity="1" />
+    </radialGradient>
+    <linearGradient id="goldKeyLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="20%" stop-color="#FFF3C4" />
+      <stop offset="45%" stop-color="#FFD700" />
+      <stop offset="75%" stop-color="#E5A93C" />
+      <stop offset="100%" stop-color="#996515" />
+    </linearGradient>
+    <linearGradient id="goldShadowLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37" />
+      <stop offset="35%" stop-color="#B8860B" />
+      <stop offset="70%" stop-color="#7A4B06" />
+      <stop offset="100%" stop-color="#3E2700" />
+    </linearGradient>
+    <linearGradient id="plasmaCore" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#E0F7FA" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+    <filter id="godGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blurWide" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blurMid" />
+      <feMerge>
+        <feMergeNode in="blurWide" />
+        <feMergeNode in="blurMid" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="plasmaBloom" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="12" result="glow1"/>
+      <feGaussianBlur stdDeviation="30" result="glow2"/>
+      <feMerge>
+        <feMergeNode in="glow2"/>
+        <feMergeNode in="glow1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1000" height="1000" fill="#040406" />
+  <circle cx="500" cy="500" r="480" fill="url(#oledGlow)" />
+  <circle cx="500" cy="500" r="440" fill="none" stroke="url(#goldKeyLight)" stroke-width="4" opacity="0.85" />
+  <circle cx="500" cy="500" r="425" fill="none" stroke="url(#goldShadowLight)" stroke-width="2" opacity="0.6" />
+  <g transform="translate(500, 480)">
+    <path d="M 0,-380 L -75,-210 L 15,-160 L -110,10 L -5,50 L -140,260 L 10,290 L 0,400 L -5,280 L 150,240 L 15,40 L 120,-10 L -5,-170 L 85,-220 Z" 
+          fill="#FFD700" opacity="0.35" filter="url(#godGlow)" />
+    <path d="M 0,-380 L -75,-210 L 5,-215 Z" fill="url(#goldKeyLight)" />
+    <path d="M -75,-210 L 15,-160 L 5,-165 L 5,-215 Z" fill="url(#goldKeyLight)" />
+    <path d="M 15,-160 L -110,10 L 10,0 L 5,-165 Z" fill="url(#goldKeyLight)" />
+    <path d="M -110,10 L -5,50 L 5,45 L 10,0 Z" fill="url(#goldKeyLight)" />
+    <path d="M -5,50 L -140,260 L 10,250 L 5,45 Z" fill="url(#goldKeyLight)" />
+    <path d="M -140,260 L 10,290 L 2,285 L 10,250 Z" fill="url(#goldKeyLight)" />
+    <path d="M 10,290 L 0,400 L 2,285 Z" fill="url(#goldKeyLight)" />
+    <path d="M 0,-380 L 85,-220 L 5,-215 Z" fill="url(#goldShadowLight)" />
+    <path d="M 85,-220 L -5,-170 L 5,-165 L 5,-215 Z" fill="url(#goldShadowLight)" />
+    <path d="M -5,-170 L 120,-10 L 10,0 L 5,-165 Z" fill="url(#goldShadowLight)" />
+    <path d="M 120,-10 L 15,40 L 5,45 L 10,0 Z" fill="url(#goldShadowLight)" />
+    <path d="M 15,40 L 150,240 L 10,250 L 5,45 Z" fill="url(#goldShadowLight)" />
+    <path d="M 150,240 L -5,280 L 2,285 L 10,250 Z" fill="url(#goldShadowLight)" />
+    <path d="M -5,280 L 0,400 L 2,285 Z" fill="url(#goldShadowLight)" />
+    <path d="M 0,-380 L -75,-210 L 15,-160 L -110,10 L -5,50 L -140,260 L 10,290 L 0,400" 
+          fill="none" stroke="#FFF7D6" stroke-width="3.5" stroke-linejoin="round" />
+    <path d="M 0,-380 L 85,-220 L -5,-170 L 120,-10 L 15,40 L 150,240 L -5,280 L 0,400" 
+          fill="none" stroke="#FFE484" stroke-width="2.5" stroke-linejoin="round" />
+    <path d="M 0,-380 L 5,-215 L 5,-165 L 10,0 L 5,45 L 10,250 L 2,285 L 0,400" 
+          fill="none" stroke="url(#plasmaCore)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" filter="url(#plasmaBloom)" />
+    <path d="M 0,-380 L 5,-215 L 5,-165 L 10,0 L 5,45 L 10,250 L 2,285 L 0,400" 
+          fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="10" cy="0" r="14" fill="#FFFFFF" filter="url(#godGlow)" />
+    <circle cx="10" cy="0" r="7" fill="#FFFFFF" />
+    <circle cx="5" cy="-215" r="9" fill="#FFFFFF" />
+    <circle cx="10" cy="250" r="9" fill="#FFFFFF" />
+  </g>
+  <g stroke="url(#goldKeyLight)" fill="url(#goldKeyLight)" opacity="0.95">
+    <path d="M 280,680 Q 250,560 300,420 Q 360,300 440,220" fill="none" stroke-width="3" />
+    <ellipse cx="285" cy="620" rx="22" ry="9" transform="rotate(-35 285 620)" />
+    <ellipse cx="270" cy="540" rx="24" ry="10" transform="rotate(-15 270 540)" />
+    <ellipse cx="290" cy="460" rx="24" ry="10" transform="rotate(10 290 460)" />
+    <ellipse cx="340" cy="380" rx="24" ry="10" transform="rotate(35 340 380)" />
+    <ellipse cx="400" cy="300" rx="22" ry="9" transform="rotate(55 400 300)" />
+    <ellipse cx="450" cy="240" rx="18" ry="7" transform="rotate(75 450 240)" />
+  </g>
+  <g stroke="url(#goldShadowLight)" fill="url(#goldShadowLight)" opacity="0.95">
+    <path d="M 720,680 Q 750,560 700,420 Q 640,300 560,220" fill="none" stroke-width="3" />
+    <ellipse cx="715" cy="620" rx="22" ry="9" transform="rotate(35 715 620)" />
+    <ellipse cx="730" cy="540" rx="24" ry="10" transform="rotate(15 730 540)" />
+    <ellipse cx="710" cy="460" rx="24" ry="10" transform="rotate(-10 710 460)" />
+    <ellipse cx="660" cy="380" rx="24" ry="10" transform="rotate(-35 660 380)" />
+    <ellipse cx="600" cy="300" rx="22" ry="9" transform="rotate(-55 600 300)" />
+    <ellipse cx="550" cy="240" rx="18" ry="7" transform="rotate(-75 550 240)" />
+  </g>
+  <ellipse cx="500" cy="740" rx="40" ry="15" fill="url(#goldKeyLight)" />
+  <circle cx="500" cy="740" r="8" fill="#FFFFFF" />
+</svg>
