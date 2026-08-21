@@ -22,7 +22,7 @@ export default function HoyScreen() {
   const { log, toggleTraining, addSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
 
-  const [onboardingVisible, setOnboardingVisible] = useState<boolean>(!log.hasCompletedOnboarding);
+  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -329,8 +329,8 @@ export default function HoyScreen() {
         </Animated.ScrollView>
 
         <StoicOnboardingModal
-          visible={onboardingVisible && !log.hasCompletedOnboarding}
-          onClose={() => setOnboardingVisible(false)}
+          visible={!log.hasCompletedOnboarding && !onboardingDismissed}
+          onClose={() => setOnboardingDismissed(true)}
         />
       </SafeAreaView>
     </PearlElectricBackground>

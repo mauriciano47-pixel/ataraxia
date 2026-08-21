@@ -97,6 +97,7 @@ export const DEFAULT_LOG: DailyLog = {
 
 const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
 const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
+const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v1';
 
 type UserProfile = {
   userName: string;
@@ -157,7 +158,19 @@ function loadLocalDailyLog(targetDate: string): DailyLog {
     const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
     if (savedProfile) {
       const profileData = JSON.parse(savedProfile);
-      baseLog = { ...baseLog, ...profileData };
+      baseLog = {
+        ...baseLog,
+        ...profileData,
+        userMetrics: {
+          ...DEFAULT_USER_METRICS,
+          ...(profileData.userMetrics || {}),
+        },
+      };
+    }
+
+    const isCompleted = SafeStorage.getItem(ONBOARDING_KEY) === 'true';
+    if (isCompleted || baseLog.hasCompletedOnboarding) {
+      baseLog.hasCompletedOnboarding = true;
     }
 
     const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);
@@ -168,11 +181,37 @@ function loadLocalDailyLog(targetDate: string): DailyLog {
     const savedToday = SafeStorage.getItem(`ataraxia_log_${targetDate}`);
     if (savedToday) {
       const todayData = JSON.parse(savedToday);
-      const { stoicAvatarUri, ...todayDataClean } = todayData;
+      const {
+        waterLitres,
+        trainingCompleted,
+        mealsLogged,
+        totalCalories,
+        steps,
+        energyLevel,
+        sleepQuality,
+        checkInDone,
+        macros,
+        readinessScore,
+        effectiveSets,
+        lastNutrientDensityScore,
+        lastNutrientVerdict,
+      } = todayData;
+
       baseLog = {
         ...baseLog,
-        ...todayDataClean,
-        ...(stoicAvatarUri ? { stoicAvatarUri } : {}),
+        ...(waterLitres !== undefined ? { waterLitres } : {}),
+        ...(trainingCompleted !== undefined ? { trainingCompleted } : {}),
+        ...(mealsLogged !== undefined ? { mealsLogged } : {}),
+        ...(totalCalories !== undefined ? { totalCalories } : {}),
+        ...(steps !== undefined ? { steps } : {}),
+        ...(energyLevel !== undefined ? { energyLevel } : {}),
+        ...(sleepQuality !== undefined ? { sleepQuality } : {}),
+        ...(checkInDone !== undefined ? { checkInDone } : {}),
+        ...(macros !== undefined ? { macros } : {}),
+        ...(readinessScore !== undefined ? { readinessScore } : {}),
+        ...(effectiveSets !== undefined ? { effectiveSets } : {}),
+        ...(lastNutrientDensityScore !== undefined ? { lastNutrientDensityScore } : {}),
+        ...(lastNutrientVerdict !== undefined ? { lastNutrientVerdict } : {}),
       };
     }
   } catch (e) {
@@ -197,8 +236,26 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
     };
     SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
 
-    const { stoicAvatarUri, ...cleanLog } = currentLog;
-    SafeStorage.setItem(`ataraxia_log_${targetDate}`, JSON.stringify(cleanLog));
+    if (currentLog.hasCompletedOnboarding) {
+      SafeStorage.setItem(ONBOARDING_KEY, 'true');
+    }
+
+    const dailyMetrics = {
+      waterLitres: currentLog.waterLitres,
+      trainingCompleted: currentLog.trainingCompleted,
+      mealsLogged: currentLog.mealsLogged,
+      totalCalories: currentLog.totalCalories,
+      steps: currentLog.steps,
+      energyLevel: currentLog.energyLevel,
+      sleepQuality: currentLog.sleepQuality,
+      checkInDone: currentLog.checkInDone,
+      macros: currentLog.macros,
+      readinessScore: currentLog.readinessScore,
+      effectiveSets: currentLog.effectiveSets,
+      lastNutrientDensityScore: currentLog.lastNutrientDensityScore,
+      lastNutrientVerdict: currentLog.lastNutrientVerdict,
+    };
+    SafeStorage.setItem(`ataraxia_log_${targetDate}`, JSON.stringify(dailyMetrics));
 
     if (currentLog.stoicAvatarUri) {
       SafeStorage.setItem(AVATAR_STORAGE_KEY, currentLog.stoicAvatarUri);
@@ -548,7 +605,13 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetOnboarding = () => {
+    SafeStorage.removeItem(ONBOARDING_KEY);
     updateLog({
+      hasCompletedOnboarding: false,
+      prokoptonProfile: undefined,
+      customRoutine: undefined,
+    });
+    saveProfileToFirestore({
       hasCompletedOnboarding: false,
       prokoptonProfile: undefined,
       customRoutine: undefined,
