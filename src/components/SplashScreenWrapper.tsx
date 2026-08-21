@@ -7,66 +7,80 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  ImageBackground,
 } from 'react-native';
-import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
-import { GreekParchmentPact } from './GreekParchmentPact';
-import { SafeStorage } from '@/utils/safeStorage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-type SplashStage = 'parchment' | 'lightning' | 'none';
-
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-  const [stage, setStage] = useState<SplashStage>('parchment');
+  const [showSplash, setShowSplash] = useState<boolean>(true);
 
-  // Animaciones del Rayo
-  const boltScale = useRef(new Animated.Value(0.7)).current;
-  const boltOpacity = useRef(new Animated.Value(0)).current;
-  const boltPulse = useRef(new Animated.Value(1)).current;
+  // Animaciones de entrada y respiración
+  const emblemScale = useRef(new Animated.Value(0.85)).current;
+  const emblemOpacity = useRef(new Animated.Value(0)).current;
+  const emblemGlowPulse = useRef(new Animated.Value(1)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleTranslateY = useRef(new Animated.Value(15)).current;
-  const badgeOpacity = useRef(new Animated.Value(0)).current;
+  const titleTranslateY = useRef(new Animated.Value(10)).current;
   const quoteOpacity = useRef(new Animated.Value(0)).current;
   const buttonPulse = useRef(new Animated.Value(1)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
 
-  const startLightningAnimations = () => {
-    // Entrada del Rayo Monumental
+  const dismissSplash = () => {
     Animated.parallel([
-      Animated.spring(boltScale, {
+      Animated.timing(containerOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(containerScale, {
+        toValue: 1.03,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowSplash(false);
+    });
+  };
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+
+    // Entrada del Emblema Maestro de Zeus
+    Animated.parallel([
+      Animated.spring(emblemScale, {
         toValue: 1,
         friction: 6,
         tension: 40,
         useNativeDriver: true,
       }),
-      Animated.timing(boltOpacity, {
+      Animated.timing(emblemOpacity, {
         toValue: 1,
-        duration: 700,
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Respiración del Rayo (Loop continuo)
+    // Respiración del Rayo y Medallón
     Animated.loop(
       Animated.sequence([
-        Animated.timing(boltPulse, {
-          toValue: 1.04,
-          duration: 1200,
+        Animated.timing(emblemGlowPulse, {
+          toValue: 1.035,
+          duration: 1400,
           useNativeDriver: true,
         }),
-        Animated.timing(boltPulse, {
+        Animated.timing(emblemGlowPulse, {
           toValue: 0.98,
-          duration: 1200,
+          duration: 1400,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // Revelación del Título Monumental
+    // Entrada del Título y Lema
     setTimeout(() => {
       Animated.parallel([
         Animated.timing(titleOpacity, {
@@ -81,26 +95,17 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           useNativeDriver: true,
         }),
       ]).start();
-    }, 300);
-
-    // Revelación de Insignia y Cita
-    setTimeout(() => {
-      Animated.timing(badgeOpacity, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    }, 600);
+    }, 500);
 
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
         toValue: 1,
-        duration: 500,
+        duration: 600,
         useNativeDriver: true,
       }).start();
-    }, 850);
+    }, 800);
 
-    // Revelación del Botón de Entrada
+    // Entrada del Botón de Ingreso
     setTimeout(() => {
       Animated.timing(buttonOpacity, {
         toValue: 1,
@@ -112,57 +117,24 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
         Animated.sequence([
           Animated.timing(buttonPulse, {
             toValue: 1.04,
-            duration: 800,
+            duration: 900,
             useNativeDriver: true,
           }),
           Animated.timing(buttonPulse, {
             toValue: 1,
-            duration: 800,
+            duration: 900,
             useNativeDriver: true,
           }),
         ])
       ).start();
-    }, 1000);
-  };
-
-  const handleAcceptPact = () => {
-    SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
-    setStage('lightning');
-    startLightningAnimations();
-  };
-
-  const dismissSplash = () => {
-    Animated.parallel([
-      Animated.timing(containerOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(containerScale, {
-        toValue: 1.04,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setStage('none');
-    });
-  };
-
-  useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    }, 1100);
   }, []);
 
   return (
     <View style={styles.rootContainer}>
       {children}
 
-      {/* 1. ETAPA PAPIRO GRIEGO DEL JURAMENTO */}
-      {stage === 'parchment' && (
-        <GreekParchmentPact onAcceptPact={handleAcceptPact} />
-      )}
-
-      {/* 2. ETAPA RAYO GLORIOSO DE LOS DIOSES */}
-      {stage === 'lightning' && (
+      {showSplash && (
         <Animated.View
           style={[
             styles.splashOverlay,
@@ -173,47 +145,35 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           ]}
         >
           <TouchableOpacity
-            activeOpacity={0.95}
+            activeOpacity={0.96}
             onPress={dismissSplash}
             style={styles.touchContainer}
           >
-            {/* FONDO AURORA CELESTIAL */}
-            <View style={styles.ambientGlowBackground}>
-              <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-                <Defs>
-                  <RadialGradient id="cosmicDawn" cx="50%" cy="38%" r="60%">
-                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.28" />
-                    <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.14" />
-                    <Stop offset="70%" stopColor="#F59E0B" stopOpacity="0.05" />
-                    <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
-                  </RadialGradient>
-                </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.38} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
-              </Svg>
-            </View>
+            {/* AMBIENTE DE FONDO OSCURO CON RESPLANDOR CENTRAL */}
+            <View style={styles.ambientBackgroundGlow} />
 
-            {/* SECCIÓN PRINCIPAL: EL GRAN RAYO DE LOS DIOSES */}
+            {/* SECCIÓN PRINCIPAL: EL EMBLEMA MAESTRO DE ZEUS & ATARAXIA */}
             <View style={styles.mainContentBlock}>
               <Animated.View
                 style={[
-                  styles.boltImageWrapper,
+                  styles.masterEmblemWrapper,
                   {
-                    opacity: boltOpacity,
+                    opacity: emblemOpacity,
                     transform: [
-                      { scale: boltScale },
-                      { scale: boltPulse }
+                      { scale: emblemScale },
+                      { scale: emblemGlowPulse },
                     ],
                   },
                 ]}
               >
                 <Image
                   source={require('../../assets/images/gods_lightning_master.png')}
-                  style={styles.masterBoltImage}
+                  style={styles.masterEmblemImage}
                   resizeMode="contain"
                 />
               </Animated.View>
 
-              {/* TÍTULO MONUMENTAL Y CITA ESTOICA */}
+              {/* TÍTULO MONUMENTAL Y LEMA ESTOICO */}
               <Animated.View
                 style={[
                   styles.titleSection,
@@ -229,14 +189,14 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                   <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
                 </View>
 
-                {/* INSIGNIA CELESTIAL */}
-                <Animated.View style={[styles.divineBadgeContainer, { opacity: badgeOpacity }]}>
+                {/* INSIGNIA CELESTIAL DORADA */}
+                <View style={styles.divineBadgeContainer}>
                   <ThemedText style={styles.divineBadgeText}>
                     TEMPLO DEL AUTODOMINIO
                   </ThemedText>
-                </Animated.View>
+                </View>
 
-                {/* LEMA ORACULAR */}
+                {/* LEMA ORACULAR DE MARCO AURELIO */}
                 <Animated.View style={[styles.quoteContainer, { opacity: quoteOpacity }]}>
                   <ThemedText style={styles.stoicMottoText}>
                     &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
@@ -248,7 +208,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </Animated.View>
             </View>
 
-            {/* BOTÓN DE ACCESO TÁCTIL */}
+            {/* BOTÓN DE ACCESO TÁCTIL (TOTALMENTE DESPEJADO) */}
             <Animated.View
               style={[
                 styles.bottomActionsBlock,
@@ -263,7 +223,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
-              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para entrar al templo</ThemedText>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para comenzar</ThemedText>
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -293,17 +253,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 28 : 44,
-    paddingBottom: Platform.OS === 'web' ? 24 : 36,
+    paddingTop: Platform.OS === 'web' ? 32 : 48,
+    paddingBottom: Platform.OS === 'web' ? 28 : 40,
   },
-  ambientGlowBackground: {
+  ambientBackgroundGlow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    top: '25%',
+    width: SCREEN_WIDTH * 0.9,
+    height: SCREEN_WIDTH * 0.9,
+    borderRadius: (SCREEN_WIDTH * 0.9) / 2,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    shadowColor: '#FFE259',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 60,
   },
   mainContentBlock: {
     alignItems: 'center',
@@ -311,132 +274,132 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
   },
-  boltImageWrapper: {
+  masterEmblemWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: Platform.OS === 'web' ? 300 : 260,
-    height: Platform.OS === 'web' ? 300 : 260,
-    marginBottom: 4,
-  },
-  masterBoltImage: {
-    width: '100%',
-    height: '100%',
+    width: Platform.OS === 'web' ? 330 : 280,
+    height: Platform.OS === 'web' ? 330 : 280,
+    marginBottom: 8,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.85,
-    shadowRadius: 25,
+    shadowRadius: 30,
+  },
+  masterEmblemImage: {
+    width: '100%',
+    height: '100%',
   },
   titleSection: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    marginTop: 2,
+    marginTop: 4,
   },
   titleWingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 12,
   },
   divineSparkleWing: {
     fontSize: 22,
     color: '#FFE259',
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 14,
+    textShadowRadius: 15,
   },
   divineMainTitle: {
-    fontSize: Platform.OS === 'web' ? 42 : 36,
+    fontSize: Platform.OS === 'web' ? 44 : 38,
     fontWeight: '900',
     color: '#FFFDE0',
-    letterSpacing: Platform.OS === 'web' ? 8 : 6,
+    letterSpacing: Platform.OS === 'web' ? 9 : 7,
     textTransform: 'uppercase',
     textShadowColor: 'rgba(255, 226, 89, 0.95)',
     textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 22,
+    textShadowRadius: 24,
     fontFamily: Platform.OS === 'ios' ? 'Cinzel' : 'serif',
   },
   divineBadgeContainer: {
-    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    backgroundColor: 'rgba(212, 175, 55, 0.16)',
     borderWidth: 1.2,
-    borderColor: 'rgba(255, 226, 89, 0.45)',
+    borderColor: 'rgba(255, 226, 89, 0.50)',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 3.5,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
   },
   divineBadgeText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '900',
     color: '#FFE259',
-    letterSpacing: 2.2,
+    letterSpacing: 2.4,
     textTransform: 'uppercase',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   quoteContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 6,
     paddingHorizontal: 20,
     gap: 2,
   },
   stoicMottoText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontStyle: 'italic',
     fontFamily: 'serif',
     color: '#E2E8F0',
     textAlign: 'center',
-    textShadowColor: 'rgba(212, 175, 55, 0.35)',
-    textShadowRadius: 5,
-    lineHeight: 17,
+    textShadowColor: 'rgba(212, 175, 55, 0.4)',
+    textShadowRadius: 6,
+    lineHeight: 18,
   },
   stoicAuthorText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontFamily: 'monospace',
     color: '#D4AF37',
     fontWeight: '700',
-    letterSpacing: 1.1,
+    letterSpacing: 1.2,
   },
   bottomActionsBlock: {
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
-    gap: 5,
+    gap: 6,
   },
   enterButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(212, 175, 55, 0.20)',
-    borderWidth: 1.4,
+    backgroundColor: 'rgba(212, 175, 55, 0.22)',
+    borderWidth: 1.5,
     borderColor: '#FFE259',
-    borderRadius: 22,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 11,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.75,
-    shadowRadius: 14,
+    shadowOpacity: 0.8,
+    shadowRadius: 16,
   },
   enterButtonSparkle: {
     fontSize: 14,
     color: '#FFE259',
   },
   enterButtonText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '900',
     color: '#FFFDE0',
-    letterSpacing: 1.8,
+    letterSpacing: 2,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   touchHintText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontFamily: 'monospace',
-    color: 'rgba(212, 175, 55, 0.65)',
+    color: 'rgba(212, 175, 55, 0.7)',
     letterSpacing: 1.2,
   },
 });
