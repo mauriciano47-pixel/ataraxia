@@ -72,12 +72,18 @@ export default function HoyScreen() {
             </TouchableOpacity>
 
             <View style={styles.titleCenterGroup}>
-              <ThemedText style={styles.brandTitleClassic}>ATARAXIA</ThemedText>
-              <ThemedText style={styles.brandSubtitle}>
-                {log.userName && log.userName !== 'Ciudadano Prokopton'
-                  ? `⚔️ ${log.userName.toUpperCase()}`
-                  : 'TEMPLO DEL AUTODOMINIO'}
-              </ThemedText>
+              <View style={styles.titleWithFlankRow}>
+                <ThemedText style={styles.titleFlankSparkle}>⚡</ThemedText>
+                <ThemedText style={styles.brandTitleClassic}>ATARAXIA</ThemedText>
+                <ThemedText style={styles.titleFlankSparkle}>⚡</ThemedText>
+              </View>
+              <View style={styles.brandSubtitleBadge}>
+                <ThemedText style={styles.brandSubtitle}>
+                  {log.userName && log.userName !== 'Ciudadano Prokopton'
+                    ? `⚔️ ${log.userName.toUpperCase()}`
+                    : 'TEMPLO DEL AUTODOMINIO'}
+                </ThemedText>
+              </View>
             </View>
 
             <View style={styles.headerRightActions}>
@@ -370,34 +376,49 @@ const styles = StyleSheet.create({
   },
   titleCenterGroup: {
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
   },
-  brandTitle: {
-    fontSize: 26,
-    fontFamily: 'sans-serif',
-    fontWeight: '900',
-    color: '#FF9100',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(255, 145, 0, 0.50)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+  titleWithFlankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  titleFlankSparkle: {
+    fontSize: 16,
+    color: '#FFE259',
+    textShadowColor: 'rgba(255, 226, 89, 0.85)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+    opacity: 0.9,
   },
   brandTitleClassic: {
-    fontSize: 22,
+    fontSize: 27,
     fontWeight: '900',
     color: '#FFE259',
-    fontFamily: 'serif',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(212, 175, 55, 0.50)',
+    letterSpacing: 4.5,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(212, 175, 55, 0.90)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowRadius: 14,
+  },
+  brandSubtitleBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    marginTop: 2,
   },
   brandSubtitle: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'monospace',
-    fontWeight: 'bold',
-    color: '#D4AF37',
-    letterSpacing: 2.5,
-    marginTop: -2,
+    fontWeight: '800',
+    color: '#E2C068',
+    letterSpacing: 1.8,
+    textAlign: 'center',
   },
   headerRightActions: {
     flexDirection: 'row',
