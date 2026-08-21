@@ -861,4 +861,23 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     marginTop: 2,
   },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  actionRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  changeLinkText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#FFE259',
+    letterSpacing: 1.2,
+    fontFamily: 'monospace',
+  },
 });
