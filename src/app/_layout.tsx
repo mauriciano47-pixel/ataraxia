@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import SplashScreenWrapper from '@/components/SplashScreenWrapper';
 import AppTabs from '@/components/app-tabs';
@@ -87,6 +88,7 @@ export default function TabLayout() {
         <SplashScreenWrapper>
           <AppTabs />
         </SplashScreenWrapper>
+        {Platform.OS === 'web' && <SpeedInsights />}
       </ThemeProvider>
     </DailyLogProvider>
   );
