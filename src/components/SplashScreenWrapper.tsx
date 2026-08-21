@@ -11,6 +11,7 @@ import {
 import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
+import { ZEUS_EMBLEM_URI } from '@/constants/zeusEmblemBase64';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -19,7 +20,6 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
 
   // Animaciones
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const emblemScale = useRef(new Animated.Value(0.9)).current;
   const emblemPulse = useRef(new Animated.Value(1)).current;
   const buttonPulse = useRef(new Animated.Value(1)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
@@ -45,20 +45,12 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
 
-    // Entrada suave y majestuosa
-    Animated.parallel([
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(emblemScale, {
-        toValue: 1,
-        friction: 7,
-        tension: 45,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Entrada suave de todo el contenido
+    Animated.timing(contentOpacity, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
 
     // Respiración del Rayo de Zeus
     Animated.loop(
@@ -93,10 +85,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     ).start();
   }, []);
 
-  // Dimensiones dinámicas del emblema para máxima presencia y proporción áurea
-  const emblemSize = Platform.OS === 'web' 
-    ? Math.min(SCREEN_WIDTH * 0.72, SCREEN_HEIGHT * 0.38, 330)
-    : Math.min(SCREEN_WIDTH * 0.75, SCREEN_HEIGHT * 0.36, 290);
+  // Tamaño del medallón para máxima presencia y proporción
+  const emblemWidth = Platform.OS === 'web'
+    ? Math.min(SCREEN_WIDTH * 0.75, 300)
+    : Math.min(SCREEN_WIDTH * 0.72, 270);
 
   return (
     <View style={styles.rootContainer}>
@@ -121,37 +113,34 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             <View style={styles.ambientGlowBackground}>
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
-                  <RadialGradient id="cosmicDawn" cx="50%" cy="36%" r="60%">
+                  <RadialGradient id="cosmicDawn" cx="50%" cy="34%" r="60%">
                     <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.25" />
                     <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.12" />
                     <Stop offset="70%" stopColor="#F59E0B" stopOpacity="0.04" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
                 </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.36} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
+                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.34} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
               </Svg>
             </View>
 
             {/* CONTENEDOR PRINCIPAL */}
             <Animated.View style={[styles.mainContentBlock, { opacity: contentOpacity }]}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (1:1 SIN APLASTAR) */}
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (100% GARANTIZADO EN WEB Y MÓVIL) */}
               <Animated.View
                 style={[
                   styles.emblemWrapper,
                   {
-                    width: emblemSize,
-                    height: emblemSize,
-                    transform: [
-                      { scale: emblemScale },
-                      { scale: emblemPulse }
-                    ],
+                    width: emblemWidth,
+                    height: emblemWidth,
+                    transform: [{ scale: emblemPulse }],
                   },
                 ]}
               >
                 <Image
-                  source={require('../../assets/images/zeus_master_emblem_transparent.png')}
-                  style={styles.masterEmblemImage}
+                  source={{ uri: ZEUS_EMBLEM_URI }}
+                  style={[styles.masterEmblemImage, { width: emblemWidth, height: emblemWidth }]}
                   resizeMode="contain"
                 />
               </Animated.View>
@@ -244,8 +233,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 20 : 40,
-    paddingBottom: Platform.OS === 'web' ? 20 : 32,
+    paddingTop: Platform.OS === 'web' ? 18 : 38,
+    paddingBottom: Platform.OS === 'web' ? 18 : 30,
   },
   ambientGlowBackground: {
     position: 'absolute',
@@ -266,11 +255,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   masterEmblemImage: {
-    width: '100%',
-    height: '100%',
     backgroundColor: 'transparent',
   },
   titleSection: {

@@ -3,7 +3,16 @@ import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
-import { ProkoptonProfile, CustomExercise, CoachArchetype } from '@/types/onboarding';
+import {
+  ProkoptonProfile,
+  CustomExercise,
+  CoachArchetype,
+  LegendaryPath,
+  LEGENDARY_PATHS,
+  MonthlyCycleState,
+  DailyGrade,
+  CycleTier,
+} from '@/types/onboarding';
 
 export interface UserMetrics {
   weightKg: number;
@@ -41,6 +50,8 @@ export interface DailyLog {
   customRoutine?: CustomExercise[];
   hasCompletedOnboarding?: boolean;
   coachArchetype?: CoachArchetype;
+  legendaryPath?: LegendaryPath;
+  monthlyCycle?: MonthlyCycleState;
   macros: {
     protein: number;
     carbs: number;
@@ -68,6 +79,18 @@ export const DEFAULT_USER_METRICS: UserMetrics = {
   goal: 'maintenance',
 };
 
+export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
+  currentDay: 1,
+  startDate: new Date().toISOString(),
+  path: 'spartan',
+  tier: 'Novicio de Esparta',
+  dailyGrades: [],
+  passedDaysCount: 0,
+  failedDaysCount: 0,
+  averageScore: 100,
+  isJudgmentReady: false,
+};
+
 export const DEFAULT_LOG: DailyLog = {
   waterLitres: 0,
   trainingCompleted: false,
@@ -80,6 +103,8 @@ export const DEFAULT_LOG: DailyLog = {
   userName: 'Ciudadano Prokopton',
   hasCompletedOnboarding: false,
   coachArchetype: 'stoic_mentor',
+  legendaryPath: 'spartan',
+  monthlyCycle: DEFAULT_MONTHLY_CYCLE,
   smartDevice: {
     connected: false,
     deviceName: 'Ninguno (Desconectado)',
@@ -98,6 +123,7 @@ export const DEFAULT_LOG: DailyLog = {
 const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
 const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
 const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v1';
+const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v1';
 
 type UserProfile = {
   userName: string;
@@ -110,6 +136,8 @@ type UserProfile = {
   prokoptonProfile?: ProkoptonProfile;
   customRoutine?: CustomExercise[];
   coachArchetype?: CoachArchetype;
+  legendaryPath?: LegendaryPath;
+  monthlyCycle?: MonthlyCycleState;
 };
 
 interface DailyLogContextType {
@@ -125,6 +153,7 @@ interface DailyLogContextType {
     stepGoal: number;
     stoicAvatarUri?: string;
     coachArchetype?: CoachArchetype;
+    legendaryPath?: LegendaryPath;
   }) => void;
   logMealWithMacros: (cals: number, protein?: number, carbs?: number, fats?: number) => void;
   addWater: (amount?: number) => void;
@@ -140,6 +169,10 @@ interface DailyLogContextType {
   setStoicAvatar: (uri: string) => void;
   setUserName: (name: string) => void;
   setCoachArchetype: (archetype: CoachArchetype) => void;
+  selectLegendaryPath: (path: LegendaryPath) => void;
+  calculateTodayGrade: () => DailyGrade;
+  executeJudgment: () => { promoted: boolean; title: string; message: string };
+  resetMonthlyCycle: () => void;
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
   saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
   resetOnboarding: () => void;
@@ -647,6 +680,180 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const calculateTodayGrade = useCallback((): DailyGrade => {
+    const current = logRef.current;
+    const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+
+    // 1. Entreno (40 pts)
+    const trainingPts = current.trainingCompleted ? 40 : 0;
+
+    // 2. Pasos (30 pts vs meta)
+    const stepsGoal = current.stepGoal || 10000;
+    const stepsRatio = Math.min(1, (current.steps || 0) / stepsGoal);
+    const stepsPts = Math.round(stepsRatio * 30);
+
+    // 3. Agua (15 pts vs 2.5L)
+    const waterRatio = Math.min(1, (current.waterLitres || 0) / 2.5);
+    const waterPts = Math.round(waterRatio * 15);
+
+    // 4. Nutrición / Checkin (15 pts)
+    const mealsPts = (current.mealsLogged || 0) > 0 ? 10 : 0;
+    const checkinPts = current.checkInDone ? 5 : 0;
+    const nutritionPts = mealsPts + checkinPts;
+
+    const totalScore = trainingPts + stepsPts + waterPts + nutritionPts;
+
+    let status: DailyGradeStatus = 'failed';
+    let verdict = 'Día Indigno: La mediocridad no tiene cabida en este templo.';
+    if (totalScore >= 90) {
+      status = 'divine';
+      verdict = 'Corona de Laurel: Día de Semidiós impecable.';
+    } else if (totalScore >= 75) {
+      status = 'worthy';
+      verdict = 'Hoplita Digno: Disciplina firme y honor cumplido.';
+    } else if (totalScore >= 50) {
+      status = 'mediocre';
+      verdict = 'Tibio / En Peligro: Estás al borde de la debilidad.';
+    }
+
+    return {
+      day: cycle.currentDay,
+      date: new Date().toISOString().split('T')[0],
+      score: totalScore,
+      status,
+      trainingDone: !!current.trainingCompleted,
+      stepsRatio: parseFloat(stepsRatio.toFixed(2)),
+      waterRatio: parseFloat(waterRatio.toFixed(2)),
+      caloriesLogged: (current.mealsLogged || 0) > 0,
+      verdict,
+    };
+  }, []);
+
+  const selectLegendaryPath = useCallback((path: LegendaryPath) => {
+    const pathInfo = LEGENDARY_PATHS[path];
+    const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
+
+    const bmr = (10 * currentMetrics.weightKg) + (6.25 * currentMetrics.heightCm) - (5 * currentMetrics.age) + 5;
+    const baseCals = Math.round(bmr * 1.4);
+    const targetCals = Math.max(1400, baseCals + pathInfo.recommendedCalsDelta);
+
+    let routine: CustomExercise[] = [];
+    if (path === 'spartan') {
+      routine = [
+        { id: 'sp1', n: 'Sentadilla Trasera Pesada', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+        { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+      ];
+    } else if (path === 'hoplite') {
+      routine = [
+        { id: 'hop1', n: 'Circuito de Resistencia Hoplita (Burpees + Zancadas)', s: '4 rondas x 45 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Full Body' },
+        { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 minutos continuos', targetRpe: 7.0, done: false, rpe: null, muscleGroup: 'Cardiovascular' },
+        { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+        { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
+    } else if (path === 'apollo') {
+      routine = [
+        { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+        { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro (Tempo 3-1-1)', s: '4 series x 10 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ap5', n: 'Elevación de Piernas Colgado (V-Cut Abs)', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Abdomen' },
+      ];
+    } else {
+      routine = [
+        { id: 'ph1', n: 'Dominadas Estrictas en Barra (Autodominio)', s: '4 series x 10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+        { id: 'ph3', n: 'Pistol Squats (Sentadilla a una pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Tríceps' },
+        { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
+    }
+
+    const newCycle: MonthlyCycleState = {
+      currentDay: 1,
+      startDate: new Date().toISOString(),
+      path,
+      tier: 'Novicio de Esparta',
+      dailyGrades: [],
+      passedDaysCount: 0,
+      failedDaysCount: 0,
+      averageScore: 100,
+      isJudgmentReady: false,
+    };
+
+    updateLog({
+      legendaryPath: path,
+      coachArchetype: pathInfo.archetype,
+      targetCalories: targetCals,
+      targetCaloriesMin: targetCals - 100,
+      targetCaloriesMax: targetCals + 100,
+      customRoutine: routine,
+      monthlyCycle: newCycle,
+    });
+
+    saveProfileToFirestore({
+      legendaryPath: path,
+      coachArchetype: pathInfo.archetype,
+      targetCalories: targetCals,
+      customRoutine: routine,
+      monthlyCycle: newCycle,
+    });
+  }, []);
+
+  const executeJudgment = useCallback(() => {
+    const current = logRef.current;
+    const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+    const passedRatio = cycle.dailyGrades.length > 0
+      ? cycle.passedDaysCount / cycle.dailyGrades.length
+      : (cycle.averageScore >= 75 ? 1 : 0);
+
+    const isPromoted = (cycle.averageScore >= 80 || passedRatio >= 0.8);
+    let title = '';
+    let message = '';
+
+    if (isPromoted) {
+      title = '👑 ¡ASCENSO OTORGADO: SEMIDIÓS DEL OLIMPO!';
+      message = `Has completado el Ciclo de 30 Días con ${Math.round(cycle.averageScore)}% de excelencia. Has demostrado templanza, honor y fuerza real. Tu rango asciende y desbloqueas el nivel superior del Templo.`;
+    } else {
+      title = '💀 JUICIO ADVERSO: REPRENSIÓN POR MEDIOCRIDAD';
+      message = `Tu promedio de disciplina fue de apenas ${Math.round(cycle.averageScore)}%. En Ataraxia no toleramos quejas ni excusas de niños. Tu rango queda revocado y deberás reiniciar el Ciclo de 30 Días desde el Día 1 con absoluta seriedad.`;
+    }
+
+    const updatedCycle: MonthlyCycleState = {
+      ...cycle,
+      isJudgmentReady: true,
+      judgmentVerdict: isPromoted ? 'promoted' : 'scolded',
+      judgmentText: message,
+      tier: isPromoted ? 'Semidiós del Olimpo' : 'Novicio de Esparta',
+    };
+
+    updateLog({ monthlyCycle: updatedCycle });
+    saveProfileToFirestore({ monthlyCycle: updatedCycle });
+
+    return { promoted: isPromoted, title, message };
+  }, []);
+
+  const resetMonthlyCycle = useCallback(() => {
+    const current = logRef.current;
+    const path = current.legendaryPath || 'spartan';
+    const newCycle: MonthlyCycleState = {
+      currentDay: 1,
+      startDate: new Date().toISOString(),
+      path,
+      tier: 'Novicio de Esparta',
+      dailyGrades: [],
+      passedDaysCount: 0,
+      failedDaysCount: 0,
+      averageScore: 100,
+      isJudgmentReady: false,
+    };
+    updateLog({ monthlyCycle: newCycle });
+    saveProfileToFirestore({ monthlyCycle: newCycle });
+  }, []);
+
   const setCustomRoutine = (routine: CustomExercise[]) => {
     updateLog({ customRoutine: routine });
   };
@@ -672,6 +879,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         setStoicAvatar,
         setUserName,
         setCoachArchetype,
+        selectLegendaryPath,
+        calculateTodayGrade,
+        executeJudgment,
+        resetMonthlyCycle,
         updateSmartDevice,
         saveOnboardingProfile,
         resetOnboarding,
