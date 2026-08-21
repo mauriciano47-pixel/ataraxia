@@ -16,6 +16,7 @@ import Svg, {
   Circle,
   G,
   Polygon,
+  Rect,
 } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
@@ -26,9 +27,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
   // Valores animados
-  const boltScale = useRef(new Animated.Value(0.4)).current;
+  const boltScale = useRef(new Animated.Value(0.35)).current;
   const boltOpacity = useRef(new Animated.Value(0)).current;
-  const boltGlowPulse = useRef(new Animated.Value(0.85)).current;
+  const boltGlowPulse = useRef(new Animated.Value(0.9)).current;
+  const sunburstRotate = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(25)).current;
   const badgeOpacity = useRef(new Animated.Value(0)).current;
@@ -60,38 +62,47 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     // Ocultar splash screen nativo de Expo
     SplashScreen.hideAsync().catch(() => {});
 
-    // 1. Entrada Majestuosa del Rayo Divino (0 a 0.8s)
+    // 1. Entrada Majestuosa del Rayo Divino
     Animated.parallel([
       Animated.spring(boltScale, {
         toValue: 1,
         friction: 6,
-        tension: 42,
+        tension: 40,
         useNativeDriver: true,
       }),
       Animated.timing(boltOpacity, {
         toValue: 1,
-        duration: 700,
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Pulso de Resplandor Neón Divino (Loop infinito continuo)
+    // 2. Pulso de Resplandor Neón Divino (Loop continuo)
     Animated.loop(
       Animated.sequence([
         Animated.timing(boltGlowPulse, {
-          toValue: 1.25,
+          toValue: 1.28,
           duration: 1100,
           useNativeDriver: true,
         }),
         Animated.timing(boltGlowPulse, {
-          toValue: 0.85,
+          toValue: 0.88,
           duration: 1100,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // 3. Revelación del Título Monumental ATARAXIA (0.5s a 1.2s)
+    // 3. Rotación Lenta y Celestial del Sol Invicto (40 segundos por vuelta)
+    Animated.loop(
+      Animated.timing(sunburstRotate, {
+        toValue: 1,
+        duration: 40000,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // 4. Revelación del Título Monumental ATARAXIA (0.5s a 1.2s)
     setTimeout(() => {
       Animated.parallel([
         Animated.timing(titleOpacity, {
@@ -108,7 +119,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       ]).start();
     }, 500);
 
-    // 4. Revelación de la Insignia Imperial (0.9s a 1.5s)
+    // 5. Revelación de la Insignia Imperial (0.9s a 1.5s)
     setTimeout(() => {
       Animated.timing(badgeOpacity, {
         toValue: 1,
@@ -117,7 +128,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       }).start();
     }, 900);
 
-    // 5. Revelación del Lema Oracular Estoico (1.3s a 1.9s)
+    // 6. Revelación del Lema Oracular Estoico (1.3s a 1.9s)
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
         toValue: 1,
@@ -126,7 +137,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       }).start();
     }, 1300);
 
-    // 6. Revelación de la Tríada de los Dioses (1.7s a 2.3s)
+    // 7. Revelación de la Tríada de los Dioses (1.7s a 2.3s)
     setTimeout(() => {
       Animated.timing(triadOpacity, {
         toValue: 1,
@@ -135,7 +146,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       }).start();
     }, 1700);
 
-    // 7. Revelación y Pulsación del Botón de Entrada (2.0s en adelante)
+    // 8. Revelación y Pulsación del Botón de Entrada (2.0s en adelante)
     setTimeout(() => {
       Animated.timing(buttonOpacity, {
         toValue: 1,
@@ -160,6 +171,11 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     }, 2000);
   }, []);
 
+  const spinInterpolate = sunburstRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
     <View style={styles.rootContainer}>
       {children}
@@ -183,23 +199,25 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             <View style={styles.ambientGlowBackground}>
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
-                  <RadialGradient id="cosmicDawn" cx="50%" cy="45%" r="60%">
-                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.35" />
-                    <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.20" />
-                    <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.09" />
+                  <RadialGradient id="cosmicDawn" cx="50%" cy="42%" r="65%">
+                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.38" />
+                    <Stop offset="30%" stopColor="#D4AF37" stopOpacity="0.22" />
+                    <Stop offset="60%" stopColor="#F59E0B" stopOpacity="0.10" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
-                  <LinearGradient id="divineLightBeam" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.28" />
-                    <Stop offset="40%" stopColor="#D4AF37" stopOpacity="0.12" />
+                  <LinearGradient id="lightningColumn" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <Stop offset="0%" stopColor="#FFFDE0" stopOpacity="0.35" />
+                    <Stop offset="30%" stopColor="#FFE259" stopOpacity="0.15" />
+                    <Stop offset="80%" stopColor="#F59E0B" stopOpacity="0.05" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </LinearGradient>
                 </Defs>
-                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.42} r={SCREEN_WIDTH * 0.75} fill="url(#cosmicDawn)" />
+                <Circle cx={SCREEN_WIDTH / 2} cy={SCREEN_HEIGHT * 0.38} r={SCREEN_WIDTH * 0.8} fill="url(#cosmicDawn)" />
+                <Rect x={SCREEN_WIDTH / 2 - 60} y={0} width={120} height={SCREEN_HEIGHT * 0.7} fill="url(#lightningColumn)" opacity={0.6} />
               </Svg>
             </View>
 
-            {/* CENTRO: EL RAYO EN SU ESPLENDOR MÁXIMO */}
+            {/* CENTRO: EL ESCUDO IMPERIAL Y EL GRAN RAYO 3D DE ZEUS */}
             <Animated.View
               style={[
                 styles.boltCenterWrapper,
@@ -219,132 +237,214 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 ]}
               />
 
-              <Svg width={220} height={240} viewBox="0 0 220 240">
+              {/* ROTACIÓN DEL SOL INVICTO Y RAYOS RADIALES */}
+              <Animated.View
+                style={[
+                  styles.rotatingSunburst,
+                  {
+                    transform: [{ rotate: spinInterpolate }],
+                  },
+                ]}
+              >
+                <Svg width={320} height={320} viewBox="0 0 320 320">
+                  <Defs>
+                    <LinearGradient id="sunRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.6" />
+                      <Stop offset="60%" stopColor="#D4AF37" stopOpacity="0.2" />
+                      <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+                    </LinearGradient>
+                  </Defs>
+                  {/* 16 Rayos de Sol Divino Geométricos */}
+                  {[0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5].map((deg, i) => (
+                    <G key={i} transform={`rotate(${deg} 160 160)`}>
+                      <Polygon
+                        points="160,25 163,80 157,80"
+                        fill="url(#sunRayGrad)"
+                        opacity={i % 2 === 0 ? 0.9 : 0.45}
+                      />
+                    </G>
+                  ))}
+                  {/* Anillo de Micro-Marcas de Compás */}
+                  <Circle cx={160} cy={160} r={148} stroke="rgba(255, 226, 89, 0.35)" strokeWidth={1} strokeDasharray="3, 7" fill="none" />
+                </Svg>
+              </Animated.View>
+
+              {/* EL GRAN RAYO MONUMENTAL 3D HYPER-DETALLADO */}
+              <Svg width={320} height={320} viewBox="0 0 320 320">
                 <Defs>
-                  {/* Gradiente 3D Oro Celestial */}
-                  <LinearGradient id="godBolt3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                  {/* Gradiente Bisel 3D Oro Diamante */}
+                  <LinearGradient id="bezel3DGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#FFFDE0" />
+                    <Stop offset="20%" stopColor="#FFE259" />
+                    <Stop offset="45%" stopColor="#D4AF37" />
+                    <Stop offset="70%" stopColor="#8A6615" />
+                    <Stop offset="88%" stopColor="#F59E0B" />
+                    <Stop offset="100%" stopColor="#FFFBEB" />
+                  </LinearGradient>
+
+                  {/* Gradiente Cuerpo Faceta Izquierda (Luz Incandescente) */}
+                  <LinearGradient id="boltFacetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
                     <Stop offset="0%" stopColor="#FFFFFF" />
-                    <Stop offset="15%" stopColor="#FFFDE0" />
-                    <Stop offset="40%" stopColor="#FFE259" />
-                    <Stop offset="70%" stopColor="#D4AF37" />
-                    <Stop offset="90%" stopColor="#F59E0B" />
-                    <Stop offset="100%" stopColor="#92400E" />
+                    <Stop offset="25%" stopColor="#FFFBEB" />
+                    <Stop offset="55%" stopColor="#FFE259" />
+                    <Stop offset="85%" stopColor="#F59E0B" />
+                    <Stop offset="100%" stopColor="#B45309" />
                   </LinearGradient>
 
-                  {/* Resplandor del Bisel Izquierdo */}
-                  <LinearGradient id="godChiselHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+                  {/* Gradiente Cuerpo Faceta Derecha (Sombra Oro Profundo) */}
+                  <LinearGradient id="boltFacetRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#FFE259" />
+                    <Stop offset="30%" stopColor="#D4AF37" />
+                    <Stop offset="65%" stopColor="#B45309" />
+                    <Stop offset="90%" stopColor="#78350F" />
+                    <Stop offset="100%" stopColor="#451A03" />
+                  </LinearGradient>
+
+                  {/* Gradiente Chisel Specular White Core */}
+                  <LinearGradient id="boltSpineCore" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                    <Stop offset="40%" stopColor="#FFFDE0" stopOpacity="0.9" />
+                    <Stop offset="80%" stopColor="#FFE259" stopOpacity="0.8" />
+                    <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
+                  </LinearGradient>
+
+                  {/* Halo Aureo Explosivo */}
+                  <RadialGradient id="zeusNovaBloom" cx="50%" cy="50%" r="50%">
                     <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-                    <Stop offset="50%" stopColor="#FFE259" stopOpacity="0.85" />
-                    <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0.25" />
-                  </LinearGradient>
-
-                  {/* Halo Aureo */}
-                  <RadialGradient id="godAuraBloom" cx="50%" cy="50%" r="50%">
-                    <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-                    <Stop offset="30%" stopColor="#FFE259" stopOpacity="0.65" />
-                    <Stop offset="70%" stopColor="#F59E0B" stopOpacity="0.25" />
+                    <Stop offset="25%" stopColor="#FFE259" stopOpacity="0.75" />
+                    <Stop offset="60%" stopColor="#F59E0B" stopOpacity="0.30" />
                     <Stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
                   </RadialGradient>
 
-                  {/* Anillo de Poder */}
-                  <LinearGradient id="bezelRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#FFFDE0" />
-                    <Stop offset="25%" stopColor="#FFE259" />
-                    <Stop offset="50%" stopColor="#D4AF37" />
-                    <Stop offset="75%" stopColor="#8A6615" />
-                    <Stop offset="100%" stopColor="#FFFDE0" />
+                  {/* Disco de Ónix Profundo */}
+                  <RadialGradient id="onyxPlateCenter" cx="50%" cy="50%" r="50%">
+                    <Stop offset="0%" stopColor="#1E2338" />
+                    <Stop offset="55%" stopColor="#0F1322" />
+                    <Stop offset="85%" stopColor="#080A14" />
+                    <Stop offset="100%" stopColor="#030408" />
+                  </RadialGradient>
+
+                  {/* Gradiente de Rama Eléctrica */}
+                  <LinearGradient id="branchBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#FFFFFF" />
+                    <Stop offset="50%" stopColor="#FFE259" />
+                    <Stop offset="100%" stopColor="#F59E0B" />
                   </LinearGradient>
                 </Defs>
 
-                {/* 1. ANILLO IMPERIAL DE LOS DIOSES */}
-                <Circle
-                  cx={110}
-                  cy={115}
-                  r={88}
-                  stroke="url(#bezelRingGrad)"
-                  strokeWidth={3}
+                {/* 1. DISCO DE ÓNYX SAGRADO Y BISEL 3D */}
+                <Circle cx={160} cy={160} r={142} fill="url(#onyxPlateCenter)" />
+                <Circle cx={160} cy={160} r={142} stroke="url(#bezel3DGrad)" strokeWidth={8} fill="none" />
+                <Circle cx={160} cy={160} r={136} stroke="rgba(255, 253, 224, 0.75)" strokeWidth={1.5} fill="none" />
+                <Circle cx={160} cy={160} r={146} stroke="rgba(255, 226, 89, 0.45)" strokeWidth={1.2} fill="none" />
+
+                {/* Corona Sagrada de Puntos Celestiales */}
+                <Circle cx={160} cy={160} r={126} stroke="rgba(212, 175, 55, 0.25)" strokeWidth={1} strokeDasharray="4, 6" fill="none" />
+
+                {/* 2. ARCOS Y RAMIFICACIONES DE RELÁMPAGO SECUNDARIO (TESLA FORKS) */}
+                {/* Arco Izquierdo */}
+                <Path
+                  d="M 125 105 L 95 130 L 105 133 L 75 165 L 85 168 L 55 205"
+                  stroke="url(#branchBoltGrad)"
+                  strokeWidth={2.4}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                  opacity={0.85}
+                />
+                {/* Arco Derecho Superior */}
+                <Path
+                  d="M 195 90 L 230 115 L 220 118 L 255 145 L 245 148 L 275 180"
+                  stroke="url(#branchBoltGrad)"
+                  strokeWidth={2.4}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                  opacity={0.85}
+                />
+                {/* Arco Derecho Inferior */}
+                <Path
+                  d="M 185 190 L 220 220 L 210 223 L 240 255"
+                  stroke="url(#branchBoltGrad)"
+                  strokeWidth={2.0}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   fill="none"
                   opacity={0.75}
                 />
-                <Circle
-                  cx={110}
-                  cy={115}
-                  r={94}
-                  stroke="rgba(255, 226, 89, 0.35)"
-                  strokeWidth={1.5}
-                  strokeDasharray="6, 4"
-                  fill="none"
-                />
-                <Circle
-                  cx={110}
-                  cy={115}
-                  r={80}
-                  stroke="rgba(212, 175, 55, 0.25)"
-                  strokeWidth={1}
-                  fill="none"
-                />
 
-                {/* 2. CHISPAS Y RELÁMPAGOS ORBITALES */}
-                <Circle cx={42} cy={70} r={2.5} fill="#FFFFFF" opacity={0.9} />
-                <Circle cx={178} cy={65} r={2.8} fill="#FFE259" opacity={0.95} />
-                <Circle cx={188} cy={140} r={2} fill="#FFFFFF" opacity={0.85} />
-                <Circle cx={32} cy={155} r={2.2} fill="#FFE259" opacity={0.9} />
-                <Circle cx={110} cy={218} r={3} fill="#FFFFFF" opacity={0.95} />
+                {/* 3. ESTRELLAS Y CHISPAS VIVAS DE TRUENO */}
+                {/* Starburst Superior */}
+                <G transform="translate(160, 48)">
+                  <Polygon points="0,-12 3,-3 12,0 3,3 0,12 -3,3 -12,0 -3,-3" fill="#FFFFFF" opacity={0.95} />
+                  <Circle cx={0} cy={0} r={3} fill="#FFE259" />
+                </G>
+                {/* Starburst Punta Inferior */}
+                <G transform="translate(132, 276)">
+                  <Polygon points="0,-14 3.5,-3.5 14,0 3.5,3.5 0,14 -3.5,3.5 -14,0 -3.5,-3.5" fill="#FFFFFF" opacity={1} />
+                  <Circle cx={0} cy={0} r={4} fill="#FFE259" />
+                </G>
+                {/* Chispas flotantes */}
+                <Circle cx={68} cy={110} r={2.5} fill="#FFFFFF" opacity={0.9} />
+                <Circle cx={255} cy={105} r={2.8} fill="#FFE259" opacity={0.95} />
+                <Circle cx={268} cy={205} r={2.2} fill="#FFFFFF" opacity={0.85} />
+                <Circle cx={52} cy={220} r={2.4} fill="#FFE259" opacity={0.9} />
+                <Circle cx={160} cy={285} r={3} fill="#FFFFFF" opacity={0.95} />
 
-                {/* Micro-rayos celestiales de acompañamiento */}
-                <Path
-                  d="M 50 85 L 42 98 L 48 100 L 40 115"
-                  stroke="#FFE259"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity={0.85}
-                />
-                <Path
-                  d="M 170 85 L 178 98 L 172 100 L 180 115"
-                  stroke="#FFE259"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity={0.85}
-                />
+                {/* 4. EL GRAN RAYO MONUMENTAL 3D ESCULPIDO DE ZEUS */}
+                <G transform="translate(45, 20)">
+                  {/* Aura Flare Trasera Gigante */}
+                  <Circle cx={115} cy={135} r={95} fill="url(#zeusNovaBloom)" />
 
-                {/* 3. EL GRAN RAYO MONUMENTAL 3D ESCULPIDO */}
-                <G transform="translate(68, 40) scale(1.65)">
-                  {/* Aura Flare trasera */}
-                  <Circle cx={26} cy={36} r={46} fill="url(#godAuraBloom)" />
-
-                  {/* Resplandor exterior Neón */}
+                  {/* Resplandor Neón de Impacto Exterior (Borde Grueso Dorado) */}
                   <Polygon
-                    points="28,0 8,36 24,36 12,68 44,26 28,26"
+                    points="115,22 75,120 108,120 62,205 102,205 48,272 188,142 142,142 182,75 138,75"
                     fill="rgba(245, 158, 11, 0.45)"
-                    stroke="rgba(255, 226, 89, 0.90)"
-                    strokeWidth={6}
+                    stroke="rgba(255, 226, 89, 0.95)"
+                    strokeWidth={8}
                     strokeLinejoin="round"
                   />
 
-                  {/* Sombra de relieve ámbar profundo */}
+                  {/* Sombra de Relieve de Titanio / Bronce Profundo */}
                   <Polygon
-                    points="28,0 8,36 24,36 12,68 44,26 28,26"
-                    fill="rgba(146, 64, 14, 0.85)"
-                    transform="translate(2.5, 3)"
+                    points="115,22 75,120 108,120 62,205 102,205 48,272 188,142 142,142 182,75 138,75"
+                    fill="rgba(120, 53, 15, 0.95)"
+                    transform="translate(3.5, 4.5)"
                   />
 
-                  {/* Cuerpo 3D Dorado */}
+                  {/* Faceta Derecha (Sombra Oro Cepillado) */}
                   <Polygon
-                    points="28,0 8,36 24,36 12,68 44,26 28,26"
-                    fill="url(#godBolt3D)"
+                    points="115,22 138,75 182,75 142,142 188,142 48,272 102,205 115,160 115,22"
+                    fill="url(#boltFacetRight)"
+                    stroke="#D4AF37"
+                    strokeWidth={1}
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Faceta Izquierda (Luz Oro Diamante Incandescente) */}
+                  <Polygon
+                    points="115,22 75,120 108,120 62,205 102,205 48,272 115,160 115,22"
+                    fill="url(#boltFacetLeft)"
                     stroke="#FFFFFF"
                     strokeWidth={1.5}
                     strokeLinejoin="round"
                   />
 
-                  {/* Bisel de luz especular tallada */}
+                  {/* Columna Vertebral Central (Cresta de Plasma Blanco/Oro) */}
+                  <Path
+                    d="M 115 24 L 98 120 L 105 120 L 84 205 L 102 205 L 48 272"
+                    stroke="url(#boltSpineCore)"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+
+                  {/* Chisel Specular Flashes en las Puntas */}
                   <Polygon
-                    points="28,2 10,34 23,34 14,64 24,34 16,34 28,6"
-                    fill="url(#godChiselHighlight)"
+                    points="115,24 82,118 106,118 68,202 100,202 52,268 96,204 66,204 104,122 78,122 115,28"
+                    fill="#FFFFFF"
+                    opacity={0.7}
                   />
                 </G>
               </Svg>
@@ -443,8 +543,8 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
   },
   ambientGlowBackground: {
     position: 'absolute',
@@ -458,23 +558,32 @@ const styles = StyleSheet.create({
   boltCenterWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -20,
+    marginTop: -10,
+    width: 320,
+    height: 320,
   },
   pulsingHalo: {
     position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(255, 226, 89, 0.16)',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255, 226, 89, 0.20)',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 40,
+    shadowOpacity: 0.9,
+    shadowRadius: 50,
+  },
+  rotatingSunburst: {
+    position: 'absolute',
+    width: 320,
+    height: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titleSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
+    marginTop: 10,
     gap: 8,
   },
   titleWingsRow: {
@@ -508,7 +617,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 5,
-    marginTop: 4,
+    marginTop: 2,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
@@ -525,22 +634,22 @@ const styles = StyleSheet.create({
   quoteContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 20,
-    gap: 4,
+    gap: 3,
   },
   stoicMottoText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontStyle: 'italic',
     fontFamily: 'serif',
     color: '#E2E8F0',
     textAlign: 'center',
     textShadowColor: 'rgba(212, 175, 55, 0.40)',
     textShadowRadius: 6,
-    lineHeight: 20,
+    lineHeight: 19,
   },
   stoicAuthorText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: 'monospace',
     color: '#D4AF37',
     fontWeight: '700',
@@ -551,7 +660,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 8,
+    marginTop: 6,
   },
   triadPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -570,27 +679,27 @@ const styles = StyleSheet.create({
   },
   enterButtonWrapper: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 32,
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 24,
-    gap: 8,
+    gap: 6,
   },
   enterButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    backgroundColor: 'rgba(212, 175, 55, 0.20)',
     borderWidth: 1.5,
     borderColor: '#FFE259',
     borderRadius: 24,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     paddingVertical: 11,
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.7,
-    shadowRadius: 14,
+    shadowOpacity: 0.75,
+    shadowRadius: 16,
   },
   enterButtonSparkle: {
     fontSize: 16,
