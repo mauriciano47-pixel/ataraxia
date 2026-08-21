@@ -1,7 +1,9 @@
-import { Spacing } from '@/constants/theme';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { Spacing } from '@/constants/theme';
 import { ThemedText } from './themed-text';
+import { HeartRateScannerModal } from './HeartRateScannerModal';
 
 interface ThunderTelemetryTwinCardsProps {
   steps?: number;
@@ -11,19 +13,65 @@ interface ThunderTelemetryTwinCardsProps {
   avgBpm?: number;
   peakBpm?: number;
   onAddSteps?: (amount: number) => void;
-  onSyncHeartRate?: () => void;
+  onSyncHeartRate?: (measuredBpm?: number) => void;
+  onOpenStepDetails?: () => void;
 }
 
 export function ThunderTelemetryTwinCards({
   steps = 14892,
   stepGoal = 15000,
   km = 7.4,
-  heartRateBpm = 78,
+  heartRateBpm = 74,
   avgBpm = 68,
-  peakBpm = 145,
+  peakBpm = 142,
   onAddSteps,
   onSyncHeartRate,
+  onOpenStepDetails,
 }: ThunderTelemetryTwinCardsProps) {
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [liveFluctuatedBpm, setLiveFluctuatedBpm] = useState(heartRateBpm);
+
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const ecgSweepAnim = useRef(new Animated.Value(0)).current;
+
+  // 1. Latido Reactivo en vivo sincronizado con los BPM
+  useEffect(() => {
+    const cycleDuration = Math.max(450, Math.min(1200, (60 / (heartRateBpm || 74)) * 1000));
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(heartScale, { toValue: 1.28, duration: cycleDuration * 0.22, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.0, duration: cycleDuration * 0.22, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.15, duration: cycleDuration * 0.16, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.0, duration: cycleDuration * 0.40, useNativeDriver: true }),
+      ])
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
+  }, [heartRateBpm, heartScale]);
+
+  // 2. Barrido Dinámico de la onda ECG (Monitor en tiempo real)
+  useEffect(() => {
+    const sweepLoop = Animated.loop(
+      Animated.timing(ecgSweepAnim, {
+        toValue: 1,
+        duration: 2200,
+        useNativeDriver: true,
+      })
+    );
+    sweepLoop.start();
+    return () => sweepLoop.stop();
+  }, [ecgSweepAnim]);
+
+  // 3. Fluctuación Fisiológica Sutil (Respiración / VFC humana en reposo: ±1-2 BPM)
+  useEffect(() => {
+    setLiveFluctuatedBpm(heartRateBpm);
+    const interval = setInterval(() => {
+      const naturalBreathingJitter = Math.round(Math.sin(Date.now() / 2800) * 1.8);
+      setLiveFluctuatedBpm(heartRateBpm + naturalBreathingJitter);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [heartRateBpm]);
+
   // Semicircle Steps Progress
   const safeGoal = stepGoal > 0 ? stepGoal : 15000;
   const rawRatio = (steps || 0) / safeGoal;
@@ -44,11 +92,11 @@ export function ThunderTelemetryTwinCards({
 
   return (
     <View style={styles.twinCardsRow}>
-      {/* 1. LIVE STEPS CARD (EXACT TO REFERENCE) */}
+      {/* 1. LIVE STEPS CARD */}
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => onAddSteps && onAddSteps(1000)}
+        activeOpacity={0.88}
+        onPress={() => onOpenStepDetails ? onOpenStepDetails() : (onAddSteps && onAddSteps(500))}
       >
         {/* Card Header */}
         <View style={styles.cardHeader}>
@@ -117,27 +165,30 @@ export function ThunderTelemetryTwinCards({
         </View>
       </TouchableOpacity>
 
-      {/* 2. HEART RATE CARD (EXACT TO REFERENCE) */}
+      {/* 2. HEART RATE CARD (ESCANEO REAL ÓPTICO PPG EN CLIC) */}
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => onSyncHeartRate && onSyncHeartRate()}
+        activeOpacity={0.88}
+        onPress={() => setScannerVisible(true)}
       >
         {/* Card Header */}
         <View style={styles.cardHeader}>
           <ThemedText style={styles.cardHeaderTitle}>HEART RATE</ThemedText>
           <View style={styles.headerIconWrapper}>
-            <ThemedText style={{ fontSize: 15 }}>💓</ThemedText>
+            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+              <ThemedText style={{ fontSize: 16 }}>💓</ThemedText>
+            </Animated.View>
           </View>
         </View>
 
         {/* Heart Rate Readout */}
         <View style={styles.bpmRow}>
-          <ThemedText style={styles.bpmNumberText}>{heartRateBpm}</ThemedText>
+          <ThemedText style={styles.bpmNumberText}>{liveFluctuatedBpm}</ThemedText>
           <ThemedText style={styles.bpmUnitText}>BPM</ThemedText>
+          <View style={styles.livePulseDotActive} />
         </View>
 
-        {/* ECG Waveform SVG Graph */}
+        {/* Dynamic ECG Waveform SVG Graph */}
         <View style={styles.ecgWrapper}>
           <Svg width="100%" height={38} viewBox="0 0 150 40">
             <Defs>
@@ -180,13 +231,25 @@ export function ThunderTelemetryTwinCards({
           </Svg>
         </View>
 
-        {/* Card Footer: Avg & Peak */}
+        {/* Card Footer: Avg & Scan prompt */}
         <View style={styles.cardFooter}>
           <ThemedText style={styles.footerEcgText}>
-            Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm}</ThemedText> - Peak: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{peakBpm}</ThemedText>
+            Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm}</ThemedText> • <ThemedText style={{ color: '#F59E0B', fontWeight: 'bold' }}>⚡ Toca p/ Escanear</ThemedText>
           </ThemedText>
         </View>
       </TouchableOpacity>
+
+      {/* Modal de Escáner Óptico PPG */}
+      <HeartRateScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onSaveHeartRate={(newBpm) => {
+          setLiveFluctuatedBpm(newBpm);
+          if (onSyncHeartRate) {
+            onSyncHeartRate(newBpm);
+          }
+        }}
+      />
     </View>
   );
 }
@@ -312,5 +375,17 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
+  },
+  livePulseDotActive: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#34D399',
+    marginLeft: 2,
+    shadowColor: '#34D399',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

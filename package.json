@@ -7,6 +7,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@google/genai": "^2.11.0",
     "expo": "~57.0.4",
+    "expo-camera": "~57.0.0",
     "expo-constants": "~57.0.3",
     "expo-device": "~57.0.0",
     "expo-font": "~57.0.0",

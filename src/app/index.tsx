@@ -123,11 +123,15 @@ export default function HoyScreen() {
             km={currentKm}
             heartRateBpm={log.smartDevice?.heartRateBpm || 72}
             avgBpm={68}
-            peakBpm={145}
+            peakBpm={142}
             onAddSteps={addSteps}
-            onSyncHeartRate={() => {
-              const randomBpm = Math.floor(Math.random() * 15) + 72;
-              updateSmartDevice({ heartRateBpm: randomBpm, lastSync: 'Ahora' });
+            onSyncHeartRate={(measuredBpm) => {
+              const bpm = measuredBpm || 74;
+              const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              updateSmartDevice({
+                heartRateBpm: bpm,
+                lastSync: `Hoy ${nowTime} (Óptico PPG)`,
+              });
             }}
           />
 

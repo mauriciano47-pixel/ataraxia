@@ -11,14 +11,16 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.ataraxia.app",
       "infoPlist": {
-        "NSMotionUsageDescription": "Ataraxia requiere acceso a tus sensores de movimiento para registrar tus pasos y calcular tu gasto de energía diario las 24 horas."
+        "NSMotionUsageDescription": "Ataraxia requiere acceso a tus sensores de movimiento para registrar tus pasos y calcular tu gasto de energía diario las 24 horas.",
+        "NSCameraUsageDescription": "Ataraxia utiliza la cámara y el flash trasero para medir tu frecuencia cardíaca (BPM) mediante fotopletismografía óptica (PPG)."
       }
     },
     "android": {
       "package": "com.ataraxia.app",
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION",
-        "android.permission.BODY_SENSORS"
+        "android.permission.BODY_SENSORS",
+        "android.permission.CAMERA"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#050505",
@@ -40,6 +42,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ataraxia utiliza la cámara y el flash trasero para medir tu frecuencia cardíaca (BPM) mediante fotopletismografía óptica (PPG)."
+        }
+      ],
       [
         "expo-sensors",
         {
