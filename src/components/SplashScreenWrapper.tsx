@@ -6,38 +6,29 @@ import {
   Dimensions,
   TouchableOpacity,
   Platform,
-  ScrollView,
+  Image,
 } from 'react-native';
-import Svg, {
-  Path,
-  Defs,
-  LinearGradient,
-  RadialGradient,
-  Stop,
-  Circle,
-  G,
-  Polygon,
-  Ellipse,
-} from 'react-native-svg';
+import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-type BoltOption = 1 | 2 | 3 | 4;
-
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState<boolean>(true);
-  const [selectedBolt, setSelectedBolt] = useState<BoltOption>(2); // Por defecto Opción 2: Laureles
 
-  // Valores animados
-  const boltScale = useRef(new Animated.Value(0.5)).current;
+  // Animaciones
+  const boltScale = useRef(new Animated.Value(0.7)).current;
   const boltOpacity = useRef(new Animated.Value(0)).current;
-  const boltGlowPulse = useRef(new Animated.Value(0.9)).current;
-  const haloRotate = useRef(new Animated.Value(0)).current;
+  const boltPulse = useRef(new Animated.Value(1)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleTranslateY = useRef(new Animated.Value(15)).current;
+  const badgeOpacity = useRef(new Animated.Value(0)).current;
+  const quoteOpacity = useRef(new Animated.Value(0)).current;
+  const buttonPulse = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
-  const buttonPulse = useRef(new Animated.Value(1)).current;
 
   const dismissSplash = () => {
     Animated.parallel([
@@ -59,218 +50,95 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
 
+    // Entrada del Rayo Monumental
     Animated.parallel([
       Animated.spring(boltScale, {
         toValue: 1,
         friction: 6,
-        tension: 45,
+        tension: 40,
         useNativeDriver: true,
       }),
       Animated.timing(boltOpacity, {
         toValue: 1,
-        duration: 600,
+        duration: 700,
         useNativeDriver: true,
       }),
     ]).start();
 
+    // Respiración del Rayo (Loop continuo)
     Animated.loop(
       Animated.sequence([
-        Animated.timing(boltGlowPulse, {
-          toValue: 1.2,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(boltGlowPulse, {
-          toValue: 0.88,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.timing(haloRotate, {
-        toValue: 1,
-        duration: 35000,
-        useNativeDriver: true,
-      })
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(buttonPulse, {
+        Animated.timing(boltPulse, {
           toValue: 1.04,
-          duration: 800,
+          duration: 1200,
           useNativeDriver: true,
         }),
-        Animated.timing(buttonPulse, {
-          toValue: 1,
-          duration: 800,
+        Animated.timing(boltPulse, {
+          toValue: 0.98,
+          duration: 1200,
           useNativeDriver: true,
         }),
       ])
     ).start();
+
+    // Revelación del Título Monumental
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(titleOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(titleTranslateY, {
+          toValue: 0,
+          friction: 7,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 400);
+
+    // Revelación de Insignia y Cita
+    setTimeout(() => {
+      Animated.timing(badgeOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }, 700);
+
+    setTimeout(() => {
+      Animated.timing(quoteOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }, 1000);
+
+    // Revelación del Botón de Entrada
+    setTimeout(() => {
+      Animated.timing(buttonOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(buttonPulse, {
+            toValue: 1.04,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(buttonPulse, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 1200);
   }, []);
-
-  const haloSpin = haloRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  // RENDERIZADO DEL RAYO SEGÚN LA OPCIÓN SELECCIONADA
-  const renderBoltGraphic = () => {
-    switch (selectedBolt) {
-      // OPCIÓN 1: RAYO CLÁSICO IMPERIAL ORO 3D
-      case 1:
-        return (
-          <Svg width={250} height={250} viewBox="0 0 250 250">
-            <Defs>
-              <RadialGradient id="g1" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.45" />
-                <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
-              </RadialGradient>
-              <LinearGradient id="l1" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor="#FFFFFF" />
-                <Stop offset="25%" stopColor="#FFFDE0" />
-                <Stop offset="55%" stopColor="#FFE259" />
-                <Stop offset="85%" stopColor="#D4AF37" />
-                <Stop offset="100%" stopColor="#F59E0B" />
-              </LinearGradient>
-              <LinearGradient id="l1_r" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor="#FFE259" />
-                <Stop offset="30%" stopColor="#D4AF37" />
-                <Stop offset="70%" stopColor="#B45309" />
-                <Stop offset="100%" stopColor="#451A03" />
-              </LinearGradient>
-              <LinearGradient id="plasma1" x1="0" y1="0" x2="0" y2="100%">
-                <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
-                <Stop offset="50%" stopColor="#FFFDE0" stopOpacity="0.9" />
-                <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
-              </LinearGradient>
-            </Defs>
-            <Circle cx={125} cy={125} r={115} fill="url(#g1)" />
-            <Circle cx={125} cy={125} r={105} stroke="rgba(255,226,89,0.5)" strokeWidth={1.5} strokeDasharray="6,5" fill="none" />
-            <Circle cx={125} cy={125} r={95} stroke="rgba(212,175,55,0.25)" strokeWidth={1} fill="none" />
-            
-            <Polygon points="148,22 80,132 124,132 88,230 172,112 132,112" fill="#451A03" transform="translate(3,4)" />
-            <Polygon points="148,22 80,132 124,132 88,230 172,112 132,112" stroke="#FFE259" strokeWidth={5} fill="rgba(245,158,11,0.35)" />
-            <Polygon points="148,22 130,132 88,230 172,112 132,112" fill="url(#l1_r)" stroke="#D4AF37" strokeWidth={0.8} />
-            <Polygon points="148,22 80,132 124,132 88,230 130,132" fill="url(#l1)" stroke="#FFFFFF" strokeWidth={1.4} />
-            <Path d="M 148 22 L 130 132 L 88 230" stroke="url(#plasma1)" strokeWidth={2.5} strokeLinecap="round" fill="none" />
-            <Circle cx={148} cy={22} r={3.5} fill="#FFFFFF" />
-            <Circle cx={88} cy={230} r={4} fill="#FFFFFF" />
-          </Svg>
-        );
-
-      // OPCIÓN 2: RAYO DE ZEUS CON CORONA DE LAURELES
-      case 2:
-        return (
-          <Svg width={250} height={250} viewBox="0 0 250 250">
-            <Defs>
-              <RadialGradient id="g2" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.5" />
-                <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
-              </RadialGradient>
-              <LinearGradient id="laurelGrad" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor="#FFFDE0" />
-                <Stop offset="35%" stopColor="#FFE259" />
-                <Stop offset="70%" stopColor="#D4AF37" />
-                <Stop offset="100%" stopColor="#8A6615" />
-              </LinearGradient>
-              <LinearGradient id="l2" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor="#FFFFFF" />
-                <Stop offset="40%" stopColor="#FFE259" />
-                <Stop offset="100%" stopColor="#D4AF37" />
-              </LinearGradient>
-            </Defs>
-            <Circle cx={125} cy={125} r={115} fill="url(#g2)" />
-
-            {/* Corona de Laureles Izquierda */}
-            <G fill="url(#laurelGrad)" stroke="#FFE259" strokeWidth={0.8}>
-              <Path d="M 68 62 C 55 58, 46 68, 55 77 C 64 77, 70 71, 68 62 Z" />
-              <Path d="M 52 87 C 39 84, 33 96, 42 105 C 51 105, 57 96, 52 87 Z" />
-              <Path d="M 48 118 C 35 118, 32 130, 42 139 C 51 139, 54 130, 48 118 Z" />
-              <Path d="M 58 152 C 48 155, 48 167, 58 173 C 67 170, 67 161, 58 152 Z" />
-              <Path d="M 78 181 C 71 187, 78 199, 87 199 C 93 193, 90 184, 78 181 Z" />
-              <Path d="M 104 201 C 100 210, 110 216, 119 213 C 122 204, 113 198, 104 201 Z" />
-            </G>
-
-            {/* Corona de Laureles Derecha */}
-            <G fill="url(#laurelGrad)" stroke="#FFE259" strokeWidth={0.8}>
-              <Path d="M 182 62 C 195 58, 204 68, 195 77 C 186 77, 180 71, 182 62 Z" />
-              <Path d="M 198 87 C 211 84, 217 96, 208 105 C 199 105, 193 96, 198 87 Z" />
-              <Path d="M 202 118 C 215 118, 218 130, 208 139 C 199 139, 196 130, 202 118 Z" />
-              <Path d="M 192 152 C 202 155, 202 167, 192 173 C 183 170, 183 161, 192 152 Z" />
-              <Path d="M 172 181 C 179 187, 172 199, 163 199 C 157 193, 160 184, 172 181 Z" />
-              <Path d="M 146 201 C 150 210, 140 216, 131 213 C 128 204, 137 198, 146 201 Z" />
-            </G>
-
-            {/* Rayo Central de Zeus */}
-            <Polygon points="144,30 88,126 126,126 94,212 166,110 130,110" fill="#451A03" transform="translate(2.5,3.5)" />
-            <Polygon points="144,30 88,126 126,126 94,212 166,110 130,110" stroke="#FFE259" strokeWidth={4} fill="#D4AF37" />
-            <Polygon points="144,30 88,126 126,126 94,212 128,126" fill="url(#l2)" />
-            <Circle cx={94} cy={212} r={4.5} fill="#FFFFFF" />
-            <Circle cx={144} cy={30} r={4} fill="#FFFFFF" />
-          </Svg>
-        );
-
-      // OPCIÓN 3: MEDALLÓN DE ÓNIX & ESCUDO ESPARTANO
-      case 3:
-        return (
-          <Svg width={250} height={250} viewBox="0 0 250 250">
-            <Defs>
-              <RadialGradient id="onyxFull" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor="#1E2338" />
-                <Stop offset="55%" stopColor="#0F1322" />
-                <Stop offset="85%" stopColor="#080A14" />
-                <Stop offset="100%" stopColor="#030408" />
-              </RadialGradient>
-              <LinearGradient id="goldBezel" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor="#FFFDE0" />
-                <Stop offset="25%" stopColor="#FFE259" />
-                <Stop offset="50%" stopColor="#D4AF37" />
-                <Stop offset="75%" stopColor="#8A6615" />
-                <Stop offset="100%" stopColor="#FFE259" />
-              </LinearGradient>
-            </Defs>
-            <Circle cx={125} cy={125} r={110} fill="url(#onyxFull)" />
-            <Circle cx={125} cy={125} r={110} stroke="url(#goldBezel)" strokeWidth={9} fill="none" />
-            <Circle cx={125} cy={125} r={98} stroke="rgba(255,253,224,0.6)" strokeWidth={1.5} fill="none" />
-            <Circle cx={125} cy={125} r={88} stroke="rgba(212,175,55,0.3)" strokeWidth={1} strokeDasharray="5,6" fill="none" />
-
-            <Polygon points="144,42 90,130 126,130 100,208 162,118 130,118" fill="#451A03" transform="translate(2.5,3.5)" />
-            <Polygon points="144,42 90,130 126,130 100,208 162,118 130,118" stroke="#FFE259" strokeWidth={3.5} fill="#D4AF37" />
-            <Polygon points="144,42 90,130 126,130 100,208 128,130" fill="#FFFDE0" />
-            <Circle cx={100} cy={208} r={4} fill="#FFFFFF" />
-          </Svg>
-        );
-
-      // OPCIÓN 4: RAYO DE PLASMA CYBER-OBSIDIAN
-      case 4:
-        return (
-          <Svg width={250} height={250} viewBox="0 0 250 250">
-            <Defs>
-              <RadialGradient id="plasmaGlow" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor="#00C6FF" stopOpacity="0.35" />
-                <Stop offset="40%" stopColor="#FFE259" stopOpacity="0.4" />
-                <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={125} cy={125} r={115} fill="url(#plasmaGlow)" />
-
-            {/* Arcos Tesla */}
-            <Path d="M 85 110 L 60 135 L 70 138 L 45 170" stroke="#00C6FF" strokeWidth={2} strokeLinecap="round" fill="none" opacity="0.9" />
-            <Path d="M 165 100 L 190 125 L 180 128 L 205 155" stroke="#FFE259" strokeWidth={2} strokeLinecap="round" fill="none" opacity="0.9" />
-
-            <Polygon points="148,22 80,132 124,132 88,230 172,112 132,112" stroke="#00C6FF" strokeWidth={8} fill="rgba(0,198,255,0.25)" />
-            <Polygon points="148,22 80,132 124,132 88,230 172,112 132,112" stroke="#FFE259" strokeWidth={4} fill="#D4AF37" />
-            <Polygon points="148,22 80,132 124,132 88,230 130,132" fill="#FFFFFF" />
-            <Circle cx={88} cy={230} r={5} fill="#00C6FF" />
-            <Circle cx={148} cy={22} r={4.5} fill="#FFFFFF" />
-          </Svg>
-        );
-    }
-  };
 
   return (
     <View style={styles.rootContainer}>
@@ -286,15 +154,19 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             },
           ]}
         >
-          <View style={styles.touchContainer}>
-            {/* AMBIENTE AURORA CELESTIAL */}
+          <TouchableOpacity
+            activeOpacity={0.95}
+            onPress={dismissSplash}
+            style={styles.touchContainer}
+          >
+            {/* FONDO AURORA CELESTIAL */}
             <View style={styles.ambientGlowBackground}>
               <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
                 <Defs>
                   <RadialGradient id="cosmicDawn" cx="50%" cy="38%" r="60%">
-                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.32" />
-                    <Stop offset="30%" stopColor="#D4AF37" stopOpacity="0.18" />
-                    <Stop offset="65%" stopColor="#F59E0B" stopOpacity="0.07" />
+                    <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.28" />
+                    <Stop offset="35%" stopColor="#D4AF37" stopOpacity="0.14" />
+                    <Stop offset="70%" stopColor="#F59E0B" stopOpacity="0.05" />
                     <Stop offset="100%" stopColor="#040406" stopOpacity="0" />
                   </RadialGradient>
                 </Defs>
@@ -302,121 +174,80 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </Svg>
             </View>
 
-            {/* BARRA SUPERIOR: SELECTOR DE OPCIONES EN VIVO */}
-            <View style={styles.optionBar}>
-              <ThemedText style={styles.optionBarLabel}>ELIGE TU EMBLEMA:</ThemedText>
-              <View style={styles.optionTabsRow}>
-                <TouchableOpacity
-                  onPress={() => setSelectedBolt(1)}
-                  style={[styles.tabButton, selectedBolt === 1 && styles.tabButtonActive]}
-                >
-                  <ThemedText style={[styles.tabText, selectedBolt === 1 && styles.tabTextActive]}>
-                    1. Clásico ⚡
-                  </ThemedText>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setSelectedBolt(2)}
-                  style={[styles.tabButton, selectedBolt === 2 && styles.tabButtonActive]}
-                >
-                  <ThemedText style={[styles.tabText, selectedBolt === 2 && styles.tabTextActive]}>
-                    2. Laureles 🏛️
-                  </ThemedText>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setSelectedBolt(3)}
-                  style={[styles.tabButton, selectedBolt === 3 && styles.tabButtonActive]}
-                >
-                  <ThemedText style={[styles.tabText, selectedBolt === 3 && styles.tabTextActive]}>
-                    3. Escudo 🛡️
-                  </ThemedText>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setSelectedBolt(4)}
-                  style={[styles.tabButton, selectedBolt === 4 && styles.tabButtonActive]}
-                >
-                  <ThemedText style={[styles.tabText, selectedBolt === 4 && styles.tabTextActive]}>
-                    4. Cyber ⚡
-                  </ThemedText>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* SECCIÓN CENTRAL: EL GRÁFICO DEL RAYO ACTIVO */}
+            {/* SECCIÓN PRINCIPAL: EL GRAN RAYO DE LOS DIOSES EN ALTA RESOLUCIÓN */}
             <View style={styles.mainContentBlock}>
               <Animated.View
                 style={[
-                  styles.boltCenterWrapper,
+                  styles.boltImageWrapper,
                   {
                     opacity: boltOpacity,
-                    transform: [{ scale: boltScale }],
+                    transform: [
+                      { scale: boltScale },
+                      { scale: boltPulse }
+                    ],
                   },
                 ]}
               >
-                {/* HALO DE RESPLANDOR NEÓN PULSANTE */}
-                <Animated.View
-                  style={[
-                    styles.pulsingHalo,
-                    {
-                      transform: [{ scale: boltGlowPulse }],
-                    },
-                  ]}
+                <Image
+                  source={require('../../assets/images/gods_lightning_master.png')}
+                  style={styles.masterBoltImage}
+                  resizeMode="contain"
                 />
-
-                {/* GRÁFICO EN VIVO */}
-                {renderBoltGraphic()}
               </Animated.View>
 
-              {/* SECCIÓN DEL TÍTULO ATARAXIA */}
-              <View style={styles.titleSection}>
+              {/* TÍTULO MONUMENTAL Y CITA ESTOICA */}
+              <Animated.View
+                style={[
+                  styles.titleSection,
+                  {
+                    opacity: titleOpacity,
+                    transform: [{ translateY: titleTranslateY }],
+                  },
+                ]}
+              >
                 <View style={styles.titleWingsRow}>
                   <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
                   <ThemedText style={styles.divineMainTitle}>ATARAXIA</ThemedText>
                   <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
                 </View>
 
-                {/* INSIGNIA CELESTIAL DORADA */}
-                <View style={styles.divineBadgeContainer}>
+                {/* INSIGNIA CELESTIAL */}
+                <Animated.View style={[styles.divineBadgeContainer, { opacity: badgeOpacity }]}>
                   <ThemedText style={styles.divineBadgeText}>
                     TEMPLO DEL AUTODOMINIO
                   </ThemedText>
-                </View>
+                </Animated.View>
 
-                {/* LEMA ORACULAR ESTOICO */}
-                <View style={styles.quoteContainer}>
+                {/* LEMA ORACULAR */}
+                <Animated.View style={[styles.quoteContainer, { opacity: quoteOpacity }]}>
                   <ThemedText style={styles.stoicMottoText}>
                     &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
                   </ThemedText>
                   <ThemedText style={styles.stoicAuthorText}>
                     — Marco Aurelio (Emperador Estoico)
                   </ThemedText>
-                </View>
-              </View>
+                </Animated.View>
+              </Animated.View>
             </View>
 
-            {/* SECCIÓN INFERIOR: BOTÓN DE ACCESO TÁCTIL (SIN SUPERPOSICIÓN) */}
+            {/* BOTÓN DE ACCESO TÁCTIL (SIN SUPERPOSICIÓN) */}
             <Animated.View
               style={[
                 styles.bottomActionsBlock,
                 {
+                  opacity: buttonOpacity,
                   transform: [{ scale: buttonPulse }],
                 },
               ]}
             >
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={dismissSplash}
-                style={styles.enterButtonPill}
-              >
+              <View style={styles.enterButtonPill}>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
-                <ThemedText style={styles.enterButtonText}>INGRESAR AL TEMPLO</ThemedText>
+                <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
-              </TouchableOpacity>
-              <ThemedText style={styles.touchHintText}>Toca para comenzar tu disciplina</ThemedText>
+              </View>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para comenzar</ThemedText>
             </Animated.View>
-          </View>
+          </TouchableOpacity>
         </Animated.View>
       )}
     </View>
@@ -444,7 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 24 : 44,
+    paddingTop: Platform.OS === 'web' ? 28 : 44,
     paddingBottom: Platform.OS === 'web' ? 24 : 36,
   },
   ambientGlowBackground: {
@@ -456,75 +287,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  optionBar: {
-    width: '100%',
-    alignItems: 'center',
-    zIndex: 10,
-    gap: 6,
-  },
-  optionBarLabel: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: '#D4AF37',
-    letterSpacing: 2,
-    fontWeight: '700',
-  },
-  optionTabsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  tabButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  tabButtonActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.22)',
-    borderColor: '#FFE259',
-    shadowColor: '#FFE259',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-  },
-  tabText: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: '#FFE259',
-    fontWeight: '900',
-  },
   mainContentBlock: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     flex: 1,
-    marginTop: -8,
   },
-  boltCenterWrapper: {
+  boltImageWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 250,
-    height: 230,
+    width: Platform.OS === 'web' ? 300 : 260,
+    height: Platform.OS === 'web' ? 300 : 260,
+    marginBottom: 4,
   },
-  pulsingHalo: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 226, 89, 0.16)',
+  masterBoltImage: {
+    width: '100%',
+    height: '100%',
     shadowColor: '#FFE259',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 35,
+    shadowOpacity: 0.85,
+    shadowRadius: 25,
   },
   titleSection: {
     alignItems: 'center',
@@ -546,7 +328,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 14,
   },
   divineMainTitle: {
-    fontSize: Platform.OS === 'web' ? 40 : 34,
+    fontSize: Platform.OS === 'web' ? 42 : 36,
     fontWeight: '900',
     color: '#FFFDE0',
     letterSpacing: Platform.OS === 'web' ? 8 : 6,
@@ -605,7 +387,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
     gap: 5,
-    marginTop: 8,
   },
   enterButtonPill: {
     flexDirection: 'row',
