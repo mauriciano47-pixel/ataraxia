@@ -11,6 +11,7 @@ import {
   LEGENDARY_PATHS,
   MonthlyCycleState,
   DailyGrade,
+  DailyGradeStatus,
   CycleTier,
 } from '@/types/onboarding';
 
