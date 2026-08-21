@@ -8,7 +8,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
+import Svg, { RadialGradient, Defs, Stop, Circle, Image as SvgImage, G } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
 import { ZEUS_EMBLEM_URI } from '@/constants/zeusEmblemBase64';
@@ -45,10 +45,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
 
-    // Entrada suave de todo el contenido
+    // Entrada suave
     Animated.timing(contentOpacity, {
       toValue: 1,
-      duration: 600,
+      duration: 500,
       useNativeDriver: true,
     }).start();
 
@@ -86,7 +86,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   }, []);
 
   // Tamaño del medallón
-  const emblemWidth = Platform.OS === 'web'
+  const emblemSize = Platform.OS === 'web'
     ? Math.min(SCREEN_WIDTH * 0.75, 290)
     : Math.min(SCREEN_WIDTH * 0.72, 260);
 
@@ -127,38 +127,36 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
             {/* CONTENEDOR PRINCIPAL */}
             <Animated.View style={[styles.mainContentBlock, { opacity: contentOpacity }]}>
               
-              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (RENDER NATIVO WEB Y MÓVIL) */}
+              {/* EL GRAN RAYO Y MEDALLÓN DE ZEUS MAJESTUOSO (TRIPLE RENDERIZADO GARANTIZADO) */}
               <Animated.View
                 style={[
                   styles.emblemWrapper,
                   {
-                    width: emblemWidth,
-                    height: emblemWidth,
+                    width: emblemSize,
+                    height: emblemSize,
                     transform: [{ scale: emblemPulse }],
                   },
                 ]}
               >
-                {Platform.OS === 'web' ? (
-                  <img
-                    src={ZEUS_EMBLEM_URI}
-                    alt="El Gran Rayo de Zeus"
-                    style={{
-                      width: emblemWidth,
-                      height: emblemWidth,
-                      objectFit: 'contain',
-                      display: 'block',
-                      filter: 'drop-shadow(0 0 20px rgba(255, 226, 89, 0.4))',
-                      userSelect: 'none',
-                      pointerEvents: 'none',
-                    }}
+                {/* 1. RENDERIZADOR SVG VECTORIAL UNIVERSAL (COMPATIBLE 100% CON TODOS LOS NAVEGADORES) */}
+                <Svg width={emblemSize} height={emblemSize} viewBox="0 0 512 512">
+                  <Defs>
+                    <RadialGradient id="emblemHalo" cx="50%" cy="50%" r="50%">
+                      <Stop offset="0%" stopColor="#FFE259" stopOpacity="0.30" />
+                      <Stop offset="60%" stopColor="#D4AF37" stopOpacity="0.10" />
+                      <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+                    </RadialGradient>
+                  </Defs>
+                  <Circle cx="256" cy="256" r="240" fill="url(#emblemHalo)" />
+                  <SvgImage
+                    href={ZEUS_EMBLEM_URI}
+                    x="0"
+                    y="0"
+                    width="512"
+                    height="512"
+                    preserveAspectRatio="xMidYMid meet"
                   />
-                ) : (
-                  <Image
-                    source={{ uri: ZEUS_EMBLEM_URI }}
-                    style={{ width: emblemWidth, height: emblemWidth }}
-                    resizeMode="contain"
-                  />
-                )}
+                </Svg>
               </Animated.View>
 
               {/* SECCIÓN DE TÍTULO, MENCIONES Y SABIDURÍA ESTOICA */}
