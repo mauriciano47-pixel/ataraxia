@@ -18,8 +18,25 @@ import { SafeStorage } from '@/utils/safeStorage';
 type SplashStage = 'parchment' | 'lightning' | 'path_selection' | 'none';
 
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-  const { selectLegendaryPath } = useDailyLog();
-  const [stage, setStage] = useState<SplashStage>('parchment');
+  const { selectLegendaryPath, log } = useDailyLog();
+
+  // Evaluamos el estado inicial: si el usuario ya consagró su senda anteriormente
+  const [stage, setStage] = useState<SplashStage>(() => {
+    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true';
+    const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
+
+    // Si ya completó el juramento y eligió senda en el pasado, solo mostrar el Rayo de bienvenida
+    if (pactAccepted && pathChosen) {
+      return 'lightning';
+    }
+    // Si ya aceptó el pacto pero faltaba elegir senda
+    if (pactAccepted) {
+      return 'path_selection';
+    }
+    // Primer inicio: empezar con el Papiro Griego
+    return 'parchment';
+  });
+
   const [isDismissing, setIsDismissing] = useState<boolean>(false);
 
   useEffect(() => {
@@ -32,28 +49,39 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   };
 
   const handleEnterFromLightning = () => {
-    setStage('path_selection');
+    const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
+    if (pathChosen) {
+      // Usuario recurrente: entra DIRECTAMENTE al Templo sin repetir juramento ni selector de senda
+      setIsDismissing(true);
+      setTimeout(() => {
+        setStage('none');
+      }, 200);
+    } else {
+      // Nuevo usuario: pasa a elegir su senda legendaria
+      setStage('path_selection');
+    }
   };
 
   const handleSelectPath = (path: LegendaryPath) => {
     selectLegendaryPath(path);
     SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
+    SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
     setIsDismissing(true);
     setTimeout(() => {
       setStage('none');
-    }, 250);
+    }, 200);
   };
 
   return (
     <View style={styles.rootContainer}>
       {children}
 
-      {/* 1. ETAPA PAPIRO GRIEGO DEL JURAMENTO */}
+      {/* 1. ETAPA PAPIRO GRIEGO DEL JURAMENTO (SOLO PRIMER INICIO) */}
       {stage === 'parchment' && (
         <GreekParchmentPact onAcceptPact={handleAcceptPact} />
       )}
 
-      {/* 2. ETAPA RAYO GLORIOSO DE ZEUS */}
+      {/* 2. ETAPA BIENVENIDA CON EL RAYO GLORIOSO DE ZEUS */}
       {stage === 'lightning' && (
         <View
           style={[
@@ -161,13 +189,13 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 <ThemedText style={styles.enterButtonText}>TOCA PARA CONTINUAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
-              <ThemedText style={styles.touchHintText}>Toca para elegir tu Senda de Ataraxia</ThemedText>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier parte para ingresar al Templo</ThemedText>
             </View>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* 3. ETAPA SELECTOR DE LAS 4 SENDAS LEGENDARIAS */}
+      {/* 3. ETAPA SELECTOR DE LAS 4 SENDAS LEGENDARIAS (SOLO PRIMER INICIO) */}
       {stage === 'path_selection' && (
         <LegendaryPathSelector onSelectPath={handleSelectPath} />
       )}

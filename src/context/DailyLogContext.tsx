@@ -267,8 +267,15 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
       prokoptonProfile: currentLog.prokoptonProfile,
       customRoutine: currentLog.customRoutine,
       coachArchetype: currentLog.coachArchetype || 'stoic_mentor',
+      legendaryPath: currentLog.legendaryPath,
+      monthlyCycle: currentLog.monthlyCycle,
     };
     SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
+
+    if (currentLog.legendaryPath) {
+      SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
+      SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+    }
 
     if (currentLog.hasCompletedOnboarding) {
       SafeStorage.setItem(ONBOARDING_KEY, 'true');
