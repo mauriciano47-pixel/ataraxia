@@ -11,13 +11,17 @@ import {
 import Svg, { RadialGradient, Defs, Stop, Circle } from 'react-native-svg';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
+import { GreekParchmentPact } from './GreekParchmentPact';
+import { SafeStorage } from '@/utils/safeStorage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-  const [showSplash, setShowSplash] = useState<boolean>(true);
+type SplashStage = 'parchment' | 'lightning' | 'none';
 
-  // Animaciones
+export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
+  const [stage, setStage] = useState<SplashStage>('parchment');
+
+  // Animaciones del Rayo
   const boltScale = useRef(new Animated.Value(0.7)).current;
   const boltOpacity = useRef(new Animated.Value(0)).current;
   const boltPulse = useRef(new Animated.Value(1)).current;
@@ -30,26 +34,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
 
-  const dismissSplash = () => {
-    Animated.parallel([
-      Animated.timing(containerOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(containerScale, {
-        toValue: 1.04,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setShowSplash(false);
-    });
-  };
-
-  useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-
+  const startLightningAnimations = () => {
     // Entrada del Rayo Monumental
     Animated.parallel([
       Animated.spring(boltScale, {
@@ -96,7 +81,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           useNativeDriver: true,
         }),
       ]).start();
-    }, 400);
+    }, 300);
 
     // Revelación de Insignia y Cita
     setTimeout(() => {
@@ -105,7 +90,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
         duration: 500,
         useNativeDriver: true,
       }).start();
-    }, 700);
+    }, 600);
 
     setTimeout(() => {
       Animated.timing(quoteOpacity, {
@@ -113,7 +98,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
         duration: 500,
         useNativeDriver: true,
       }).start();
-    }, 1000);
+    }, 850);
 
     // Revelación del Botón de Entrada
     setTimeout(() => {
@@ -137,14 +122,47 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
           }),
         ])
       ).start();
-    }, 1200);
+    }, 1000);
+  };
+
+  const handleAcceptPact = () => {
+    SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+    setStage('lightning');
+    startLightningAnimations();
+  };
+
+  const dismissSplash = () => {
+    Animated.parallel([
+      Animated.timing(containerOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(containerScale, {
+        toValue: 1.04,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setStage('none');
+    });
+  };
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
   }, []);
 
   return (
     <View style={styles.rootContainer}>
       {children}
 
-      {showSplash && (
+      {/* 1. ETAPA PAPIRO GRIEGO DEL JURAMENTO */}
+      {stage === 'parchment' && (
+        <GreekParchmentPact onAcceptPact={handleAcceptPact} />
+      )}
+
+      {/* 2. ETAPA RAYO GLORIOSO DE LOS DIOSES */}
+      {stage === 'lightning' && (
         <Animated.View
           style={[
             styles.splashOverlay,
@@ -174,7 +192,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </Svg>
             </View>
 
-            {/* SECCIÓN PRINCIPAL: EL GRAN RAYO DE LOS DIOSES EN ALTA RESOLUCIÓN */}
+            {/* SECCIÓN PRINCIPAL: EL GRAN RAYO DE LOS DIOSES */}
             <View style={styles.mainContentBlock}>
               <Animated.View
                 style={[
@@ -230,7 +248,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
               </Animated.View>
             </View>
 
-            {/* BOTÓN DE ACCESO TÁCTIL (SIN SUPERPOSICIÓN) */}
+            {/* BOTÓN DE ACCESO TÁCTIL */}
             <Animated.View
               style={[
                 styles.bottomActionsBlock,
@@ -245,7 +263,7 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
                 <ThemedText style={styles.enterButtonText}>TOCA PARA INGRESAR</ThemedText>
                 <ThemedText style={styles.enterButtonSparkle}>⚡</ThemedText>
               </View>
-              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para comenzar</ThemedText>
+              <ThemedText style={styles.touchHintText}>Toca en cualquier lugar para entrar al templo</ThemedText>
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
