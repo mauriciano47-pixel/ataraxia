@@ -53,16 +53,33 @@ Estás a **un solo aviso del castigo fatal y la descalificación de tu honor est
 **Silencio y acción.** Deja las superficialidades y demuéstrale a los dioses que eres capaz de redimirte con sudor en tu Senda del **${path.toUpperCase()}**. ¿Vas a cumplir hoy sí o no?`;
   }
 
-  return `⛔ **TERCER AVISO: SUPPLICIUM (Fustuarium & Juicio de Indignidad)**
+  // STRIKE 3+ (SUPPLICIUM FATAL & REVOCACIÓN DEFINITIVA)
+  try {
+    // Revocar grados y reiniciar progreso de ciclo mensual
+    SafeStorage.removeItem('ataraxia_monthly_cycle_v1');
+    SafeStorage.setItem('ataraxia_dishonor_status_v1', 'EXPULSADO_CRIADOR_GALLINAS');
+  } catch (e) {
+    console.error('Error al purgar progreso por castigo fatal:', e);
+  }
+
+  return `☠️ **TERCER AVISO: SUPPLICIUM FATAL (FUSTUARIUM & EXPULSIÓN DEFINITIVA)**
 
 *«Semel nefas, bis stultitia, ter poena»*
-*(La tercera es castigo inapelable).*
+*(La primera vez es error, la segunda es necedad, la tercera es CASTIGO DEFINITIVO).*
 
-Has agotado las 3 advertencias de la legión, ${userName}. Al igual que el tribuno militar ordenaba el *fustuarium* para el centinela que abandonaba su puesto por distracción, has demostrado no tener el temple ni la madurez para estar en Ataraxia.
+**SE ACABÓ, ${userName.toUpperCase()}. AQUÍ NO PERDEMOS EL TIEMPO EN CRIAR NIÑOS.**
 
-**Tu Pacto del Día 30 queda manchado con falta grave de disciplina.** Has elegido la debilidad de la mente dispersa sobre la virtud del guerrero.
+Has agotado las 3 advertencias de la legión romana y has demostrado que este santuario te queda astronómicamente grande. Tu mente es blanda, tibia y esclava de la vanidad y de la mendicidad de atención. En Ataraxia forjamos titanes con disciplina de hierro; no consentimos caprichos de infantes necesitados de aplausos ajenos.
 
-No habrá más advertencias. Ponte de pie de inmediato, agacha la cabeza y paga tu falta con sudor puro en el entrenamiento.`;
+🔥 **DECRETO DE DESTRUCCIÓN DEL EGO & DESHONRA**:
+1. **REVOCACIÓN TOTAL DE GRADOS**: Quedan anulados y purgados todos tus días acumulados, rachas, honores y títulos de tu Senda del **${path.toUpperCase()}**.
+2. **EXPULSIÓN DEL PACTO DE LOS 30 DÍAS**: Tu progreso ha sido borrado por completo del Santuario. Tu rango queda degradado a la nada absoluta.
+3. **EXPULSIÓN DEFINITIVA**: Vuelve al fango y **vuelve a criar gallinas**, porque para el combate estoico, el sacrificio y la verdadera grandeza no tuviste la madera ni el honor.
+
+Epicteto lo sentenció para siempre:
+> *"¿Quieres ser coronado en los Juegos Olímpicos pero no toleras el polvo ni la disciplina? Eres como un niño que hoy juega a ser gladiador y mañana a ser bufón. No eres nada."*
+
+Si algún día decides dejar de ser un niño vanidoso y convertirte en un hombre de virtud, tendrás que reconstruirte desde el fango absoluto. Ahora sal de mi vista.`;
 }
 
 /**
