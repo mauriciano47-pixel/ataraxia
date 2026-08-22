@@ -11,30 +11,35 @@ import * as SplashScreen from 'expo-splash-screen';
 import { ThemedText } from './themed-text';
 import { GreekParchmentPact } from './GreekParchmentPact';
 import { LegendaryPathSelector } from './LegendaryPathSelector';
+import { TempleGuardianKeyStep } from './TempleGuardianKeyStep';
 import { useDailyLog } from '@/context/DailyLogContext';
 import { LegendaryPath } from '@/types/onboarding';
 import { SafeStorage } from '@/utils/safeStorage';
 
-type SplashStage = 'parchment' | 'lightning' | 'path_selection' | 'none';
+type SplashStage = 'parchment' | 'lightning' | 'path_selection' | 'guardian_key' | 'none';
 
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-  const { selectLegendaryPath, log } = useDailyLog();
+  const { selectLegendaryPath, saveGuardianKey, log } = useDailyLog();
+  const [chosenPath, setChosenPath] = useState<LegendaryPath>(log.legendaryPath || 'spartan');
 
   // Evaluamos el estado inicial de forma infalible:
-  // Por defecto 'lightning' (el Rayo de Zeus) para SSR y usuarios registrados, impidiendo que el papiro parpadee.
   const [stage, setStage] = useState<SplashStage>(() => {
-    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true';
+    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || !!log.hasCompletedOnboarding;
     const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
+    const keyConfigured = SafeStorage.getItem('ataraxia_guardian_key_v1') === 'true' || !!log.userEmail;
 
-    if (pactAccepted && pathChosen) {
+    // Si ya completó todo el rito (pacto, senda y llave de correo), solo mostrar el Rayo
+    if (pactAccepted && pathChosen && keyConfigured) {
       return 'lightning';
+    }
+    if (pactAccepted && pathChosen && !keyConfigured) {
+      return 'guardian_key';
     }
     if (pactAccepted && !pathChosen) {
       return 'path_selection';
     }
-    // Solo si estamos confirmados en navegador cliente y no hay registro previo
     if (typeof window !== 'undefined') {
-      const isPactDone = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true';
+      const isPactDone = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true';
       if (!isPactDone) {
         return 'parchment';
       }
@@ -48,18 +53,21 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     SplashScreen.hideAsync().catch(() => {});
 
     // Validación post-hidratación precisa en cliente:
-    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true' || !!log.hasCompletedOnboarding;
+    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || !!log.hasCompletedOnboarding;
     const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
+    const keyConfigured = SafeStorage.getItem('ataraxia_guardian_key_v1') === 'true' || !!log.userEmail;
 
     if (!pactAccepted) {
       setStage('parchment');
     } else if (!pathChosen) {
       setStage('path_selection');
+    } else if (!keyConfigured) {
+      setStage('guardian_key');
     } else {
-      // Usuario ya consagrado y registrado: asegurar que jamás se muestre el papiro
-      setStage((prev) => (prev === 'parchment' || prev === 'path_selection' ? 'lightning' : prev));
+      // Usuario ya consagrado con llave: asegurar que no aparezca el papiro
+      setStage((prev) => (prev === 'parchment' || prev === 'path_selection' || prev === 'guardian_key' ? 'lightning' : prev));
     }
-  }, [log.hasCompletedOnboarding, log.legendaryPath]);
+  }, [log.hasCompletedOnboarding, log.legendaryPath, log.userEmail]);
 
   const handleAcceptPact = () => {
     SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
@@ -68,26 +76,57 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
 
   const handleEnterFromLightning = () => {
     const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
-    if (pathChosen) {
-      // Usuario recurrente: entra DIRECTAMENTE al Templo sin repetir juramento ni selector de senda
+    const keyConfigured = SafeStorage.getItem('ataraxia_guardian_key_v1') === 'true' || !!log.userEmail;
+
+    if (pathChosen && keyConfigured) {
+      // Usuario recurrente: entra DIRECTAMENTE al Templo sin repetir flujo
       setIsDismissing(true);
       setTimeout(() => {
         setStage('none');
       }, 200);
-    } else {
+    } else if (!pathChosen) {
       // Nuevo usuario: pasa a elegir su senda legendaria
       setStage('path_selection');
+    } else {
+      // Falta adjuntar la llave del correo
+      setStage('guardian_key');
     }
   };
 
   const handleSelectPath = (path: LegendaryPath) => {
+    setChosenPath(path);
     selectLegendaryPath(path);
     SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
     SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+    // Pasa al paso solemne de adjuntar la llave de correo y biometría
+    setStage('guardian_key');
+  };
+
+  const handleCompleteGuardianKey = (data: {
+    email: string;
+    userName: string;
+    weightKg: number;
+    heightCm: number;
+    age: number;
+  }) => {
+    saveGuardianKey({
+      email: data.email,
+      userName: data.userName,
+      weightKg: data.weightKg,
+      heightCm: data.heightCm,
+      age: data.age,
+      path: chosenPath,
+    });
+
+    SafeStorage.setItem('ataraxia_guardian_key_v1', 'true');
+    SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
+    SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+    SafeStorage.setItem('ataraxia_user_email_v1', data.email);
+
     setIsDismissing(true);
     setTimeout(() => {
       setStage('none');
-    }, 200);
+    }, 250);
   };
 
   return (
@@ -216,6 +255,14 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       {/* 3. ETAPA SELECTOR DE LAS 4 SENDAS LEGENDARIAS (SOLO PRIMER INICIO) */}
       {stage === 'path_selection' && (
         <LegendaryPathSelector onSelectPath={handleSelectPath} />
+      )}
+
+      {/* 4. ETAPA LLAVE SAGRADA DEL GUARDIÁN: CORREO Y BIOMETRÍA */}
+      {stage === 'guardian_key' && (
+        <TempleGuardianKeyStep
+          selectedPath={chosenPath}
+          onCompleteKey={handleCompleteGuardianKey}
+        />
       )}
     </View>
   );

@@ -33,9 +33,9 @@ export default function ProfileScreen() {
   const [showParchmentModal, setShowParchmentModal] = useState(false);
   const [showPathModal, setShowPathModal] = useState(false);
 
-  // Editable fields
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
+  const [emailInput, setEmailInput] = useState(log.userEmail || '');
   const [ageInput, setAgeInput] = useState(metrics.age.toString());
   const [weightInput, setWeightInput] = useState(metrics.weightKg.toString());
   const [heightInput, setHeightInput] = useState(metrics.heightCm.toString());
@@ -51,6 +51,7 @@ export default function ProfileScreen() {
   const handleOpenEditModal = () => {
     const currentMetrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
     setNameInput(log.userName || 'Ciudadano Prokopton');
+    setEmailInput(log.userEmail || '');
     setAgeInput(currentMetrics.age.toString());
     setWeightInput(currentMetrics.weightKg.toString());
     setHeightInput(currentMetrics.heightCm.toString());
@@ -111,6 +112,7 @@ export default function ProfileScreen() {
 
     saveFullProfile({
       userName: nameInput.trim() || 'Ciudadano Prokopton',
+      userEmail: emailInput.trim(),
       targetCalories: cals,
       stepGoal: steps,
       age,
@@ -380,6 +382,14 @@ export default function ProfileScreen() {
               <ThemedText style={[styles.statusText, { color: status.color }]}>{status.label}</ThemedText>
             </View>
 
+            {/* Llave Sagrada (Correo) */}
+            <View style={styles.row}>
+              <ThemedText style={styles.rowLabel}>Llave Sagrada (Correo)</ThemedText>
+              <ThemedText style={[styles.rowValue, { color: '#FFE259', fontFamily: 'monospace', fontSize: 11 }]}>
+                {log.userEmail || 'Sin registrar'}
+              </ThemedText>
+            </View>
+
             {/* UID Copiable */}
             <View style={styles.row}>
               <ThemedText style={styles.rowLabel}>ID del Guardián</ThemedText>
@@ -393,7 +403,7 @@ export default function ProfileScreen() {
             <View style={styles.warningBox}>
               <Ionicons name="shield-outline" size={14} color="#F59E0B" style={{ marginTop: 1 }} />
               <ThemedText style={styles.warningText}>
-                {'Tu sesión está vinculada a este templo y respaldada con tu ID de Guardián.'}
+                {'Tu sesión está vinculada a este templo y respaldada con tu Llave Sagrada.'}
               </ThemedText>
             </View>
           </ThemedView>
@@ -420,7 +430,18 @@ export default function ProfileScreen() {
             </View>
 
             <ScrollView style={{ maxHeight: 380 }}>
-              <ThemedText style={styles.inputLabel}>Nombre o Pseudónimo Estoico</ThemedText>
+              <ThemedText style={styles.inputLabel}>Correo Electrónico (Llave Sagrada)</ThemedText>
+              <TextInput 
+                style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
+                value={emailInput}
+                onChangeText={setEmailInput}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder="tu.correo@ejemplo.com"
+                placeholderTextColor="rgba(212, 175, 55, 0.40)"
+              />
+
+              <ThemedText style={[styles.inputLabel, { marginTop: Spacing.two }]}>Nombre o Pseudónimo Estoico</ThemedText>
               <TextInput 
                 style={[styles.input, { color: '#FFF', borderColor: 'rgba(212, 175, 55, 0.30)', backgroundColor: 'rgba(212, 175, 55, 0.08)' }]}
                 value={nameInput}

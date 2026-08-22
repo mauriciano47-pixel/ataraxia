@@ -1025,6 +1025,8 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         updateUserMetrics,
         setStoicAvatar,
         setUserName,
+        setUserEmail,
+        saveGuardianKey,
         setCoachArchetype,
         selectLegendaryPath,
         calculateTodayGrade,
