@@ -38,5 +38,16 @@ export const SafeStorage = {
     } catch (e) {
       console.warn(`[SafeStorage] Failed removing key '${key}':`, e);
     }
+  },
+
+  clearAll: (): void => {
+    memoryStorage.clear();
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.clear();
+      }
+    } catch (e) {
+      console.warn(`[SafeStorage] Failed clearing all storage:`, e);
+    }
   }
 };
