@@ -47,6 +47,7 @@ export interface DailyLog {
   checkInDone?: boolean;
   stoicAvatarUri?: string;
   userName?: string;
+  userEmail?: string;
   smartDevice?: SmartDeviceState;
   prokoptonProfile?: ProkoptonProfile;
   customRoutine?: CustomExercise[];
@@ -103,6 +104,7 @@ export const DEFAULT_LOG: DailyLog = {
   stepGoal: 10000,
   stoicAvatarUri: '',
   userName: 'Ciudadano Prokopton',
+  userEmail: '',
   hasCompletedOnboarding: false,
   coachArchetype: 'stoic_mentor',
   legendaryPath: 'spartan',
@@ -129,6 +131,7 @@ const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v1';
 
 type UserProfile = {
   userName: string;
+  userEmail?: string;
   userMetrics: UserMetrics;
   targetCalories: number;
   stepGoal: number;
@@ -148,6 +151,7 @@ interface DailyLogContextType {
   user: User | null;
   saveFullProfile: (data: {
     userName: string;
+    userEmail?: string;
     age: number;
     weightKg: number;
     heightCm: number;
@@ -170,6 +174,15 @@ interface DailyLogContextType {
   updateUserMetrics: (metrics: Partial<UserMetrics>, targetCals?: number) => void;
   setStoicAvatar: (uri: string) => void;
   setUserName: (name: string) => void;
+  setUserEmail: (email: string) => void;
+  saveGuardianKey: (data: {
+    email: string;
+    userName: string;
+    weightKg: number;
+    heightCm: number;
+    age: number;
+    path: LegendaryPath;
+  }) => void;
   setCoachArchetype: (archetype: CoachArchetype) => void;
   selectLegendaryPath: (path: LegendaryPath) => void;
   calculateTodayGrade: () => DailyGrade;
@@ -603,6 +616,131 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const setUserName = (name: string) => {
     updateLog({ userName: name });
     saveProfileToFirestore({ userName: name });
+  };
+
+  const setUserEmail = (email: string) => {
+    updateLog({ userEmail: email });
+    saveProfileToFirestore({ userEmail: email });
+  };
+
+  const saveGuardianKey = ({
+    email,
+    userName,
+    weightKg,
+    heightCm,
+    age,
+    path,
+  }: {
+    email: string;
+    userName: string;
+    weightKg: number;
+    heightCm: number;
+    age: number;
+    path: LegendaryPath;
+  }) => {
+    const pathInfo = LEGENDARY_PATHS[path];
+    const bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
+    const baseCals = Math.round(bmr * 1.4);
+    const targetCals = Math.max(1400, baseCals + pathInfo.recommendedCalsDelta);
+
+    const updatedMetrics: UserMetrics = {
+      weightKg,
+      heightCm,
+      age,
+      gender: 'male',
+      activityLevel: 'moderate',
+      goal: pathInfo.dietPreference === 'deficit' ? 'deficit' : pathInfo.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
+    };
+
+    let routine: CustomExercise[] = [];
+    if (path === 'spartan') {
+      routine = [
+        { id: 'sp1', n: 'Sentadilla Trasera Pesada', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+        { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+      ];
+    } else if (path === 'hoplite') {
+      routine = [
+        { id: 'hop1', n: 'Circuito de Resistencia Hoplita', s: '4 rondas x 45 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Full Body' },
+        { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 minutos continuos', targetRpe: 7.0, done: false, rpe: null, muscleGroup: 'Cardiovascular' },
+        { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+        { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
+    } else if (path === 'apollo') {
+      routine = [
+        { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
+        { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Hombros' },
+        { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro', s: '4 series x 10 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ap5', n: 'Elevación de Piernas Colgado', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Abdomen' },
+      ];
+    } else {
+      routine = [
+        { id: 'ph1', n: 'Dominadas Estrictas en Barra (Autodominio)', s: '4 series x 10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
+        { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
+        { id: 'ph3', n: 'Pistol Squats (Sentadilla a una pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Piernas' },
+        { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Tríceps' },
+        { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Core' },
+      ];
+    }
+
+    const newCycle: MonthlyCycleState = {
+      currentDay: 1,
+      startDate: new Date().toISOString(),
+      path,
+      tier: 'Novicio de Esparta',
+      dailyGrades: [],
+      passedDaysCount: 0,
+      failedDaysCount: 0,
+      averageScore: 100,
+      isJudgmentReady: false,
+    };
+
+    const profileData: ProkoptonProfile = {
+      userName,
+      focus: pathInfo.focus,
+      equipment: pathInfo.equipment,
+      daysPerWeek: 4,
+      sessionDurationMinutes: 45,
+      dietPreference: pathInfo.dietPreference,
+      age,
+      weightKg,
+      targetWeightKg: weightKg,
+      heightCm,
+      completedAt: new Date().toISOString(),
+      legendaryPath: path,
+    };
+
+    updateLog({
+      userEmail: email,
+      userName,
+      userMetrics: updatedMetrics,
+      targetCalories: targetCals,
+      targetCaloriesMin: targetCals - 100,
+      targetCaloriesMax: targetCals + 100,
+      legendaryPath: path,
+      coachArchetype: pathInfo.archetype,
+      customRoutine: routine,
+      monthlyCycle: newCycle,
+      prokoptonProfile: profileData,
+      hasCompletedOnboarding: true,
+    });
+
+    saveProfileToFirestore({
+      userEmail: email,
+      userName,
+      userMetrics: updatedMetrics,
+      targetCalories: targetCals,
+      legendaryPath: path,
+      coachArchetype: pathInfo.archetype,
+      customRoutine: routine,
+      monthlyCycle: newCycle,
+      prokoptonProfile: profileData,
+      hasCompletedOnboarding: true,
+    });
   };
 
   const setCoachArchetype = (archetype: CoachArchetype) => {

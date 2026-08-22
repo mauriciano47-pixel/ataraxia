@@ -73,6 +73,21 @@ export default function HoyScreen() {
   const totalBurnedCalories = basalBurn + stepsBurn + workoutBurn;
   const targetBurnCalories = Math.max(2200, Math.round(bmr * 1.45));
 
+  // 4. Variables de la Senda Activa & Pilares del Pacto de 30 Días
+  const currentPath = log.legendaryPath || 'spartan';
+  const pathMeta = {
+    spartan: { title: '⚔️ SENDA ESPARTANA', focus: 'Fuerza & Sobrecarga', target: '4-5 Series • RIR 2' },
+    hoplite: { title: '🛡️ SENDA DEL HOPLITA', focus: 'Motor 24h & Resistencia', target: 'Cardio Zona 2 & Mitocondrial' },
+    apollo: { title: '⚡ SENDA DE APOLO', focus: 'Definición & V-Taper', target: 'Déficit & Densidad Magra' },
+    philosopher: { title: '🧘‍♂️ SENDA FILOSÓFICA', focus: 'Calistenia & Claridad', target: 'Dominio Corporal & Ayuno' },
+  }[currentPath] || { title: '⚔️ SENDA ESPARTANA', focus: 'Fuerza & Sobrecarga', target: '4-5 Series • RIR 2' };
+
+  const stepsCheck = currentSteps >= currentGoal;
+  const trainingCheck = Boolean(log.trainingCompleted);
+  const nutritionCheck = (log.mealsLogged ?? 0) >= 2 || (log.totalCalories ?? 0) > 0;
+  const waterCheck = waterLitres >= 2.5;
+  const completedPillarsCount = [stepsCheck, trainingCheck, nutritionCheck, waterCheck].filter(Boolean).length;
+
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
@@ -216,30 +231,41 @@ export default function HoyScreen() {
               onSetStepGoal={setStepGoal}
             />
 
-            {/* Fila Doble: Sesión de Entrenamiento & Principio Estoico */}
+            {/* Fila Doble: Misión Táctica de la Senda & Principio Estoico */}
             <View style={styles.twoColRow}>
-              {/* Entrena */}
+              {/* Misión Táctica de la Senda */}
               <View style={styles.halfCard}>
-                <ThemedText style={styles.cardHeaderGoldText}>⚡ RESISTENCIA FÍSICA</ThemedText>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <ThemedText style={styles.cardHeaderGoldText}>
+                    {pathMeta.title}
+                  </ThemedText>
+                  <ThemedText style={{ fontSize: 9, color: log.trainingCompleted ? '#10B981' : '#F59E0B', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                    {log.trainingCompleted ? 'LISTO ✓' : 'HOY'}
+                  </ThemedText>
+                </View>
 
-                <View style={styles.workoutGoldBox}>
-                  <ThemedText style={styles.workoutTitleText}>Rutina de Hoy</ThemedText>
-                  <ThemedText style={styles.workoutMetaText}>55 mins | 720 kcal</ThemedText>
+                <View style={[styles.workoutGoldBox, log.trainingCompleted && { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)' }]}>
+                  <ThemedText style={[styles.workoutTitleText, log.trainingCompleted && { color: '#6EE7B7' }]}>
+                    {pathMeta.focus}
+                  </ThemedText>
+                  <ThemedText style={[styles.workoutMetaText, log.trainingCompleted && { color: '#10B981' }]}>
+                    {log.trainingCompleted ? '🏆 Sesión Cumplida' : pathMeta.target}
+                  </ThemedText>
                 </View>
 
                 <TouchableOpacity
-                  onPress={toggleTraining}
+                  onPress={() => router.navigate('/trainer')}
                   activeOpacity={0.8}
                   style={styles.startButtonTouch}
                 >
                   <LinearGradient
-                    colors={['#D4AF37', '#F59E0B', '#B45309']}
+                    colors={log.trainingCompleted ? ['#059669', '#10B981', '#047857'] : ['#D4AF37', '#F59E0B', '#B45309']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.startButtonGradient}
                   >
                     <ThemedText style={styles.startButtonText}>
-                      {log.trainingCompleted ? '🏆 Completado ✓' : '⚡ Iniciar Sesión'}
+                      {log.trainingCompleted ? 'Ver Rutina ✓' : '⚡ Ir al Entreno'}
                     </ThemedText>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -268,33 +294,73 @@ export default function HoyScreen() {
           {/* 4. SECCIÓN 2: PILAR DE VIRTUD Y BIENESTAR MENTAL */}
           <View style={styles.pillarSectionGroup}>
             <View style={styles.sectionTitleRow}>
-              <ThemedText style={styles.sectionPillarTitle}>🏛️ PILAR DE VIRTUD & BIENESTAR</ThemedText>
+              <ThemedText style={styles.sectionPillarTitle}>🏛️ PILAR DE VIRTUD & PACTO DE 30 DÍAS</ThemedText>
               <ThemedText style={styles.sectionPctBadgeGold}>{(virtueProgress * 100).toFixed(0)}%</ThemedText>
             </View>
 
-            {/* Hábito de Meditación */}
-            <View style={styles.meditationCard}>
-              <View style={styles.meditationLeft}>
-                <ThemedText style={styles.cardHeaderGoldText}>RACHA DE DISCIPLINA</ThemedText>
-                <View style={styles.streakRow}>
-                  <FlameIcon color="#D4AF37" size={28} />
-                  <ThemedText style={styles.streakNumberText}>{activeStreak}</ThemedText>
-                  <View style={styles.streakSubCol}>
-                    <ThemedText style={styles.streakDayText}>Días</ThemedText>
-                    <ThemedText style={styles.streakLabelText}>Racha Activa</ThemedText>
+            {/* Módulo: Termómetro del Pacto de 30 Días & Calificación en Vivo */}
+            <View style={styles.pactStatusCard}>
+              <View style={styles.pactHeaderRow}>
+                <View style={styles.pactTitleCol}>
+                  <ThemedText style={styles.cardHeaderGoldText}>🏛️ ESTADO DEL PACTO • 30 DÍAS</ThemedText>
+                  <View style={styles.dayBadgeRow}>
+                    <ThemedText style={styles.pactDayNumber}>DÍA {log.monthlyCycle?.currentDay || 1}</ThemedText>
+                    <ThemedText style={styles.pactDayTotal}>/ 30</ThemedText>
                   </View>
+                </View>
+
+                <View style={styles.gradeBadgeContainer}>
+                  <LinearGradient
+                    colors={completedPillarsCount === 4 ? ['#059669', '#10B981'] : completedPillarsCount >= 2 ? ['#B45309', '#F59E0B'] : ['#1E293B', '#334155']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.gradeBadgeGradient}
+                  >
+                    <ThemedText style={styles.gradeBadgeText}>
+                      {completedPillarsCount === 4 ? 'A+ • 100%' : completedPillarsCount === 3 ? 'A • 75%' : completedPillarsCount === 2 ? 'B • 50%' : '⏳ EN CURSO'}
+                    </ThemedText>
+                  </LinearGradient>
                 </View>
               </View>
 
-              <View style={styles.meditationRight}>
+              {/* 4 Pilares del Día */}
+              <View style={styles.pillarsGridRow}>
+                <View style={[styles.pillarPill, stepsCheck && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{stepsCheck ? '👟 ✓' : '👟 ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, stepsCheck && styles.pillarLabelActive]}>Pasos</ThemedText>
+                </View>
+
+                <View style={[styles.pillarPill, trainingCheck && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{trainingCheck ? '🏋️‍♂️ ✓' : '🏋️‍♂️ ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, trainingCheck && styles.pillarLabelActive]}>Entreno</ThemedText>
+                </View>
+
+                <View style={[styles.pillarPill, nutritionCheck && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{nutritionCheck ? '🥗 ✓' : '🥗 ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, nutritionCheck && styles.pillarLabelActive]}>Nutrición</ThemedText>
+                </View>
+
+                <View style={[styles.pillarPill, waterCheck && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{waterCheck ? '💧 ✓' : '💧 ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, waterCheck && styles.pillarLabelActive]}>Agua</ThemedText>
+                </View>
+              </View>
+
+              {/* Estado de texto militar y botón al juicio de progreso */}
+              <View style={styles.pactFooterRow}>
+                <ThemedText style={styles.pactStatusText}>
+                  {completedPillarsCount === 4
+                    ? '✨ Los 4 pilares sellados hoy con honor militar.'
+                    : `⚔️ Faltan ${4 - completedPillarsCount} pilares para sellar el pacto de hoy.`}
+                </ThemedText>
+
                 <TouchableOpacity
-                  style={styles.continuePillBtn}
-                  activeOpacity={0.7}
-                  onPress={() => router.navigate('/journal')}
+                  style={styles.viewJudgmentBtn}
+                  activeOpacity={0.8}
+                  onPress={() => router.navigate('/progress')}
                 >
-                  <ThemedText style={styles.continuePillText}>Continuar ⚡</ThemedText>
+                  <ThemedText style={styles.viewJudgmentBtnText}>Ver Juicio 🏛️</ThemedText>
                 </TouchableOpacity>
-                <ThemedText style={styles.viewSubtext}>Abrir Diario</ThemedText>
               </View>
             </View>
 
@@ -498,23 +564,6 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginBottom: 4,
   },
-  meditationCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(14, 20, 36, 0.88)',
-    borderRadius: 16,
-    padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: 'rgba(226, 192, 104, 0.35)',
-    shadowColor: '#E2C068',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  meditationLeft: {
-    gap: 4,
-  },
   cardHeaderGoldText: {
     fontSize: 10,
     fontFamily: 'monospace',
@@ -523,51 +572,121 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 4,
   },
-  streakRow: {
+  pactStatusCard: {
+    backgroundColor: 'rgba(14, 20, 36, 0.92)',
+    borderRadius: 16,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.38)',
+    gap: 12,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  pactHeaderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
   },
-  streakNumberText: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    fontFamily: 'sans-serif',
+  pactTitleCol: {
+    gap: 2,
   },
-  streakSubCol: {
-    justifyContent: 'center',
-  },
-  streakDayText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    lineHeight: 14,
-  },
-  streakLabelText: {
-    fontSize: 11,
-    color: '#94A3B8',
-    lineHeight: 14,
-  },
-  meditationRight: {
-    alignItems: 'center',
+  dayBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
     gap: 4,
   },
-  continuePillBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 22,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(226, 192, 104, 0.55)',
-    backgroundColor: 'rgba(226, 192, 104, 0.05)',
+  pactDayNumber: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
   },
-  continuePillText: {
+  pactDayTotal: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  gradeBadgeContainer: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  gradeBadgeGradient: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradeBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  pillarsGridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  pillarPill: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+    gap: 2,
+  },
+  pillarPillActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+  },
+  pillarIconText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#E2C068',
   },
-  viewSubtext: {
-    fontSize: 11,
+  pillarLabel: {
+    fontSize: 10,
     color: '#94A3B8',
+    fontWeight: '600',
+    fontFamily: 'monospace',
+  },
+  pillarLabelActive: {
+    color: '#6EE7B7',
+    fontWeight: 'bold',
+  },
+  pactFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(212, 175, 55, 0.15)',
+  },
+  pactStatusText: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    flex: 1,
+    marginRight: 8,
+  },
+  viewJudgmentBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.5)',
+  },
+  viewJudgmentBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FDE68A',
+    fontFamily: 'monospace',
   },
   twoColRow: {
     flexDirection: 'row',
