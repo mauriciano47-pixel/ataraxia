@@ -1,10 +1,68 @@
 import { CoachArchetype, LegendaryPath, CustomExercise } from '@/types/onboarding';
 import { DailyLog, UserMetrics } from '@/context/DailyLogContext';
+import { SafeStorage } from '@/utils/safeStorage';
 
 export interface StoicAdvice {
   title?: string;
   body: string;
   recommendedRoutine?: CustomExercise[];
+}
+
+const DISCIPLINE_STRIKES_KEY = 'ataraxia_discipline_strikes_v1';
+
+function getDisciplineWarningResponse(userName: string, path: LegendaryPath, reason: 'vanity' | 'banality'): string {
+  let strike = 1;
+  try {
+    const raw = SafeStorage.getItem(DISCIPLINE_STRIKES_KEY);
+    const prev = raw ? parseInt(raw, 10) : 0;
+    strike = prev + 1;
+    SafeStorage.setItem(DISCIPLINE_STRIKES_KEY, String(strike));
+  } catch {
+    strike = 1;
+  }
+
+  if (strike === 1) {
+    return `⚠️ **PRIMER AVISO: MONITIO (Llamada de Atención)**
+
+*«Semel nefas, bis stultitia, ter poena»*
+*(La primera vez es error, la segunda es necedad, la tercera es castigo).*
+
+**Novato**, esta fue una llamada de atención formal. En las legiones romanas, ante la primera falta de guardia (*vigilia*), el centurión descargaba un golpe seco con su vara de vid (*vitis*) sobre la espalda para despertar al recluta frente a toda la cohorte.
+
+Esto es **ATARAXIA**: concentración, determinación y disciplina inquebrantable. ${
+      reason === 'vanity'
+        ? 'Aquí no se admiten vanidades superficiales, mendicidad de atención femenina/masculina ni búsqueda de aprobación ajena. Quien entrena para ser mirado es un esclavo de ojos extraños.'
+        : 'Aquí no se toleran preguntas ociosas, servicios meteorológicos ni dispersión mental sobre cosas irrelevantes que no puedes controlar.'
+    }
+
+Consideramos esta primera vez como un error de novicio (*semel nefas*). Si vuelves a caer en insignificancias, vendrá el segundo aviso.
+
+**Vuelve al foco de inmediato.** ¿Cuál es tu deber de entrenamiento o nutrición de hoy?`;
+  }
+
+  if (strike === 2) {
+    return `🚨 **SEGUNDO AVISO: CASTIGATIO (Al Borde de la Deshonra)**
+
+*«Semel nefas, bis stultitia, ter poena»*
+*(La segunda vez ya no es error; es pura necedad).*
+
+Has insistido en caer en trivialidades indignas de este templo, ${userName}. En la disciplina de la legión, el segundo aviso conllevaba azotes públicos frente al campamento, ser despojado del honor del trigo para comer raciones de cebada (*hordeum*) y dormir fuera de la empalizada fortificada.
+
+Estás a **un solo aviso del castigo fatal y la descalificación de tu honor estoico**. Tu falta queda sellada en el registro de disciplina del Santuario.
+
+**Silencio y acción.** Deja las superficialidades y demuéstrale a los dioses que eres capaz de redimirte con sudor en tu Senda del **${path.toUpperCase()}**. ¿Vas a cumplir hoy sí o no?`;
+  }
+
+  return `⛔ **TERCER AVISO: SUPPLICIUM (Fustuarium & Juicio de Indignidad)**
+
+*«Semel nefas, bis stultitia, ter poena»*
+*(La tercera es castigo inapelable).*
+
+Has agotado las 3 advertencias de la legión, ${userName}. Al igual que el tribuno militar ordenaba el *fustuarium* para el centinela que abandonaba su puesto por distracción, has demostrado no tener el temple ni la madurez para estar en Ataraxia.
+
+**Tu Pacto del Día 30 queda manchado con falta grave de disciplina.** Has elegido la debilidad de la mente dispersa sobre la virtud del guerrero.
+
+No habrá más advertencias. Ponte de pie de inmediato, agacha la cabeza y paga tu falta con sudor puro en el entrenamiento.`;
 }
 
 /**
@@ -24,7 +82,7 @@ export function generateStoicMentorResponse(
   const weight = metrics?.weightKg || 75;
 
   // ─────────────────────────────────────────────────────────────
-  // 0. FILTRO DE DIGNIDAD ESTOICA & ENFOQUE (ANTI-VANIDAD Y ANTI-BANALIDAD)
+  // 0. FILTRO DE DIGNIDAD ESTOICA & ENFOQUE (SISTEMA ROMANO DE 3 AVISOS)
   // ─────────────────────────────────────────────────────────────
 
   // A. VANIDAD, BÚSQUEDA DE VALIDACIÓN ROMÁNTICA O EXTERNA
@@ -43,21 +101,7 @@ export function generateStoicMentorResponse(
     p.includes('sexy') ||
     p.includes('atractiv')
   ) {
-    return `⛔ **ALTO AHÍ: ESA PREGUNTA NO SE ADMITE EN ATARAXIA**
-
-Seamos directos y categóricos, ${userName}: **aquí no se habla de esas banalidades**.
-
-Este no es un consultorio de seducción barata ni un espacio para alimentar la vanidad o mendigar la aprobación de terceros. Quien forja su cuerpo solo para que otros lo miren o para buscar aprobación externa es un esclavo dependiente de ojos ajenos. En Ataraxia repudiamos esa mentalidad tibia y superficial.
-
-Marco Aurelio y Epicteto fueron tajantes:
-> *"¿Buscas el aplauso de gente que ni siquiera se respeta a sí misma? Si vives para complacer al mundo exterior, has arruinado tu propio plan de vida."*
-
-⚔️ **Aquí entrenamos por y para nosotros mismos**:
-1. **Por disciplina inquebrantable**: Porque juraste forjar un templo indestructible.
-2. **Por potencia y salud física real**: No por un espectáculo vacío para las redes o para llamar la atención.
-3. **Por autodominio y temple mental**: Porque el verdadero respeto no se mendiga; se forja en silencio.
-
-Deja esas vanidades para las mentes débiles y enfoca tu energía en lo que viniste a conquistar: tu Senda del **${path.toUpperCase()}**. ¿Vas a cumplir con tu entrenamiento y tu nutrición de hoy sí o no?`;
+    return getDisciplineWarningResponse(userName, path, 'vanity');
   }
 
   // B. BANALIDADES, CLIMA Y DISTRACCIONES FUERA DE FOCO
@@ -76,21 +120,7 @@ Deja esas vanidades para las mentes débiles y enfoca tu energía en lo que vini
     p.includes('fútbol') ||
     p.includes('chiste')
   ) {
-    return `⛔ **PREGUNTA FUERA DE LUGAR: AQUÍ NO SE ADMITEN BANALIDADES**
-
-Directo y al punto, ${userName}: **en este Santuario no toleramos preguntas superficiales ni distracciones ociosas**.
-
-No soy un servicio meteorológico, ni un periódico de noticias, ni un foro de chismes. Estás en **ATARAXIA**: concentración, determinación y disciplina absoluta.
-
-Marco Aurelio nos dejó una orden inmutable:
-> *"Desecha no solo las acciones innecesarias, sino también los pensamientos innecesarios."*
-
-🛡️ **Lo que ocurra afuera no nos importa**:
-• Si mañana llueve, entrenamos bajo techo con Amor Fati.
-• Si hace sol, entrenamos con el mismo honor.
-• Si truena, cumplimos el deber sin buscar excusas en el cielo.
-
-Vuelve al foco de inmediato y deja la ociosidad afuera. ¿Cuál es tu objetivo de entrenamiento o nutrición de hoy?`;
+    return getDisciplineWarningResponse(userName, path, 'banality');
   }
 
   // ─────────────────────────────────────────────────────────────
