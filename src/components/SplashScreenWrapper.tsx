@@ -20,28 +20,46 @@ type SplashStage = 'parchment' | 'lightning' | 'path_selection' | 'none';
 export default function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
   const { selectLegendaryPath, log } = useDailyLog();
 
-  // Evaluamos el estado inicial: si el usuario ya consagró su senda anteriormente
+  // Evaluamos el estado inicial de forma infalible:
+  // Por defecto 'lightning' (el Rayo de Zeus) para SSR y usuarios registrados, impidiendo que el papiro parpadee.
   const [stage, setStage] = useState<SplashStage>(() => {
-    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true';
+    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true';
     const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
 
-    // Si ya completó el juramento y eligió senda en el pasado, solo mostrar el Rayo de bienvenida
     if (pactAccepted && pathChosen) {
       return 'lightning';
     }
-    // Si ya aceptó el pacto pero faltaba elegir senda
-    if (pactAccepted) {
+    if (pactAccepted && !pathChosen) {
       return 'path_selection';
     }
-    // Primer inicio: empezar con el Papiro Griego
-    return 'parchment';
+    // Solo si estamos confirmados en navegador cliente y no hay registro previo
+    if (typeof window !== 'undefined') {
+      const isPactDone = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true';
+      if (!isPactDone) {
+        return 'parchment';
+      }
+    }
+    return 'lightning';
   });
 
   const [isDismissing, setIsDismissing] = useState<boolean>(false);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
-  }, []);
+
+    // Validación post-hidratación precisa en cliente:
+    const pactAccepted = SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' || SafeStorage.getItem('ataraxia_onboarding_completed') === 'true' || !!log.hasCompletedOnboarding;
+    const pathChosen = SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' || !!log.legendaryPath;
+
+    if (!pactAccepted) {
+      setStage('parchment');
+    } else if (!pathChosen) {
+      setStage('path_selection');
+    } else {
+      // Usuario ya consagrado y registrado: asegurar que jamás se muestre el papiro
+      setStage((prev) => (prev === 'parchment' || prev === 'path_selection' ? 'lightning' : prev));
+    }
+  }, [log.hasCompletedOnboarding, log.legendaryPath]);
 
   const handleAcceptPact = () => {
     SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');

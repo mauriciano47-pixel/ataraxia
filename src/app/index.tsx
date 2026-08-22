@@ -19,10 +19,19 @@ import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCard
 import { StepCalibrationModal } from '@/components/StepCalibrationModal';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
+import { SafeStorage } from '@/utils/safeStorage';
 
 export default function HoyScreen() {
   const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
+
+  const isRegisteredUser = Boolean(
+    log.hasCompletedOnboarding ||
+    log.legendaryPath ||
+    SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' ||
+    SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' ||
+    SafeStorage.getItem('ataraxia_onboarding_completed') === 'true'
+  );
 
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(false);
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
@@ -346,7 +355,7 @@ export default function HoyScreen() {
         </Animated.ScrollView>
 
         <StoicOnboardingModal
-          visible={!log.hasCompletedOnboarding && !onboardingDismissed}
+          visible={!isRegisteredUser && !onboardingDismissed}
           onClose={() => setOnboardingDismissed(true)}
         />
 
