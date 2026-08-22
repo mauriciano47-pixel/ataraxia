@@ -97,23 +97,21 @@ export function StepCounterCard({
         />
       </View>
 
-      {/* LIVE AUTO-PEDOMETER TOGGLE BUTTON */}
+      {/* LIVE AUTO-PEDOMETER 24/7 ALWAYS-ON BADGE */}
       <TouchableOpacity
-        style={[styles.livePedometerBtn, isLiveTracking && styles.livePedometerBtnActive]}
+        style={[styles.livePedometerBtn, styles.livePedometerBtnActive]}
         onPress={toggleLiveTracking}
         activeOpacity={0.85}
       >
         <View style={styles.liveIndicatorDotRow}>
-          <View style={[styles.pulseDot, isLiveTracking ? styles.pulseDotActive : styles.pulseDotInactive]} />
-          <ThemedText style={[styles.liveBtnText, isLiveTracking && styles.liveBtnTextActive]}>
-            {isLiveTracking ? '⚡ Podómetro Automático: ACTIVO 🟢' : '⏸️ Podómetro en Pausa (Toca para reanudar)'}
+          <View style={[styles.pulseDot, styles.pulseDotActive]} />
+          <ThemedText style={[styles.liveBtnText, styles.liveBtnTextActive]}>
+            ⚡ Podómetro Automático: ACTIVO 24/7 🟢
           </ThemedText>
         </View>
-        {isLiveTracking && (
-          <ThemedText style={styles.liveSessionSubtext}>
-            +{liveSessionSteps} pasos sincronizados automáticamente en esta sesión
-          </ThemedText>
-        )}
+        <ThemedText style={styles.liveSessionSubtext}>
+          Hardware de movimiento en vivo • Sincronización continua de fondo
+        </ThemedText>
       </TouchableOpacity>
 
       {/* QUICK ADD STEP CHIPS (CALIBRADOS REALISTAS) */}

@@ -18,6 +18,7 @@ import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCards';
 import { StepCalibrationModal } from '@/components/StepCalibrationModal';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
+import { getLocalTodayDateString } from '@/utils/dateUtils';
 
 export default function HoyScreen() {
   const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
@@ -27,7 +28,7 @@ export default function HoyScreen() {
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalTodayDateString();
   const currentPrinciple = getDailyStoicPrinciple(todayStr, quoteOffset);
 
   const scrollY = useState(() => new Animated.Value(0))[0];

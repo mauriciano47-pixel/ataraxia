@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { DailyLog, useDailyLog, useWeekHistory } from './useDailyLog';
+import { getLocalTodayDateString } from '@/utils/dateUtils';
 
 /**
  * Patrones de comportamiento detectados automáticamente
@@ -53,7 +54,7 @@ export function useCoachContext(): CoachContext {
     }
     // Si hoy tampoco ha entrenado, sumamos 1
     if (!log.trainingCompleted) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalTodayDateString();
       const lastLogDate = weekLogs.length > 0 ? weekLogs[weekLogs.length - 1].date : null;
       if (lastLogDate !== today) skippedTrainingStreak++;
     }

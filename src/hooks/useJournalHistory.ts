@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
+import { getLocalTodayDateString } from '@/utils/dateUtils';
 
 export interface JournalMessage {
   text: string;
@@ -30,15 +31,15 @@ function loadLocalJournal(dateStr: string): JournalMessage[] {
 
 function loadLocalPastEntries(todayStr: string): JournalEntry[] {
   try {
-    const datesSaved = SafeStorage.getItem(JOURNAL_DATES_KEY);
-    if (datesSaved) {
-      const dates: string[] = JSON.parse(datesSaved);
+    const savedDates = SafeStorage.getItem(JOURNAL_DATES_KEY);
+    if (savedDates) {
+      const dates: string[] = JSON.parse(savedDates);
       const entries: JournalEntry[] = [];
       for (const d of dates) {
         if (d !== todayStr) {
-          const msgs = loadLocalJournal(d);
-          if (msgs.length > 0) {
-            entries.push({ date: d, messages: msgs });
+          const raw = SafeStorage.getItem(`ataraxia_journal_${d}`);
+          if (raw) {
+            entries.push({ date: d, messages: JSON.parse(raw) });
           }
         }
       }
@@ -49,7 +50,7 @@ function loadLocalPastEntries(todayStr: string): JournalEntry[] {
 }
 
 export function useJournalHistory() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalTodayDateString();
   const [messages, setMessages] = useState<JournalMessage[]>(() => loadLocalJournal(today));
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>(() => loadLocalPastEntries(today));
   const [loading, setLoading] = useState(Boolean(auth && db));

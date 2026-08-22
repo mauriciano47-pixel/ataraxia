@@ -163,11 +163,13 @@ export const STOIC_PRINCIPLES: StoicPrinciple[] = [
   },
 ];
 
+import { getLocalTodayDateString } from '@/utils/dateUtils';
+
 /**
  * Obtiene el principio estoico para la fecha actual garantizando rotación diaria no repetitiva.
  */
 export function getDailyStoicPrinciple(dateStr?: string, offsetIndex: number = 0): StoicPrinciple {
-  const targetDate = dateStr || new Date().toISOString().split('T')[0];
+  const targetDate = dateStr || getLocalTodayDateString();
   
   // Hash numérico determinista derivado de la fecha (ej: '2026-08-16' -> entero)
   let charSum = 0;

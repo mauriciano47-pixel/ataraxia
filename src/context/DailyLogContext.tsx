@@ -3,6 +3,7 @@ import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
+import { getLocalTodayDateString } from '@/utils/dateUtils';
 import {
   ProkoptonProfile,
   CustomExercise,
@@ -307,7 +308,7 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
 }
 
 export function DailyLogProvider({ children }: { children: React.ReactNode }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalTodayDateString();
   const [user, setUser] = useState<User | null>(null);
   const [log, setLog] = useState<DailyLog>(() => loadLocalDailyLog(today));
   const loading = false;
@@ -726,7 +727,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     return {
       day: cycle.currentDay,
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalTodayDateString(),
       score: totalScore,
       status,
       trainingDone: !!current.trainingCompleted,
