@@ -24,22 +24,23 @@ import { useCoachContext } from '@/hooks/useCoachContext';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { useJournalHistory, JournalMessage } from '@/hooks/useJournalHistory';
 import { buildCoachSystemPrompt, generateWelcomeMessage, extractExercisesFromText } from '@/lib/coachPrompt';
+import { generateStoicMentorResponse } from '@/lib/stoicMentorEngine';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
-import { COACH_ARCHETYPES, CoachArchetype } from '@/types/onboarding';
+import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath } from '@/types/onboarding';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 const DISCLAIMER_TEXT =
-  '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA. No reemplaza el consejo de un médico, nutricionista o profesional de salud certificado. Si tienes condiciones médicas, consulta siempre a un especialista.';
+  '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA y mentoría estoica. No reemplaza el consejo de un médico o especialista certificado. Si sientes dolor severo o agudo, consulta a un profesional.';
 
 const QUICK_PROMPTS = [
+  { icon: 'body-outline', text: '🩺 Me duele el cuello / trapecios' },
+  { icon: 'help-circle-outline', text: '⚔️ Dudo si llegaré al Día 30' },
+  { icon: 'battery-dead-outline', text: '🧠 Siento fatiga mental y desmotivación' },
+  { icon: 'restaurant-outline', text: '🥗 Qué comer según mi Senda' },
   { icon: 'flash-outline', text: '⚡ Sugiere rutina de hoy' },
-  { icon: 'restaurant-outline', text: '🥗 Ideas de comida alta en proteína' },
-  { icon: 'fitness-outline', text: '💊 ¿Qué suplementos me recomiendas?' },
-  { icon: 'water-outline', text: '💧 ¿Cómo voy con el agua hoy?' },
-  { icon: 'moon-outline', text: '😴 Cómo mejorar mi sueño y recuperar' },
-  { icon: 'sparkles-outline', text: '🏛️ Lección estoica para motivarme' },
+  { icon: 'fitness-outline', text: '💊 Suplementación con evidencia' },
 ];
 
 export default function JournalScreen() {
@@ -136,82 +137,12 @@ export default function JournalScreen() {
     return () => clearTimeout(timer);
   }, [loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown, saveMessages, setDisclaimerShown, setMessages, currentArchetype]);
 
-  // Índices para rotación continua anti-repetición de respaldos
-  const workoutIndexRef = useRef(0);
-  const mealIndexRef = useRef(0);
-  const stoicIndexRef = useRef(0);
+  const currentPath: LegendaryPath = today.legendaryPath || 'spartan';
 
-  // Generador contextual amplio y variado de respaldo (Rotación Cero Repetición)
+  // Generador de Mentoría Experta & Psicología Estoica (Cero Respuestas Genéricas / Cero Volcado de Datos)
   const generateFallbackResponse = useCallback((userPrompt: string): string => {
-    const p = userPrompt.toLowerCase();
-
-    // 1. ENTRENAMIENTO & RUTINAS
-    if (p.includes('rutina') || p.includes('entren') || p.includes('ejercicio') || p.includes('pesas') || p.includes('gym')) {
-      if (today.trainingCompleted) {
-        return '🏆 ¡Ya cumpliste con tu entrenamiento de hoy! Excelente sobrecarga. Tu foco ahora debe estar en la recuperación activa:\n\n• 🍳 **Proteína**: 35-45g de rápida asimilación (pollo, atún o batido whey).\n• 💧 **Agua & Electrólitos**: Mínimo 500ml con pizca de sal rosa.\n• 🛌 **Descanso**: Al menos 7.5h de sueño profundo para la supercompensación.';
-      }
-
-      const workoutOptions = [
-        '💪 **Propuesta A — Empuje & Fuerza Superior (45 min)**:\n\n1. **Press de Banca o Mancuernas**: 4x8-10 reps (RIR 2)\n2. **Press Militar de Hombro**: 3x10 reps\n3. **Fondos en Paralelas / Flexiones**: 3x12 reps al fallo\n4. **Elevaciones Laterales**: 3x15 reps\n5. **Plancha Abdominal**: 3x45s\n\n*La constancia en la sobrecarga es la clave del progreso real.*',
-        '🏋️‍♂️ **Propuesta B — Tracción & Cadena Posterior (50 min)**:\n\n1. **Peso Muerto Rumano**: 4x8 reps (foco en isquios y glúteos)\n2. **Remo con Barra o Mancuerna**: 4x10 reps\n3. **Dominadas o Jalón al Pecho**: 3x10 reps\n4. **Curl de Bíceps con Barra**: 3x12 reps\n5. **Face Pulls para Hombro Posterior**: 3x15 reps\n\n*Tu espalda sostiene tu postura y tu carácter estoico.*',
-        '🦵 **Propuesta C — Tren Inferior & Potencia (45 min)**:\n\n1. **Sentadilla Trasera o Frontal**: 4x8 reps (RIR 2)\n2. **Zancadas Búlgaras**: 3x10 reps por pierna\n3. **Prensa Inclinada**: 3x12 reps\n4. **Elevaciones de Talón (Gemelos)**: 4x15 reps\n5. **Elevación de Piernas para Core**: 3x15 reps\n\n*Las piernas fuertes son el cimiento de un templo indestructible.*',
-        '🛡️ **Propuesta D — Calistenia Espartana en Casa (35 min)**:\n\n1. **Flexiones Declinadas o Diamante**: 4 series al fallo técnico\n2. **Sentadillas Libres Explosivas**: 4x20 reps\n3. **Zancadas Alternas**: 3x16 reps\n4. **Plancha de Oso & Core**: 4x50s\n\n*No necesitas máquinas caras para forjar una voluntad de hierro.*'
-      ];
-
-      const chosen = workoutOptions[workoutIndexRef.current % workoutOptions.length];
-      workoutIndexRef.current += 1;
-      return chosen;
-    }
-
-    // 2. NUTRICIÓN & MACROS
-    if (p.includes('comida') || p.includes('prote') || p.includes('nutri') || p.includes('receta') || p.includes('macro') || p.includes('calor')) {
-      const mealOptions = [
-        `🥗 **Opción A — Proteína Magra & Compleja (Meta: ${today.targetCalories || 2200} kcal)**:\n\n• **Plato**: 220g de Pechuga de Pollo al Limón + 150g de Arroz Integral + Ensalada verde con aceite de oliva extra virgen.\n• **Macros**: 45g Proteína | 50g Carbos | 12g Grasas (520 kcal).`,
-        `🐟 **Opción B — Omega-3 & Recomposición**: 200g de Salmón o Atún a la plancha + Quinoa hervida + Espárragos salteados en Ghee.\n• **Macros**: 42g Proteína | 45g Carbos | 16g Grasas (550 kcal).`,
-        `🍳 **Opción C — Comida Proteica Rápida**: Omelette de 4 Huevos enteros + 100g de Queso Cottage + Champiñones + 2 Tostadas de Avena integral.\n• **Macros**: 40g Proteína | 35g Carbos | 18g Grasas (490 kcal).`,
-        `🥩 **Opción D — Lomo Magro & Carbohidratos Complejos**: 200g de Lomo Magro salteado con pimientos + Camote al horno + Semillas de Chía o Almendras.\n• **Macros**: 44g Proteína | 48g Carbos | 14g Grasas (530 kcal).`
-      ];
-
-      const chosen = mealOptions[mealIndexRef.current % mealOptions.length];
-      mealIndexRef.current += 1;
-      return chosen;
-    }
-
-    // 3. SUPLEMENTACIÓN
-    if (p.includes('suplement') || p.includes('creatina') || p.includes('whey') || p.includes('vitamina') || p.includes('cafeina')) {
-      return '💊 **Guía de Suplementación con Evidencia Científica**:\n\n1. **Creatina Monohidrato**: 3-5g diarios (mejora fuerza, potencia y volumen celular no retenido en piel).\n2. **Proteína Whey/Aislada**: Útil para alcanzar fácilmente tus 1.6-2.2g/kg de proteína.\n3. **Cafeína (150-200mg)**: Tomar 45 min antes de entrenar (evitar 6 horas antes de dormir).\n4. **Omega 3 & Vitamina D3**: Apoyan la salud articular, cardiovascular y hormonal.\n\n*Nota: Los suplementos complementan, la comida real y el sueño construyen.*';
-    }
-
-    // 4. HIDRATACIÓN
-    if (p.includes('agua') || p.includes('hidrat') || p.includes('beber')) {
-      const remaining = Math.max(0, parseFloat((2.5 - today.waterLitres).toFixed(2)));
-      if (remaining === 0) {
-        return `💧 **Estado de Hidratación Óptimo**: Has registrado **${today.waterLitres}L** de agua hoy. Tus músculos están 75% compuestos de agua; la hidratación mantiene tu fuerza y transporte de nutrientes al máximo.`;
-      }
-      return `💧 **Métrica de Agua**: Llevas **${today.waterLitres}L** hoy. Te faltan **${remaining}L** para tu meta óptima de 2.5L. ¡Aprovecha este momento y bebe un gran vaso de agua fresca ahora mismo!`;
-    }
-
-    // 5. SUEÑO & RECUPERACIÓN
-    if (p.includes('sueño') || p.includes('dormir') || p.includes('cansad') || p.includes('recupera') || p.includes('descans')) {
-      return '😴 **Optimización de Sueño y Cortisol**:\n\n• **Luz Solar Matutina**: Recibe 10 min de luz solar al despertar para alinear tu ritmo circadiano.\n• **Corte de Pantallas**: Apaga pantallas o usa filtro azul 60 min antes de acostarte.\n• **Magnesio Bisglicinato**: 200-400mg antes de dormir favorece la relajación muscular profunda y reduce despertares nocturnos.';
-    }
-
-    // 6. ESTOICISMO & MENTALIDAD
-    if (p.includes('reflex') || p.includes('motiv') || p.includes('frase') || p.includes('perez') || p.includes('mente') || p.includes('estoic')) {
-      const stoicOptions = [
-        '🏛️ *"No nos atrevemos a muchas cosas porque son difíciles, pero son difíciles porque no nos atrevemos."* — Séneca.\n\nHoy no buscas ganas, buscas disciplina. Cumple tu deber sin negociar con la pereza.',
-        '🏛️ *"Tienes poder sobre tu mente, no sobre los acontecimientos externos. Date cuenta de esto y encontrarás tu fuerza."* — Marco Aurelio.\n\nEnfoca todo tu ímpetu en las decisiones que sí controlas hoy.',
-        '🏛️ *"No expliques tu filosofía; encárnala en tus actos de hoy."* — Epicteto.\n\nEl sudor de tu entrenamiento es tu mejor discurso.',
-        '🏛️ *"Si haces algo noble con esfuerzo, el esfuerzo pasa y lo noble queda."* — Musonio Rufo.\n\nEl cansancio de hoy se convertirá en la fortaleza de mañana.'
-      ];
-
-      const chosen = stoicOptions[stoicIndexRef.current % stoicOptions.length];
-      stoicIndexRef.current += 1;
-      return chosen;
-    }
-
-    return `🏛️ **Status de tu Coach Ataraxia**:\n\n• **Pasos**: ${(today.steps || 0).toLocaleString()} / ${(today.stepGoal || 10000).toLocaleString()}\n• **Nutrición**: ${today.totalCalories} / ${today.targetCalories || 2200} kcal\n• **Agua**: ${today.waterLitres}L / 2.5L\n• **Entreno**: ${today.trainingCompleted ? 'COMPLETADO 🏆' : 'PENDIENTE ⏳'}\n\n¿En qué área específica (rutina, suplementos, comidas, mentalidad) necesitas mi asesoramiento en este instante?`;
-  }, [today]);
+    return generateStoicMentorResponse(userPrompt, currentPath, currentArchetype, today.userMetrics, today);
+  }, [currentPath, currentArchetype, today]);
 
   const handleSendQuery = useCallback(async (textToSend: string) => {
     const trimmed = textToSend.trim();
@@ -235,7 +166,7 @@ export default function JournalScreen() {
 
       if (ai) {
         const pastContext = getPastContext();
-        const systemPrompt = buildCoachSystemPrompt(contextSummary, pastContext, currentArchetype);
+        const systemPrompt = buildCoachSystemPrompt(contextSummary, pastContext, currentArchetype, currentPath);
 
         const conversationParts: string[] = [];
         updatedWithUser.slice(-10).forEach((msg) => {
@@ -263,7 +194,7 @@ export default function JournalScreen() {
           const response = await Promise.race([apiCall, timeoutPromise]);
           botText = response.text || '';
         } catch (e1) {
-          console.warn("Gemini Oracle Timeout/Error. Activando respuesta contextual socrática:", e1);
+          console.warn("Gemini Oracle Timeout/Error. Activando respuesta de mentoría experta estoica:", e1);
         }
       }
 
@@ -281,7 +212,7 @@ export default function JournalScreen() {
       setMessages(updatedWithBot);
       await saveMessages(updatedWithBot);
     } catch (error) {
-      console.warn("Falla en consulta de IA Gemini, usando respuesta inteligente contextual:", error);
+      console.warn("Falla en consulta de IA Gemini, usando respuesta de mentoría experta estoica:", error);
       const fallbackText = generateFallbackResponse(trimmed);
       const botMsg: JournalMessage = {
         text: fallbackText,

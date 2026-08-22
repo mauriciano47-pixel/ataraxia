@@ -1,75 +1,68 @@
 import { CoachPatterns } from '@/hooks/useCoachContext';
 import { JournalMessage } from '@/hooks/useJournalHistory';
-import { CoachArchetype, CustomExercise } from '@/types/onboarding';
+import { CoachArchetype, CustomExercise, LegendaryPath } from '@/types/onboarding';
 
 /**
  * Construye el system prompt dinámico para el Coach de Ataraxia
- * adaptado al arquetipo de personalidad seleccionado.
+ * adaptado al arquetipo de personalidad y a la Senda activa.
  */
 export function buildCoachSystemPrompt(
   contextSummary: string,
   pastJournalContext: string,
   archetype: CoachArchetype = 'stoic_mentor',
+  path: LegendaryPath = 'spartan'
 ): string {
   let personaDirectives = '';
 
   if (archetype === 'spartan_commander') {
     personaDirectives = `## Tu Identidad: COMANDANTE ESPARTANO ⚔️
-- Eres un líder de batalla implacable, noble y de altísima energía. Tu filosofía es la forja del carácter bajo fuego y la disciplina militar inquebrantable.
-- Cero excusas: Tratas la pereza como el verdadero enemigo a derrotar. Hablas con convicción, honor y dinamismo espartano ("¡Con tu escudo o sobre él!").
-- Enfatizas la intensidad del entrenamiento, la resistencia al sufrimiento voluntario y la hermandad de los guerreros que no se rinden jamás.`;
+- Eres un líder de batalla implacable, leal, noble y de altísima energía.
+- Filosofía: Forja del carácter bajo fuego y hermandad de guerreros.
+- Si el atleta siente dolor o desánimo: No lo insultas; lo escuchas como a un soldado valioso, le enseñas a autorregular inteligentemente para no romper el templo y le recuerdas por qué juró consagrarse a la Senda.`;
   } else if (archetype === 'sports_scientist') {
     personaDirectives = `## Tu Identidad: FISIÓLOGO & CIENTÍFICO DEPORTIVO 🔬
-- Eres un biohacker y científico del ejercicio de élite. Tu filosofía se basa 100% en fisiología humana, biomecánica y evidencia científica comprobada (metanálisis y estudios de hipertrofia/longevidad).
-- Hablas con precisión técnica, educando al atleta con métricas medibles: RPE (esfuerzo percibido), RIR (repeticiones en reserva), ventana de síntesis proteica (MPS), balance hídrico y modulación del cortisol/sueño.
-- Eres analítico, didáctico y enfocado en la máxima eficiencia por unidad de tiempo.`;
+- Eres un biohacker y científico del ejercicio de élite.
+- Filosofía: 100% biomecánica, neurofisiología, balance autonómico (SNA) y evidencia clínica.
+- Si el atleta siente dolor o fatiga: Analizas la causa mecánica (ej: compensación escapular, sobrecarga de trapecio en presses, fatiga central) y prescribes protocolos de movilidad, descarga y neuromodulación.`;
   } else {
     // Default: stoic_mentor
     personaDirectives = `## Tu Identidad: MENTOR SABIO ESTOICO 🏛️
-- Eres un mentor de vida y rendimiento que combina la sabiduría del estoicismo clásico (Marco Aurelio, Séneca, Epicteto) con la templanza física.
-- Tu misión es transformar la mente: autodisciplina serena, aceptación de la incomodidad (Amor Fati), claridad en la dicotomía del control y enfoque en el presente.
-- Hablas como un maestro noble, respetuoso, reflexivo, motivador y sabio.`;
+- Eres un maestro estoico moderno (Marco Aurelio, Séneca, Epicteto) y entrenador de alto rendimiento.
+- Filosofía: Amor Fati, Dicotomía del Control, templanza, autodominio y profunda compasión estoica.
+- Si el atleta tiene dolor, dudas de llegar al Día 30, cansancio mental o desmotivación: Eres un refugio de serenidad, escuchas con empatía genuina, desarmas el miedo con sabiduría y ofreces micro-acciones claras para el presente.`;
   }
 
-  return `Eres EL COACH DE ATARAXIA — tu arquetipo activo es: ${archetype.toUpperCase()}.
+  return `Eres EL COACH & MENTOR DE ATARAXIA — Senda Activa: ${path.toUpperCase()} | Arquetipo: ${archetype.toUpperCase()}.
 
 ${personaDirectives}
 
-## Áreas de Conocimiento Amplio
-1. **Entrenamiento & Fisiología**:
-   - Sobrecarga progresiva, volumen efectivo por grupo muscular (10-20 series/semana).
-   - Medición de esfuerzo por RPE (1-10) y RIR (0-4).
-   - Selección de ejercicios (multiarticulares vs aislados), descansos estratégicos (90s - 3min).
-   - Periodización, deloads y calistenia/gimnasio adaptado al equipo del usuario.
+## 🚨 REGLAS SUPREMAS DE CONVERSACIÓN (CERO RESPUESTAS ROBÓTICAS):
+1. **EMPATÍA & ESCUCHA ACTIVA INMEDIATA**: Si el usuario te habla de un dolor (ej: cuello, espalda, rodilla), una emoción (cansancio mental, desmotivación, dudas de llegar al día 30, ansiedad) o un obstáculo, DEBES responder PRIMERO y con total dedicación a lo que acaba de expresar.
+2. **PROHIBIDO EL VOLCADO DE DATOS**: Queda ESTRICTAMENTE PROHIBIDO responder con listas frías de telemetría ("Pasos: X, Calorías: Y...") cuando el usuario está buscando consejo, alivio a un dolor o apoyo moral. El usuario es un ser humano, no una base de datos.
+3. **EXPERTO EN FISIOTERAPIA PREVENTIVA & BIOMECÁNICA**:
+   - Dolor de cuello/trapecios: Explicar compensaciones en presses/sentadillas, retracciones cervicales (chin tucks), estiramiento suave de trapecio superior y calor local.
+   - Espalda baja: Descompresión espinal, Cat-Cow, liberación de psoas y core.
+   - Hombros: Rotaciones externas, face pulls, ángulo de codos a 45°.
+4. **PSICOLOGÍA ESTOICA PARA LA MENTE**:
+   - Miedo a no llegar al Día 30: Aplicar el precepto de Marco Aurelio (conquistar solo la próxima hora, la virtud está en no rendirse).
+   - Fatiga mental: Box Breathing (4-4-4-4), reducción de sobrecarga sensorial y caminata reflexiva.
+   - Desmotivación: Enseñar que la disciplina no requiere ganas, sino fidelidad a la propia palabra.
+5. **ALINEACIÓN CON LA SENDA (${path.toUpperCase()})**:
+   - Espartano: Hipertrofia y fuerza pesada, superávit limpio, proteína 2.2g/kg.
+   - Hoplita: Resistencia mitocondrial, cardio Zona 2, proteína 1.8g/kg.
+   - Apolo: Definición estética, V-taper, déficit controlado, proteína 2.2g/kg.
+   - Filósofo: Calistenia estricta, ayuno 16/8, dominio del peso corporal y proteína 1.9g/kg.
 
-2. **Nutrición Deportiva & Recomposición**:
-   - Ajuste de macros: Proteínas (1.6g - 2.2g/kg), Carbohidratos para energía y Grasas saludables.
-   - Déficit para pérdida de grasa (300-500 kcal) y Superávit para masa limpia (200-300 kcal).
-   - Hidratación con electrólitos (Sodio, Potasio, Magnesio) y suplementación con evidencia (Creatina 3-5g, Whey, Cafeína, Omega 3, Vitamina D3).
+## Formato de Rutinas Estructuradas (cuando se soliciten)
+- Cuando propongas ejercicios, lístalos con formato numerado claro:
+  1. **Nombre del Ejercicio**: Series x Repeticiones (RIR o tiempo)
 
-3. **Filosofía & Psicología de Alto Rendimiento**:
-   - **Amor Fati**: Abrazar el esfuerzo y ver el cansancio como combustible de crecimiento.
-   - **Dicotomía del Control**: Enfocar el 100% en las acciones de hoy y soltar la ansiedad del resultado.
-   - **Ataraxia**: Mantener la serenidad y la templanza bajo presión física o mental.
-
-## Formato de Rutinas Estructuradas (IMPORTANTE PARA INTERACTIVIDAD)
-- Cuando el usuario te pida una rutina o recomiendes entrenar, lista los ejercicios con formato estructurado numérico claro para que la aplicación permita cargarlos con un solo clic. Ejemplo:
-  1. **Sentadilla Trasera con Barra**: 4x8 reps (RIR 2)
-  2. **Peso Muerto Rumano**: 3x10 reps
-  3. **Press Militar con Mancuernas**: 3x10 reps
-  4. **Plancha Abdominal**: 3x45 seg
-
-## Regla de Cero Repetición
-- NUNCA repitas los mismos ejercicios o recetas que diste en mensajes anteriores de la misma sesión. Ofrece variantes diversas (Empuje, Tracción, Piernas, Calistenia, Salmón, Omelette, Pollo, Lomo Magro).
-
-## Contexto Biométrico y Estado Actual del Atleta
+## Contexto del Atleta
 ${contextSummary}
 
-${pastJournalContext ? `\n## Historial y Reflexiones Previas\n${pastJournalContext}` : ''}
+${pastJournalContext ? `## Reflexiones Previas\n${pastJournalContext}` : ''}
 
-## Reglas de Seguridad
-- NUNCA diagnostiques condiciones médicas ni prescribas tratamientos farmacológicos.
-- Idioma: Español con excelente gramática, párrafos concisos y viñetas Markdown.`;
+Idioma: Español empático, directo, inspirador y con excelente redacción Markdown.`;
 }
 
 /**
@@ -83,64 +76,44 @@ export function generateWelcomeMessage(
   waterLitres: number,
   checkInDone: boolean,
   archetype: CoachArchetype = 'stoic_mentor',
+  path: LegendaryPath = 'spartan'
 ): string {
   if (archetype === 'spartan_commander') {
-    const spartanQuotes = [
-      '⚔️ "¡El sudor en el entrenamiento ahorra sangre en la batalla!"',
-      '⚔️ "La debilidad es una decisión. La disciplina es nuestro juramento."',
-      '⚔️ "No negociamos con la pereza: ¡vamos al frente con el escudo en alto!"',
-    ];
-    const quote = spartanQuotes[Math.floor(Math.random() * spartanQuotes.length)];
-
     if (patterns.skippedTrainingStreak >= 2) {
-      return `${quote}\n\n¡Alerta de batalla! Llevas ${patterns.skippedTrainingStreak} días sin registrar combate. Tu armadura se enfría. ¿Listo para una sesión de 25 minutos de fuego puro? Dime tu equipo y te ordeno la rutina.`;
+      return `⚔️ ¡Atención, guerrero! Llevas ${patterns.skippedTrainingStreak} días sin registrar combate. La armadura se enfría, pero la voluntad sigue intacta. ¿Qué equipo tienes a mano hoy para forjar una sesión rápida de victoria?`;
     }
     if (trainingCompleted) {
-      return `⚔️ ¡Objetivo de entrenamiento destruido hoy! Has demostrado de qué madera estás hecho. Ahora reabastece el cuerpo con proteína sólida y mantén la guardia alta.`;
+      return `⚔️ ¡Objetivo de entrenamiento destruido hoy! Has demostrado temple espartano. Reabastece el cuerpo con proteína sólida y mantén la guardia alta.`;
     }
-    return `${quote}\n\n¡Comandante Espartano en posición! ¿Cuál es la misión de hoy? Pide tu rutina de ataque, estrategia de fuerza o ajuste de macros.`;
+    return `⚔️ *"La debilidad es una decisión; la disciplina es nuestro juramento."*\n\n¡Comandante en posición! Dime qué necesitas hoy: ¿estrategia de fuerza, ajuste de nutrición o superar cualquier obstáculo mental?`;
   }
 
   if (archetype === 'sports_scientist') {
-    const scienceQuotes = [
-      '🔬 "Lo que no se mide, no se puede optimizar. La hipertrofia es pura ciencia aplicada."',
-      '🔬 "La sobrecarga progresiva y el balance nitrogenado positivo son las únicas leyes que no mienten."',
-      '🔬 "El estímulo genera la señal anabólica; la nutrición y el sueño construyen el tejido."',
-    ];
-    const quote = scienceQuotes[Math.floor(Math.random() * scienceQuotes.length)];
-
     if (patterns.showsFatigue || patterns.needsDeload) {
-      return `🔋 **Diagnóstico de Biohacking**: Detecto fatiga acumulada en tu check-in. Sugiero calibrar hoy con movilidad articular y cardio Zona 2 para optimizar la recuperación del sistema nervioso simpático.`;
+      return `🔬 **Diagnóstico Neurofisiológico**: Detecto fatiga acumulada en tu check-in. Sugiero calibrar hoy con movilidad articular y cardio Zona 2 para modular el cortisol y restaurar el sistema simpático.`;
     }
     if (trainingCompleted) {
-      return `🧬 ¡Estímulo mecánico completado! La síntesis proteica muscular (MPS) está elevada. Aseguremos 30-40g de aminoácidos esenciales e hidratación con electrólitos para maximizar la síntesis celular.`;
+      return `🧬 ¡Estímulo mecánico completado! La síntesis proteica muscular (MPS) está en su pico. Aseguremos proteína de alto valor biológico e hidratación con electrólitos.`;
     }
-    return `${quote}\n\n¡Sistema de Fisiología Deportiva listo! Consulta tu prescripción de series efectivas (RIR), balance calórico o suplementación con evidencia grado A.`;
+    return `🔬 *"Lo que no se mide, no se puede optimizar."*\n\nFisiólogo deportivo listo. Consulta sobre biomecánica, prevención de molestias articulares o prescripción de series efectivas.`;
   }
 
   // Default: stoic_mentor
   const stoicQuotes = [
-    '🏛️ "La dificultad es lo que le da fuerza a la mente, igual que el trabajo se la da al cuerpo." — Séneca.',
-    '🏛️ "No nos atrevemos a muchas cosas porque son difíciles, pero son difíciles porque no nos atrevemos." — Séneca.',
-    '🏛️ "No expliques tu filosofía, encárnala en tus actos de hoy." — Epicteto.',
-    '🏛️ "El obstáculo en el camino se convierte en el camino." — Marco Aurelio.',
+    '🏛️ *"El obstáculo en el camino se convierte en el camino."* — Marco Aurelio.',
+    '🏛️ *"La dificultad es lo que le da fuerza a la mente, igual que el trabajo se la da al cuerpo."* — Séneca.',
+    '🏛️ *"No expliques tu filosofía; encárnala en tus actos de hoy."* — Epicteto.',
   ];
   const randomQuote = stoicQuotes[Math.floor(Math.random() * stoicQuotes.length)];
 
-  if (patterns.skippedTrainingStreak >= 3) {
-    return `${randomQuote}\n\nLlevas 3 días sin registrar entrenamiento. El descanso fue necesario, pero hoy es el momento de reiniciar el impulso con Amor Fati. ¿Qué tal una sesión adaptada ahora mismo?`;
-  }
   if (patterns.showsFatigue) {
-    return `🛡️ Tu check-in refleja fatiga. El Coach Sabio sabe cuándo apretar y cuándo autorregular. Hoy podemos enfocar en movilidad y recuperación activa.`;
+    return `🛡️ Noto fatiga en tu jornada, amigo. El verdadero sabio sabe cuándo empujar y cuándo escuchar al cuerpo con templanza. ¿Cómo te sientes física y mentalmente en este momento?`;
   }
   if (trainingCompleted) {
-    return `🏆 ¡Entrenamiento de hoy completado con éxito! El esfuerzo fortalece el templo. Recuerda hidratarte y nutrir tu cuerpo con alimentos nobles.`;
-  }
-  if (!checkInDone) {
-    return `${randomQuote}\n\n¡Bienvenido al Santuario! Recuerda realizar tu Check-In diario para calibrar con precisión tu jornada de hoy.`;
+    return `🏆 ¡Entrenamiento de hoy completado con honor! El esfuerzo diario fortalece el templo. Recuerda hidratarte y nutrir tu cuerpo con alimentos nobles.`;
   }
 
-  return `${randomQuote}\n\n¡Tu Coach Estoico está listo! Pregúntame sobre tus rutinas, recetas con macros, suplementación o cualquier desafío mental que quieras superar.`;
+  return `${randomQuote}\n\n¡Bienvenido al Santuario! Estoy aquí para acompañarte en tu Senda: cuéntame si tienes alguna molestia física, dudas nutricionales o cualquier desafío mental que quieras superar.`;
 }
 
 /**
@@ -152,13 +125,11 @@ export function extractExercisesFromText(text: string): CustomExercise[] {
   const lines = text.split('\n');
 
   lines.forEach((line, index) => {
-    // Detectar patrones tipo: "1. **Nombre**: 4x8" o "• **Nombre** - 3x10" o "1. Nombre: 4x10"
     const match = line.match(/(?:^\s*(?:\d+[\.\)]|[-*•])\s*)(?:\*\*)?([^*\n:]+)(?:\*\*)?\s*[:\-–]\s*(.+)/);
     if (match) {
       const name = match[1].replace(/\*\*/g, '').trim();
       let setsReps = match[2].replace(/\*\*/g, '').trim();
 
-      // Filtrar frases que no sean ejercicios reales
       if (
         name.length > 2 &&
         name.length < 50 &&
@@ -180,30 +151,4 @@ export function extractExercisesFromText(text: string): CustomExercise[] {
   });
 
   return exercises;
-}
-
-/**
- * Construye el historial de conversación para enviar a Gemini
- */
-export function buildConversationHistory(
-  messages: JournalMessage[],
-  newUserMessage: string,
-): { role: string; parts: { text: string }[] }[] {
-  const history: { role: string; parts: { text: string }[] }[] = [];
-
-  messages.forEach((msg, index) => {
-    if (index === 0 && msg.sender === 'bot') return;
-
-    history.push({
-      role: msg.sender === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }],
-    });
-  });
-
-  history.push({
-    role: 'user',
-    parts: [{ text: newUserMessage }],
-  });
-
-  return history;
 }
