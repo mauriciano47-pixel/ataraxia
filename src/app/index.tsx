@@ -17,6 +17,9 @@ import { SmartDeviceCard } from '@/components/SmartDeviceCard';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCards';
 import { StepCalibrationModal } from '@/components/StepCalibrationModal';
+import { BoxBreathingModal } from '@/components/BoxBreathingModal';
+import { DailyStoicChallengeCard } from '@/components/DailyStoicChallengeCard';
+import { StoicTwinMetabolicCards } from '@/components/StoicTwinMetabolicCards';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
@@ -35,6 +38,7 @@ export default function HoyScreen() {
 
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(false);
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
+  const [showBoxBreathing, setShowBoxBreathing] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
 
   const todayStr = getLocalTodayDateString();
@@ -87,6 +91,7 @@ export default function HoyScreen() {
   const nutritionCheck = (log.mealsLogged ?? 0) >= 2 || (log.totalCalories ?? 0) > 0;
   const waterCheck = waterLitres >= 2.5;
   const completedPillarsCount = [stepsCheck, trainingCheck, nutritionCheck, waterCheck].filter(Boolean).length;
+  const readinessScore = Math.min(100, Math.round(65 + (waterRatio * 15) + (log.trainingCompleted ? 10 : 0) + (log.checkInDone ? 10 : 0)));
 
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
@@ -364,9 +369,17 @@ export default function HoyScreen() {
               </View>
             </View>
 
-            {/* Métrica de Salud */}
+            {/* Módulo: Prueba Diaria de Temple ("El Obstáculo es el Camino") */}
+            <DailyStoicChallengeCard />
+
+            {/* Métricas de Bienestar & Score de Preparación SNC */}
             <View style={styles.healthMetricsCard}>
-              <ThemedText style={styles.cardHeaderGoldText}>MÉTRICAS DE BIENESTAR EN TIEMPO REAL</ThemedText>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ThemedText style={styles.cardHeaderGoldText}>MÉTRICAS & PREPARACIÓN DEL SNC</ThemedText>
+                <ThemedText style={{ fontSize: 9, color: '#10B981', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {readinessScore >= 80 ? '⚡ ÓPTIMO' : '⏳ RECUPERANDO'}
+                </ThemedText>
+              </View>
 
               <View style={styles.metricsGridRow}>
                 <View style={styles.metricCol}>
@@ -381,7 +394,7 @@ export default function HoyScreen() {
                 <View style={styles.metricCol}>
                   <ThemedText style={styles.metricLabelText}>Sueño & Recup.</ThemedText>
                   <ThemedText style={styles.metricValText}>
-                    {log.readinessScore?.sleep ? `${log.readinessScore.sleep}h / 8h` : log.sleepQuality ? `${log.sleepQuality * 1.5}h / 8h` : '6.5h / 8h'}
+                    {log.readinessScore?.sleep ? `${log.readinessScore.sleep}h` : log.sleepQuality ? `${(log.sleepQuality * 1.5).toFixed(1)}h` : '7.0h'}
                   </ThemedText>
                 </View>
 
@@ -393,15 +406,42 @@ export default function HoyScreen() {
                     {waterLitres.toFixed(1)}L <ThemedText style={styles.unitText}>/ 3.0L</ThemedText>
                   </ThemedText>
                 </View>
+
+                <View style={styles.metricDividerLine} />
+
+                <View style={styles.metricCol}>
+                  <ThemedText style={styles.metricLabelText}>SNC Readiness</ThemedText>
+                  <ThemedText style={[styles.metricValText, { color: '#6EE7B7' }]}>
+                    {readinessScore}%
+                  </ThemedText>
+                </View>
               </View>
+
+              {/* Botón Acceso Rápido Box Breathing */}
+              <TouchableOpacity
+                style={styles.boxBreathingTriggerBtn}
+                activeOpacity={0.8}
+                onPress={() => setShowBoxBreathing(true)}
+              >
+                <ThemedText style={styles.boxBreathingTriggerText}>
+                  🌬️ Iniciar Respiración Táctica (Box Breathing 4-4-4-4) ⚡
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* 5. SECCIÓN 3: NUTRICIÓN & TECNOLOGÍA */}
+          {/* 5. SECCIÓN 3: BALANCE ENERGÉTICO & NUTRICIÓN */}
           <View style={styles.pillarSectionGroup}>
             <View style={styles.sectionTitleRow}>
-              <ThemedText style={styles.sectionPillarTitle}>📊 NUTRICIÓN & TECNOLOGÍA</ThemedText>
+              <ThemedText style={styles.sectionPillarTitle}>📊 BALANCE METABÓLICO & NUTRICIÓN</ThemedText>
             </View>
+
+            {/* Módulo Doble: Balanza Energética Neta & Ventana de Ayuno */}
+            <StoicTwinMetabolicCards
+              totalBurnedCalories={totalBurnedCalories}
+              consumedCalories={currentCalories}
+              legendaryPath={currentPath}
+            />
 
             <CalorieIndexCard
               consumedCalories={log.totalCalories || 0}
@@ -433,6 +473,11 @@ export default function HoyScreen() {
           onSetSteps={setSteps}
           onAddSteps={addSteps}
           onSetStepGoal={setStepGoal}
+        />
+
+        <BoxBreathingModal
+          visible={showBoxBreathing}
+          onClose={() => setShowBoxBreathing(false)}
         />
       </SafeAreaView>
     </PearlElectricBackground>
@@ -883,5 +928,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(226, 192, 104, 0.30)',
+  },
+  boxBreathingTriggerBtn: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(56, 189, 248, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxBreathingTriggerText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#7DD3FC',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
   },
 });
