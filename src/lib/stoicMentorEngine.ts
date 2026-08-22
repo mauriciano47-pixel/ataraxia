@@ -24,6 +24,76 @@ export function generateStoicMentorResponse(
   const weight = metrics?.weightKg || 75;
 
   // ─────────────────────────────────────────────────────────────
+  // 0. FILTRO DE DIGNIDAD ESTOICA & ENFOQUE (ANTI-VANIDAD Y ANTI-BANALIDAD)
+  // ─────────────────────────────────────────────────────────────
+
+  // A. VANIDAD, BÚSQUEDA DE VALIDACIÓN ROMÁNTICA O EXTERNA
+  if (
+    p.includes('mujeres') ||
+    p.includes('chicas') ||
+    p.includes('hombres') ||
+    p.includes('gustar') ||
+    p.includes('les gusta') ||
+    p.includes('miran mas') ||
+    p.includes('miran más') ||
+    p.includes('atraer') ||
+    p.includes('impresionar') ||
+    p.includes('ligar') ||
+    p.includes('pareja') ||
+    p.includes('sexy') ||
+    p.includes('atractiv')
+  ) {
+    return `⛔ **ALTO AHÍ: ESA PREGUNTA NO SE ADMITE EN ATARAXIA**
+
+Seamos directos y categóricos, ${userName}: **aquí no se habla de esas banalidades**.
+
+Este no es un consultorio de seducción barata ni un espacio para alimentar la vanidad o mendigar la aprobación de terceros. Quien forja su cuerpo solo para que otros lo miren o para buscar aprobación externa es un esclavo dependiente de ojos ajenos. En Ataraxia repudiamos esa mentalidad tibia y superficial.
+
+Marco Aurelio y Epicteto fueron tajantes:
+> *"¿Buscas el aplauso de gente que ni siquiera se respeta a sí misma? Si vives para complacer al mundo exterior, has arruinado tu propio plan de vida."*
+
+⚔️ **Aquí entrenamos por y para nosotros mismos**:
+1. **Por disciplina inquebrantable**: Porque juraste forjar un templo indestructible.
+2. **Por potencia y salud física real**: No por un espectáculo vacío para las redes o para llamar la atención.
+3. **Por autodominio y temple mental**: Porque el verdadero respeto no se mendiga; se forja en silencio.
+
+Deja esas vanidades para las mentes débiles y enfoca tu energía en lo que viniste a conquistar: tu Senda del **${path.toUpperCase()}**. ¿Vas a cumplir con tu entrenamiento y tu nutrición de hoy sí o no?`;
+  }
+
+  // B. BANALIDADES, CLIMA Y DISTRACCIONES FUERA DE FOCO
+  if (
+    p.includes('llueve') ||
+    p.includes('llover') ||
+    p.includes('clima') ||
+    p.includes('tiempo mañana') ||
+    p.includes('chisme') ||
+    p.includes('noticia') ||
+    p.includes('farandula') ||
+    p.includes('farándula') ||
+    p.includes('politica') ||
+    p.includes('política') ||
+    p.includes('futbol') ||
+    p.includes('fútbol') ||
+    p.includes('chiste')
+  ) {
+    return `⛔ **PREGUNTA FUERA DE LUGAR: AQUÍ NO SE ADMITEN BANALIDADES**
+
+Directo y al punto, ${userName}: **en este Santuario no toleramos preguntas superficiales ni distracciones ociosas**.
+
+No soy un servicio meteorológico, ni un periódico de noticias, ni un foro de chismes. Estás en **ATARAXIA**: concentración, determinación y disciplina absoluta.
+
+Marco Aurelio nos dejó una orden inmutable:
+> *"Desecha no solo las acciones innecesarias, sino también los pensamientos innecesarios."*
+
+🛡️ **Lo que ocurra afuera no nos importa**:
+• Si mañana llueve, entrenamos bajo techo con Amor Fati.
+• Si hace sol, entrenamos con el mismo honor.
+• Si truena, cumplimos el deber sin buscar excusas en el cielo.
+
+Vuelve al foco de inmediato y deja la ociosidad afuera. ¿Cuál es tu objetivo de entrenamiento o nutrición de hoy?`;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 1. DOLORES MUSCULARES, MOLESTIAS Y FISIOTERAPIA PREVENTIVA
   // ─────────────────────────────────────────────────────────────
 
