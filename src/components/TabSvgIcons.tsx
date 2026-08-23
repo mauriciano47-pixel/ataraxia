@@ -1,13 +1,13 @@
-import React from 'react';
-import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
+﻿import React from 'react';
+import Svg, { Path, Circle } from 'react-native-svg';
 
 interface IconProps {
-  color: string | any;
+  color?: string;
   size?: number;
   focused?: boolean;
 }
 
-export function HoyIcon({ color, size = 22 }: IconProps) {
+export function HoyIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Circle cx="12" cy="12" r="10" />
@@ -16,7 +16,7 @@ export function HoyIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function JournalIcon({ color, size = 22 }: IconProps) {
+export function JournalIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -25,7 +25,7 @@ export function JournalIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function TrainerIcon({ color, size = 22 }: IconProps) {
+export function TrainerIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12" />
@@ -33,7 +33,7 @@ export function TrainerIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function ProgressIcon({ color, size = 22 }: IconProps) {
+export function ProgressIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M18 20V10M12 20V4M6 20v-6" />
@@ -41,7 +41,7 @@ export function ProgressIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function NutritionIcon({ color, size = 22 }: IconProps) {
+export function NutritionIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 2a10 10 0 1 0 10 10H12V2z" />
@@ -50,7 +50,7 @@ export function NutritionIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function ProfileIcon({ color, size = 22 }: IconProps) {
+export function ProfileIcon({ color = '#D4AF37', size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -59,14 +59,14 @@ export function ProfileIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-// 👑 ICONO EXCLUSIVO DEL ARCONTE (CORONA IMPERIAL CON LAUREL)
-export function ArchonCrownIcon({ color, size = 24 }: IconProps) {
+export function ArchonCrownIcon({ color = '#D4AF37', size = 24, focused }: IconProps) {
+  const safeColor = color || '#D4AF37';
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" fill={color + '30'} />
-      <Circle cx="12" cy="3" r="1.5" fill={color} />
-      <Circle cx="5" cy="4" r="1.5" fill={color} />
-      <Circle cx="19" cy="4" r="1.5" fill={color} />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={safeColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" fill={focused ? 'rgba(212, 175, 55, 0.3)' : 'none'} />
+      <Circle cx="12" cy="3" r="1.5" fill={safeColor} />
+      <Circle cx="5" cy="4" r="1.5" fill={safeColor} />
+      <Circle cx="19" cy="4" r="1.5" fill={safeColor} />
       <Path d="M5 20h14" strokeWidth={2.5} />
     </Svg>
   );
