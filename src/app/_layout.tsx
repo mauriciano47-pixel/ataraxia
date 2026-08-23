@@ -1,4 +1,4 @@
-﻿import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Platform, View, Text, TouchableOpacity } from 'react-native';
 import {
@@ -43,10 +43,13 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
 }
 
+import { DailyLogProvider } from '@/context/DailyLogContext';
+
 export default function TabLayout() {
   return (
     <GlobalErrorBoundary>
-      <Tabs
+      <DailyLogProvider>
+        <Tabs
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: '#D4AF37',
@@ -123,6 +126,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+      </DailyLogProvider>
     </GlobalErrorBoundary>
   );
 }
