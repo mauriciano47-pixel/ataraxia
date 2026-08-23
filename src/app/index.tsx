@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -422,25 +422,31 @@ export default function HoyScreen() {
 
         </Animated.ScrollView>
 
-        <StoicOnboardingModal
-          visible={!isRegisteredUser && !onboardingDismissed}
-          onClose={() => setOnboardingDismissed(true)}
-        />
+        {(!isRegisteredUser && !onboardingDismissed) && (
+          <StoicOnboardingModal
+            visible={true}
+            onClose={() => setOnboardingDismissed(true)}
+          />
+        )}
 
-        <StepCalibrationModal
-          visible={showStepCalibration}
-          onClose={() => setShowStepCalibration(false)}
-          currentSteps={currentSteps}
-          stepGoal={currentGoal}
-          onSetSteps={setSteps}
-          onAddSteps={addSteps}
-          onSetStepGoal={setStepGoal}
-        />
+        {showStepCalibration && (
+          <StepCalibrationModal
+            visible={true}
+            onClose={() => setShowStepCalibration(false)}
+            currentSteps={currentSteps}
+            stepGoal={currentGoal}
+            onSetSteps={setSteps}
+            onAddSteps={addSteps}
+            onSetStepGoal={setStepGoal}
+          />
+        )}
 
-        <BoxBreathingModal
-          visible={showBoxBreathing}
-          onClose={() => setShowBoxBreathing(false)}
-        />
+        {showBoxBreathing && (
+          <BoxBreathingModal
+            visible={true}
+            onClose={() => setShowBoxBreathing(false)}
+          />
+        )}
       </SafeAreaView>
     </PearlElectricBackground>
   );

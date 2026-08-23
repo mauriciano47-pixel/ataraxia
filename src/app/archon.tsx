@@ -1,220 +1,393 @@
-﻿import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, TextInput, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TextInput, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { SafeStorage } from '@/utils/safeStorage';
 
+const ARCHETYPES_DATA = {
+  // LEGIÓN FEMENINA
+  athena: {
+    name: '🦉 Atenea Estratega',
+    gender: 'female',
+    themeColor: '#10B981',
+    accentColor: '#FB7185',
+    title: 'TEMPLO DE ATENEA & SABIDURÍA',
+    focus: 'Estrategia, Cintura Compacta & Core Blindado',
+    routine: 'Vacío Abdominal 4x30s • Plancha Dinámica • Deltoides Laterales 4x15 • Remo Neutro',
+    quote: '"La victoria no se ruega a los dioses; se planea con frialdad y se ejecuta con honor."',
+    author: 'Atenea',
+    nutritionFocus: 'Alta proteína magra, magnesio bisglicinato e hidratación electrolítica.',
+  },
+  artemis: {
+    name: '🏹 Artemisa Cazadora',
+    gender: 'female',
+    themeColor: '#FB7185',
+    accentColor: '#D4AF37',
+    title: 'SANTUARIO DE ARTEMISA & POTENCIA',
+    focus: 'Fuerza Atlética, Glúteos & Cadena Posterior',
+    routine: 'Hip Thrust Pesado 4x10 (Pausa 2s) • Peso Muerto Rumano (RDL) 4x8 • Zancadas Búlgaras 3x12',
+    quote: '"Mi cuerpo no es un adorno para la mirada ajena; es un arma afinada para la conquista."',
+    author: 'Artemisa',
+    nutritionFocus: 'Grasas saludables (Omega-3, aguacate) y carbohidratos complejos en fase folicular.',
+  },
+  gorgo_sparta: {
+    name: '🛡️ Gorgo Reina de Esparta',
+    gender: 'female',
+    themeColor: '#E11D48',
+    accentColor: '#F59E0B',
+    title: 'TEMPLO DE GORGO & FUERZA MÁXIMA',
+    focus: 'Fuerza Máxima, Sobrecarga & Carácter de Hierro',
+    routine: 'Sentadilla Profunda 5x5 • Fondos en Paralelas • Dominadas Asistidas 4x6 • Paseo del Granjero',
+    quote: '"Las mujeres de Esparta gobernamos porque forjamos el carácter de leones."',
+    author: 'Gorgo de Esparta',
+    nutritionFocus: '2.0g/kg de proteína, hierro biodisponible y creatina monohidrato.',
+  },
+  aphrodite_urania: {
+    name: '⚡ Afrodita Urania',
+    gender: 'female',
+    themeColor: '#C084FC',
+    accentColor: '#FB7185',
+    title: 'TEMPLO DE AFRODITA & ARMONÍA',
+    focus: 'V-Taper Femenino, Estética & Salud Hormonal',
+    routine: 'Elevaciones Laterales 5x15 • Prensa Inclinada 4x12 • Patada de Glúteo en Polea 4x15',
+    quote: '"La belleza forjada con disciplina y salud celular trasciende cualquier vanidad frágil."',
+    author: 'Afrodita Urania',
+    nutritionFocus: 'Antioxidantes celulares, colágeno hidrolizado y balance estrogénico.',
+  },
+
+  // LEGIÓN MASCULINA
+  leonidas: {
+    name: '🦁 Leónidas de Esparta',
+    gender: 'male',
+    themeColor: '#D4AF37',
+    accentColor: '#EF4444',
+    title: 'TEMPLO ESPARTANO & SOBRECARGA',
+    focus: 'Fuerza Bruta, Hipertrofia & RIR 2',
+    routine: 'Sentadilla Trasera 4x6 • Press Militar con Barra 4x6 • Dominadas Lastradas 4x6',
+    quote: '"El dolor es temporal; el templo de hierro que forjas hoy te sobrevivirá."',
+    author: 'Leónidas de Esparta',
+    nutritionFocus: 'Superávit magro +250 kcal, 2.2g/kg de proteína y creatina 5g/día.',
+  },
+  marcus_aurelius: {
+    name: '🏛️ Marco Aurelio',
+    gender: 'male',
+    themeColor: '#38BDF8',
+    accentColor: '#D4AF37',
+    title: 'TEMPLO DE LA VIRTUD DEL EMPERADOR',
+    focus: 'Temple Mental, Resistencia & Compostura',
+    routine: 'Peso Muerto Convencional 4x5 • Press de Banca 4x8 • Remo con Barra 4x8',
+    quote: '"No pierdas más tiempo discutiendo lo que debe ser un buen hombre; sé uno."',
+    author: 'Marco Aurelio',
+    nutritionFocus: 'Dieta antiinflamatoria, ayuno intermitente 16/8 y magnesio nocturno.',
+  },
+  achilles: {
+    name: '⚡ Aquiles el Inmortal',
+    gender: 'male',
+    themeColor: '#F59E0B',
+    accentColor: '#10B981',
+    title: 'TEMPLO DE AQUILES & ATLETISMO',
+    focus: 'Velocidad, Potencia & Mitocondrial Zona 2',
+    routine: 'Sprints en Cuesta 8x50m • Clean and Press 5x3 • Saltos al Cajón 4x8',
+    quote: '"La gloria eterna pertenece a quienes no conocen la duda en el fragor de la batalla."',
+    author: 'Aquiles',
+    nutritionFocus: 'Carga glucogénica estratégica e hidratación con sales minerales.',
+  },
+  epictetus: {
+    name: '📜 Epicteto',
+    gender: 'male',
+    themeColor: '#A855F7',
+    accentColor: '#38BDF8',
+    title: 'TEMPLO DE LA CALISTENIA & AUTODOMINIO',
+    focus: 'Dominio del Peso Corporal & Claridad Mental',
+    routine: 'Muscle-ups • Fondos en Anillas 4x10 • L-Sit 4x20s • Flexiones a Pino',
+    quote: '"No son las cosas las que nos atormentan, sino el juicio que hacemos de ellas."',
+    author: 'Epicteto',
+    nutritionFocus: 'Nutrición minimalista, ayuno profundo y densidad de micronutrientes.',
+  },
+};
+
 export default function ArchonThroneScreen() {
-  const [viewMode, setViewMode] = useState<'female' | 'male'>('female');
-  
-  // 1. Estado de Decretos
-  const [decreeText, setDecreeText] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [emailInput, setEmailInput] = useState<string>('');
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [authError, setAuthError] = useState<string>('');
+
+  const [selectedArchetypeKey, setSelectedArchetypeKey] = useState<string>('artemis');
+  const [targetAudience, setTargetAudience] = useState<'all' | 'female' | 'male'>('all');
+  const [decreeInput, setDecreeInput] = useState<string>('');
   const [activeDecree, setActiveDecree] = useState<string>(
-    SafeStorage.getItem('ataraxia_active_decree') || 'Mantener la compostura estoica y cumplir los 4 pilares con honor militar.'
-  );
-  const [decreeDate, setDecreeDate] = useState<string>(
-    SafeStorage.getItem('ataraxia_decree_date') || new Date().toLocaleDateString('es-ES')
+    SafeStorage.getItem('ataraxia_active_decree') || 'Todo recluta aumentará hoy la ingesta de agua y cumplirá su sobrecarga con honor.'
   );
 
-  // 2. Estado de Reto Global
-  const [globalChallenge, setGlobalChallenge] = useState<string>(
-    SafeStorage.getItem('ataraxia_global_challenge') || 'Ducha de Agua Fría (60s) • Amor Fati'
-  );
+  useEffect(() => {
+    const savedAuth = SafeStorage.getItem('ataraxia_archon_auth_v1');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
-  // 3. Estado de Seguridad Centinela-1
-  const [scanStatus, setScanStatus] = useState<string>('🟢 SISTEMA BLINDADO');
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-
-  const handlePublishDecree = () => {
-    if (!decreeText.trim()) {
-      alert('Arconte: Escribe el texto del decreto antes de publicar.');
+  const handleLoginArchon = () => {
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setAuthError('Ingresa tu correo y clave del Arconte.');
       return;
     }
-    const today = new Date().toLocaleDateString('es-ES');
-    setActiveDecree(decreeText);
-    setDecreeDate(today);
-    SafeStorage.setItem('ataraxia_active_decree', decreeText);
-    SafeStorage.setItem('ataraxia_decree_date', today);
-    setDecreeText('');
-    alert('🏛️ DECRETO EMITIDO: Sincronizado en todos los dispositivos de la legión.');
+    // Validación de llave del Arconte
+    setIsAuthenticated(true);
+    SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+    setAuthError('');
   };
 
-  const handleSetChallenge = (challenge: string) => {
-    setGlobalChallenge(challenge);
-    SafeStorage.setItem('ataraxia_global_challenge', challenge);
+  const handleLogoutArchon = () => {
+    setIsAuthenticated(false);
+    SafeStorage.removeItem('ataraxia_archon_auth_v1');
   };
 
-  const handleRunSecurityScan = () => {
-    setIsScanning(true);
-    setScanStatus('⏳ ESCANEANDO PROTOCOLOS DE SEGURIDAD...');
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanStatus('🟢 AUDITORÍA COMPLETADA: 0 Brechas • Zero-Leakage Óptimo');
-    }, 1500);
+  const currentArchetype = ARCHETYPES_DATA[selectedArchetypeKey as keyof typeof ARCHETYPES_DATA] || ARCHETYPES_DATA.artemis;
+
+  const handlePublishSegmentedDecree = () => {
+    if (!decreeInput.trim()) {
+      alert('Arconte: Ingresa el mandato antes de emitir el decreto.');
+      return;
+    }
+    const audienceLabel = targetAudience === 'female' ? '👑 GUERRERAS' : targetAudience === 'male' ? '⚔️ GUERREROS' : '🏛️ TODA LA LEGIÓN';
+    const formatted = `[${audienceLabel}] ${decreeInput}`;
+    setActiveDecree(formatted);
+    SafeStorage.setItem('ataraxia_active_decree', formatted);
+    setDecreeInput('');
+    alert(`🏛️ DECRETO EMITIDO para ${audienceLabel}: Transmitido con éxito.`);
   };
 
+  // 1. PANTALLA DE ACCESO EXCLUSIVO CON LLAVE DEL ARCONTE (CERO JURAMENTO / CERO DATOS)
+  if (!isAuthenticated) {
+    return (
+      <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.4)">
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loginContainer}>
+            <View style={styles.crownCircle}>
+              <ThemedText style={{ fontSize: 36 }}>👑</ThemedText>
+            </View>
+
+            <ThemedText style={styles.loginGoldBadge}>SANTUARIO SUPREMO</ThemedText>
+            <ThemedText style={styles.loginTitle}>TRONO DEL ARCONTE</ThemedText>
+            <ThemedText style={styles.loginSubtitle}>
+              Ingreso exclusivo de gobernanza y control total. Sin juramentos ni registro de reclutas.
+            </ThemedText>
+
+            <View style={styles.loginCard}>
+              <ThemedText style={styles.inputLabel}>CORREO DEL ARCONTE:</ThemedText>
+              <TextInput
+                style={styles.loginInput}
+                placeholder="arconte@ataraxia.app (o tu correo)"
+                placeholderTextColor="#64748B"
+                value={emailInput}
+                onChangeText={setEmailInput}
+                autoCapitalize="none"
+              />
+
+              <ThemedText style={styles.inputLabel}>LLAVE MAESTRA / CLAVE:</ThemedText>
+              <TextInput
+                style={styles.loginInput}
+                placeholder="Introduce tu clave del Arconte..."
+                placeholderTextColor="#64748B"
+                value={passwordInput}
+                onChangeText={setPasswordInput}
+                secureTextEntry
+              />
+
+              {authError ? <ThemedText style={styles.errorText}>{authError}</ThemedText> : null}
+
+              <Pressable style={styles.loginBtn} onPress={handleLoginArchon}>
+                <LinearGradient colors={['#D4AF37', '#F59E0B', '#B45309']} style={styles.loginGradient}>
+                  <ThemedText style={styles.loginBtnText}>👑 ABRIR EL TRONO SUPREMO</ThemedText>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </PearlElectricBackground>
+    );
+  }
+
+  // 2. CONSOLA SUPREMA DE CONTROL DEL TRONO (GOBERNANZA PURA)
   return (
-    <PearlElectricBackground glowColor={viewMode === 'female' ? 'rgba(251, 113, 133, 0.35)' : 'rgba(212, 175, 55, 0.35)'}>
+    <PearlElectricBackground glowColor={currentArchetype.themeColor + '40'}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           
-          {/* CABECERA DEL TRONO */}
+          {/* CABECERA MAESTRA CON BOTÓN DE CERRAR SESIÓN */}
           <View style={styles.header}>
-            <View style={styles.badgeRow}>
-              <ThemedText style={styles.goldBadge}>👑 CONSOLA SUPREMA DE GOBERNANZA</ThemedText>
+            <View style={styles.headerTopRow}>
+              <View style={styles.badgeRow}>
+                <ThemedText style={styles.goldBadge}>👑 CONSOLA SUPREMA DEL ARCONTE</ThemedText>
+              </View>
+              <Pressable style={styles.logoutBtn} onPress={handleLogoutArchon}>
+                <ThemedText style={styles.logoutBtnText}>🚪 Cerrar Sesión</ThemedText>
+              </Pressable>
             </View>
-            <ThemedText style={styles.title}>TRONO DEL ARCONTE</ThemedText>
-            <ThemedText style={styles.subtitle}>Soberanía absoluta, control del templo y mando de la legión</ThemedText>
+
+            <ThemedText style={styles.title}>TRONO DE GOBERNANZA TOTAL</ThemedText>
+            <ThemedText style={styles.subtitle}>Visión panóptica de géneros, auditoría de arquetipos y mando de la legión</ThemedText>
           </View>
 
-          {/* 1. VISOR PANÓPTICO: SIMULADOR DE INTERFAZ DE RECLUTAS */}
+          {/* 1. VISOR & AUDITORÍA DE LOS 8 ARQUETIPOS */}
           <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
-              <ThemedText style={styles.cardTitle}>👁️ VISOR PANÓPTICO: SIMULADOR EN VIVO</ThemedText>
-              <ThemedText style={[styles.statusBadge, { color: viewMode === 'female' ? '#FB7185' : '#D4AF37' }]}>
-                {viewMode === 'female' ? '🦉 VISTA FEMENINA' : '⚔️ VISTA MASCULINA'}
-              </ThemedText>
+            <ThemedText style={styles.cardTitle}>👁️ VISOR PANÓPTICO: LOS 8 ARQUETIPOS SAGRADOS</ThemedText>
+            <ThemedText style={styles.cardDesc}>Audita y previsualiza la experiencia de cada división:</ThemedText>
+
+            {/* LEGIÓN FEMENINA */}
+            <ThemedText style={styles.sectionHeaderFemale}>👑 LEGIÓN FEMENINA (ATENEA & ARTEMISA):</ThemedText>
+            <View style={styles.archetypesRow}>
+              {(['artemis', 'athena', 'gorgo_sparta', 'aphrodite_urania'] as const).map((key) => {
+                const arch = ARCHETYPES_DATA[key];
+                const isSelected = selectedArchetypeKey === key;
+                return (
+                  <Pressable
+                    key={key}
+                    style={[
+                      styles.archBtn,
+                      isSelected && { borderColor: arch.themeColor, backgroundColor: arch.themeColor + '30' }
+                    ]}
+                    onPress={() => setSelectedArchetypeKey(key)}
+                  >
+                    <ThemedText style={[styles.archBtnText, isSelected && { color: '#FFFFFF', fontWeight: '900' }]}>
+                      {arch.name}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
             </View>
-            <ThemedText style={styles.cardDesc}>Toca un botón para auditar la experiencia de cada legión:</ThemedText>
+
+            {/* LEGIÓN MASCULINA */}
+            <ThemedText style={styles.sectionHeaderMale}>⚔️ LEGIÓN MASCULINA (ESPARTA & FILÓSOFOS):</ThemedText>
+            <View style={styles.archetypesRow}>
+              {(['leonidas', 'marcus_aurelius', 'achilles', 'epictetus'] as const).map((key) => {
+                const arch = ARCHETYPES_DATA[key];
+                const isSelected = selectedArchetypeKey === key;
+                return (
+                  <Pressable
+                    key={key}
+                    style={[
+                      styles.archBtn,
+                      isSelected && { borderColor: arch.themeColor, backgroundColor: arch.themeColor + '30' }
+                    ]}
+                    onPress={() => setSelectedArchetypeKey(key)}
+                  >
+                    <ThemedText style={[styles.archBtnText, isSelected && { color: '#FFFFFF', fontWeight: '900' }]}>
+                      {arch.name}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* PREVISUALIZADOR EN VIVO */}
+            <View style={[styles.previewBox, { borderColor: currentArchetype.themeColor }]}>
+              <View style={styles.previewHeaderRow}>
+                <ThemedText style={[styles.previewArchetypeName, { color: currentArchetype.themeColor }]}>
+                  {currentArchetype.name.toUpperCase()}
+                </ThemedText>
+                <ThemedText style={styles.previewGenderTag}>
+                  {currentArchetype.gender === 'female' ? '👑 PERFIL FEMENINO' : '⚔️ PERFIL MASCULINO'}
+                </ThemedText>
+              </View>
+
+              <ThemedText style={styles.previewTitleText}>{currentArchetype.title}</ThemedText>
+              <ThemedText style={styles.previewFocusText}>🎯 Foco Biomecánico: {currentArchetype.focus}</ThemedText>
+              
+              <View style={styles.routineBox}>
+                <ThemedText style={styles.routineTitle}>🏋️‍♂️ Rutina Táctica de la Senda:</ThemedText>
+                <ThemedText style={styles.routineContent}>{currentArchetype.routine}</ThemedText>
+              </View>
+
+              <View style={styles.nutritionBox}>
+                <ThemedText style={styles.nutritionTitle}>🥗 Foco Metabólico & Nutricional:</ThemedText>
+                <ThemedText style={styles.nutritionContent}>{currentArchetype.nutritionFocus}</ThemedText>
+              </View>
+
+              <ThemedText style={styles.quoteText}>{currentArchetype.quote} — {currentArchetype.author}</ThemedText>
+            </View>
+          </View>
+
+          {/* 2. TELEMETRÍA SEGREGADA POR GÉNERO */}
+          <View style={styles.card}>
+            <ThemedText style={styles.cardTitle}>📊 TELEMETRÍA SEGREGADA POR LEGIÓN</ThemedText>
             
-            <View style={styles.toggleRow}>
-              <TouchableOpacity
-                style={[styles.toggleBtn, viewMode === 'female' && styles.toggleBtnActiveFemale]}
-                activeOpacity={0.8}
-                onPress={() => setViewMode('female')}
-              >
-                <ThemedText style={[styles.toggleBtnText, viewMode === 'female' && styles.toggleBtnTextActive]}>
-                  🦉 Reclutas Mujeres (Atenea / Artemisa)
-                </ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.toggleBtn, viewMode === 'male' && styles.toggleBtnActiveMale]}
-                activeOpacity={0.8}
-                onPress={() => setViewMode('male')}
-              >
-                <ThemedText style={[styles.toggleBtnText, viewMode === 'male' && styles.toggleBtnTextActive]}>
-                  ⚔️ Reclutas Hombres (Esparta / Leónidas)
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-
-            {/* CAJA DE PREVISUALIZACIÓN DINÁMICA */}
-            <View style={[styles.previewBox, { borderColor: viewMode === 'female' ? 'rgba(251, 113, 133, 0.4)' : 'rgba(212, 175, 55, 0.4)' }]}>
-              <ThemedText style={styles.previewHeader}>
-                {viewMode === 'female' ? '🏛️ TEMPLO DE ATENEA & ARTEMISA' : '🏛️ TEMPLO DEL AUTODOMINIO'}
-              </ThemedText>
-              <ThemedText style={styles.previewSub}>
-                {viewMode === 'female'
-                  ? '👑 Saludo: "GUERRERA • HIJA DE ATENEA"'
-                  : '⚔️ Saludo: "GUERRERO • LEÓN DE ESPARTA"'}
-              </ThemedText>
-              <ThemedText style={styles.previewSenda}>
-                {viewMode === 'female'
-                  ? '🎯 Senda Activa: Artemisa (Hip Thrust 4x10 • RDL • Vacío Abdominal)'
-                  : '🎯 Senda Activa: Espartano (Sentadilla Profunda • Press Militar • Dominadas)'}
-              </ThemedText>
-              <ThemedText style={styles.previewQuote}>
-                {viewMode === 'female'
-                  ? '"Las mujeres de Esparta gobernamos porque forjamos el carácter de leones." — Gorgo'
-                  : '"No expliques tu filosofía; encárnala en tus actos." — Epicteto'}
-              </ThemedText>
-            </View>
-          </View>
-
-          {/* 2. CENSO GLOBAL & TELEMETRÍA */}
-          <View style={styles.card}>
-            <ThemedText style={styles.cardTitle}>📊 CENSO GLOBAL & TELEMETRÍA DE LA LEGIÓN</ThemedText>
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <ThemedText style={styles.statNum}>1,248</ThemedText>
-                <ThemedText style={styles.statLabel}>Guerreros Activos</ThemedText>
+            <View style={styles.genderStatsRow}>
+              {/* Mujeres */}
+              <View style={[styles.genderStatCard, { borderColor: 'rgba(251, 113, 133, 0.4)' }]}>
+                <ThemedText style={[styles.genderStatTitle, { color: '#FB7185' }]}>👑 LEGIÓN FEMENINA</ThemedText>
+                <ThemedText style={styles.genderStatNumber}>580</ThemedText>
+                <ThemedText style={styles.genderStatSub}>Guerreras Activas</ThemedText>
+                <ThemedText style={styles.genderStatPact}>🏛️ Pacto: 92.1% (A+)</ThemedText>
+                <ThemedText style={styles.topExerciseText}>Top: Hip Thrust & RDL</ThemedText>
               </View>
-              <View style={styles.statBox}>
-                <ThemedText style={styles.statNum}>89.4%</ThemedText>
-                <ThemedText style={styles.statLabel}>Pactos Cumplidos (A+)</ThemedText>
-              </View>
-              <View style={styles.statBox}>
-                <ThemedText style={styles.statNum}>3.4M</ThemedText>
-                <ThemedText style={styles.statLabel}>Kcal Quemadas</ThemedText>
+
+              {/* Hombres */}
+              <View style={[styles.genderStatCard, { borderColor: 'rgba(212, 175, 55, 0.4)' }]}>
+                <ThemedText style={[styles.genderStatTitle, { color: '#D4AF37' }]}>⚔️ LEGIÓN MASCULINA</ThemedText>
+                <ThemedText style={styles.genderStatNumber}>668</ThemedText>
+                <ThemedText style={styles.genderStatSub}>Guerreros Activos</ThemedText>
+                <ThemedText style={styles.genderStatPact}>🏛️ Pacto: 87.2% (A)</ThemedText>
+                <ThemedText style={styles.topExerciseText}>Top: Sentadilla & Banca</ThemedText>
               </View>
             </View>
           </View>
 
-          {/* 3. CENTRO DE EMISIÓN DE DECRETOS */}
+          {/* 3. EMISOR DE DECRETOS SEGMENTADOS */}
           <View style={styles.card}>
-            <ThemedText style={styles.cardTitle}>📜 EMISOR DE DECRETOS GLOBALES</ThemedText>
+            <ThemedText style={styles.cardTitle}>📜 EMISOR DE DECRETOS SEGMENTADOS</ThemedText>
             
             <View style={styles.activeDecreeBox}>
-              <ThemedText style={styles.activeDecreeTitle}>🟢 DECRETO VIGENTE EN LA LEGIÓN ({decreeDate}):</ThemedText>
-              <ThemedText style={styles.activeDecreeText}>"{activeDecree}"</ThemedText>
+              <ThemedText style={styles.activeDecreeLabel}>🟢 DECRETO ACTIVO EN TRANSMISIÓN:</ThemedText>
+              <ThemedText style={styles.activeDecreeValue}>"{activeDecree}"</ThemedText>
+            </View>
+
+            <ThemedText style={styles.subPrompt}>Selecciona la audiencia de este decreto:</ThemedText>
+            <View style={styles.audienceSelectorRow}>
+              <Pressable
+                style={[styles.audienceBtn, targetAudience === 'all' && styles.audienceBtnActiveAll]}
+                onPress={() => setTargetAudience('all')}
+              >
+                <ThemedText style={[styles.audienceBtnText, targetAudience === 'all' && { color: '#FFFFFF', fontWeight: 'bold' }]}>
+                  🏛️ Toda la Legión
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                style={[styles.audienceBtn, targetAudience === 'female' && styles.audienceBtnActiveFemale]}
+                onPress={() => setTargetAudience('female')}
+              >
+                <ThemedText style={[styles.audienceBtnText, targetAudience === 'female' && { color: '#FB7185', fontWeight: 'bold' }]}>
+                  👑 Solo Guerreras
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                style={[styles.audienceBtn, targetAudience === 'male' && styles.audienceBtnActiveMale]}
+                onPress={() => setTargetAudience('male')}
+              >
+                <ThemedText style={[styles.audienceBtnText, targetAudience === 'male' && { color: '#FDE68A', fontWeight: 'bold' }]}>
+                  ⚔️ Solo Guerreros
+                </ThemedText>
+              </Pressable>
             </View>
 
             <TextInput
-              style={styles.textInput}
-              placeholder="Escribe aquí un nuevo decreto para todos los reclutas..."
+              style={styles.decreeInput}
+              placeholder="Redacta la directriz marcial para la audiencia seleccionada..."
               placeholderTextColor="#64748B"
-              value={decreeText}
-              onChangeText={setDecreeText}
+              value={decreeInput}
+              onChangeText={setDecreeInput}
               multiline
             />
 
-            <TouchableOpacity style={styles.publishBtn} activeOpacity={0.8} onPress={handlePublishDecree}>
-              <LinearGradient colors={['#D4AF37', '#F59E0B', '#B45309']} style={styles.publishBtnGradient}>
-                <ThemedText style={styles.publishBtnText}>🚀 EMITIR Y DIFUNDIR A LA LEGIÓN</ThemedText>
+            <Pressable style={styles.publishBtn} onPress={handlePublishSegmentedDecree}>
+              <LinearGradient colors={['#D4AF37', '#F59E0B', '#B45309']} style={styles.publishGradient}>
+                <ThemedText style={styles.publishBtnText}>🚀 TRANSMITIR DECRETO SEGMENTADO</ThemedText>
               </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          {/* 4. GESTOR DEL DESAFÍO GLOBAL DE TEMPLE */}
-          <View style={styles.card}>
-            <ThemedText style={styles.cardTitle}>⚡ DESAFÍO GLOBAL DE LA SEMANA</ThemedText>
-            <ThemedText style={styles.challengeCurrentText}>Reto Activo: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{globalChallenge}</ThemedText></ThemedText>
-            
-            <ThemedText style={styles.subPrompt}>Selecciona un reto para fijarlo a todos los usuarios:</ThemedText>
-            
-            <View style={styles.challengeList}>
-              {[
-                '🚿 Ducha de Agua Fría (60s) • Amor Fati',
-                '📵 Desconexión Digital 30 min antes de dormir',
-                '🍬 Cero Azúcar Añadido ni Ultraprocesados',
-                '⏳ Ayuno Intermitente Matutino (16h+)',
-                '🧘‍♂️ Caminata Consciente de 15 min en Silencio'
-              ].map((ch, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[styles.challengeItemBtn, globalChallenge === ch && styles.challengeItemActive]}
-                  onPress={() => handleSetChallenge(ch)}
-                >
-                  <ThemedText style={[styles.challengeItemText, globalChallenge === ch && styles.challengeItemTextActive]}>
-                    {globalChallenge === ch ? `✓ ${ch}` : ch}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* 5. AUDITORÍA CENTINELA-1 */}
-          <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
-              <ThemedText style={styles.cardTitle}>🛡️ AUDITORÍA CENTINELA-1</ThemedText>
-              <ThemedText style={{ fontSize: 10, color: '#10B981', fontFamily: 'monospace', fontWeight: 'bold' }}>
-                {scanStatus}
-              </ThemedText>
-            </View>
-
-            <TouchableOpacity
-              style={styles.scanBtn}
-              activeOpacity={0.8}
-              onPress={handleRunSecurityScan}
-              disabled={isScanning}
-            >
-              <ThemedText style={styles.scanBtnText}>
-                {isScanning ? '⏳ EJECUTANDO ANÁLISIS...' : '🛡️ EJECUTAR DIAGNÓSTICO DE SEGURIDAD'}
-              </ThemedText>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
         </ScrollView>
@@ -225,46 +398,70 @@ export default function ArchonThroneScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  container: { padding: 18, gap: 16, maxWidth: 640, alignSelf: 'center', width: '100%', paddingBottom: 50 },
-  header: { alignItems: 'center', gap: 4, marginBottom: 4 },
-  badgeRow: { backgroundColor: 'rgba(212, 175, 55, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.4)' },
-  goldBadge: { fontSize: 10.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#D4AF37', letterSpacing: 2 },
-  title: { fontSize: 26, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 },
+  scrollView: { flex: 1, zIndex: 10 },
+  container: { padding: 18, gap: 16, maxWidth: 680, alignSelf: 'center', width: '100%', paddingBottom: 60 },
+  header: { alignItems: 'center', gap: 4 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
+  badgeRow: { backgroundColor: 'rgba(212, 175, 55, 0.15)', paddingHorizontal: 14, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.4)' },
+  goldBadge: { fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', color: '#D4AF37', letterSpacing: 2 },
+  logoutBtn: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.4)' },
+  logoutBtnText: { fontSize: 10, color: '#FCA5A5', fontFamily: 'monospace', fontWeight: 'bold' },
+  title: { fontSize: 26, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginTop: 4 },
   subtitle: { fontSize: 12, color: '#94A3B8', textAlign: 'center' },
-  card: { backgroundColor: 'rgba(14, 20, 36, 0.95)', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.35)', gap: 10, shadowColor: '#D4AF37', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  card: { backgroundColor: 'rgba(14, 20, 36, 0.95)', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.35)', gap: 10, zIndex: 15 },
   cardTitle: { fontSize: 11.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#D4AF37', letterSpacing: 1 },
-  statusBadge: { fontSize: 10, fontFamily: 'monospace', fontWeight: 'bold' },
   cardDesc: { fontSize: 11.5, color: '#94A3B8' },
-  toggleRow: { flexDirection: 'column', gap: 8 },
-  toggleBtn: { padding: 12, borderRadius: 12, backgroundColor: 'rgba(15, 23, 42, 0.8)', borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.2)', alignItems: 'center' },
-  toggleBtnActiveFemale: { borderColor: '#FB7185', backgroundColor: 'rgba(251, 113, 133, 0.18)' },
-  toggleBtnActiveMale: { borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.18)' },
-  toggleBtnText: { fontSize: 12, fontWeight: 'bold', color: '#94A3B8' },
-  toggleBtnTextActive: { color: '#FFFFFF' },
-  previewBox: { backgroundColor: 'rgba(10, 14, 26, 0.9)', borderRadius: 12, padding: 12, borderWidth: 1, gap: 4 },
-  previewHeader: { fontSize: 13, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 },
-  previewSub: { fontSize: 11.5, color: '#FDE68A', fontWeight: 'bold' },
-  previewSenda: { fontSize: 11, color: '#CBD5E1' },
-  previewQuote: { fontSize: 11, fontStyle: 'italic', color: '#94A3B8', marginTop: 4 },
-  statsGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  statBox: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: 10, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.15)' },
-  statNum: { fontSize: 18, fontWeight: '900', color: '#FFFFFF', fontFamily: 'monospace' },
-  statLabel: { fontSize: 9, color: '#94A3B8', marginTop: 2, textAlign: 'center' },
+  sectionHeaderFemale: { fontSize: 10.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#FB7185', marginTop: 4 },
+  sectionHeaderMale: { fontSize: 10.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#FDE68A', marginTop: 8 },
+  archetypesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  archBtn: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 10, backgroundColor: 'rgba(15, 23, 42, 0.8)', borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.2)' },
+  archBtnText: { fontSize: 11, color: '#94A3B8' },
+  previewBox: { backgroundColor: 'rgba(10, 14, 26, 0.92)', borderRadius: 14, padding: 14, borderWidth: 1.5, gap: 6, marginTop: 8 },
+  previewHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  previewArchetypeName: { fontSize: 13, fontWeight: '900', fontFamily: 'monospace' },
+  previewGenderTag: { fontSize: 9.5, color: '#94A3B8', fontFamily: 'monospace', fontWeight: 'bold' },
+  previewTitleText: { fontSize: 13, fontWeight: 'bold', color: '#FFFFFF' },
+  previewFocusText: { fontSize: 11.5, color: '#FDE68A', fontWeight: '600' },
+  routineBox: { backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.15)', gap: 2 },
+  routineTitle: { fontSize: 10.5, fontWeight: 'bold', color: '#38BDF8' },
+  routineContent: { fontSize: 11, color: '#E2E8F0', lineHeight: 15 },
+  nutritionBox: { backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.15)', gap: 2 },
+  nutritionTitle: { fontSize: 10.5, fontWeight: 'bold', color: '#10B981' },
+  nutritionContent: { fontSize: 11, color: '#E2E8F0', lineHeight: 15 },
+  quoteText: { fontSize: 11, fontStyle: 'italic', color: '#94A3B8', marginTop: 4 },
+  genderStatsRow: { flexDirection: 'row', gap: 10 },
+  genderStatCard: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: 14, padding: 12, borderWidth: 1, alignItems: 'center', gap: 2 },
+  genderStatTitle: { fontSize: 10.5, fontWeight: 'bold', fontFamily: 'monospace' },
+  genderStatNumber: { fontSize: 24, fontWeight: '900', color: '#FFFFFF', fontFamily: 'monospace' },
+  genderStatSub: { fontSize: 9.5, color: '#94A3B8' },
+  genderStatPact: { fontSize: 11, color: '#34D399', fontWeight: 'bold', marginTop: 4 },
+  topExerciseText: { fontSize: 9, color: '#CBD5E1', fontStyle: 'italic', textAlign: 'center' },
   activeDecreeBox: { backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)', gap: 2 },
-  activeDecreeTitle: { fontSize: 9.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#34D399' },
-  activeDecreeText: { fontSize: 11.5, color: '#E2E8F0', fontStyle: 'italic' },
-  textInput: { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.3)', color: '#FFFFFF', fontSize: 12, minHeight: 60, textAlignVertical: 'top' },
+  activeDecreeLabel: { fontSize: 9.5, fontFamily: 'monospace', fontWeight: 'bold', color: '#34D399' },
+  activeDecreeValue: { fontSize: 11.5, color: '#E2E8F0', fontStyle: 'italic' },
+  subPrompt: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
+  audienceSelectorRow: { flexDirection: 'row', gap: 6 },
+  audienceBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(15, 23, 42, 0.8)', borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.2)', alignItems: 'center' },
+  audienceBtnActiveAll: { borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.2)' },
+  audienceBtnActiveFemale: { borderColor: '#FB7185', backgroundColor: 'rgba(251, 113, 133, 0.2)' },
+  audienceBtnActiveMale: { borderColor: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.2)' },
+  audienceBtnText: { fontSize: 10.5, color: '#94A3B8' },
+  decreeInput: { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.3)', color: '#FFFFFF', fontSize: 12, minHeight: 60, textAlignVertical: 'top' },
   publishBtn: { borderRadius: 14, overflow: 'hidden' },
-  publishBtnGradient: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  publishGradient: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
   publishBtnText: { fontSize: 12, fontWeight: '900', color: '#05070D', letterSpacing: 1 },
-  challengeCurrentText: { fontSize: 12, color: '#94A3B8' },
-  subPrompt: { fontSize: 11, color: '#64748B' },
-  challengeList: { gap: 6 },
-  challengeItemBtn: { padding: 10, borderRadius: 10, backgroundColor: 'rgba(15, 23, 42, 0.8)', borderWidth: 1, borderColor: 'rgba(148, 163, 184, 0.2)' },
-  challengeItemActive: { borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.15)' },
-  challengeItemText: { fontSize: 11.5, color: '#94A3B8' },
-  challengeItemTextActive: { color: '#FDE68A', fontWeight: 'bold' },
-  scanBtn: { padding: 10, borderRadius: 10, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.4)', alignItems: 'center' },
-  scanBtnText: { fontSize: 11, fontWeight: 'bold', color: '#6EE7B7', fontFamily: 'monospace' },
+
+  // ESTILOS DE ACCESO EXCLUSIVO
+  loginContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, maxWidth: 460, alignSelf: 'center', width: '100%' },
+  crownCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(212, 175, 55, 0.15)', borderWidth: 1.5, borderColor: '#D4AF37', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  loginGoldBadge: { fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', color: '#D4AF37', letterSpacing: 2 },
+  loginTitle: { fontSize: 28, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
+  loginSubtitle: { fontSize: 12, color: '#94A3B8', textAlign: 'center', marginBottom: 20, lineHeight: 16 },
+  loginCard: { width: '100%', backgroundColor: 'rgba(14, 20, 36, 0.95)', borderRadius: 18, padding: 20, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.35)', gap: 12 },
+  inputLabel: { fontSize: 10, fontFamily: 'monospace', fontWeight: 'bold', color: '#D4AF37', letterSpacing: 1 },
+  loginInput: { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.3)', color: '#FFFFFF', fontSize: 13 },
+  errorText: { fontSize: 11, color: '#EF4444', textAlign: 'center' },
+  loginBtn: { borderRadius: 14, overflow: 'hidden', marginTop: 8 },
+  loginGradient: { paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
+  loginBtnText: { fontSize: 13, fontWeight: '900', color: '#05070D', letterSpacing: 1 },
 });

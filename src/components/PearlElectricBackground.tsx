@@ -15,10 +15,10 @@ export function PearlElectricBackground({
   return (
     <View style={styles.container}>
       {/* Fondo Negro Ónix OLED Profundo */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050507' }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050507' }]} pointerEvents="none" />
 
-      {/* Rayos Eléctricos Dorados de Fondo (Top Right & Left) */}
-      <View style={[styles.lightningLayer, { pointerEvents: 'none' }]}>
+      {/* Rayos Eléctricos Dorados de Fondo */}
+      <View style={[styles.lightningLayer, { pointerEvents: 'none' }]} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 400 800" style={StyleSheet.absoluteFill}>
           <Defs>
             <SvgGradient id="goldBoltGrad" x1="0" y1="0" x2="1" y2="1">
@@ -34,7 +34,6 @@ export function PearlElectricBackground({
             </SvgGradient>
           </Defs>
 
-          {/* Rayo Grande Superior Derecho (idéntico al de la imagen) */}
           <Path
             d="M360 0 L325 70 L345 85 L310 160 L330 175 L285 280 L300 295 L260 410 L275 425 L230 540"
             stroke="url(#goldBoltGrad)"
@@ -43,7 +42,6 @@ export function PearlElectricBackground({
             strokeLinejoin="round"
             fill="none"
           />
-          {/* Ramificación del rayo derecho */}
           <Path
             d="M325 70 L280 110 L295 125 L260 190"
             stroke="url(#goldBoltGrad)"
@@ -59,7 +57,6 @@ export function PearlElectricBackground({
             fill="none"
           />
 
-          {/* Rayo Izquierdo Sutil */}
           <Path
             d="M20 180 L55 230 L40 245 L70 310 L50 325 L85 400 L65 420 L95 490"
             stroke="url(#goldBoltGradLeft)"
@@ -78,39 +75,42 @@ export function PearlElectricBackground({
         </Svg>
       </View>
 
-      {/* Aura 1: Halo de Rayo Dorado Central */}
+      {/* Auras con pointerEvents="none" explícito */}
       <LinearGradient
         colors={[glowColor, 'rgba(245, 158, 11, 0.10)', 'transparent']}
         style={styles.heroArcGlow}
         start={{ x: 0.5, y: 0.05 }}
         end={{ x: 0.5, y: 0.95 }}
+        pointerEvents="none"
       />
 
-      {/* Aura 2: Resplandor Oro Imperial Izquierda */}
       <LinearGradient
         colors={['rgba(212, 175, 55, 0.14)', 'transparent']}
         style={styles.leftCardGlow}
         start={{ x: 0, y: 0.4 }}
         end={{ x: 0.8, y: 0.8 }}
+        pointerEvents="none"
       />
 
-      {/* Aura 3: Resplandor Rayo Ámbar Superior Derecha */}
       <LinearGradient
         colors={['rgba(245, 158, 11, 0.18)', 'transparent']}
         style={styles.rightHeaderGlow}
         start={{ x: 1, y: 0 }}
         end={{ x: 0.2, y: 0.5 }}
+        pointerEvents="none"
       />
 
-      {/* Viñeta Inferior Negro Ónix */}
       <LinearGradient
         colors={['transparent', 'rgba(5, 5, 7, 0.98)']}
         style={styles.bottomGlow}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
+        pointerEvents="none"
       />
 
-      {children}
+      <View style={styles.contentLayer}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -119,6 +119,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#050507',
+  },
+  contentLayer: {
+    flex: 1,
+    zIndex: 10,
   },
   lightningLayer: {
     ...StyleSheet.absoluteFill,
@@ -131,7 +135,6 @@ const styles = StyleSheet.create({
     right: '8%',
     height: 360,
     borderRadius: 180,
-    pointerEvents: 'none',
   },
   leftCardGlow: {
     position: 'absolute',
@@ -140,7 +143,6 @@ const styles = StyleSheet.create({
     width: 260,
     height: 380,
     borderRadius: 130,
-    pointerEvents: 'none',
   },
   rightHeaderGlow: {
     position: 'absolute',
@@ -148,7 +150,6 @@ const styles = StyleSheet.create({
     right: 0,
     width: 220,
     height: 240,
-    pointerEvents: 'none',
   },
   bottomGlow: {
     position: 'absolute',
@@ -156,6 +157,5 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 140,
-    pointerEvents: 'none',
   },
 });
