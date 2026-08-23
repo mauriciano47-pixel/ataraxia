@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -181,45 +181,7 @@ export default function HoyScreen() {
             }}
           />
 
-          {/* 2. DOCK DE ACCIONES RÁPIDAS (Quick Action Dock) */}
-          <View style={styles.quickDockCard}>
-            <ThemedText style={styles.dockHeaderTitle}>ACCIONES RÁPIDAS • RAYO DE FUERZA</ThemedText>
-            <View style={styles.dockButtonsRow}>
-              <TouchableOpacity
-                style={styles.dockChipBtn}
-                onPress={() => addSteps(1000)}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={styles.dockChipText}>👟 +1k Pasos</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.dockChipBtn, log.trainingCompleted && styles.dockChipActive]}
-                onPress={toggleTraining}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={[styles.dockChipText, log.trainingCompleted && styles.dockChipTextActive]}>
-                  {log.trainingCompleted ? '🏆 Entrenado ✓' : '🏋️‍♂️ Entrenar'}
-                </ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.dockChipBtn}
-                onPress={() => addWater(0.25)}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={styles.dockChipText}>💧 +0.25L Agua</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.dockChipBtn}
-                onPress={() => router.navigate('/journal')}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={styles.dockChipText}>📖 Check-In</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
+          
 
           {/* 3. SECCIÓN 1: PILAR DE FUERZA Y ACTIVIDAD EN VIVO */}
           <View style={styles.pillarSectionGroup}>
@@ -948,3 +910,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
