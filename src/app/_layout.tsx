@@ -125,6 +125,12 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => <ArchonCrownIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
           }}
         />
+        <Tabs.Screen
+          name="+not-found"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
       </DailyLogProvider>
     </GlobalErrorBoundary>
