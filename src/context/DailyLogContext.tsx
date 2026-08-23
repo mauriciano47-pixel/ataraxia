@@ -492,6 +492,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       }
       firestoreDebounceTimer.current = setTimeout(async () => {
         try {
+          if (!db) return;
           const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
           await setDoc(docRef, updates, { merge: true });
         } catch (error) {

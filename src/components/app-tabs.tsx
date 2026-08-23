@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 
-import { HomeTabIcon, BarbellTabIcon, NutritionTabIcon, JournalTabIcon, ProgressTabIcon } from '@/components/TabSvgIcons';
+import { HoyIcon, TrainerIcon, NutritionIcon, JournalIcon, ProgressIcon } from '@/components/TabSvgIcons';
 
 export default function AppTabs() {
   return (
@@ -33,35 +33,35 @@ export default function AppTabs() {
         name="index"
         options={{
           title: 'Hoy',
-          tabBarIcon: ({ color, focused }) => <HomeTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <HoyIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="trainer"
         options={{
           title: 'Entreno',
-          tabBarIcon: ({ color, focused }) => <BarbellTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TrainerIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="nutrition"
         options={{
           title: 'Nutrición',
-          tabBarIcon: ({ color, focused }) => <NutritionTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NutritionIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="journal"
         options={{
           title: 'Diario',
-          tabBarIcon: ({ color, focused }) => <JournalTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <JournalIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Historial',
-          tabBarIcon: ({ color, focused }) => <ProgressTabIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <ProgressIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
