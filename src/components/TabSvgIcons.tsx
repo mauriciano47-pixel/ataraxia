@@ -1,107 +1,73 @@
-import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+﻿import React from 'react';
+import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 
 interface IconProps {
-  color: any;
+  color: string;
   size?: number;
   focused?: boolean;
 }
 
-export function HomeTabIcon({ color, size = 24, focused }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D4AF37';
+export function HoyIcon({ color, size = 22 }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V14H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
-      />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx="12" cy="12" r="10" />
+      <Path d="M12 6v6l4 2" />
     </Svg>
   );
 }
 
-export function BarbellTabIcon({ color, size = 24, focused }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D4AF37';
+export function JournalIcon({ color, size = 22 }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M6 5V19M18 5V19M4 8H8M16 8H20M2 11H6M18 11H24M4 16H8M16 16H20M8 12H16"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
-      />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <Path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </Svg>
   );
 }
 
-export function NutritionTabIcon({ color, size = 24, focused }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D4AF37';
+export function TrainerIcon({ color, size = 22 }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 2C8 2 4 5 4 10C4 16 12 22 12 22C12 22 20 16 20 10C20 5 16 2 12 2Z"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
-      />
-      <Path
-        d="M12 6V12M12 12L15 9"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12" />
     </Svg>
   );
 }
 
-export function JournalTabIcon({ color, size = 24, focused }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D4AF37';
+export function ProgressIcon({ color, size = 22 }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <Path
-        d="M6.5 2H20V22H6.5A2.5 2.5 0 0 1 4 19.5V4.5A2.5 2.5 0 0 1 6.5 2Z"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
-      />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M18 20V10M12 20V4M6 20v-6" />
     </Svg>
   );
 }
 
-export function ProgressTabIcon({ color, size = 24, focused }: IconProps) {
-  const colorStr = typeof color === 'string' ? color : '#D4AF37';
+export function NutritionIcon({ color, size = 22 }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M23 6L13.5 15.5L8.5 10.5L1 18"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={focused ? 'rgba(212, 175, 55, 0.15)' : 'none'}
-      />
-      <Path
-        d="M17 6H23V12"
-        stroke={colorStr}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+      <Path d="M12 2a10 10 0 0 1 10 10" />
+    </Svg>
+  );
+}
+
+export function ProfileIcon({ color, size = 22 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <Circle cx="12" cy="7" r="4" />
+    </Svg>
+  );
+}
+
+// 👑 ICONO EXCLUSIVO DEL ARCONTE (CORONA IMPERIAL CON LAUREL)
+export function ArchonCrownIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" fill={color + '30'} />
+      <Circle cx="12" cy="3" r="1.5" fill={color} />
+      <Circle cx="5" cy="4" r="1.5" fill={color} />
+      <Circle cx="19" cy="4" r="1.5" fill={color} />
+      <Path d="M5 20h14" strokeWidth={2.5} />
     </Svg>
   );
 }

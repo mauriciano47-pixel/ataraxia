@@ -1,15 +1,15 @@
-import { DarkTheme, ThemeProvider } from 'expo-router';
+﻿import { ArchonCrownIcon, DarkTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { ArchonCrownIcon, useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { ArchonCrownIcon, useFonts } from 'expo-font';
+import { ArchonCrownIcon, Ionicons } from '@expo/vector-icons';
+import { ArchonCrownIcon, Platform } from 'react-native';
 
 import SplashScreenWrapper from '@/components/SplashScreenWrapper';
 import AppTabs from '@/components/app-tabs';
 
-import { DailyLogProvider } from '@/context/DailyLogContext';
+import { ArchonCrownIcon, DailyLogProvider } from '@/context/DailyLogContext';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -100,3 +100,4 @@ export default function TabLayout() {
     </DailyLogProvider>
   );
 }
+
