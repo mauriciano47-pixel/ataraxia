@@ -23,10 +23,18 @@ export function StepCounterCard({
   const [modalVisible, setModalVisible] = useState(false);
   const [customGoalInput, setCustomGoalInput] = useState(stepGoal.toString());
 
+  const [justSynced, setJustSynced] = useState(false);
+
   // Sensor for real step detection and live tracking
   const { isLiveTracking, toggleLiveTracking, liveSessionSteps } = usePedometerSensor((addedSteps) => {
     onAddSteps(addedSteps);
   });
+
+  const handleManualSync = () => {
+    toggleLiveTracking();
+    setJustSynced(true);
+    setTimeout(() => setJustSynced(false), 1600);
+  };
 
   const progressPct = Math.min(100, Math.round((steps / stepGoal) * 100));
   const { km, caloriesBurned } = estimateStepMetrics(steps);
@@ -97,20 +105,20 @@ export function StepCounterCard({
         />
       </View>
 
-      {/* LIVE AUTO-PEDOMETER 24/7 ALWAYS-ON BADGE */}
+      {/* LIVE AUTO-PEDOMETER 24/7 ALWAYS-ON BADGE & SYNC TRIGGER */}
       <TouchableOpacity
-        style={[styles.livePedometerBtn, styles.livePedometerBtnActive]}
-        onPress={toggleLiveTracking}
-        activeOpacity={0.85}
+        style={[styles.livePedometerBtn, styles.livePedometerBtnActive, justSynced && { borderColor: '#FFE259', backgroundColor: 'rgba(255, 226, 89, 0.18)' }]}
+        onPress={handleManualSync}
+        activeOpacity={0.8}
       >
         <View style={styles.liveIndicatorDotRow}>
-          <View style={[styles.pulseDot, styles.pulseDotActive]} />
-          <ThemedText style={[styles.liveBtnText, styles.liveBtnTextActive]}>
-            ⚡ Podómetro Automático: ACTIVO 24/7 🟢
+          <View style={[styles.pulseDot, styles.pulseDotActive, justSynced && { backgroundColor: '#FFE259' }]} />
+          <ThemedText style={[styles.liveBtnText, styles.liveBtnTextActive, justSynced && { color: '#FFE259' }]}>
+            {justSynced ? '⚡ ¡Sincronizado al Instante! ⚡' : '⚡ Podómetro Automático: ACTIVO 24/7 🟢'}
           </ThemedText>
         </View>
         <ThemedText style={styles.liveSessionSubtext}>
-          Hardware de movimiento en vivo • Sincronización continua de fondo
+          {justSynced ? 'Lectura en tiempo real calibrada con el sensor de hardware' : 'Hardware de movimiento en vivo • Toca para forzar sincronización instantánea'}
         </ThemedText>
       </TouchableOpacity>
 

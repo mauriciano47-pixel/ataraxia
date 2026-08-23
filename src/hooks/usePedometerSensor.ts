@@ -5,17 +5,17 @@ import { SafeStorage } from '@/utils/safeStorage';
 
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 
-// Parámetros Biomecánicos de Marcha Humana (Filtro Anti-Trampa & Anti-Sacudidas)
-const MIN_RHYTHMIC_STRIDE_BUFFER = 5;    // Requiere mínimo 5 pasos consecutivos rítmicos para confirmar marcha
-const MIN_STEP_INTERVAL_MS = 380;       // Intervalo mínimo entre pasos (~158 pasos/min)
-const MAX_STEP_INTERVAL_MS = 1150;      // Intervalo máximo entre pasos (~52 pasos/min)
-const GAIT_TIMEOUT_MS = 1800;           // Si transcurren >1.8s sin paso, se confirma reposo y se descarta el buffer
-const MIN_VALID_ACCEL = 11.4;           // Umbral mínimo de impacto de talón (m/s²)
-const MAX_VALID_ACCEL = 17.2;           // Sacudidas bruscas de mano (>17.2 m/s²) son descartadas como trampa
+// Parámetros Biomecánicos Optimizados para Respuesta Inmediata (Zero-Lag)
+const MIN_RHYTHMIC_STRIDE_BUFFER = 2;    // Comienza a registrar al 2do paso rítmico (respuesta en <1 segundo)
+const MIN_STEP_INTERVAL_MS = 250;       // Intervalo mínimo entre pasos (hasta 240 pasos/minuto - trote/marcha rápida)
+const MAX_STEP_INTERVAL_MS = 1400;      // Intervalo máximo entre pasos (marcha lenta relajada)
+const GAIT_TIMEOUT_MS = 2200;           // Si transcurren >2.2s sin paso, se confirma reposo
+const MIN_VALID_ACCEL = 10.35;          // Umbral de impacto de talón optimizado para bolsillo y mano (m/s²)
+const MAX_VALID_ACCEL = 18.5;           // Descarte de sacudidas espasmódicas excesivas
 
 export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void) {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
-  const isLiveTracking = true; // IMPERATIVO: Siempre Activo 24/7 (Inmutable)
+  const isLiveTracking = true; // Always-On 24/7
   const [liveSessionSteps, setLiveSessionSteps] = useState<number>(() => {
     try {
       const saved = SafeStorage.getItem(PEDOMETER_SESSION_STEPS_KEY);
@@ -30,7 +30,8 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
   const candidateStepTimestamps = useRef<number[]>([]);
   const isWalkingGaitLocked = useRef<boolean>(false);
   const pedometerSubscription = useRef<any>(null);
-  const lastNativeStepCount = useRef<number>(0);
+  const lastHistoricalStepCount = useRef<number>(0);
+  const lastWatcherSteps = useRef<number>(0);
 
   // 1. Sincronización de Pasos Nativos 24h desde las 00:00 locales (Hardware Coprocessor)
   const syncNativeHistoricalSteps = useCallback(async () => {
@@ -47,11 +48,11 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
 
         const result = await Pedometer.getStepCountAsync(startOfDay, now);
         if (result && typeof result.steps === 'number') {
-          const delta = lastNativeStepCount.current === 0 
+          const delta = lastHistoricalStepCount.current === 0 
             ? result.steps 
-            : Math.max(0, result.steps - lastNativeStepCount.current);
+            : Math.max(0, result.steps - lastHistoricalStepCount.current);
 
-          lastNativeStepCount.current = result.steps;
+          lastHistoricalStepCount.current = result.steps;
 
           if (delta > 0) {
             setLiveSessionSteps((prev) => {
@@ -75,19 +76,28 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
         setIsAvailable(true);
       }
     } else {
-      // Plataforma Nativa (Android / iOS): Sincronizar historial 24h
+      // Plataforma Nativa (Android / iOS): Sincronizar historial 24h inicial
       syncNativeHistoricalSteps();
 
-      // Iniciar Watcher Nativo en Vivo Always-On
+      // Iniciar Watcher Nativo en Vivo con cálculo de Delta acumulativo exacto
       try {
+        lastWatcherSteps.current = 0;
         pedometerSubscription.current = Pedometer.watchStepCount((result) => {
-          if (result && typeof result.steps === 'number' && result.steps > 0) {
-            setLiveSessionSteps((prev) => {
-              const updated = prev + 1;
-              try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-              return updated;
-            });
-            onStepDetected(1);
+          if (result && typeof result.steps === 'number') {
+            const currentTotal = result.steps;
+            const delta = lastWatcherSteps.current === 0
+              ? currentTotal
+              : Math.max(0, currentTotal - lastWatcherSteps.current);
+
+            if (delta > 0) {
+              lastWatcherSteps.current = currentTotal;
+              setLiveSessionSteps((prev) => {
+                const updated = prev + delta;
+                try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+                return updated;
+              });
+              onStepDetected(delta);
+            }
           }
         });
       } catch (err) {
@@ -103,24 +113,24 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     };
   }, [syncNativeHistoricalSteps, onStepDetected]);
 
-  // 3. Sensor Web de Acelerómetro con FILTRO BIOMECÁNICO ANTI-SACUDIDAS & ANTI-TRAMPA
+  // 3. Sensor Web de Acelerómetro de Alta Sensibilidad & Respuesta Instantánea
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
-      const accel = event.accelerationIncludingGravity;
+      const accel = event.accelerationIncludingGravity || event.acceleration;
       if (!accel || accel.x === null || accel.y === null || accel.z === null) return;
 
       const mag = Math.sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
       const now = Date.now();
 
-      // Resetear buffer si el tiempo entre pasos supera el timeout de marcha (sujeto en reposo)
+      // Resetear buffer si el tiempo entre pasos supera el timeout de marcha
       if (now - lastStepTime.current > GAIT_TIMEOUT_MS) {
         candidateStepTimestamps.current = [];
         isWalkingGaitLocked.current = false;
       }
 
-      // Descartar sacudidas bruscas no fisiológicas de muñeca/mano (violencia > 17.2 m/s²)
+      // Descartar sacudidas no fisiológicas
       if (mag > MAX_VALID_ACCEL) {
         candidateStepTimestamps.current = [];
         isWalkingGaitLocked.current = false;
@@ -128,26 +138,24 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
         return;
       }
 
-      // Detección de cresta de onda de impacto de talón
+      // Detección de cresta de onda de impacto
       const isPeakCrossing = mag >= MIN_VALID_ACCEL && lastAccelMagnitude.current < MIN_VALID_ACCEL;
 
       if (isPeakCrossing) {
         const interval = now - lastStepTime.current;
 
-        // Si la frecuencia es demasiado rápida (<380ms), es agitación espasmódica de mano: DESCARTAR
+        // Descartar vibración ultrarrápida
         if (interval < MIN_STEP_INTERVAL_MS && lastStepTime.current !== 0) {
-          candidateStepTimestamps.current = [];
-          isWalkingGaitLocked.current = false;
           lastAccelMagnitude.current = mag;
           return;
         }
 
-        // Si el intervalo está en el rango fisiológico de marcha bípeda (380ms - 1150ms)
+        // Rango fisiológico de marcha
         if (interval >= MIN_STEP_INTERVAL_MS && interval <= MAX_STEP_INTERVAL_MS) {
           lastStepTime.current = now;
 
           if (isWalkingGaitLocked.current) {
-            // Ya está en marcha activa confirmada: Registrar paso real
+            // Marcha continua confirmada: registrar paso en vivo al instante (0ms lag)
             setLiveSessionSteps((prev) => {
               const updated = prev + 1;
               try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
@@ -155,11 +163,10 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
             });
             onStepDetected(1);
           } else {
-            // Acumulando candidatos en el buffer previo a validación
+            // Acumulando candidatos en el buffer rápido
             candidateStepTimestamps.current.push(now);
 
             if (candidateStepTimestamps.current.length >= MIN_RHYTHMIC_STRIDE_BUFFER) {
-              // Confirmada marcha humana continua de 5 pasos: Desbloquear y consolidar
               isWalkingGaitLocked.current = true;
               const countToCommit = candidateStepTimestamps.current.length;
               candidateStepTimestamps.current = [];
@@ -185,11 +192,11 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
       (DeviceMotionEvent as any).requestPermission().then((permissionState: string) => {
         if (permissionState === 'granted') {
-          window.addEventListener('devicemotion', handleMotion);
+          window.addEventListener('devicemotion', handleMotion, { passive: true });
         }
       }).catch(() => {});
     } else {
-      window.addEventListener('devicemotion', handleMotion);
+      window.addEventListener('devicemotion', handleMotion, { passive: true });
     }
 
     return () => {
@@ -215,10 +222,14 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     return () => sub.remove();
   }, [syncNativeHistoricalSteps]);
 
-  // Forzar sincronización inmediata (no pausa)
+  // Forzar sincronización inmediata
   const forceSyncSteps = useCallback(() => {
     if (Platform.OS !== 'web') {
       syncNativeHistoricalSteps();
+    } else {
+      lastStepTime.current = 0;
+      candidateStepTimestamps.current = [];
+      isWalkingGaitLocked.current = false;
     }
   }, [syncNativeHistoricalSteps]);
 
@@ -227,6 +238,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     isLiveTracking: true,
     liveSessionSteps,
     forceSyncSteps,
-    toggleLiveTracking: forceSyncSteps, // Al tocar el botón ejecuta sincronización forzada
+    toggleLiveTracking: forceSyncSteps,
   };
 }

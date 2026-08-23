@@ -329,6 +329,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
   const logRef = useRef<DailyLog>(log);
   const prevTodayRef = useRef(today);
+  const firestoreDebounceTimer = useRef<any>(null);
 
   useEffect(() => {
     if (prevTodayRef.current !== today) {
@@ -465,7 +466,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribeSnapshot();
   }, [user, today, isLocalMode]);
 
-  const updateLog = async (updates: Partial<DailyLog>) => {
+  const updateLog = (updates: Partial<DailyLog>) => {
     const current = logRef.current;
     const newLog: DailyLog = {
       ...current,
@@ -486,12 +487,17 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveLocalDailyLog(today, newLog);
 
     if (user && db && !isLocalMode) {
-      const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
-      try {
-        await setDoc(docRef, updates, { merge: true });
-      } catch (error) {
-        console.warn("Error en setDoc Firestore:", error);
+      if (firestoreDebounceTimer.current) {
+        clearTimeout(firestoreDebounceTimer.current);
       }
+      firestoreDebounceTimer.current = setTimeout(async () => {
+        try {
+          const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
+          await setDoc(docRef, updates, { merge: true });
+        } catch (error) {
+          console.warn("Error en setDoc Firestore:", error);
+        }
+      }, 1000);
     }
   };
 
