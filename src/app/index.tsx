@@ -23,10 +23,20 @@ import { StoicTwinMetabolicCards } from '@/components/StoicTwinMetabolicCards';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
+import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 export default function HoyScreen() {
   const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
   const router = useRouter();
+
+  // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7
+  const {
+    isLiveTracking,
+    isTransitMode,
+    isVehicleDetected,
+    toggleTransitMode,
+    forceSyncSteps,
+  } = usePedometerSensor(addSteps);
 
   const isRegisteredUser = Boolean(
     log.hasCompletedOnboarding ||
@@ -190,12 +200,18 @@ export default function HoyScreen() {
               <ThemedText style={styles.sectionPctBadge}>{(strengthProgress * 100).toFixed(0)}%</ThemedText>
             </View>
 
-            {/* Step Counter Card con Podómetro en Vivo */}
+            {/* Step Counter Card con Podómetro Biomecánico & Filtro Anti-Vehículo */}
             <StepCounterCard
               steps={log.steps || 0}
               stepGoal={log.stepGoal || 10000}
+              onOpenCalibration={() => setShowStepCalibration(true)}
               onAddSteps={addSteps}
               onSetStepGoal={setStepGoal}
+              isLiveTracking={isLiveTracking}
+              isTransitMode={isTransitMode}
+              isVehicleDetected={isVehicleDetected}
+              onToggleTransitMode={toggleTransitMode}
+              onForceSync={forceSyncSteps}
             />
 
             {/* Fila Doble: Misión Táctica de la Senda & Principio Estoico */}

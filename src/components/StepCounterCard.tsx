@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -12,6 +12,11 @@ interface StepCounterCardProps {
   onOpenCalibration?: () => void;
   onAddSteps?: (amount: number) => void;
   onSetStepGoal?: (goal: number) => void;
+  isLiveTracking?: boolean;
+  isTransitMode?: boolean;
+  isVehicleDetected?: boolean;
+  onToggleTransitMode?: () => void;
+  onForceSync?: () => void;
 }
 
 export function StepCounterCard({
@@ -20,7 +25,16 @@ export function StepCounterCard({
   steps,
   stepGoal,
   onOpenCalibration,
+  onAddSteps,
+  onSetStepGoal,
+  isLiveTracking = true,
+  isTransitMode = false,
+  isVehicleDetected = false,
+  onToggleTransitMode,
+  onForceSync,
 }: StepCounterCardProps) {
+  const [justSynced, setJustSynced] = useState(false);
+
   const actualSteps = currentSteps ?? steps ?? 0;
   const actualGoal = goal ?? stepGoal ?? 10000;
   const progressRatio = actualGoal > 0 ? Math.min(1, actualSteps / actualGoal) : 0;
@@ -28,27 +42,57 @@ export function StepCounterCard({
   const kcalBurned = Math.round(actualSteps * 0.045);
   const activeMinutes = Math.round(actualSteps / 110);
 
+  const isPaused = isTransitMode || isVehicleDetected;
+
+  const handleSyncPress = () => {
+    if (onForceSync) {
+      onForceSync();
+    }
+    setJustSynced(true);
+    setTimeout(() => setJustSynced(false), 1600);
+  };
+
   return (
-    <View style={styles.card}>
-      {/* CABECERA */}
+    <View style={[styles.card, isPaused && styles.cardPaused]}>
+      {/* CABECERA & BADGE DE ESTADO BIOMECÁNICO */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <ThemedText style={styles.headerGoldText}>👟 PODÓMETRO BIOMECÁNICO 24/7</ThemedText>
           <View style={styles.liveSensorRow}>
-            <View style={styles.liveGreenDot} />
-            <ThemedText style={styles.liveSensorText}>SENSOR DE MOVIMIENTO ACTIVO</ThemedText>
+            <View style={[styles.liveDot, isPaused ? styles.liveDotAmber : styles.liveDotGreen]} />
+            <ThemedText style={[styles.liveSensorText, isPaused && styles.liveSensorTextAmber]}>
+              {isVehicleDetected
+                ? '🚗 MODO VEHÍCULO DETECTADO (>20 km/h)'
+                : isTransitMode
+                ? '🚗 MODO TRÁNSITO ACTIVO (PAUSADO)'
+                : '🟢 SENSOR DINÁMICO ACTIVO (ZERO-LAG)'}
+            </ThemedText>
           </View>
         </View>
 
-        {onOpenCalibration && (
-          <TouchableOpacity
-            style={styles.calibrationBtn}
-            activeOpacity={0.7}
-            onPress={onOpenCalibration}
-          >
-            <ThemedText style={styles.calibrationBtnText}>⚙️ Calibrar Sensor</ThemedText>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerActions}>
+          {onToggleTransitMode && (
+            <TouchableOpacity
+              style={[styles.transitBtn, isTransitMode && styles.transitBtnActive]}
+              activeOpacity={0.75}
+              onPress={onToggleTransitMode}
+            >
+              <ThemedText style={[styles.transitBtnText, isTransitMode && styles.transitBtnTextActive]}>
+                {isTransitMode ? '🚗 En Viaje' : '🚶‍♂️ A Pie'}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+
+          {onOpenCalibration && (
+            <TouchableOpacity
+              style={styles.calibrationBtn}
+              activeOpacity={0.7}
+              onPress={onOpenCalibration}
+            >
+              <ThemedText style={styles.calibrationBtnText}>⚙️ Calibrar</ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* CONTADOR PRINCIPAL REAL */}
@@ -65,7 +109,7 @@ export function StepCounterCard({
       {/* BARRA DE PROGRESO DE ALTA TENSIÓN */}
       <View style={styles.progressBarTrack}>
         <LinearGradient
-          colors={progressRatio >= 1 ? ['#059669', '#10B981'] : ['#D4AF37', '#F59E0B']}
+          colors={progressRatio >= 1 ? ['#059669', '#10B981'] : isPaused ? ['#B45309', '#F59E0B'] : ['#D4AF37', '#F59E0B']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.progressBarFill, { width: `${Math.max(4, progressRatio * 100)}%` }]}
@@ -94,28 +138,42 @@ export function StepCounterCard({
         </View>
       </View>
 
-      {/* AVISO DE HONOR ESTOICO */}
-      <View style={styles.honorNoticeBox}>
-        <ThemedText style={styles.honorNoticeText}>
-          ⚔️ "Los pasos se ganan con los pies en la tierra; el templo no admite atajos ni trampas."
+      {/* BOTÓN DE SINCRONIZACIÓN INMEDIATA & AVISO ANTI-VEHÍCULO */}
+      <TouchableOpacity
+        style={[styles.syncButtonRow, justSynced && styles.syncButtonRowActive]}
+        activeOpacity={0.8}
+        onPress={handleSyncPress}
+      >
+        <ThemedText style={styles.syncButtonSparkle}>⚡</ThemedText>
+        <ThemedText style={[styles.syncButtonText, justSynced && { color: '#FFE259' }]}>
+          {justSynced
+            ? '¡Lectura de Sensor Sincronizada al Instante!'
+            : isPaused
+            ? 'Pausado: Baches y velocidad vehicular filtrados. Toca para sincronizar.'
+            : 'Filtro Dinámico Anti-Vehículo Activo • Toca para forzar sincronización'}
         </ThemedText>
-      </View>
+        <ThemedText style={styles.syncButtonSparkle}>⚡</ThemedText>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(14, 20, 36, 0.92)',
+    backgroundColor: 'rgba(14, 20, 36, 0.94)',
     borderRadius: 16,
     padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(212, 175, 55, 0.38)',
     gap: 12,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+  },
+  cardPaused: {
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+    backgroundColor: 'rgba(20, 16, 28, 0.94)',
   },
   headerRow: {
     flexDirection: 'row',
@@ -124,6 +182,7 @@ const styles = StyleSheet.create({
   },
   titleGroup: {
     gap: 2,
+    flex: 1,
   },
   headerGoldText: {
     fontSize: 10,
@@ -138,11 +197,16 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 2,
   },
-  liveGreenDot: {
+  liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  liveDotGreen: {
     backgroundColor: '#10B981',
+  },
+  liveDotAmber: {
+    backgroundColor: '#F59E0B',
   },
   liveSensorText: {
     fontSize: 9,
@@ -151,16 +215,45 @@ const styles = StyleSheet.create({
     color: '#34D399',
     letterSpacing: 0.5,
   },
+  liveSensorTextAmber: {
+    color: '#FBBF24',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  transitBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+  },
+  transitBtnActive: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderColor: '#F59E0B',
+  },
+  transitBtnText: {
+    fontSize: 9.5,
+    color: '#CBD5E1',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  transitBtnTextActive: {
+    color: '#FDE68A',
+  },
   calibrationBtn: {
     paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   calibrationBtnText: {
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
   },
@@ -232,18 +325,31 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#94A3B8',
   },
-  honorNoticeBox: {
-    backgroundColor: 'rgba(212, 175, 55, 0.06)',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+  syncButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    gap: 6,
   },
-  honorNoticeText: {
-    fontSize: 10,
-    color: '#CBD5E1',
-    fontStyle: 'italic',
+  syncButtonRowActive: {
+    backgroundColor: 'rgba(255, 226, 89, 0.2)',
+    borderColor: '#FFE259',
+  },
+  syncButtonSparkle: {
+    fontSize: 12,
+    color: '#FFE259',
+  },
+  syncButtonText: {
+    fontSize: 9.5,
+    color: '#E2E8F0',
+    fontFamily: 'monospace',
     textAlign: 'center',
+    flex: 1,
   },
 });

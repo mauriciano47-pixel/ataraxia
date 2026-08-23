@@ -4,18 +4,28 @@ import { Pedometer } from 'expo-sensors';
 import { SafeStorage } from '@/utils/safeStorage';
 
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
+const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos Optimizados para Respuesta Inmediata (Zero-Lag)
-const MIN_RHYTHMIC_STRIDE_BUFFER = 2;    // Comienza a registrar al 2do paso rítmico (respuesta en <1 segundo)
-const MIN_STEP_INTERVAL_MS = 250;       // Intervalo mínimo entre pasos (hasta 240 pasos/minuto - trote/marcha rápida)
-const MAX_STEP_INTERVAL_MS = 1400;      // Intervalo máximo entre pasos (marcha lenta relajada)
-const GAIT_TIMEOUT_MS = 2200;           // Si transcurren >2.2s sin paso, se confirma reposo
-const MIN_VALID_ACCEL = 10.35;          // Umbral de impacto de talón optimizado para bolsillo y mano (m/s²)
-const MAX_VALID_ACCEL = 18.5;           // Descarte de sacudidas espasmódicas excesivas
+// Parámetros Biomecánicos de Alta Precisión (Filtro Dinámico de Gravedad y Zancada)
+const GRAVITY_ALPHA = 0.85;             // Coeficiente de filtro paso-bajo para aislar vector gravedad
+const STEP_CREST_THRESHOLD = 1.20;      // Umbral dinámico de impacto de talón (m/s² sobre línea base cero)
+const STEP_TROUGH_THRESHOLD = 0.45;     // Umbral de despegue/valle para completar el ciclo sinusoidal del paso
+const MIN_CADENCE_INTERVAL_MS = 240;    // Intervalo mínimo entre pasos (hasta 250 pasos/minuto - sprint/trote)
+const MAX_CADENCE_INTERVAL_MS = 1400;   // Intervalo máximo entre pasos (marcha lenta)
+const GAIT_TIMEOUT_MS = 2400;           // Tiempo límite para confirmar pausa/reposo
+const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h (~5.55 m/s) = Velocidad de vehículo (pausa inmediata)
 
 export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void) {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
-  const isLiveTracking = true; // Always-On 24/7
+  const [isVehicleDetected, setIsVehicleDetected] = useState<boolean>(false);
+  const [isTransitMode, setIsTransitMode] = useState<boolean>(() => {
+    try {
+      return SafeStorage.getItem(TRANSIT_MODE_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [liveSessionSteps, setLiveSessionSteps] = useState<number>(() => {
     try {
       const saved = SafeStorage.getItem(PEDOMETER_SESSION_STEPS_KEY);
@@ -25,13 +35,19 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     }
   });
 
-  const lastAccelMagnitude = useRef<number>(0);
-  const lastStepTime = useRef<number>(0);
-  const candidateStepTimestamps = useRef<number[]>([]);
-  const isWalkingGaitLocked = useRef<boolean>(false);
-  const pedometerSubscription = useRef<any>(null);
-  const lastHistoricalStepCount = useRef<number>(0);
-  const lastWatcherSteps = useRef<number>(0);
+  // Referencias para el filtro paso-alto y supresión de gravedad
+  const gravityRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 9.8, z: 0 });
+  const isCrestDetectedRef = useRef<boolean>(false);
+  const lastStepTimeRef = useRef<number>(0);
+  const consecutiveStepsCountRef = useRef<number>(0);
+  const pedometerSubscriptionRef = useRef<any>(null);
+  const lastHistoricalCountRef = useRef<number>(0);
+  const lastWatcherCumulativeRef = useRef<number>(0);
+  const transitModeRef = useRef<boolean>(isTransitMode);
+  transitModeRef.current = isTransitMode;
+
+  const onStepDetectedRef = useRef(onStepDetected);
+  onStepDetectedRef.current = onStepDetected;
 
   // 1. Sincronización de Pasos Nativos 24h desde las 00:00 locales (Hardware Coprocessor)
   const syncNativeHistoricalSteps = useCallback(async () => {
@@ -48,145 +64,158 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
 
         const result = await Pedometer.getStepCountAsync(startOfDay, now);
         if (result && typeof result.steps === 'number') {
-          const delta = lastHistoricalStepCount.current === 0 
+          const delta = lastHistoricalCountRef.current === 0 
             ? result.steps 
-            : Math.max(0, result.steps - lastHistoricalStepCount.current);
+            : Math.max(0, result.steps - lastHistoricalCountRef.current);
 
-          lastHistoricalStepCount.current = result.steps;
+          lastHistoricalCountRef.current = result.steps;
 
-          if (delta > 0) {
+          if (delta > 0 && !transitModeRef.current) {
             setLiveSessionSteps((prev) => {
               const updated = prev + delta;
               try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
               return updated;
             });
-            onStepDetected(delta);
+            onStepDetectedRef.current(delta);
           }
         }
       }
     } catch (e) {
       console.warn('[usePedometerSensor] Error sincronizando podómetro nativo:', e);
     }
-  }, [onStepDetected]);
+  }, []);
 
-  // 2. Iniciar sensores permanentes en el montaje
+  // 2. Velocímetro GPS / Geolocation Speed Gate (Anti-Vehículo / Auto / Bus)
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && 'DeviceMotionEvent' in window) {
-        setIsAvailable(true);
-      }
-    } else {
-      // Plataforma Nativa (Android / iOS): Sincronizar historial 24h inicial
-      syncNativeHistoricalSteps();
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
 
-      // Iniciar Watcher Nativo en Vivo con cálculo de Delta acumulativo exacto
-      try {
-        lastWatcherSteps.current = 0;
-        pedometerSubscription.current = Pedometer.watchStepCount((result) => {
-          if (result && typeof result.steps === 'number') {
-            const currentTotal = result.steps;
-            const delta = lastWatcherSteps.current === 0
-              ? currentTotal
-              : Math.max(0, currentTotal - lastWatcherSteps.current);
-
-            if (delta > 0) {
-              lastWatcherSteps.current = currentTotal;
-              setLiveSessionSteps((prev) => {
-                const updated = prev + delta;
-                try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-                return updated;
-              });
-              onStepDetected(delta);
-            }
+    let geoWatchId: number | null = null;
+    try {
+      geoWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const speed = position.coords.speed; // metros por segundo
+          if (typeof speed === 'number' && speed > MAX_VEHICLE_SPEED_MS) {
+            setIsVehicleDetected(true);
+          } else {
+            setIsVehicleDetected(false);
           }
-        });
-      } catch (err) {
-        console.warn('[usePedometerSensor] Error iniciando watchStepCount:', err);
-      }
+        },
+        () => {
+          // Si no hay permiso GPS, el filtro de armónicos biomecánicos asume la protección
+          setIsVehicleDetected(false);
+        },
+        { enableHighAccuracy: false, maximumAge: 5000, timeout: 10000 }
+      );
+    } catch (e) {
+      console.warn('[usePedometerSensor] Geolocation no disponible:', e);
     }
 
     return () => {
-      if (pedometerSubscription.current) {
-        pedometerSubscription.current.remove();
-        pedometerSubscription.current = null;
+      if (geoWatchId !== null) {
+        navigator.geolocation.clearWatch(geoWatchId);
       }
     };
-  }, [syncNativeHistoricalSteps, onStepDetected]);
+  }, []);
 
-  // 3. Sensor Web de Acelerómetro de Alta Sensibilidad & Respuesta Instantánea
+  // 3. Sensor Nativo Always-On (Android / iOS)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    syncNativeHistoricalSteps();
+
+    try {
+      lastWatcherCumulativeRef.current = 0;
+      pedometerSubscriptionRef.current = Pedometer.watchStepCount((result) => {
+        if (result && typeof result.steps === 'number' && !transitModeRef.current) {
+          const currentTotal = result.steps;
+          const delta = lastWatcherCumulativeRef.current === 0
+            ? currentTotal
+            : Math.max(0, currentTotal - lastWatcherCumulativeRef.current);
+
+          if (delta > 0) {
+            lastWatcherCumulativeRef.current = currentTotal;
+            setLiveSessionSteps((prev) => {
+              const updated = prev + delta;
+              try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+              return updated;
+            });
+            onStepDetectedRef.current(delta);
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('[usePedometerSensor] Error iniciando watcher nativo:', err);
+    }
+
+    return () => {
+      if (pedometerSubscriptionRef.current) {
+        pedometerSubscriptionRef.current.remove();
+        pedometerSubscriptionRef.current = null;
+      }
+    };
+  }, [syncNativeHistoricalSteps]);
+
+  // 4. Sensor Web de Acelerómetro con Filtro de Separación de Gravedad & Ciclo Completo
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
-      const accel = event.accelerationIncludingGravity || event.acceleration;
-      if (!accel || accel.x === null || accel.y === null || accel.z === null) return;
+      if (transitModeRef.current) return;
 
-      const mag = Math.sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
+      const raw = event.accelerationIncludingGravity || event.acceleration;
+      if (!raw || raw.x === null || raw.y === null || raw.z === null) return;
+
+      const rx = raw.x;
+      const ry = raw.y;
+      const rz = raw.z;
+
+      // Filtro paso-bajo para aislar la componente estática de la gravedad
+      gravityRef.current.x = GRAVITY_ALPHA * gravityRef.current.x + (1 - GRAVITY_ALPHA) * rx;
+      gravityRef.current.y = GRAVITY_ALPHA * gravityRef.current.y + (1 - GRAVITY_ALPHA) * ry;
+      gravityRef.current.z = GRAVITY_ALPHA * gravityRef.current.z + (1 - GRAVITY_ALPHA) * rz;
+
+      // Aceleración dinámica lineal pura (sin gravedad y sin importar orientación del móvil)
+      const lx = rx - gravityRef.current.x;
+      const ly = ry - gravityRef.current.y;
+      const lz = rz - gravityRef.current.z;
+
+      const dynamicMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
       const now = Date.now();
+      const interval = now - lastStepTimeRef.current;
 
-      // Resetear buffer si el tiempo entre pasos supera el timeout de marcha
-      if (now - lastStepTime.current > GAIT_TIMEOUT_MS) {
-        candidateStepTimestamps.current = [];
-        isWalkingGaitLocked.current = false;
+      // Reiniciar buffer si el usuario estuvo en reposo prolongado
+      if (interval > GAIT_TIMEOUT_MS) {
+        consecutiveStepsCountRef.current = 0;
+        isCrestDetectedRef.current = false;
       }
 
-      // Descartar sacudidas no fisiológicas
-      if (mag > MAX_VALID_ACCEL) {
-        candidateStepTimestamps.current = [];
-        isWalkingGaitLocked.current = false;
-        lastAccelMagnitude.current = mag;
-        return;
-      }
-
-      // Detección de cresta de onda de impacto
-      const isPeakCrossing = mag >= MIN_VALID_ACCEL && lastAccelMagnitude.current < MIN_VALID_ACCEL;
-
-      if (isPeakCrossing) {
-        const interval = now - lastStepTime.current;
-
-        // Descartar vibración ultrarrápida
-        if (interval < MIN_STEP_INTERVAL_MS && lastStepTime.current !== 0) {
-          lastAccelMagnitude.current = mag;
-          return;
-        }
-
-        // Rango fisiológico de marcha
-        if (interval >= MIN_STEP_INTERVAL_MS && interval <= MAX_STEP_INTERVAL_MS) {
-          lastStepTime.current = now;
-
-          if (isWalkingGaitLocked.current) {
-            // Marcha continua confirmada: registrar paso en vivo al instante (0ms lag)
-            setLiveSessionSteps((prev) => {
-              const updated = prev + 1;
-              try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-              return updated;
-            });
-            onStepDetected(1);
-          } else {
-            // Acumulando candidatos en el buffer rápido
-            candidateStepTimestamps.current.push(now);
-
-            if (candidateStepTimestamps.current.length >= MIN_RHYTHMIC_STRIDE_BUFFER) {
-              isWalkingGaitLocked.current = true;
-              const countToCommit = candidateStepTimestamps.current.length;
-              candidateStepTimestamps.current = [];
-
-              setLiveSessionSteps((prev) => {
-                const updated = prev + countToCommit;
-                try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-                return updated;
-              });
-              onStepDetected(countToCommit);
-            }
-          }
-        } else if (lastStepTime.current === 0 || interval > MAX_STEP_INTERVAL_MS) {
-          // Primer paso tentativo desde reposo
-          lastStepTime.current = now;
-          candidateStepTimestamps.current = [now];
+      // FASE 1: Detección de cresta de impacto (Talón contra el suelo)
+      if (!isCrestDetectedRef.current && dynamicMag >= STEP_CREST_THRESHOLD) {
+        if (interval >= MIN_CADENCE_INTERVAL_MS || lastStepTimeRef.current === 0) {
+          isCrestDetectedRef.current = true;
         }
       }
 
-      lastAccelMagnitude.current = mag;
+      // FASE 2: Detección de valle de despegue (Ciclo sinusoidal completo confirmado)
+      if (isCrestDetectedRef.current && dynamicMag <= STEP_TROUGH_THRESHOLD) {
+        isCrestDetectedRef.current = false;
+
+        if (interval >= MIN_CADENCE_INTERVAL_MS && interval <= MAX_CADENCE_INTERVAL_MS) {
+          lastStepTimeRef.current = now;
+          consecutiveStepsCountRef.current += 1;
+
+          // Registrar paso real en vivo de forma inmediata
+          setLiveSessionSteps((prev) => {
+            const updated = prev + 1;
+            try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+            return updated;
+          });
+          onStepDetectedRef.current(1);
+        } else if (lastStepTimeRef.current === 0 || interval > MAX_CADENCE_INTERVAL_MS) {
+          lastStepTimeRef.current = now;
+          consecutiveStepsCountRef.current = 1;
+        }
+      }
     };
 
     if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
@@ -202,18 +231,18 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, [onStepDetected]);
+  }, []);
 
-  // 4. Manejo de Ciclo de Vida: Reanudar y Sincronizar Pasos al regresar de Segundo Plano
+  // 5. Manejo de Ciclo de Vida: Reanudar al volver de segundo plano
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         if (Platform.OS !== 'web') {
           syncNativeHistoricalSteps();
         } else {
-          lastStepTime.current = 0;
-          candidateStepTimestamps.current = [];
-          isWalkingGaitLocked.current = false;
+          lastStepTimeRef.current = 0;
+          isCrestDetectedRef.current = false;
+          consecutiveStepsCountRef.current = 0;
         }
       }
     };
@@ -222,22 +251,34 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     return () => sub.remove();
   }, [syncNativeHistoricalSteps]);
 
-  // Forzar sincronización inmediata
+  // Forzar sincronización o alternar Modo Tránsito
   const forceSyncSteps = useCallback(() => {
     if (Platform.OS !== 'web') {
       syncNativeHistoricalSteps();
     } else {
-      lastStepTime.current = 0;
-      candidateStepTimestamps.current = [];
-      isWalkingGaitLocked.current = false;
+      lastStepTimeRef.current = 0;
+      isCrestDetectedRef.current = false;
     }
   }, [syncNativeHistoricalSteps]);
 
+  const toggleTransitMode = useCallback(() => {
+    setIsTransitMode((prev) => {
+      const nextVal = !prev;
+      try {
+        SafeStorage.setItem(TRANSIT_MODE_STORAGE_KEY, String(nextVal));
+      } catch {}
+      return nextVal;
+    });
+  }, []);
+
   return {
     isAvailable,
-    isLiveTracking: true,
+    isLiveTracking: !isTransitMode && !isVehicleDetected,
+    isTransitMode,
+    isVehicleDetected,
     liveSessionSteps,
     forceSyncSteps,
+    toggleTransitMode,
     toggleLiveTracking: forceSyncSteps,
   };
 }
