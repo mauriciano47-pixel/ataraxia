@@ -1,24 +1,32 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 
 interface StepCounterCardProps {
-  currentSteps: number;
-  goal: number;
+  currentSteps?: number;
+  goal?: number;
+  steps?: number;
+  stepGoal?: number;
   onOpenCalibration?: () => void;
+  onAddSteps?: (amount: number) => void;
+  onSetStepGoal?: (goal: number) => void;
 }
 
 export function StepCounterCard({
   currentSteps,
   goal,
+  steps,
+  stepGoal,
   onOpenCalibration,
 }: StepCounterCardProps) {
-  const progressRatio = goal > 0 ? Math.min(1, currentSteps / goal) : 0;
-  const km = (currentSteps * 0.00075).toFixed(2);
-  const kcalBurned = Math.round(currentSteps * 0.045);
-  const activeMinutes = Math.round(currentSteps / 110);
+  const actualSteps = currentSteps ?? steps ?? 0;
+  const actualGoal = goal ?? stepGoal ?? 10000;
+  const progressRatio = actualGoal > 0 ? Math.min(1, actualSteps / actualGoal) : 0;
+  const km = (actualSteps * 0.00075).toFixed(2);
+  const kcalBurned = Math.round(actualSteps * 0.045);
+  const activeMinutes = Math.round(actualSteps / 110);
 
   return (
     <View style={styles.card}>
@@ -46,8 +54,8 @@ export function StepCounterCard({
       {/* CONTADOR PRINCIPAL REAL */}
       <View style={styles.stepsMainRow}>
         <ThemedText style={styles.stepsCountText}>
-          {currentSteps.toLocaleString()}
-          <ThemedText style={styles.stepsGoalSub}> / {goal.toLocaleString()} pasos</ThemedText>
+          {actualSteps.toLocaleString()}
+          <ThemedText style={styles.stepsGoalSub}> / {actualGoal.toLocaleString()} pasos</ThemedText>
         </ThemedText>
         <ThemedText style={styles.pctBadgeText}>
           {(progressRatio * 100).toFixed(0)}%

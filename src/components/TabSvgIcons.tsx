@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 
 interface IconProps {
-  color?: string;
+  color?: any;
   size?: number;
   focused?: boolean;
 }
