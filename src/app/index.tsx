@@ -421,14 +421,6 @@ export default function HoyScreen() {
               legendaryPath={currentPath}
             />
 
-            <CalorieIndexCard
-              consumedCalories={log.totalCalories || 0}
-              targetCalories={log.targetCalories || 2200}
-              userMetrics={log.userMetrics}
-              consumedMacros={log.macros}
-              onUpdateMetrics={updateUserMetrics}
-            />
-
             <SmartDeviceCard
               deviceState={log.smartDevice}
               onUpdateDevice={updateSmartDevice}
