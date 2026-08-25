@@ -24,7 +24,7 @@ const STOIC_PRESET_AVATARS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { log, setStoicAvatar, saveFullProfile, setCoachArchetype, selectLegendaryPath } = useDailyLog();
+  const { log, setStoicAvatar, saveFullProfile, setCoachArchetype, selectLegendaryPath, resetOnboarding, resetMonthlyCycle } = useDailyLog();
 
   const [mementoMoriEnabled, setMementoMoriEnabled] = useState(true);
   const [fastingEnabled, setFastingEnabled] = useState(false);
@@ -122,6 +122,55 @@ export default function ProfileScreen() {
 
     setShowEditModal(false);
     Alert.alert("Perfil Calibrado", "Tus datos biométricos han sido actualizados con éxito.");
+  };
+
+  const handleDestroyEgo = () => {
+    const executeWipe = () => {
+      // 1. Limpiar todo el almacenamiento local de Ataraxia
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i);
+          if (key && (key.startsWith('ataraxia') || key.startsWith('stoic') || key.startsWith('daily_log') || key.startsWith('fasting'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => window.localStorage.removeItem(k));
+      }
+
+      // 2. Resetear Onboarding y Ciclo en Contexto
+      if (resetOnboarding) resetOnboarding();
+      if (resetMonthlyCycle) resetMonthlyCycle();
+
+      // 3. Redirigir al inicio del Templo (Papiro Sagrado)
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.replace('/');
+      }
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const confirmed = window.confirm(
+        '🔥 DESTRUCCIÓN DEL EGO: ¿Estás seguro de purificar todos tus registros?\n\nSe borrarán tus datos biométricos, racha, senda y pacto para renacer desde cero absoluto.'
+      );
+      if (confirmed) {
+        executeWipe();
+      }
+    } else {
+      Alert.alert(
+        '🔥 Destruir Ego',
+        '¿Estás seguro de purificar todos tus registros? Se borrarán tus datos, racha y pacto para comenzar de nuevo desde el Día 1.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Destruir y Renacer',
+            style: 'destructive',
+            onPress: executeWipe,
+          },
+        ]
+      );
+    }
   };
 
   return (
@@ -410,7 +459,7 @@ export default function ProfileScreen() {
 
           {/* Sección de Peligro */}
           <ThemedView style={[styles.section, { borderColor: 'rgba(239, 68, 68, 0.35)', marginTop: Spacing.two }]}>
-            <TouchableOpacity style={styles.dangerButton} onPress={() => Alert.alert("Destruir Ego", "Esta acción limpiará permanentemente tu cuenta.")}>
+            <TouchableOpacity style={styles.dangerButton} onPress={handleDestroyEgo} activeOpacity={0.8}>
               <Ionicons name="flame-outline" size={20} color="#FF453A" />
               <ThemedText style={styles.dangerText}>Destruir Ego (Reiniciar Datos)</ThemedText>
             </TouchableOpacity>

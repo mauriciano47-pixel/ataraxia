@@ -446,6 +446,8 @@ export default function HoyScreen() {
             onSetSteps={setSteps}
             onAddSteps={addSteps}
             onSetStepGoal={setStepGoal}
+            isLiveTracking={isLiveTracking}
+            onToggleLiveTracking={toggleTransitMode}
           />
         )}
 

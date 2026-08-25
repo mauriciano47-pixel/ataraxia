@@ -6,14 +6,14 @@ import { SafeStorage } from '@/utils/safeStorage';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos de Alta Precisión (Filtro Dinámico de Gravedad y Zancada)
-const GRAVITY_ALPHA = 0.85;             // Coeficiente de filtro paso-bajo para aislar vector gravedad
-const STEP_CREST_THRESHOLD = 1.20;      // Umbral dinámico de impacto de talón (m/s² sobre línea base cero)
-const STEP_TROUGH_THRESHOLD = 0.45;     // Umbral de despegue/valle para completar el ciclo sinusoidal del paso
-const MIN_CADENCE_INTERVAL_MS = 240;    // Intervalo mínimo entre pasos (hasta 250 pasos/minuto - sprint/trote)
-const MAX_CADENCE_INTERVAL_MS = 1400;   // Intervalo máximo entre pasos (marcha lenta)
-const GAIT_TIMEOUT_MS = 2400;           // Tiempo límite para confirmar pausa/reposo
-const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h (~5.55 m/s) = Velocidad de vehículo (pausa inmediata)
+// Parámetros Biomecánicos Calibrados de Alta Sensibilidad y Filtro de Gravedad
+const GRAVITY_ALPHA = 0.80;             // Coeficiente paso-bajo para vector gravedad
+const STEP_CREST_THRESHOLD = 0.70;      // Umbral dinámico de impacto (m/s² sobre línea base) - Calibrado para bolsillos y mano
+const STEP_TROUGH_THRESHOLD = 0.25;     // Umbral de despegue/valle para completar ciclo
+const MIN_CADENCE_INTERVAL_MS = 220;    // Intervalo mínimo entre pasos (hasta 270 pasos/min)
+const MAX_CADENCE_INTERVAL_MS = 1600;   // Intervalo máximo entre pasos (marcha pausada)
+const GAIT_TIMEOUT_MS = 2500;           // Tiempo para confirmar reposo
+const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void) {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
@@ -258,6 +258,11 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     } else {
       lastStepTimeRef.current = 0;
       isCrestDetectedRef.current = false;
+
+      // Solicitar permiso de movimiento en navegadores móviles (iOS/Android)
+      if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
+        (DeviceMotionEvent as any).requestPermission().catch(() => {});
+      }
     }
   }, [syncNativeHistoricalSteps]);
 

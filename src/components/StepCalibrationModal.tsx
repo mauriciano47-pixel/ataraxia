@@ -13,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
-import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 interface StepCalibrationModalProps {
   visible: boolean;
@@ -23,6 +22,8 @@ interface StepCalibrationModalProps {
   onSetSteps: (steps: number) => void;
   onAddSteps: (amount: number) => void;
   onSetStepGoal?: (goal: number) => void;
+  isLiveTracking?: boolean;
+  onToggleLiveTracking?: () => void;
 }
 
 export function StepCalibrationModal({
@@ -33,15 +34,15 @@ export function StepCalibrationModal({
   onSetSteps,
   onAddSteps,
   onSetStepGoal,
+  isLiveTracking = true,
+  onToggleLiveTracking,
 }: StepCalibrationModalProps) {
   const [exactInput, setExactInput] = useState<string>(currentSteps.toString());
   const [goalInput, setGoalInput] = useState<string>(stepGoal.toString());
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false);
 
   const { km, caloriesBurned } = estimateStepMetrics(currentSteps);
-  const { isLiveTracking, toggleLiveTracking, isAvailable } = usePedometerSensor((added) => {
-    onAddSteps(added);
-  });
+  const toggleLiveTracking = onToggleLiveTracking ?? (() => {});
 
   const handleSaveExact = () => {
     const val = parseInt(exactInput, 10);
