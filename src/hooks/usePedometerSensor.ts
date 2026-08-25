@@ -243,8 +243,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
           syncNativeHistoricalSteps();
         } else {
           lastStepTimeRef.current = 0;
-          isCrestDetectedRef.current = false;
-          consecutiveStepsCountRef.current = 0;
         }
       }
     };
@@ -259,7 +257,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
       syncNativeHistoricalSteps();
     } else {
       lastStepTimeRef.current = 0;
-      isCrestDetectedRef.current = false;
 
       // Solicitar permiso de movimiento en navegadores móviles (iOS/Android)
       if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
