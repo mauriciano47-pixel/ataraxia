@@ -7,12 +7,10 @@ const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
 // Parámetros Biomecánicos Calibrados de Alta Sensibilidad y Filtro de Gravedad
-const GRAVITY_ALPHA = 0.80;             // Coeficiente paso-bajo para vector gravedad
-const STEP_CREST_THRESHOLD = 0.70;      // Umbral dinámico de impacto (m/s² sobre línea base) - Calibrado para bolsillos y mano
-const STEP_TROUGH_THRESHOLD = 0.25;     // Umbral de despegue/valle para completar ciclo
-const MIN_CADENCE_INTERVAL_MS = 220;    // Intervalo mínimo entre pasos (hasta 270 pasos/min)
-const MAX_CADENCE_INTERVAL_MS = 1600;   // Intervalo máximo entre pasos (marcha pausada)
-const GAIT_TIMEOUT_MS = 2500;           // Tiempo para confirmar reposo
+const GRAVITY_ALPHA = 0.98;             // Coeficiente paso-bajo estándar (constante de tiempo ~1s a 60Hz)
+const STEP_THRESHOLD = 0.55;            // Umbral dinámico de aceleración lineal neta (m/s²)
+const MIN_CADENCE_INTERVAL_MS = 240;    // Intervalo mínimo entre pasos (hasta 250 pasos/min)
+const MAX_CADENCE_INTERVAL_MS = 1800;   // Intervalo máximo entre pasos (marcha pausada)
 const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void) {
@@ -37,9 +35,7 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
 
   // Referencias para el filtro paso-alto y supresión de gravedad
   const gravityRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 9.8, z: 0 });
-  const isCrestDetectedRef = useRef<boolean>(false);
   const lastStepTimeRef = useRef<number>(0);
-  const consecutiveStepsCountRef = useRef<number>(0);
   const pedometerSubscriptionRef = useRef<any>(null);
   const lastHistoricalCountRef = useRef<number>(0);
   const lastWatcherCumulativeRef = useRef<number>(0);
@@ -101,7 +97,6 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
           }
         },
         () => {
-          // Si no hay permiso GPS, el filtro de armónicos biomecánicos asume la protección
           setIsVehicleDetected(false);
         },
         { enableHighAccuracy: false, maximumAge: 5000, timeout: 10000 }
@@ -155,81 +150,88 @@ export function usePedometerSensor(onStepDetected: (stepsAdded: number) => void)
     };
   }, [syncNativeHistoricalSteps]);
 
-  // 4. Sensor Web de Acelerómetro con Filtro de Separación de Gravedad & Ciclo Completo
+  // 4. Sensor Web de Acelerómetro con Fusión Dual (Linear Acceleration + Gravity Isolation)
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (transitModeRef.current) return;
 
-      const raw = event.accelerationIncludingGravity || event.acceleration;
-      if (!raw || raw.x === null || raw.y === null || raw.z === null) return;
+      let dynamicMag = 0;
 
-      const rx = raw.x;
-      const ry = raw.y;
-      const rz = raw.z;
+      // Opción A: Aceleración lineal directa del hardware (Chrome Android & navegadores modernos)
+      if (
+        event.acceleration &&
+        event.acceleration.x !== null &&
+        event.acceleration.y !== null &&
+        event.acceleration.z !== null
+      ) {
+        const ax = event.acceleration.x;
+        const ay = event.acceleration.y;
+        const az = event.acceleration.z;
+        dynamicMag = Math.sqrt(ax * ax + ay * ay + az * az);
+      } 
+      // Opción B: Aceleración con gravedad (Filtro paso-alto con constante de 1 segundo)
+      else if (
+        event.accelerationIncludingGravity &&
+        event.accelerationIncludingGravity.x !== null &&
+        event.accelerationIncludingGravity.y !== null &&
+        event.accelerationIncludingGravity.z !== null
+      ) {
+        const rx = event.accelerationIncludingGravity.x;
+        const ry = event.accelerationIncludingGravity.y;
+        const rz = event.accelerationIncludingGravity.z;
 
-      // Filtro paso-bajo para aislar la componente estática de la gravedad
-      gravityRef.current.x = GRAVITY_ALPHA * gravityRef.current.x + (1 - GRAVITY_ALPHA) * rx;
-      gravityRef.current.y = GRAVITY_ALPHA * gravityRef.current.y + (1 - GRAVITY_ALPHA) * ry;
-      gravityRef.current.z = GRAVITY_ALPHA * gravityRef.current.z + (1 - GRAVITY_ALPHA) * rz;
+        gravityRef.current.x = GRAVITY_ALPHA * gravityRef.current.x + (1 - GRAVITY_ALPHA) * rx;
+        gravityRef.current.y = GRAVITY_ALPHA * gravityRef.current.y + (1 - GRAVITY_ALPHA) * ry;
+        gravityRef.current.z = GRAVITY_ALPHA * gravityRef.current.z + (1 - GRAVITY_ALPHA) * rz;
 
-      // Aceleración dinámica lineal pura (sin gravedad y sin importar orientación del móvil)
-      const lx = rx - gravityRef.current.x;
-      const ly = ry - gravityRef.current.y;
-      const lz = rz - gravityRef.current.z;
+        const lx = rx - gravityRef.current.x;
+        const ly = ry - gravityRef.current.y;
+        const lz = rz - gravityRef.current.z;
 
-      const dynamicMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
+        dynamicMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
+      }
+
+      if (dynamicMag === 0) return;
+
       const now = Date.now();
       const interval = now - lastStepTimeRef.current;
 
-      // Reiniciar buffer si el usuario estuvo en reposo prolongado
-      if (interval > GAIT_TIMEOUT_MS) {
-        consecutiveStepsCountRef.current = 0;
-        isCrestDetectedRef.current = false;
-      }
+      // Registro de paso con ventana de cadencia humana (240ms - 1800ms)
+      if (dynamicMag >= STEP_THRESHOLD && (interval >= MIN_CADENCE_INTERVAL_MS || lastStepTimeRef.current === 0)) {
+        lastStepTimeRef.current = now;
 
-      // FASE 1: Detección de cresta de impacto (Talón contra el suelo)
-      if (!isCrestDetectedRef.current && dynamicMag >= STEP_CREST_THRESHOLD) {
-        if (interval >= MIN_CADENCE_INTERVAL_MS || lastStepTimeRef.current === 0) {
-          isCrestDetectedRef.current = true;
-        }
-      }
-
-      // FASE 2: Detección de valle de despegue (Ciclo sinusoidal completo confirmado)
-      if (isCrestDetectedRef.current && dynamicMag <= STEP_TROUGH_THRESHOLD) {
-        isCrestDetectedRef.current = false;
-
-        if (interval >= MIN_CADENCE_INTERVAL_MS && interval <= MAX_CADENCE_INTERVAL_MS) {
-          lastStepTimeRef.current = now;
-          consecutiveStepsCountRef.current += 1;
-
-          // Registrar paso real en vivo de forma inmediata
-          setLiveSessionSteps((prev) => {
-            const updated = prev + 1;
-            try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-            return updated;
-          });
-          onStepDetectedRef.current(1);
-        } else if (lastStepTimeRef.current === 0 || interval > MAX_CADENCE_INTERVAL_MS) {
-          lastStepTimeRef.current = now;
-          consecutiveStepsCountRef.current = 1;
-        }
+        setLiveSessionSteps((prev) => {
+          const updated = prev + 1;
+          try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+          return updated;
+        });
+        onStepDetectedRef.current(1);
       }
     };
 
-    if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
-      (DeviceMotionEvent as any).requestPermission().then((permissionState: string) => {
-        if (permissionState === 'granted') {
-          window.addEventListener('devicemotion', handleMotion, { passive: true });
-        }
-      }).catch(() => {});
-    } else {
-      window.addEventListener('devicemotion', handleMotion, { passive: true });
-    }
+    // Registro estándar de devicemotion
+    window.addEventListener('devicemotion', handleMotion, { passive: true });
+
+    // En iOS Safari se requiere permiso explícito en respuesta a un gesto
+    const requestIOSMotion = () => {
+      if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
+        (DeviceMotionEvent as any).requestPermission().then((res: string) => {
+          if (res === 'granted') {
+            window.addEventListener('devicemotion', handleMotion, { passive: true });
+          }
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('touchstart', requestIOSMotion, { once: true, passive: true });
+    window.addEventListener('click', requestIOSMotion, { once: true, passive: true });
 
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
+      window.removeEventListener('touchstart', requestIOSMotion);
+      window.removeEventListener('click', requestIOSMotion);
     };
   }, []);
 
