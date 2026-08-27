@@ -36,7 +36,7 @@ export default function HoyScreen() {
     isVehicleDetected,
     toggleTransitMode,
     forceSyncSteps,
-  } = usePedometerSensor(addSteps);
+  } = usePedometerSensor(addSteps, setSteps, log.steps ?? 0);
 
   const isRegisteredUser = Boolean(
     log.hasCompletedOnboarding ||
