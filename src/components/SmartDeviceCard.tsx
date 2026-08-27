@@ -27,24 +27,18 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
   const device = deviceState || {
     connected: false,
     deviceName: 'Ninguno (Desconectado)',
-    heartRateBpm: 72,
+    heartRateBpm: 0,
     lastSync: 'Nunca',
-    batteryLevel: 90,
+    batteryLevel: 0,
   };
 
   const handleSyncNow = () => {
+    if (!device.connected) return;
     setIsSyncing(true);
     setTimeout(() => {
-      // Simulate reading live sensor data from device
-      const randomStepsAdded = Math.floor(Math.random() * 850) + 350;
-      const currentBpm = Math.floor(Math.random() * 25) + 65; // 65 - 90 BPM
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      onSyncSteps(randomStepsAdded);
       onUpdateDevice({
-        heartRateBpm: currentBpm,
         lastSync: `Hoy ${nowTime}`,
-        batteryLevel: Math.max(10, (device.batteryLevel || 90) - 1),
       });
       setIsSyncing(false);
     }, 1200);
@@ -57,9 +51,9 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       onUpdateDevice({
         connected: true,
         deviceName: dev.name,
-        heartRateBpm: 74,
+        heartRateBpm: 0,
         lastSync: `Ahora (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
-        batteryLevel: 95,
+        batteryLevel: 0,
       });
       setModalVisible(false);
     }, 1500);
@@ -69,7 +63,9 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
     onUpdateDevice({
       connected: false,
       deviceName: 'Ninguno (Desconectado)',
+      heartRateBpm: 0,
       lastSync: 'Desconectado',
+      batteryLevel: 0,
     });
   };
 
@@ -91,7 +87,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
           <View style={[styles.dot, { backgroundColor: device.connected ? '#D4AF37' : '#64748B' }]} />
           <ThemedText style={[styles.statusText, { color: device.connected ? '#FDE68A' : '#94A3B8' }]}>
-            {device.connected ? '⚡ VINCULADO' : 'OFFLINE'}
+            {device.connected ? '⚡ VINCULADO' : '🔌 DESCONECTADO'}
           </ThemedText>
         </View>
       </View>
@@ -103,14 +99,14 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
             <HeartIcon color="#D4AF37" size={16} />
             <View>
               <ThemedText style={styles.metricLabel}>RITMO CARDÍACO</ThemedText>
-              <ThemedText style={styles.metricValue}>{device.heartRateBpm || 72} BPM</ThemedText>
+              <ThemedText style={styles.metricValue}>{(device.heartRateBpm && device.heartRateBpm > 0) ? `${device.heartRateBpm} BPM` : '-- BPM'}</ThemedText>
             </View>
           </View>
 
           <View style={styles.metricItem}>
             <View>
               <ThemedText style={styles.metricLabel}>BATERÍA</ThemedText>
-              <ThemedText style={styles.metricValue}>{device.batteryLevel || 90}%</ThemedText>
+              <ThemedText style={styles.metricValue}>{(device.batteryLevel && device.batteryLevel > 0) ? `${device.batteryLevel}%` : '--%'}</ThemedText>
             </View>
           </View>
 

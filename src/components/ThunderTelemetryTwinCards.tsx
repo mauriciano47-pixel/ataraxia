@@ -18,12 +18,12 @@ interface ThunderTelemetryTwinCardsProps {
 }
 
 export function ThunderTelemetryTwinCards({
-  steps = 14892,
+  steps = 0,
   stepGoal = 15000,
-  km = 7.4,
-  heartRateBpm = 74,
-  avgBpm = 68,
-  peakBpm = 142,
+  km = 0,
+  heartRateBpm = 0,
+  avgBpm = 0,
+  peakBpm = 0,
   onAddSteps,
   onSyncHeartRate,
   onOpenStepDetails,
@@ -31,12 +31,15 @@ export function ThunderTelemetryTwinCards({
   const [scannerVisible, setScannerVisible] = useState(false);
   const [liveFluctuatedBpm, setLiveFluctuatedBpm] = useState(heartRateBpm);
 
+  const hasMeasurement = heartRateBpm > 0;
+
   const heartScale = useRef(new Animated.Value(1)).current;
   const ecgSweepAnim = useRef(new Animated.Value(0)).current;
 
-  // 1. Latido Reactivo en vivo sincronizado con los BPM
+  // 1. Latido Reactivo — solo anima si hay medición real
   useEffect(() => {
-    const cycleDuration = Math.max(450, Math.min(1200, (60 / (heartRateBpm || 74)) * 1000));
+    if (!hasMeasurement) return;
+    const cycleDuration = Math.max(450, Math.min(1200, (60 / heartRateBpm) * 1000));
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(heartScale, { toValue: 1.28, duration: cycleDuration * 0.22, useNativeDriver: true }),
@@ -47,10 +50,11 @@ export function ThunderTelemetryTwinCards({
     );
     pulseLoop.start();
     return () => pulseLoop.stop();
-  }, [heartRateBpm, heartScale]);
+  }, [heartRateBpm, heartScale, hasMeasurement]);
 
-  // 2. Barrido Dinámico de la onda ECG (Monitor en tiempo real)
+  // 2. Barrido Dinámico de la onda ECG (solo si hay medición)
   useEffect(() => {
+    if (!hasMeasurement) return;
     const sweepLoop = Animated.loop(
       Animated.timing(ecgSweepAnim, {
         toValue: 1,
@@ -60,17 +64,18 @@ export function ThunderTelemetryTwinCards({
     );
     sweepLoop.start();
     return () => sweepLoop.stop();
-  }, [ecgSweepAnim]);
+  }, [ecgSweepAnim, hasMeasurement]);
 
-  // 3. Fluctuación Fisiológica Sutil (Respiración / VFC humana en reposo: ±1-2 BPM)
+  // 3. Variabilidad fisiológica real (±1-2 BPM) — solo cuando hay medición verdadera
   useEffect(() => {
     setLiveFluctuatedBpm(heartRateBpm);
+    if (!hasMeasurement) return;
     const interval = setInterval(() => {
-      const naturalBreathingJitter = Math.round(Math.sin(Date.now() / 2800) * 1.8);
-      setLiveFluctuatedBpm(heartRateBpm + naturalBreathingJitter);
+      const naturalJitter = Math.round(Math.sin(Date.now() / 2800) * 1.5);
+      setLiveFluctuatedBpm(heartRateBpm + naturalJitter);
     }, 2000);
     return () => clearInterval(interval);
-  }, [heartRateBpm]);
+  }, [heartRateBpm, hasMeasurement]);
 
   // Semicircle Steps Progress
   const safeGoal = stepGoal > 0 ? stepGoal : 15000;
@@ -183,58 +188,63 @@ export function ThunderTelemetryTwinCards({
 
         {/* Heart Rate Readout */}
         <View style={styles.bpmRow}>
-          <ThemedText style={styles.bpmNumberText}>{liveFluctuatedBpm}</ThemedText>
-          <ThemedText style={styles.bpmUnitText}>BPM</ThemedText>
-          <View style={styles.livePulseDotActive} />
+          <ThemedText style={[styles.bpmNumberText, !hasMeasurement && { color: '#475569', textShadowColor: 'transparent' }]}>
+            {hasMeasurement ? liveFluctuatedBpm : '--'}
+          </ThemedText>
+          <ThemedText style={[styles.bpmUnitText, !hasMeasurement && { color: '#475569' }]}>BPM</ThemedText>
+          <View style={hasMeasurement ? styles.livePulseDotActive : styles.livePulseDotInactive} />
         </View>
 
-        {/* Dynamic ECG Waveform SVG Graph */}
+        {/* ECG Waveform — plana si no hay medición */}
         <View style={styles.ecgWrapper}>
-          <Svg width="100%" height={38} viewBox="0 0 150 40">
-            <Defs>
-              <LinearGradient id="ecgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor="#F59E0B" />
-                <Stop offset="50%" stopColor="#FFE259" />
-                <Stop offset="100%" stopColor="#FFFFFF" />
-              </LinearGradient>
-              <LinearGradient id="ecgAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor="rgba(255, 226, 89, 0.28)" />
-                <Stop offset="100%" stopColor="rgba(255, 226, 89, 0.00)" />
-              </LinearGradient>
-            </Defs>
-
-            {/* Area Fill */}
-            <Path
-              d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26 L 150 40 L 0 40 Z"
-              fill="url(#ecgAreaGrad)"
-            />
-
-            {/* Line Glow Bloom */}
-            <Path
-              d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
-              stroke="rgba(255, 226, 89, 0.40)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-
-            {/* Line Stroke */}
-            <Path
-              d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
-              stroke="url(#ecgGrad)"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </Svg>
+          {hasMeasurement ? (
+            <Svg width="100%" height={38} viewBox="0 0 150 40">
+              <Defs>
+                <LinearGradient id="ecgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <Stop offset="0%" stopColor="#F59E0B" />
+                  <Stop offset="50%" stopColor="#FFE259" />
+                  <Stop offset="100%" stopColor="#FFFFFF" />
+                </LinearGradient>
+                <LinearGradient id="ecgAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <Stop offset="0%" stopColor="rgba(255, 226, 89, 0.28)" />
+                  <Stop offset="100%" stopColor="rgba(255, 226, 89, 0.00)" />
+                </LinearGradient>
+              </Defs>
+              <Path
+                d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26 L 150 40 L 0 40 Z"
+                fill="url(#ecgAreaGrad)"
+              />
+              <Path
+                d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
+                stroke="rgba(255, 226, 89, 0.40)"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+              <Path
+                d="M 0 26 L 15 26 L 22 28 L 30 22 L 38 32 L 45 10 L 52 36 L 58 24 L 68 26 L 80 25 L 88 30 L 98 12 L 106 34 L 114 22 L 125 26 L 150 26"
+                stroke="url(#ecgGrad)"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          ) : (
+            <Svg width="100%" height={38} viewBox="0 0 150 40">
+              <Path d="M 0 26 L 150 26" stroke="rgba(71, 85, 105, 0.50)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </Svg>
+          )}
         </View>
 
         {/* Card Footer: Avg & Scan prompt */}
         <View style={styles.cardFooter}>
           <ThemedText style={styles.footerEcgText}>
-            Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm}</ThemedText> • <ThemedText style={{ color: '#F59E0B', fontWeight: 'bold' }}>⚡ Toca p/ Escanear</ThemedText>
+            {hasMeasurement
+              ? <>Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm} BPM</ThemedText> • <ThemedText style={{ color: '#F59E0B', fontWeight: 'bold' }}>⚡ Toca p/ Escanear</ThemedText></>
+              : <ThemedText style={{ color: '#64748B' }}>Sin Medición • Toca para Escanear</ThemedText>
+            }
           </ThemedText>
         </View>
       </TouchableOpacity>
@@ -387,5 +397,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.9,
     shadowRadius: 4,
     elevation: 3,
+  },
+  livePulseDotInactive: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#334155',
+    marginLeft: 2,
   },
 });

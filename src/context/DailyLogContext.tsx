@@ -112,9 +112,9 @@ export const DEFAULT_LOG: DailyLog = {
   smartDevice: {
     connected: false,
     deviceName: 'Ninguno (Desconectado)',
-    heartRateBpm: 72,
+    heartRateBpm: 0,
     lastSync: 'Nunca',
-    batteryLevel: 90,
+    batteryLevel: 0,
   },
   userMetrics: DEFAULT_USER_METRICS,
   checkInDone: false,
