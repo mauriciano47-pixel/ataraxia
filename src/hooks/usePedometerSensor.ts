@@ -6,12 +6,15 @@ import { SafeStorage } from '@/utils/safeStorage';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos Calibrados de Alta Precisión
+// Parámetros Biomecánicos Calibrados Anti-Agitación y Filtro de Marcha Real
 const GRAVITY_ALPHA = 0.85;             // Coeficiente paso-bajo de convergencia rápida (~200ms)
-const WEB_STEP_THRESHOLD = 1.35;        // Umbral dinámico de aceleración lineal neta (m/s²) para descartar vibraciones
-const WEB_STEP_RESET_THRESHOLD = 0.60;  // Umbral de caída de ciclo para detector de picos
-const MIN_CADENCE_INTERVAL_MS = 250;    // Intervalo mínimo entre pasos (hasta 240 pasos/min)
-const MAX_CADENCE_INTERVAL_MS = 2000;   // Intervalo máximo entre pasos (marcha pausada)
+const WEB_STEP_THRESHOLD = 2.05;        // Umbral dinámico de activación de zancada (m/s²) para descartar micro-movimientos
+const WEB_STEP_RESET_THRESHOLD = 0.80;  // Umbral de caída de ciclo para detector de picos
+const MIN_CADENCE_INTERVAL_MS = 340;    // Intervalo mínimo entre pasos (hasta 176 pasos/min, ritmo máximo humano)
+const MAX_CADENCE_INTERVAL_MS = 1400;   // Intervalo máximo entre pasos (marcha pausada)
+const MAX_HUMAN_ACCEL_MS2 = 9.80;       // Aceleración máxima permitida (rechaza sacudidas violentas de mano)
+const MAX_INTERVAL_VARIANCE_MS = 380;   // Variación máxima entre zancadas para validar ritmo periódico
+const REQUIRED_CADENCE_STEPS = 3;       // Número de pasos periódicos consecutivos para confirmar marcha real
 const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(
@@ -38,10 +41,14 @@ export function usePedometerSensor(
     }
   });
 
-  // Referencias para el filtro web, listeners nativos y debounce
+  // Referencias para el filtro web, listeners nativos y buffer anti-agitación
   const gravityRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 9.8, z: 0 });
   const isPeakArmRef = useRef<boolean>(false);
   const lastStepTimeRef = useRef<number>(0);
+  const lastIntervalRef = useRef<number>(0);
+  const candidateStepsRef = useRef<number>(0);
+  const isWalkingCadenceConfirmedRef = useRef<boolean>(false);
+  const rollingMagsRef = useRef<number[]>([]);
   const pedometerSubscriptionRef = useRef<any>(null);
   const lastWatcherReportedRef = useRef<number | null>(null);
   const highestAuthoritativeCountRef = useRef<number>(currentDailySteps);
@@ -134,7 +141,7 @@ export function usePedometerSensor(
     };
   }, []);
 
-  // 3. Sensor Nativo Always-On en Tiempo Real (Android / iOS)
+  // 3. Sensor Nativo Always-On en Tiempo Real (Android / iOS) con Límite de Frecuencia Humana
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
@@ -152,7 +159,10 @@ export function usePedometerSensor(
             return;
           }
 
-          const delta = currentTotal - lastWatcherReportedRef.current;
+          const rawDelta = currentTotal - lastWatcherReportedRef.current;
+          // Limitar incremento máximo por evento para descartar saltos abruptos por agitación
+          const delta = Math.min(rawDelta, 5);
+
           if (delta > 0) {
             lastWatcherReportedRef.current = currentTotal;
             highestAuthoritativeCountRef.current += delta;
@@ -181,16 +191,16 @@ export function usePedometerSensor(
     };
   }, [syncNativeHistoricalSteps]);
 
-  // 4. Sensor Web de Acelerómetro con Fusión Dual & Detector de Picos con Histéresis
+  // 4. Sensor Web: Filtro de Marcha Biomecánica & Supresión Estricta de Agitación Manual
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (transitModeRef.current || isVehicleDetectedRef.current) return;
 
-      let dynamicMag = 0;
+      let rawMag = 0;
 
-      // Opción A: Aceleración lineal directa del hardware (Chrome Android & navegadores modernos)
+      // Opción A: Aceleración lineal directa del hardware
       if (
         event.acceleration &&
         event.acceleration.x !== null &&
@@ -200,9 +210,9 @@ export function usePedometerSensor(
         const ax = event.acceleration.x;
         const ay = event.acceleration.y;
         const az = event.acceleration.z;
-        dynamicMag = Math.sqrt(ax * ax + ay * ay + az * az);
+        rawMag = Math.sqrt(ax * ax + ay * ay + az * az);
       } 
-      // Opción B: Aceleración con gravedad (Filtro paso-alto adaptativo rápido)
+      // Opción B: Aceleración con gravedad (Filtro paso-alto adaptativo)
       else if (
         event.accelerationIncludingGravity &&
         event.accelerationIncludingGravity.x !== null &&
@@ -221,37 +231,95 @@ export function usePedometerSensor(
         const ly = ry - gravityRef.current.y;
         const lz = rz - gravityRef.current.z;
 
-        dynamicMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
+        rawMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
       }
 
-      if (dynamicMag === 0) return;
+      if (rawMag === 0) return;
+
+      // Filtro de media móvil (FIR 4-tap) para amortiguar vibraciones de alta frecuencia
+      const mags = rollingMagsRef.current;
+      mags.push(rawMag);
+      if (mags.length > 4) mags.shift();
+      const dynamicMag = mags.reduce((a, b) => a + b, 0) / mags.length;
+
+      // Si la aceleración supera el límite biológico de marcha humana (>9.8 m/s²), es agitación violenta
+      if (dynamicMag > MAX_HUMAN_ACCEL_MS2) {
+        candidateStepsRef.current = 0;
+        isWalkingCadenceConfirmedRef.current = false;
+        isPeakArmRef.current = false;
+        return;
+      }
 
       const now = Date.now();
       const interval = now - lastStepTimeRef.current;
 
-      // Máquina de estados con histéresis:
-      // 1. Armar pico cuando supera el umbral de aceleración
+      // 1. Armar pico si supera el umbral de marcha
       if (dynamicMag >= WEB_STEP_THRESHOLD && !isPeakArmRef.current) {
         isPeakArmRef.current = true;
       }
 
-      // 2. Disparar paso cuando la señal desciende tras el pico (ciclo completo de zancada)
-      if (
-        isPeakArmRef.current &&
-        dynamicMag <= WEB_STEP_RESET_THRESHOLD &&
-        (interval >= MIN_CADENCE_INTERVAL_MS || lastStepTimeRef.current === 0)
-      ) {
+      // 2. Disparar evaluación cuando la señal desciende tras la cresta
+      if (isPeakArmRef.current && dynamicMag <= WEB_STEP_RESET_THRESHOLD) {
         isPeakArmRef.current = false;
+
+        // Si el intervalo es menor a 340ms, es agitación manual rápida -> Resetear racha
+        if (interval > 0 && interval < MIN_CADENCE_INTERVAL_MS) {
+          candidateStepsRef.current = 0;
+          isWalkingCadenceConfirmedRef.current = false;
+          return;
+        }
+
+        // Si pasó demasiado tiempo (>1400ms), iniciar nueva evaluación de racha
+        if (lastStepTimeRef.current === 0 || interval > MAX_CADENCE_INTERVAL_MS) {
+          lastStepTimeRef.current = now;
+          lastIntervalRef.current = 0;
+          candidateStepsRef.current = 1;
+          isWalkingCadenceConfirmedRef.current = false;
+          return;
+        }
+
+        // Intervalo en rango humano [340ms - 1400ms]
+        const intervalDelta = lastIntervalRef.current > 0 ? Math.abs(interval - lastIntervalRef.current) : 0;
+        lastIntervalRef.current = interval;
         lastStepTimeRef.current = now;
 
-        setLiveSessionSteps((prev) => {
-          const updated = prev + 1;
-          try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-          return updated;
-        });
+        // Validar armonía de cadencia periódica (la marcha real es rítmica)
+        if (intervalDelta > MAX_INTERVAL_VARIANCE_MS && candidateStepsRef.current > 0) {
+          // Movimiento errático no periódico -> no sumar y reiniciar evaluación
+          candidateStepsRef.current = 1;
+          isWalkingCadenceConfirmedRef.current = false;
+          return;
+        }
 
-        if (onStepDetectedRef.current) {
-          onStepDetectedRef.current(1);
+        // Si ya está en modo de marcha confirmada (en ritmo)
+        if (isWalkingCadenceConfirmedRef.current) {
+          setLiveSessionSteps((prev) => {
+            const updated = prev + 1;
+            try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+            return updated;
+          });
+
+          if (onStepDetectedRef.current) {
+            onStepDetectedRef.current(1);
+          }
+        } else {
+          // Acumular en buffer de verificación (Regla de 3 pasos periódicos)
+          candidateStepsRef.current += 1;
+
+          if (candidateStepsRef.current >= REQUIRED_CADENCE_STEPS) {
+            isWalkingCadenceConfirmedRef.current = true;
+            const verifiedInitial = candidateStepsRef.current;
+
+            setLiveSessionSteps((prev) => {
+              const updated = prev + verifiedInitial;
+              try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+              return updated;
+            });
+
+            if (onStepDetectedRef.current) {
+              onStepDetectedRef.current(verifiedInitial);
+            }
+          }
         }
       }
     };
