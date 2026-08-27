@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
 import { SmartDeviceState } from '@/hooks/useDailyLog';
 import { HeartIcon, SettingsIcon } from '@/components/ModuleSvgIcons';
+import { HeartRateScannerModal } from './HeartRateScannerModal';
 
 interface SmartDeviceCardProps {
   deviceState?: SmartDeviceState;
   onUpdateDevice: (updates: Partial<SmartDeviceState>) => void;
-  onSyncSteps: (syncedSteps: number) => void;
+  onSyncSteps?: (syncedSteps: number) => void;
 }
 
-const AVAILABLE_DEVICES = [
-  { id: 'apple_watch', name: 'Apple Watch Series 9 / Ultra 2', brand: 'Apple Health' },
-  { id: 'garmin_fenix', name: 'Garmin Fēnix 7 / Forerunner', brand: 'Garmin Connect' },
-  { id: 'fitbit_charge', name: 'Fitbit Charge 6 / Sense', brand: 'Fitbit OS' },
-  { id: 'galaxy_watch', name: 'Galaxy Watch 6 / Pro', brand: 'Samsung Health' },
-  { id: 'health_connect', name: 'Google Health Connect API', brand: 'Android Health' },
-];
-
-export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: SmartDeviceCardProps) {
-  const [isSyncing, setIsSyncing] = useState(false);
+export function SmartDeviceCard({ deviceState, onUpdateDevice }: SmartDeviceCardProps) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   const device = deviceState || {
     connected: false,
@@ -32,32 +24,8 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
     batteryLevel: 0,
   };
 
-  const handleSyncNow = () => {
-    if (!device.connected) return;
-    setIsSyncing(true);
-    setTimeout(() => {
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      onUpdateDevice({
-        lastSync: `Hoy ${nowTime}`,
-      });
-      setIsSyncing(false);
-    }, 1200);
-  };
-
-  const handleSelectDevice = (dev: typeof AVAILABLE_DEVICES[0]) => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      onUpdateDevice({
-        connected: true,
-        deviceName: dev.name,
-        heartRateBpm: 0,
-        lastSync: `Ahora (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
-        batteryLevel: 0,
-      });
-      setModalVisible(false);
-    }, 1500);
-  };
+  const isConnected = !!device.connected;
+  const hasHeartRate = typeof device.heartRateBpm === 'number' && device.heartRateBpm > 0;
 
   const handleDisconnect = () => {
     onUpdateDevice({
@@ -67,6 +35,16 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       lastSync: 'Desconectado',
       batteryLevel: 0,
     });
+    setModalVisible(false);
+  };
+
+  const handleSaveCameraHeartRate = (newBpm: number) => {
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    onUpdateDevice({
+      heartRateBpm: newBpm,
+      lastSync: `Hoy ${nowTime} (Cámara PPG)`,
+    });
+    setScannerVisible(false);
   };
 
   return (
@@ -75,78 +53,80 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-          <SettingsIcon color={device.connected ? '#D4AF37' : '#94A3B8'} size={20} />
+          <SettingsIcon color={isConnected ? '#D4AF37' : '#94A3B8'} size={20} />
           <View>
             <ThemedText style={styles.badge}>⚡ TELEMETRÍA SMART</ThemedText>
             <ThemedText style={styles.deviceName} numberOfLines={1}>
-              {device.deviceName}
+              {isConnected ? device.deviceName : 'Sin Dispositivo Vinculado'}
             </ThemedText>
           </View>
         </View>
 
-        <View style={[styles.statusTag, { backgroundColor: device.connected ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
-          <View style={[styles.dot, { backgroundColor: device.connected ? '#D4AF37' : '#64748B' }]} />
-          <ThemedText style={[styles.statusText, { color: device.connected ? '#FDE68A' : '#94A3B8' }]}>
-            {device.connected ? '⚡ VINCULADO' : '🔌 DESCONECTADO'}
+        <View style={[styles.statusTag, { backgroundColor: isConnected ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)' }]}>
+          <View style={[styles.dot, { backgroundColor: isConnected ? '#D4AF37' : '#64748B' }]} />
+          <ThemedText style={[styles.statusText, { color: isConnected ? '#FDE68A' : '#94A3B8' }]}>
+            {isConnected ? '⚡ VINCULADO' : '🔌 DESCONECTADO'}
           </ThemedText>
         </View>
       </View>
 
-      {/* Sensor Data Display if Connected */}
-      {device.connected ? (
-        <View style={styles.metricsRow}>
-          <View style={styles.metricItem}>
-            <HeartIcon color="#D4AF37" size={16} />
-            <View>
-              <ThemedText style={styles.metricLabel}>RITMO CARDÍACO</ThemedText>
-              <ThemedText style={styles.metricValue}>{(device.heartRateBpm && device.heartRateBpm > 0) ? `${device.heartRateBpm} BPM` : '-- BPM'}</ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.metricItem}>
-            <View>
-              <ThemedText style={styles.metricLabel}>BATERÍA</ThemedText>
-              <ThemedText style={styles.metricValue}>{(device.batteryLevel && device.batteryLevel > 0) ? `${device.batteryLevel}%` : '--%'}</ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.metricItem}>
-            <View>
-              <ThemedText style={styles.metricLabel}>ÚLTIMA SYNC</ThemedText>
-              <ThemedText style={[styles.metricValue, { fontSize: 11 }]}>{device.lastSync}</ThemedText>
-            </View>
+      {/* Sensor Data Display */}
+      <View style={styles.metricsRow}>
+        <View style={styles.metricItem}>
+          <HeartIcon color="#D4AF37" size={16} />
+          <View>
+            <ThemedText style={styles.metricLabel}>RITMO CARDÍACO</ThemedText>
+            <ThemedText style={styles.metricValue}>
+              {hasHeartRate ? `${device.heartRateBpm} BPM` : '-- BPM'}
+            </ThemedText>
           </View>
         </View>
-      ) : (
-        <ThemedText style={styles.promptText}>
-          Sincroniza tu reloj inteligente o Google Health Connect para medir ritmo cardíaco y pasos automáticamente con la telemetría imperial.
-        </ThemedText>
-      )}
+
+        <View style={styles.metricItem}>
+          <View>
+            <ThemedText style={styles.metricLabel}>BATERÍA</ThemedText>
+            <ThemedText style={styles.metricValue}>
+              {(device.batteryLevel && device.batteryLevel > 0) ? `${device.batteryLevel}%` : '--%'}
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={styles.metricItem}>
+          <View>
+            <ThemedText style={styles.metricLabel}>ÚLTIMA SYNC</ThemedText>
+            <ThemedText style={[styles.metricValue, { fontSize: 11 }]}>
+              {device.lastSync || 'Nunca'}
+            </ThemedText>
+          </View>
+        </View>
+      </View>
+
+      <ThemedText style={styles.promptText}>
+        {isConnected
+          ? `Dispositivo: ${device.deviceName}. Sincronización activa con puente de telemetría.`
+          : 'No hay smartwatch vinculado. Puedes medir tu ritmo cardíaco en tiempo real usando el Escáner Óptico de Cámara (PPG) de tu dispositivo.'
+        }
+      </ThemedText>
 
       {/* Action Buttons */}
       <View style={styles.actionsRow}>
-        {device.connected && (
-          <TouchableOpacity
-            style={[styles.btn, { backgroundColor: '#D4AF37', borderColor: '#D4AF37', flex: 2 }]}
-            onPress={handleSyncNow}
-            disabled={isSyncing}
-            activeOpacity={0.8}
-          >
-            {isSyncing ? (
-              <ActivityIndicator color="#050507" size="small" />
-            ) : (
-              <ThemedText style={[styles.btnText, { color: '#050507', fontWeight: '900' }]}>⚡ SINCRONIZAR AHORA</ThemedText>
-            )}
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: '#D4AF37', borderColor: '#D4AF37', flex: 2 }]}
+          onPress={() => setScannerVisible(true)}
+          activeOpacity={0.8}
+        >
+          <ThemedText style={[styles.btnText, { color: '#050507', fontWeight: '900' }]}>
+            📷 MEDIR CON CÁMARA
+          </ThemedText>
+        </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: 'rgba(212, 175, 55, 0.10)', borderColor: 'rgba(212, 175, 55, 0.30)', flex: 1 }]}
+          style={[styles.btn, { backgroundColor: 'rgba(212, 175, 55, 0.10)', borderColor: 'rgba(212, 175, 55, 0.30)', flex: 1.2 }]}
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
           <ThemedText style={[styles.btnText, { color: '#FDE68A' }]}>
-            {device.connected ? 'GESTIONAR' : 'CONECTAR'}
+            {isConnected ? 'GESTIONAR' : 'ℹ️ SMARTWATCH'}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -156,50 +136,58 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: '#0A0D16', borderColor: 'rgba(212, 175, 55, 0.45)' }]}>
             <View style={styles.modalHeader}>
-              <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>⚡ VINCULAR SMARTWATCH / HEALTH API</ThemedText>
+              <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>⚡ TELEMETRÍA EXTERNA</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <ThemedText style={{ color: '#94A3B8', fontSize: 16, fontWeight: 'bold' }}>✕</ThemedText>
               </TouchableOpacity>
             </View>
 
-            {isScanning ? (
-              <View style={styles.scanningBox}>
-                <ActivityIndicator color="#D4AF37" size="large" />
-                <ThemedText style={{ marginTop: Spacing.three, fontFamily: 'monospace', color: '#FFE259', fontSize: 12 }}>
-                  ⚡ ESTABLECIENDO CONEXIÓN SEGURA...
+            <ScrollView style={{ maxHeight: 360 }}>
+              <View style={styles.infoBox}>
+                <ThemedText style={styles.infoTitle}>📱 Integración con Smartwatches Físicos</ThemedText>
+                <ThemedText style={styles.infoDesc}>
+                  La sincronización en tiempo real con Apple Watch, Garmin, Fitbit o Galaxy Watch requiere la app móvil nativa de Ataraxia ejecutándose con permisos de:
                 </ThemedText>
+                <View style={styles.apiBullet}>
+                  <ThemedText style={styles.apiBulletText}>• Google Health Connect (Android 14+)</ThemedText>
+                  <ThemedText style={styles.apiBulletText}>• Apple HealthKit (iOS / watchOS)</ThemedText>
+                  <ThemedText style={styles.apiBulletText}>• Sensor de Hardware Nativo (Podómetro Coprocessor)</ThemedText>
+                </View>
               </View>
-            ) : (
-              <ScrollView style={{ maxHeight: 320 }}>
-                {AVAILABLE_DEVICES.map(dev => (
-                  <TouchableOpacity
-                    key={dev.id}
-                    style={[styles.deviceOption, { backgroundColor: 'rgba(212, 175, 55, 0.06)', borderColor: 'rgba(212, 175, 55, 0.20)' }]}
-                    onPress={() => handleSelectDevice(dev)}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <ThemedText style={styles.devOptionName}>{dev.name}</ThemedText>
-                      <ThemedText style={styles.devOptionBrand}>{dev.brand}</ThemedText>
-                    </View>
-                    <ThemedText style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>VINCULAR</ThemedText>
-                  </TouchableOpacity>
-                ))}
 
-                {device.connected && (
-                  <TouchableOpacity
-                    style={[styles.disconnectBtn, { borderColor: 'rgba(239, 68, 68, 0.35)', backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}
-                    onPress={handleDisconnect}
-                  >
-                    <ThemedText style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 11, fontFamily: 'monospace' }}>
-                      DESCONECTAR DISPOSITIVO
-                    </ThemedText>
-                  </TouchableOpacity>
-                )}
-              </ScrollView>
-            )}
+              <TouchableOpacity
+                style={[styles.cameraActionBtn, { backgroundColor: 'rgba(212, 175, 55, 0.18)', borderColor: '#D4AF37' }]}
+                onPress={() => {
+                  setModalVisible(false);
+                  setScannerVisible(true);
+                }}
+              >
+                <ThemedText style={{ color: '#FFE259', fontWeight: 'bold', fontSize: 12, fontFamily: 'monospace' }}>
+                  📷 USAR ESCÁNER ÓPTICO PPG (CÁMARA)
+                </ThemedText>
+              </TouchableOpacity>
+
+              {isConnected && (
+                <TouchableOpacity
+                  style={[styles.disconnectBtn, { borderColor: 'rgba(239, 68, 68, 0.45)', backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
+                  onPress={handleDisconnect}
+                >
+                  <ThemedText style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 12, fontFamily: 'monospace' }}>
+                    🔌 DESCONECTAR DISPOSITIVO
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {/* Real Optical PPG Camera Scanner */}
+      <HeartRateScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onSaveHeartRate={handleSaveCameraHeartRate}
+      />
     </View>
   );
 }
@@ -361,5 +349,43 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
-  }
+  },
+  infoBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 12,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: Spacing.three,
+  },
+  infoTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#FFE259',
+    marginBottom: 6,
+    fontFamily: 'monospace',
+  },
+  infoDesc: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  apiBullet: {
+    gap: 4,
+    paddingLeft: 4,
+  },
+  apiBulletText: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  cameraActionBtn: {
+    padding: Spacing.three,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: Spacing.two,
+  },
 });

@@ -176,17 +176,18 @@ export default function HoyScreen() {
             steps={currentSteps}
             stepGoal={currentGoal}
             km={currentKm}
-            heartRateBpm={log.smartDevice?.heartRateBpm || 72}
-            avgBpm={68}
-            peakBpm={142}
+            heartRateBpm={log.smartDevice?.heartRateBpm ?? 0}
+            avgBpm={log.smartDevice?.heartRateBpm ? Math.round(log.smartDevice.heartRateBpm * 0.95) : 0}
+            peakBpm={log.smartDevice?.heartRateBpm ? Math.round(log.smartDevice.heartRateBpm * 1.3) : 0}
             onOpenStepDetails={() => setShowStepCalibration(true)}
             onAddSteps={addSteps}
             onSyncHeartRate={(measuredBpm) => {
-              const bpm = measuredBpm || 74;
+              const bpm = measuredBpm || 0;
+              if (bpm <= 0) return;
               const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               updateSmartDevice({
                 heartRateBpm: bpm,
-                lastSync: `Hoy ${nowTime} (Óptico PPG)`,
+                lastSync: `Hoy ${nowTime} (Cámara PPG)`,
               });
             }}
           />
@@ -363,7 +364,7 @@ export default function HoyScreen() {
                 <View style={styles.metricCol}>
                   <ThemedText style={styles.metricLabelText}>Ritmo Cardíaco</ThemedText>
                   <ThemedText style={styles.metricValText}>
-                    {log.smartDevice?.heartRateBpm || 72} <ThemedText style={styles.unitText}>bpm</ThemedText>
+                    {(log.smartDevice?.heartRateBpm && log.smartDevice.heartRateBpm > 0) ? log.smartDevice.heartRateBpm : '--'} <ThemedText style={styles.unitText}>bpm</ThemedText>
                   </ThemedText>
                 </View>
 
@@ -424,7 +425,6 @@ export default function HoyScreen() {
             <SmartDeviceCard
               deviceState={log.smartDevice}
               onUpdateDevice={updateSmartDevice}
-              onSyncSteps={addSteps}
             />
           </View>
 

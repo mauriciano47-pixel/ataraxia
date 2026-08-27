@@ -6,15 +6,18 @@ import { SafeStorage } from '@/utils/safeStorage';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos Calibrados de Alta Sensibilidad y Filtro de Marcha Real
+// Parámetros Biomecánicos Calibrados Anti-Shock con Filtro de Duración de Zancada Real
 const GRAVITY_ALPHA = 0.85;             // Coeficiente paso-bajo de convergencia rápida (~200ms)
-const WEB_STEP_THRESHOLD = 1.38;        // Umbral dinámico de activación de zancada (m/s²) para detección natural en mano/bolsillo
-const WEB_STEP_RESET_THRESHOLD = 0.55;  // Umbral de caída de ciclo para detector de picos
-const MIN_CADENCE_INTERVAL_MS = 280;    // Intervalo mínimo entre pasos (hasta 214 pasos/min, permite marcha rápida/trote)
-const MAX_CADENCE_INTERVAL_MS = 1600;   // Intervalo máximo entre pasos (permite caminata relajada)
-const MAX_HUMAN_ACCEL_MS2 = 12.50;      // Aceleración máxima permitida (rechaza sacudidas violentas de mano)
-const MAX_INTERVAL_VARIANCE_MS = 650;   // Tolerancia de variación de ritmo al girar o cambiar de velocidad
-const REQUIRED_CADENCE_STEPS = 2;       // Confirmación rápida de marcha (2 pasos) para máxima reactividad
+const GAIT_EMA_ALPHA = 0.35;            // Filtro paso-bajo de marcha humana (~3 Hz, atenúa impactos táctiles rápidos)
+const WEB_STEP_THRESHOLD = 1.35;        // Umbral dinámico de activación de zancada (m/s²)
+const WEB_STEP_RESET_THRESHOLD = 0.50;  // Umbral de caída de ciclo para detector de picos
+const MIN_PEAK_DURATION_MS = 85;        // Duración mínima del pico (m descarta toques rápidos en pantalla <85ms)
+const MAX_PEAK_DURATION_MS = 600;       // Duración máxima del pico de aceleración de zancada
+const MIN_CADENCE_INTERVAL_MS = 300;    // Intervalo mínimo entre pasos (hasta 200 pasos/min, trote/marcha)
+const MAX_CADENCE_INTERVAL_MS = 1500;   // Intervalo máximo entre pasos (caminata pausada)
+const MAX_HUMAN_ACCEL_MS2 = 12.00;      // Aceleración máxima permitida (rechaza sacudidas violentas de mano)
+const MAX_INTERVAL_VARIANCE_MS = 500;   // Tolerancia de variación de ritmo al girar o cambiar de velocidad
+const REQUIRED_CADENCE_STEPS = 4;       // Marcha real confirmada: 4 pasos rítmicos antes de sumar a la cuenta
 const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(
@@ -44,6 +47,7 @@ export function usePedometerSensor(
   // Referencias para el filtro web, listeners nativos y buffer anti-agitación
   const gravityRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 9.8, z: 0 });
   const isPeakArmRef = useRef<boolean>(false);
+  const peakStartTimeRef = useRef<number>(0);
   const lastStepTimeRef = useRef<number>(0);
   const lastIntervalRef = useRef<number>(0);
   const candidateStepsRef = useRef<number>(0);
@@ -235,13 +239,13 @@ export function usePedometerSensor(
 
       if (rawMag === 0) return;
 
-      // Filtro reactivo rápido: conserva la amplitud del pico sin retraso
+      // Filtro paso-bajo de marcha: atenúa fuertemente picos y golpes táctiles rápidos en la pantalla
       const dynamicMag = lastFilteredMagRef.current === 0
         ? rawMag
-        : (0.75 * rawMag + 0.25 * lastFilteredMagRef.current);
+        : (GAIT_EMA_ALPHA * rawMag + (1 - GAIT_EMA_ALPHA) * lastFilteredMagRef.current);
       lastFilteredMagRef.current = dynamicMag;
 
-      // Rechazar sacudidas destructivas violentas (>12.5 m/s²)
+      // Rechazar sacudidas destructivas violentas (>12.0 m/s²)
       if (dynamicMag > MAX_HUMAN_ACCEL_MS2) {
         candidateStepsRef.current = 0;
         isWalkingCadenceConfirmedRef.current = false;
@@ -252,23 +256,30 @@ export function usePedometerSensor(
       const now = Date.now();
       const interval = now - lastStepTimeRef.current;
 
-      // 1. Armar pico si supera el umbral de marcha
+      // 1. Armar pico si supera el umbral de marcha y registrar el tiempo exacto en que empezó
       if (dynamicMag >= WEB_STEP_THRESHOLD && !isPeakArmRef.current) {
         isPeakArmRef.current = true;
+        peakStartTimeRef.current = now;
       }
 
       // 2. Disparar evaluación cuando la señal desciende tras la cresta
       if (isPeakArmRef.current && dynamicMag <= WEB_STEP_RESET_THRESHOLD) {
+        const peakDuration = now - peakStartTimeRef.current;
         isPeakArmRef.current = false;
 
-        // Si el intervalo es menor a 280ms, es vibración de alta frecuencia -> Ignorar
+        // FILTRO DE ANCHO DE PULSO: Si el pico duró menos de 85ms, es un toque en la pantalla o clic de botón -> IGNORAR
+        if (peakDuration < MIN_PEAK_DURATION_MS || peakDuration > MAX_PEAK_DURATION_MS) {
+          return;
+        }
+
+        // Si el intervalo es menor a 300ms, es vibración de alta frecuencia -> Ignorar
         if (interval > 0 && interval < MIN_CADENCE_INTERVAL_MS) {
           candidateStepsRef.current = 0;
           isWalkingCadenceConfirmedRef.current = false;
           return;
         }
 
-        // Si pasó demasiado tiempo (>1600ms), iniciar nueva evaluación de marcha
+        // Si pasó demasiado tiempo (>1500ms), iniciar nueva evaluación de marcha
         if (lastStepTimeRef.current === 0 || interval > MAX_CADENCE_INTERVAL_MS) {
           lastStepTimeRef.current = now;
           lastIntervalRef.current = 0;
@@ -277,7 +288,7 @@ export function usePedometerSensor(
           return;
         }
 
-        // Intervalo en rango humano [280ms - 1600ms]
+        // Intervalo en rango humano [300ms - 1500ms]
         const intervalDelta = lastIntervalRef.current > 0 ? Math.abs(interval - lastIntervalRef.current) : 0;
         lastIntervalRef.current = interval;
         lastStepTimeRef.current = now;
@@ -289,7 +300,7 @@ export function usePedometerSensor(
           return;
         }
 
-        // Si ya está en marcha confirmada (ritmo establecido)
+        // Si ya está en marcha confirmada (ritmo establecido continuo)
         if (isWalkingCadenceConfirmedRef.current) {
           setLiveSessionSteps((prev) => {
             const updated = prev + 1;
@@ -301,7 +312,7 @@ export function usePedometerSensor(
             onStepDetectedRef.current(1);
           }
         } else {
-          // Confirmación rápida: 2 pasos periódicos
+          // Confirmación estricta de marcha real: 4 pasos rítmicos antes de sumar a la cuenta
           candidateStepsRef.current += 1;
 
           if (candidateStepsRef.current >= REQUIRED_CADENCE_STEPS) {
@@ -346,7 +357,7 @@ export function usePedometerSensor(
     };
   }, []);
 
-  // 5. Manejo de Ciclo de Vida: Reanudar al volver de segundo plano
+  // Control de cambio de foco y AppState
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
@@ -355,6 +366,8 @@ export function usePedometerSensor(
         } else {
           lastStepTimeRef.current = 0;
           isPeakArmRef.current = false;
+          candidateStepsRef.current = 0;
+          isWalkingCadenceConfirmedRef.current = false;
         }
       }
     };
@@ -370,6 +383,8 @@ export function usePedometerSensor(
     } else {
       lastStepTimeRef.current = 0;
       isPeakArmRef.current = false;
+      candidateStepsRef.current = 0;
+      isWalkingCadenceConfirmedRef.current = false;
 
       // Solicitar permiso de movimiento en navegadores móviles (iOS/Android)
       if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
