@@ -117,58 +117,80 @@ export default function HoyScreen() {
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* HEADER STOIC ROYAL IMPERIAL (EXACT TO REFERENCE PHOTO) */}
-          <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => router.navigate('/profile')} activeOpacity={0.8} style={styles.laurelLogoBtn}>
-              <View style={styles.laurelRing}>
-                <ThemedText style={styles.laurelLetter}>⚡</ThemedText>
-              </View>
-            </TouchableOpacity>
+          {/* HEADER STOIC ROYAL IMPERIAL (EXACT TO USER REFERENCE PHOTO) */}
+          <View style={styles.headerContainerMaster}>
+            <View style={styles.headerTopRow}>
+              <TouchableOpacity
+                onPress={() => router.navigate('/profile')}
+                activeOpacity={0.8}
+                style={styles.laurelLogoBtn}
+              >
+                <View style={styles.laurelRing}>
+                  <ThemedText style={styles.laurelLetter}>⚡</ThemedText>
+                </View>
+              </TouchableOpacity>
 
-            <View style={styles.titleCenterGroup}>
-              <View style={styles.titleWithFlankRow}>
+              <View style={styles.titleCenterMaster}>
                 {Platform.OS === 'web' ? (
                   <img
                     src="/ataraxia_gold_title_banner.png"
                     alt="ATARAXIA"
-                    width={210}
-                    height={52}
+                    width={320}
+                    height={80}
                     style={{
-                      width: '210px',
-                      height: '52px',
-                      maxWidth: '56vw',
+                      width: '320px',
+                      height: '80px',
+                      maxWidth: '82vw',
                       objectFit: 'contain',
                       display: 'block',
-                      filter: 'drop-shadow(0 0 14px rgba(255, 226, 89, 0.65))',
+                      filter: 'drop-shadow(0 4px 18px rgba(212, 175, 55, 0.45))',
                       userSelect: 'none',
                     }}
                   />
                 ) : (
                   <Image
                     source={require('../../assets/images/ataraxia_gold_title_banner.png')}
-                    style={{ width: 210, height: 52, maxWidth: '56%' }}
+                    style={{ width: 320, height: 80, maxWidth: '82%' }}
                     resizeMode="contain"
                   />
                 )}
               </View>
-              <View style={styles.brandSubtitleBadge}>
-                <ThemedText style={styles.brandSubtitle}>
-                  {log.userName && log.userName !== 'Ciudadano Prokopton'
-                    ? `⚔️ ${log.userName.toUpperCase()}`
-                    : 'TEMPLO DEL AUTODOMINIO'}
-                </ThemedText>
-              </View>
+
+              {/* Espacio de balance simétrico */}
+              <View style={{ width: 44, height: 44 }} />
             </View>
 
-            <View style={styles.headerRightActions}>
-              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/transformation' as any)}>
-                <ThemedText style={{ fontSize: 16, color: '#38BDF8' }}>📸</ThemedText>
+            {/* Insignia con el nombre del usuario */}
+            <View style={styles.brandSubtitleBadge}>
+              <ThemedText style={styles.brandSubtitle}>
+                {log.userName && log.userName !== 'Ciudadano Prokopton'
+                  ? `⚔️ ${log.userName.toUpperCase()}`
+                  : '⚔️ MAURO'}
+              </ThemedText>
+            </View>
+
+            {/* Muelle flotante con los 3 accesos rápidos exactos de la foto */}
+            <View style={styles.actionDockPill}>
+              <TouchableOpacity
+                style={styles.actionDockBtn}
+                activeOpacity={0.7}
+                onPress={() => router.navigate('/transformation' as any)}
+              >
+                <ThemedText style={{ fontSize: 18 }}>📸</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/journal')}>
-                <ThemedText style={{ fontSize: 16, color: '#D4AF37' }}>📖</ThemedText>
+              <TouchableOpacity
+                style={styles.actionDockBtn}
+                activeOpacity={0.7}
+                onPress={() => router.navigate('/journal')}
+              >
+                <ThemedText style={{ fontSize: 18 }}>📖</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/trainer')}>
-                <ThemedText style={{ fontSize: 16, color: '#F59E0B' }}>🏋️‍♂️</ThemedText>
+              <TouchableOpacity
+                style={styles.actionDockBtn}
+                activeOpacity={0.7}
+                onPress={() => router.navigate('/trainer')}
+              >
+                <ThemedText style={{ fontSize: 18 }}>🏋️‍♂️</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -550,51 +572,55 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#FFAB00',
   },
-  titleCenterGroup: {
+  headerContainerMaster: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 10,
+    gap: 6,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  titleCenterMaster: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
   },
-  titleWithFlankRow: {
+  brandSubtitleBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.45)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 3,
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    color: '#FFE259',
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  actionDockPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-  },
-  titleFlankSparkle: {
-    fontSize: 16,
-    color: '#FFE259',
-    textShadowColor: 'rgba(255, 226, 89, 0.85)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-    opacity: 0.9,
-  },
-  brandTitleClassic: {
-    fontSize: 27,
-    fontWeight: '900',
-    color: '#FFE259',
-    letterSpacing: 4.5,
-    textTransform: 'uppercase',
-    textShadowColor: 'rgba(212, 175, 55, 0.90)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 14,
-  },
-  brandSubtitleBadge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    gap: 16,
+    backgroundColor: 'rgba(13, 17, 28, 0.85)',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.35)',
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
     marginTop: 2,
   },
-  brandSubtitle: {
-    fontSize: 9.5,
-    fontFamily: 'monospace',
-    fontWeight: '800',
-    color: '#E2C068',
-    letterSpacing: 1.8,
-    textAlign: 'center',
+  actionDockBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   headerRightActions: {
     flexDirection: 'row',
