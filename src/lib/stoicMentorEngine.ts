@@ -287,6 +287,98 @@ La mente dispersa salta entre el remordimiento del pasado y la ansiedad del futu
   }
 
   // ─────────────────────────────────────────────────────────────
+  // 2.5. SUEÑO, INSOMNIO, RECUPERACIÓN NOCTURNA Y DESCANSO
+  // ─────────────────────────────────────────────────────────────
+
+  if (
+    p.includes('dormir') ||
+    p.includes('sueño') ||
+    p.includes('sueno') ||
+    p.includes('insomnio') ||
+    p.includes('desvelo') ||
+    p.includes('desvelad') ||
+    p.includes('no puedo dormir') ||
+    p.includes('conciliar el sueño') ||
+    p.includes('descanso') ||
+    p.includes('despertar') ||
+    p.includes('pesadilla') ||
+    p.includes('calidad de sueño') ||
+    p.includes('calidad del sueño') ||
+    p.includes('dormido') ||
+    p.includes('dormir mejor') ||
+    p.includes('desvelar')
+  ) {
+    if (archetype === 'sports_scientist') {
+      return `🔬 **Protocolo Neurofisiológico de Inducción al Sueño Profundo**
+
+Comprendo la situación, ${userName}. La dificultad para conciliar el sueño suele responder a una hiperactivación del Sistema Nervioso Simpático (cortisol elevado) y a la inhibición de la melatonina por estímulos fotolumínicos o rumiación cognitiva.
+
+🧬 **1. Protocolo de Acción Inmediata (Para esta noche en la cama)**:
+• **Suspiro Fisiológico Cíclico (Physiological Sigh)**: Realiza 2 inhalaciones nasales seguidas (una profunda + un sorbo extra al final para reexpandir los alvéolos) y 1 exhalación muy lenta y completa por la boca. Repite 6 a 10 ciclos. Esto estimula el nervio vago, desacelera la frecuencia cardíaca y activa el tono parasimpático en menos de 2 minutos.
+• **Regla de los 20 Minutos**: Si llevas más de 20 minutos despierto en la cama, sal de ella. Quedarte frustrado asocia la cama con vigilia y estrés. Ve a un rincón con luz tenue y lee en papel o realiza estiramientos suaves hasta sentir somnolencia.
+• **Descarga Cognitiva (Brain Dump)**: Si tu mente está procesando pendientes del día o del trabajo, anótalos en una libreta física. Sacar los pensamientos de la memoria de trabajo reduce drásticamente las ondas beta cerebrales.
+
+🌙 **2. Optimización Circadiana & Ambiente de Descanso**:
+• **Temperatura Ambiental Fresca (18°C - 20°C)**: El cuerpo necesita descender su temperatura central en ~1°C para ingresar en sueño N3 de ondas lentas y fase REM.
+• **Oscuridad Absoluta & Cero Pantallas**: Bloquea toda luz azul (teléfono, tablet, TV) al menos 60 minutos antes de dormir; la luz azul frena en un 80% la síntesis de melatonina en la glándula pineal.
+• **Corte de Estimulantes**: Evita cafeína 8-10 horas antes de dormir (la vida media de la cafeína es de 6 a 8 horas).
+
+💊 **3. Apoyo Nutracéutico Científico (Grado A)**:
+• **Bisglicinato de Magnesio (300-400mg)** 45 min antes de acostarte: Activa receptores GABAérgicos y relaja el tono muscular.
+• **L-Teanina (100-200mg)** o infusión concentrada de Manzanilla/Pasiflora: Induce ondas alfa de calma mental sin generar dependencia.`;
+    }
+
+    if (archetype === 'spartan_commander') {
+      return `⚔️ **El Sagrado Reposo del Guerrero: Reparación de la Armadura**
+
+¡Soldado, escucha con atención! Un guerrero que no duerme es un guerrero cuya espada pierde el filo y cuyos músculos se devoran a sí mismos. El sueño no es tiempo perdido; es la forja donde tus hormonas anabólicas reconstruyen el templo para la batalla de mañana.
+
+🛡️ **Instrucciones Tácticas de Apagado Inmediato**:
+1. **Desactiva el Dispositivo AHORA MISMO**: La luz de las pantallas es veneno para tu mente militar en la noche. Pon el teléfono en modo silencio, boca abajo o en otra habitación.
+2. **Respiración Táctica de Combate (Box Breathing 4-4-4-4)**:
+   - Inhala en 4 segundos sintiendo cómo se expande tu diafragma.
+   - Retén el aire en 4 segundos con total calma.
+   - Exhala lentamente en 4 segundos vaciando los pulmones.
+   - Mantén el vacío 4 segundos antes de volver a inhalar.
+   - *Haz 6 rondas completas. Sentirás cómo tu pulso baja y la mente entra en guardia baja.*
+3. **Reencuadre del Espartano**: Si tu mente rumiando problemas no te deja dormir, recuerda: *«El guerrero lucha en el día y descansa en la noche; combatir sombras en la oscuridad solo desgasta tu honor»*. Mañana conquistarás lo que haga falta; esta noche tu único deber es descansar.
+4. **Cámara Oscura y Fresca**: Habitación a oscuras totales y aire fresco para que el cuerpo entre en modo de recuperación profunda.
+
+¡A la cama con disciplina, ${userName}! Mañana nos espera la gloria.`;
+    }
+
+    // Default: stoic_mentor
+    return `🏛️ **Serenidad Nocturna: Restaurando el Sueño y la Paz Interior**
+
+Entiendo perfectamente lo frustrante que resulta querer descansar y sentir que la mente sigue despierta, ${userName}. La noche suele magnificar las preocupaciones cuando el mundo exterior se apaga.
+
+Marco Aurelio se recordaba a sí mismo antes de dormir:
+> *"Al final de cada jornada, reflexiona: he hecho lo que correspondía a mi deber humano. Lo que no pude resolver hoy, no lo resolveré angustiándome en la oscuridad de mi lecho; se resolverá mañana con virtud, serenidad y energía renovada."*
+
+🧘‍♂️ **Protocolo Estoico & Fisiológico para Conciliar el Sueño**:
+
+• **1. Técnica del Suspiro Fisiológico (En la cama ahora mismo)**:
+  - Toma una inhalación profunda por la nariz.
+  - Sin soltar el aire, da un segundo sorbo corto de aire por la nariz para inflar los pulmones al 100%.
+  - Exhala de forma muy larga, suave y lenta por la boca.
+  - *Repite 6 a 8 veces. Este patrón respiratorio activa de inmediato el sistema parasimpático y reduce el ritmo cardíaco.*
+
+• **2. La Dicotomía del Control Nocturna**:
+  - El sueño no se puede "forzar" por la fuerza de voluntad (intentar forzarlo solo genera adrenalina y cortisol).
+  - Tu único deber es **crear las condiciones de paz**: cuerpo relajado, músculos sueltos, respiración lenta. Deja que el sueño llegue por sí solo como consecuencia natural de la calma.
+
+• **3. La Regla de los 20 Minutos**:
+  - Si llevas rato dando vueltas en la cama, no te quedes batallando contra las sábanas. Levántate con calma, bebe unos sorbos de agua templada, lee una página de filosofía en papel o haz 5 minutos de respiración tranquila hasta que los párpados pesen.
+
+• **4. Higiene del Templo Nocturno**:
+  - **Cero Pantallas**: Apaga el móvil o pon filtro nocturno cálido; la luz azul confunde a tu cerebro haciéndole creer que aún es mediodía.
+  - **Ambiente Fresco**: Una habitación ventilada y fresca (18°C-20°C) facilita que baje la temperatura corporal necesaria para el sueño profundo.
+  - **Bisglicinato de Magnesio (300-400mg)** o infusión de manzanilla/melisa: Relaja el tono muscular y aquieta el sistema nervioso.
+
+Suelta el peso del día, ${userName}. Has hecho lo suficiente por hoy. Cierra los ojos y descansa en paz.`;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 3. NUTRICIÓN PERSONALIZADA SEGÚN LA SENDA
   // ─────────────────────────────────────────────────────────────
 

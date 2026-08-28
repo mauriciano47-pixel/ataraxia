@@ -35,6 +35,7 @@ const DISCLAIMER_TEXT =
   '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA y mentoría estoica. No reemplaza el consejo de un médico o especialista certificado. Si sientes dolor severo o agudo, consulta a un profesional.';
 
 const QUICK_PROMPTS = [
+  { icon: 'moon-outline', text: '😴 No puedo dormir / Mejorar sueño' },
   { icon: 'body-outline', text: '🩺 Me duele el cuello / trapecios' },
   { icon: 'help-circle-outline', text: '⚔️ Dudo si llegaré al Día 30' },
   { icon: 'battery-dead-outline', text: '🧠 Siento fatiga mental y desmotivación' },
