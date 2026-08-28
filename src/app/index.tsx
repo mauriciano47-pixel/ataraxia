@@ -240,7 +240,7 @@ export default function HoyScreen() {
                 </View>
 
                 <TouchableOpacity
-                  onPress={() => router.navigate('/trainer')}
+                  onPress={() => router.navigate('/progress')}
                   activeOpacity={0.8}
                   style={styles.startButtonTouch}
                 >
@@ -251,7 +251,7 @@ export default function HoyScreen() {
                     style={styles.startButtonGradient}
                   >
                     <ThemedText style={styles.startButtonText}>
-                      {log.trainingCompleted ? 'Ver Rutina ✓' : '⚡ Ir al Entreno'}
+                      {log.trainingCompleted ? 'Programa Cumplido ✓' : '🏛️ Ir al Programa (Obligatorio)'}
                     </ThemedText>
                   </LinearGradient>
                 </TouchableOpacity>

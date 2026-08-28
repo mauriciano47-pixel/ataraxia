@@ -78,11 +78,11 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="journal"
+          name="progress"
           options={{
-            title: 'Diario',
-            tabBarLabel: '📖 Diario',
-            tabBarIcon: ({ color, focused }) => <JournalIcon color={focused ? '#D4AF37' : color} size={22} />,
+            title: 'Programa',
+            tabBarLabel: '🏛️ Programa',
+            tabBarIcon: ({ color, focused }) => <ProgressIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen
@@ -94,11 +94,11 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="progress"
+          name="journal"
           options={{
-            title: 'Progreso',
-            tabBarLabel: '🏛️ Progreso',
-            tabBarIcon: ({ color, focused }) => <ProgressIcon color={focused ? '#D4AF37' : color} size={22} />,
+            title: 'Diario',
+            tabBarLabel: '📖 Diario',
+            tabBarIcon: ({ color, focused }) => <JournalIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen

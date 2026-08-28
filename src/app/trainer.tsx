@@ -296,9 +296,16 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         
         {/* Header de la Sesión */}
         <View style={styles.header}>
+          {/* BADGE DE MÓDULO LIBRE Y OPCIONAL */}
+          <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.12)', borderWidth: 1, borderColor: '#38BDF8', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 8 }}>
+            <ThemedText style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: 'bold', color: '#38BDF8', letterSpacing: 1 }}>
+              🏋️‍♂️ ENTRENADOR LIBRE & IA • 100% OPCIONAL
+            </ThemedText>
+          </View>
+
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
             <View style={{flex: 1, paddingRight: 8}}>
-              <ThemedText style={styles.label}>HOY — {equipName.toUpperCase()}</ThemedText>
+              <ThemedText style={styles.label}>SESIÓN LIBRE — {equipName.toUpperCase()}</ThemedText>
               <ThemedText style={styles.title}>{focusTitle}</ThemedText>
               <ThemedText style={{fontSize: 12, color: '#D4AF37', marginTop: 2, fontWeight: 'bold'}}>
                 ⏱️ {durationMin} min | {completedCount}/{ejercicios.length} ejercicios completados
@@ -310,6 +317,12 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
             >
               <ThemedText style={[styles.amorFatiText, { color: isAmorFati ? '#050507' : '#FDE68A' }]}>Amor Fati</ThemedText>
             </TouchableOpacity>
+          </View>
+
+          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.2)', borderRadius: 8, padding: 8, marginTop: 8 }}>
+            <ThemedText style={{ fontSize: 10, color: '#CBD5E1', fontStyle: 'italic', lineHeight: 14 }}>
+              💡 Entrena a tu gusto particular o genera sesiones con IA. Para cumplir el reto sagrado de 30 días, realiza la sesión obligatoria en la pestaña "Programa".
+            </ThemedText>
           </View>
         </View>
 

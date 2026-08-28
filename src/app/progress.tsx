@@ -1,19 +1,75 @@
 import React, { useState } from 'react';
-import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal, Platform } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
-import { LEGENDARY_PATHS } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+
+const PATH_MANDATORY_ROUTINES: Record<LegendaryPath, {
+  name: string;
+  focus: string;
+  exercises: { id: string; n: string; s: string; targetRpe: number; muscleGroup: string }[];
+}> = {
+  spartan: {
+    name: 'Senda del Espartano',
+    focus: 'Fuerza Máxima & Hipertrofia Titánica (RIR 1-2)',
+    exercises: [
+      { id: 'sp1', n: 'Sentadilla Trasera Pesada con Barra', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Piernas' },
+      { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Pecho' },
+      { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, muscleGroup: 'Espalda / Isquios' },
+      { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Hombros' },
+      { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Espalda' },
+    ],
+  },
+  hoplite: {
+    name: 'Senda del Hoplita',
+    focus: 'Resistencia Inagotable & Densidad Mitocondrial',
+    exercises: [
+      { id: 'hop1', n: 'Circuito Táctico de Resistencia', s: '4 rondas x 45 seg', targetRpe: 8.0, muscleGroup: 'Full Body' },
+      { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 min continuos', targetRpe: 7.0, muscleGroup: 'Cardiovascular' },
+      { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, muscleGroup: 'Pecho / Tríceps' },
+      { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, muscleGroup: 'Espalda' },
+      { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, muscleGroup: 'Core' },
+    ],
+  },
+  apollo: {
+    name: 'Senda de Apolo',
+    focus: 'Escultura Estética, V-Taper & Proporciones Áureas',
+    exercises: [
+      { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, muscleGroup: 'Pecho Superior' },
+      { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, muscleGroup: 'Hombros Laterales' },
+      { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Dorsales' },
+      { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, muscleGroup: 'Cuádriceps / Glúteos' },
+      { id: 'ap5', n: 'Elevación de Piernas Colgado en Barra', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Abdomen' },
+    ],
+  },
+  philosopher: {
+    name: 'Senda del Filósofo Guerrero',
+    focus: 'Calistenia Pura, Autodominio & Temple Corporal',
+    exercises: [
+      { id: 'ph1', n: 'Dominadas Estrictas en Barra', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Dorsales / Bíceps' },
+      { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, muscleGroup: 'Pecho / Tríceps' },
+      { id: 'ph3', n: 'Pistol Squats (Sentadilla a 1 Pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, muscleGroup: 'Piernas' },
+      { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Tríceps' },
+      { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, muscleGroup: 'Core / Abdomen' },
+    ],
+  },
+};
 
 export default function ProgressScreen() {
-  const { log, loading, calculateTodayGrade, executeJudgment, resetMonthlyCycle } = useDailyLog();
+  const { log, loading, calculateTodayGrade, executeJudgment, resetMonthlyCycle, toggleTraining } = useDailyLog();
   const { historyMap, loadingHistory } = useHistoryLog();
   const [modalVisible, setModalVisible] = useState(false);
   const [judgmentResult, setJudgmentResult] = useState<{ promoted: boolean; title: string; message: string } | null>(null);
+  
+  // Estado local para los checkboxes de la sesión obligatoria del día
+  const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
 
   if (loading || loadingHistory) {
     return (
@@ -24,8 +80,10 @@ export default function ProgressScreen() {
     );
   }
 
-  const activePathKey = log.legendaryPath || 'spartan';
-  const activePathInfo = LEGENDARY_PATHS[activePathKey];
+  const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
+  const activePathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
+  const mandatoryProgram = PATH_MANDATORY_ROUTINES[activePathKey] || PATH_MANDATORY_ROUTINES.spartan;
+
   const cycle = log.monthlyCycle || {
     currentDay: 1,
     startDate: new Date().toISOString(),
@@ -39,18 +97,32 @@ export default function ProgressScreen() {
   };
 
   const todayGrade = calculateTodayGrade();
-
-  // El día 30 es HOY. Sobrescribimos el último día de la base de datos con el estado en tiempo real.
   const isTodaySuccess = todayGrade.score >= 75;
   const fullMap = [...historyMap];
   if (fullMap.length > 0) {
     fullMap[fullMap.length - 1] = isTodaySuccess;
   }
 
-  // Contar días victoriosos en el mapa de 30 días
   const victoriousDays = fullMap.filter(Boolean).length;
   const adherencePercent = Math.round((victoriousDays / 30) * 100);
   const isAboveThreshold = adherencePercent >= 80;
+
+  const handleToggleExercise = (id: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    setCompletedExerciseIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const handleSealWorkout = () => {
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+    toggleTraining();
+  };
 
   const handleOpenJudgment = () => {
     const res = executeJudgment();
@@ -70,13 +142,87 @@ export default function ProgressScreen() {
                 🏛️ RANGO: {cycle.tier.toUpperCase()}
               </ThemedText>
             </View>
-            <ThemedText style={styles.title}>CICLO DE 30 DÍAS</ThemedText>
+            <ThemedText style={styles.title}>PROGRAMA DE 30 DÍAS</ThemedText>
             <ThemedText style={styles.pathSubheader}>
               {activePathInfo.icon} {activePathInfo.name.toUpperCase()} • DÍA {cycle.currentDay}/30
             </ThemedText>
           </View>
 
-          {/* TARJETA DE CALIFICACIÓN DE HOY */}
+          {/* 1. SECCIÓN OBLIGATORIA: SESIÓN MARCIAL DEL DÍA (INMUTABLE) */}
+          <View style={styles.mandatoryCard}>
+            <View style={styles.mandatoryHeaderRow}>
+              <View style={styles.mandatoryBadge}>
+                <ThemedText style={styles.mandatoryBadgeText}>⚔️ PROGRAMA SAGRADO • OBLIGATORIO</ThemedText>
+              </View>
+              <ThemedText style={[styles.statusText, log.trainingCompleted ? { color: '#10B981' } : { color: '#F59E0B' }]}>
+                {log.trainingCompleted ? 'SELLADO ✓' : 'PENDIENTE'}
+              </ThemedText>
+            </View>
+
+            <ThemedText style={styles.mandatoryTitle}>{mandatoryProgram.name}</ThemedText>
+            <ThemedText style={styles.mandatoryFocus}>{mandatoryProgram.focus}</ThemedText>
+
+            {/* AVISO DE INMUTABILIDAD */}
+            <View style={styles.immutableNoticeBox}>
+              <ThemedText style={styles.immutableNoticeText}>
+                🔒 Esta rutina es inmutable y no modificable. Cumplir esta sesión es requisito sagrado para validar el día en tu ciclo de 30 días.
+              </ThemedText>
+            </View>
+
+            {/* LISTA DE EJERCICIOS DEL PROGRAMA */}
+            <View style={styles.exerciseList}>
+              {mandatoryProgram.exercises.map((ex, idx) => {
+                const isChecked = Boolean(completedExerciseIds[ex.id]) || Boolean(log.trainingCompleted);
+                return (
+                  <TouchableOpacity
+                    key={ex.id}
+                    style={[styles.exerciseItemRow, isChecked && styles.exerciseItemRowChecked]}
+                    activeOpacity={0.8}
+                    onPress={() => handleToggleExercise(ex.id)}
+                  >
+                    <View style={[styles.checkCircle, isChecked && styles.checkCircleChecked]}>
+                      <ThemedText style={styles.checkMarkText}>{isChecked ? '✓' : idx + 1}</ThemedText>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={[styles.exerciseName, isChecked && styles.exerciseNameChecked]}>
+                        {ex.n}
+                      </ThemedText>
+                      <View style={styles.exerciseMetaRow}>
+                        <ThemedText style={styles.exerciseSeries}>{ex.s}</ThemedText>
+                        <ThemedText style={styles.exerciseRpe}>• RPE {ex.targetRpe}</ThemedText>
+                        <ThemedText style={styles.exerciseGroup}>• {ex.muscleGroup}</ThemedText>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* BOTÓN SELLAR ENTRENAMIENTO DEL DÍA */}
+            <TouchableOpacity
+              style={styles.sealWorkoutBtn}
+              activeOpacity={0.85}
+              onPress={handleSealWorkout}
+            >
+              <LinearGradient
+                colors={log.trainingCompleted ? ['#059669', '#10B981', '#047857'] : ['#D4AF37', '#F59E0B', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.sealWorkoutGradient}
+              >
+                <ThemedText style={styles.sealWorkoutText}>
+                  {log.trainingCompleted ? '🏆 SESIÓN SELLADA EN EL PACTO (COMPLETADA)' : '⚔️ SELLAR SESIÓN OBLIGATORIA (+40 PTS)'}
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <ThemedText style={styles.optionalHintText}>
+              💡 ¿Quieres más entrenamiento? Usa la pestaña "Entreno" para sesiones libres o con IA (Opcional).
+            </ThemedText>
+          </View>
+
+          {/* 2. TARJETA DE CALIFICACIÓN DE HOY */}
           <View style={styles.todayCard}>
             <View style={styles.todayCardHeader}>
               <View style={styles.scorePill}>
@@ -125,7 +271,7 @@ export default function ProgressScreen() {
             <ThemedText style={styles.todayVerdictText}>{todayGrade.verdict}</ThemedText>
           </View>
 
-          {/* ADHERENCIA AL PLAN DE 30 DÍAS */}
+          {/* 3. ADHERENCIA AL PLAN DE 30 DÍAS */}
           <View style={styles.adherenceCard}>
             <View style={styles.adherenceHeaderRow}>
               <ThemedText style={styles.adherenceTitle}>ADHERENCIA AL JUICIO DEL DÍA 30</ThemedText>
@@ -148,7 +294,7 @@ export default function ProgressScreen() {
             </ThemedText>
           </View>
 
-          {/* CONSTELACIÓN ESTELAR DE LOS 30 DÍAS */}
+          {/* 4. CONSTELACIÓN ESTELAR DE LOS 30 DÍAS */}
           <View style={styles.constellationCard}>
             <ThemedText style={styles.constellationTitle}>⚡ CONSTELACIÓN DE FUERZA (30 DÍAS)</ThemedText>
             <ThemedText style={styles.constellationDesc}>
@@ -298,26 +444,178 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'serif',
-    textTransform: 'uppercase',
     fontWeight: '900',
-    color: '#FFFDE0',
-    letterSpacing: 1.5,
+    color: '#FFFFFF',
+    letterSpacing: 2,
   },
   pathSubheader: {
     fontSize: 11,
-    fontFamily: 'monospace',
     color: '#D4AF37',
+    fontFamily: 'monospace',
     fontWeight: 'bold',
-    letterSpacing: 1.2,
+    marginTop: 2,
+  },
+  mandatoryCard: {
+    backgroundColor: 'rgba(14, 20, 36, 0.95)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.55)',
+    borderRadius: 18,
+    padding: 16,
+    gap: 10,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  mandatoryHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mandatoryBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1,
+    borderColor: '#FFE259',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  mandatoryBadgeText: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#FFE259',
+    letterSpacing: 1,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  mandatoryTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'serif',
+  },
+  mandatoryFocus: {
+    fontSize: 11,
+    color: '#D4AF37',
+    fontFamily: 'monospace',
+    marginTop: -4,
+  },
+  immutableNoticeBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  immutableNoticeText: {
+    fontSize: 10,
+    color: '#CBD5E1',
+    fontStyle: 'italic',
+    lineHeight: 14,
+  },
+  exerciseList: {
+    gap: 8,
+    marginTop: 4,
+  },
+  exerciseItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
+    borderRadius: 12,
+    padding: 10,
+  },
+  exerciseItemRowChecked: {
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkCircleChecked: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  checkMarkText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+  },
+  exerciseName: {
+    fontSize: 12.5,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  exerciseNameChecked: {
+    color: '#6EE7B7',
+    textDecorationLine: 'line-through',
+  },
+  exerciseMetaRow: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 2,
+  },
+  exerciseSeries: {
+    fontSize: 10,
+    color: '#D4AF37',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  exerciseRpe: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  exerciseGroup: {
+    fontSize: 10,
+    color: '#38BDF8',
+    fontFamily: 'monospace',
+  },
+  sealWorkoutBtn: {
+    marginTop: 6,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  sealWorkoutGradient: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sealWorkoutText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+  optionalHintText: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    textAlign: 'center',
+    fontFamily: 'monospace',
     marginTop: 2,
   },
   todayCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     borderRadius: 16,
-    borderWidth: 1.4,
-    borderColor: 'rgba(212, 175, 55, 0.45)',
-    padding: 16,
-    gap: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    gap: 10,
   },
   todayCardHeader: {
     flexDirection: 'row',
@@ -325,46 +623,47 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   scorePill: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    backgroundColor: 'rgba(212, 175, 55, 0.18)',
-    borderWidth: 1.2,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1,
     borderColor: '#FFE259',
     borderRadius: 12,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   scoreText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
     color: '#FFE259',
     fontFamily: 'monospace',
   },
   scoreMax: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#D4AF37',
     fontFamily: 'monospace',
   },
   todayGradeLabel: {
     fontSize: 9.5,
-    fontFamily: 'monospace',
     color: '#94A3B8',
-    letterSpacing: 1,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
   },
   todayGradeStatus: {
     fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontWeight: 'bold',
+    fontFamily: 'serif',
   },
   pillarsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderRadius: 10,
-    padding: 10,
+    padding: 8,
   },
   pillarItem: {
     alignItems: 'center',
+    flex: 1,
     gap: 2,
   },
   pillarIcon: {
@@ -378,24 +677,21 @@ const styles = StyleSheet.create({
   pillarPts: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#FFE259',
+    color: '#FFFFFF',
     fontFamily: 'monospace',
   },
   todayVerdictText: {
-    fontSize: 11.5,
-    fontStyle: 'italic',
+    fontSize: 10.5,
     color: '#CBD5E1',
-    textAlign: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 8,
+    fontStyle: 'italic',
+    lineHeight: 14,
   },
   adherenceCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderRadius: 16,
     padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     gap: 8,
   },
   adherenceHeaderRow: {
@@ -405,171 +701,159 @@ const styles = StyleSheet.create({
   },
   adherenceTitle: {
     fontSize: 10,
-    fontWeight: '900',
+    color: '#D4AF37',
     fontFamily: 'monospace',
-    color: '#FFE259',
-    letterSpacing: 1,
+    fontWeight: 'bold',
   },
   adherencePercent: {
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: 'bold',
     fontFamily: 'monospace',
   },
   progressBarTrack: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
   adherenceSub: {
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#94A3B8',
     fontFamily: 'monospace',
   },
   constellationCard: {
-    backgroundColor: 'rgba(13, 17, 28, 0.80)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
     borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-    padding: 16,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     gap: 8,
   },
   constellationTitle: {
-    fontSize: 11,
-    fontWeight: '900',
-    fontFamily: 'monospace',
+    fontSize: 10,
     color: '#FFE259',
-    letterSpacing: 1.5,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
   },
   constellationDesc: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#94A3B8',
-    lineHeight: 15,
+    lineHeight: 14,
   },
   starMap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   starContainer: {
-    width: '15%',
-    aspectRatio: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
+    width: 24,
   },
   todayContainer: {
-    borderWidth: 1.2,
-    borderColor: '#FFE259',
-    borderRadius: 6,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    transform: [{ scale: 1.15 }],
   },
   star: {
     width: 14,
     height: 14,
-    borderRadius: 3,
+    borderRadius: 7,
   },
   starDayLabel: {
-    fontSize: 8,
-    fontFamily: 'monospace',
+    fontSize: 7.5,
     color: '#64748B',
+    fontFamily: 'monospace',
+    marginTop: 2,
   },
   judgmentBtn: {
     backgroundColor: '#D4AF37',
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FFE259',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.70,
-    shadowRadius: 12,
-    elevation: 6,
+    marginTop: 4,
   },
   judgmentBtnInner: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
+    alignItems: 'center',
   },
   judgmentBtnText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '900',
     color: '#050507',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    letterSpacing: 1.2,
+    fontFamily: 'monospace',
+    letterSpacing: 1,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    alignItems: 'center',
+    backgroundColor: 'rgba(2, 4, 8, 0.85)',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 480,
-    borderRadius: 20,
-    padding: 22,
-    alignItems: 'center',
+    maxWidth: 420,
+    backgroundColor: '#0F172A',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1.5,
     gap: 12,
+    alignItems: 'center',
   },
   modalCardSuccess: {
-    backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    borderWidth: 2,
     borderColor: '#FFE259',
   },
   modalCardScold: {
-    backgroundColor: 'rgba(24, 10, 10, 0.98)',
-    borderWidth: 2,
     borderColor: '#EF4444',
   },
   modalEmblem: {
-    fontSize: 44,
+    fontSize: 36,
   },
   modalTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
     textAlign: 'center',
     fontFamily: 'serif',
-    letterSpacing: 1,
   },
   modalMessage: {
-    fontSize: 13,
-    color: '#CBD5E1',
+    fontSize: 12,
+    color: '#E2E8F0',
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 18,
   },
   resetCycleBtn: {
-    backgroundColor: '#EF4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginTop: 6,
     width: '100%',
     alignItems: 'center',
   },
   resetCycleBtnText: {
+    color: '#FCA5A5',
+    fontWeight: 'bold',
     fontSize: 10.5,
-    fontWeight: '900',
-    color: '#FFFFFF',
     fontFamily: 'monospace',
-    letterSpacing: 1,
-    textAlign: 'center',
   },
   closeModalBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 8,
-    marginTop: 4,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
   },
   closeModalBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
     fontSize: 11,
-    color: '#94A3B8',
     fontFamily: 'monospace',
-    letterSpacing: 1,
   },
 });
