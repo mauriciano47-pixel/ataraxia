@@ -3,6 +3,7 @@ import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Moda
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -12,6 +13,7 @@ import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { LegendaryPath, LEGENDARY_PATHS, EquipmentType } from '@/types/onboarding';
 import { SafeStorage } from '@/utils/safeStorage';
 import { MonthlyResolution, DayAudit } from '@/lib/monthlyResolutionEngine';
+import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 
 export interface ProgramExercise {
   id: string;
@@ -200,6 +202,7 @@ export default function ProgressScreen() {
   const [judgmentResult, setJudgmentResult] = useState<{ promoted: boolean; title: string; message: string; resolution?: MonthlyResolution } | null>(null);
   const [activeResolutionTab, setActiveResolutionTab] = useState<'verdict' | 'feedback' | 'audit'>('verdict');
   const [copiedDecree, setCopiedDecree] = useState(false);
+  const [diplomaModalVisible, setDiplomaModalVisible] = useState(false);
 
   // Estado local para los checkboxes de la sesión obligatoria del día
   const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
@@ -680,6 +683,35 @@ export default function ProgressScreen() {
             </View>
           </View>
 
+          {/* BANNER DE DIPLOMA DE HONOR (SI ADHERENCIA >= 80% o PROMOVIDO) */}
+          {isAboveThreshold && (
+            <TouchableOpacity
+              style={styles.diplomaBannerBtn}
+              onPress={() => {
+                try {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } catch {}
+                setDiplomaModalVisible(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#FFE259', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.diplomaBannerGradient}
+              >
+                <ThemedText style={{ fontSize: 24 }}>📜</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.diplomaBannerTag}>EXCELENCIA CONQUISTADA ({adherencePercent}%)</ThemedText>
+                  <ThemedText style={styles.diplomaBannerTitle}>DIPLOMA DE HONOR ESTOICO</ThemedText>
+                  <ThemedText style={styles.diplomaBannerSub}>Fase II: La Forja de los Titanes • Desbloqueada (Coming Soon)</ThemedText>
+                </View>
+                <Ionicons name="ribbon" size={24} color="#050507" />
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
           {/* BOTÓN DEL JUICIO DEL DÍA 30 */}
           <TouchableOpacity
             style={styles.judgmentBtn}
@@ -924,6 +956,29 @@ export default function ProgressScreen() {
                     </ThemedText>
                   </TouchableOpacity>
 
+                  {(judgmentResult?.promoted || (judgmentResult?.resolution?.adherencePct ?? 0) >= 80 || adherencePercent >= 80) && (
+                    <TouchableOpacity
+                      style={styles.claimDiplomaBtn}
+                      onPress={() => {
+                        setModalVisible(false);
+                        setDiplomaModalVisible(true);
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <LinearGradient
+                        colors={['#D4AF37', '#FFE259', '#B45309']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.claimDiplomaGradient}
+                      >
+                        <Ionicons name="ribbon" size={16} color="#050507" />
+                        <ThemedText style={styles.claimDiplomaText}>
+                          👑 VER DIPLOMA DE HONOR OLÍMPICO (80%+)
+                        </ThemedText>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
+
                   {!judgmentResult?.promoted && (
                     <TouchableOpacity
                       style={styles.resetCycleBtn}
@@ -950,6 +1005,17 @@ export default function ProgressScreen() {
               </View>
             </View>
           </Modal>
+
+          {/* MODAL DEL DIPLOMA DE HONOR */}
+          <HonorDiplomaModal
+            visible={diplomaModalVisible}
+            onClose={() => setDiplomaModalVisible(false)}
+            userName={log.userName || 'Ciudadano Prokopton'}
+            path={activePathKey}
+            scoreAverage={judgmentResult?.resolution?.totalScoreAverage ?? cycle.averageScore}
+            adherencePct={judgmentResult?.resolution?.adherencePct ?? adherencePercent}
+            tier={judgmentResult?.resolution?.tierAwarded || cycle.tier}
+          />
 
         </ScrollView>
       </SafeAreaView>
@@ -1805,5 +1871,63 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 11,
     fontFamily: 'monospace',
+  },
+  diplomaBannerBtn: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#FFE259',
+    marginVertical: 4,
+    shadowColor: '#FFE259',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+  },
+  diplomaBannerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  diplomaBannerTag: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+  diplomaBannerTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'serif',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  diplomaBannerSub: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#3B2F04',
+    marginTop: 2,
+  },
+  claimDiplomaBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  claimDiplomaGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  claimDiplomaText: {
+    fontSize: 11.5,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
   },
 });

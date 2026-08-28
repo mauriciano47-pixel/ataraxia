@@ -1188,6 +1188,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
   const setCustomRoutine = (routine: CustomExercise[]) => {
     updateLog({ customRoutine: routine });
+    saveProfileToFirestore({ customRoutine: routine });
   };
 
   return (

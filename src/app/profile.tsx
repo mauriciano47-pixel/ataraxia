@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
@@ -14,7 +15,8 @@ import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { GreekParchmentPact } from '@/components/GreekParchmentPact';
 import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
-import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath } from '@/types/onboarding';
+import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -32,6 +34,7 @@ export default function ProfileScreen() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showParchmentModal, setShowParchmentModal] = useState(false);
   const [showPathModal, setShowPathModal] = useState(false);
+  const [showDiplomaModal, setShowDiplomaModal] = useState(false);
 
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
@@ -41,6 +44,13 @@ export default function ProfileScreen() {
   const [heightInput, setHeightInput] = useState(metrics.heightCm.toString());
   const [targetCalInput, setTargetCalInput] = useState((log.targetCalories || 2200).toString());
   const [targetStepInput, setTargetStepInput] = useState((log.stepGoal || 10000).toString());
+
+  const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
+  const pathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
+  const cycle = log.monthlyCycle;
+  const passedDays = cycle?.passedDaysCount ?? (cycle?.dailyGrades?.filter((g) => g.score >= 75).length || 0);
+  const adherencePct = Math.round((passedDays / 30) * 100);
+  const isWorthyHonor = (cycle?.averageScore ?? 100) >= 80 || cycle?.tier === 'Semidiós del Olimpo' || cycle?.tier === 'Guerrero de Élite';
 
   const uid = auth?.currentUser?.uid || null;
   const shortUid = uid ? uid.substring(0, 8) : '????????';
@@ -224,6 +234,67 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+          </View>
+
+          {/* MÓDULO DE DISTINCIÓN DE RANGO, DIPLOMA DE HONOR & FASE II COMING SOON */}
+          <View style={styles.condecorationCard}>
+            <View style={styles.condecorationHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <ThemedText style={{ fontSize: 26 }}>👑</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.condecorationTag}>DISTINCIÓN OFICIAL DEL OLIMPO</ThemedText>
+                  <ThemedText style={styles.condecorationRankTitle}>
+                    {cycle?.tier || 'Novicio de Esparta'}
+                  </ThemedText>
+                </View>
+              </View>
+              <View style={styles.condecorationBadge}>
+                <ThemedText style={styles.condecorationBadgeText}>
+                  {(cycle?.averageScore ?? 100) >= 80 ? '80%+ HONOR' : 'EN CURSO'}
+                </ThemedText>
+              </View>
+            </View>
+
+            <ThemedText style={styles.condecorationDesc}>
+              {(cycle?.averageScore ?? 100) >= 80
+                ? '🎖️ Has completado el Ciclo con templanza superior. Tu perfil cuenta con acreditación oficial del Santuario.'
+                : '⚔️ Mantén tu disciplina diaria por encima del 80% durante los 30 días para consagrar tu rango.'}
+            </ThemedText>
+
+            <TouchableOpacity
+              style={styles.openDiplomaBtn}
+              onPress={() => setShowDiplomaModal(true)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#FFE259', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.openDiplomaBtnGradient}
+              >
+                <Ionicons name="ribbon" size={18} color="#050507" />
+                <ThemedText style={styles.openDiplomaBtnText}>
+                  📜 VER DIPLOMA DE HONOR ESTOICO
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Módulo Próximo Nivel: Fase II - La Forja de los Titanes */}
+            <View style={styles.nextLevelCard}>
+              <View style={styles.nextLevelHeaderRow}>
+                <ThemedText style={styles.nextLevelIcon}>⚡</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.nextLevelSubtitle}>PREPARADO PARA EL SIGUIENTE NIVEL</ThemedText>
+                  <ThemedText style={styles.nextLevelTitleText}>FASE II: LA FORJA DE LOS TITANES</ThemedText>
+                </View>
+                <View style={styles.comingSoonBadge}>
+                  <ThemedText style={styles.comingSoonText}>COMING SOON</ThemedText>
+                </View>
+              </View>
+              <ThemedText style={styles.nextLevelBodyText}>
+                Has sido registrado en la lista de honor del Templo Superior. Nuevas rutinas de sobrecarga avanzada, protocolos de hipertrofia y pruebas estoicas supremas estarán disponibles en la próxima fase.
+              </ThemedText>
             </View>
           </View>
 
@@ -585,6 +656,17 @@ export default function ProfileScreen() {
           }} />
         </View>
       )}
+
+      {/* Modal del Diploma de Honor */}
+      <HonorDiplomaModal
+        visible={showDiplomaModal}
+        onClose={() => setShowDiplomaModal(false)}
+        userName={log.userName || 'Ciudadano Prokopton'}
+        path={activePathKey}
+        scoreAverage={cycle?.averageScore ?? 100}
+        adherencePct={adherencePct}
+        tier={cycle?.tier || 'Novicio de Esparta'}
+      />
       </SafeAreaView>
     </PearlElectricBackground>
   );
@@ -949,5 +1031,126 @@ const styles = StyleSheet.create({
     color: '#FFE259',
     letterSpacing: 1.2,
     fontFamily: 'monospace',
+  },
+  condecorationCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFE259',
+    gap: 12,
+    marginBottom: Spacing.four,
+    shadowColor: '#FFE259',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+  },
+  condecorationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingBottom: 10,
+  },
+  condecorationTag: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#D4AF37',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  condecorationRankTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'serif',
+  },
+  condecorationBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  condecorationBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFE259',
+    fontFamily: 'monospace',
+  },
+  condecorationDesc: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    lineHeight: 16,
+  },
+  openDiplomaBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 2,
+  },
+  openDiplomaBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  openDiplomaBtnText: {
+    fontSize: 11.5,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  nextLevelCard: {
+    backgroundColor: 'rgba(5, 5, 8, 0.75)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+    gap: 6,
+    marginTop: 4,
+  },
+  nextLevelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nextLevelIcon: {
+    fontSize: 16,
+  },
+  nextLevelSubtitle: {
+    fontSize: 8.5,
+    fontFamily: 'monospace',
+    color: '#38BDF8',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  nextLevelTitleText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'serif',
+  },
+  comingSoonBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  comingSoonText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#F59E0B',
+    fontFamily: 'monospace',
+  },
+  nextLevelBodyText: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    lineHeight: 14,
   },
 });
