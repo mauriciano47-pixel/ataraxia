@@ -274,11 +274,12 @@ export function usePedometerSensor(
         rz = event.acceleration.z;
       }
 
-      const totalNorm = Math.sqrt(rx * rx + ry * ry + rz * rz);
-      if (totalNorm === 0) return;
+      // ETAPA A: Cálculo de Magnitud 3D a 1D (Invariante a la orientación)
+      const rawMagnitude = Math.sqrt(rx * rx + ry * ry + rz * rz);
+      if (rawMagnitude === 0) return;
 
-      // Descartar sacudidas destructivas violentas (>14.5 m/s²)
-      if (totalNorm > MAX_VIOLENT_ACCEL_MS2 + 9.8) {
+      // Descartar sacudidas destructivas violentas (>15.0 m/s²)
+      if (rawMagnitude > MAX_VIOLENT_ACCEL_MS2 + 9.8) {
         isRisingPeakRef.current = false;
         peakMaxValRef.current = 0;
         candidateStepsBufferRef.current = [];
@@ -286,51 +287,53 @@ export function usePedometerSensor(
         return;
       }
 
-      // Constante temporal de gravedad tau_g = 0.8s (invariante a FPS)
-      const alphaG = dt / (0.80 + dt);
-      gravityNormRef.current = (1 - alphaG) * gravityNormRef.current + alphaG * totalNorm;
-      const rawDynamic = Math.abs(totalNorm - gravityNormRef.current);
+      // ETAPA B: Filtrado Pasa-Bajo Biomecánico (1 Hz a 3 Hz)
+      // Constante temporal tau = 0.08s (corte ~2.0 Hz a cualquier tasa de FPS)
+      const alphaLP = dt / (0.08 + dt);
+      const filteredSignal = alphaLP * rawMagnitude + (1 - alphaLP) * smoothedDynamicRef.current;
+      smoothedDynamicRef.current = filteredSignal;
 
-      // Constante temporal de suavizado tau_s = 0.045s (invariante a FPS)
-      const alphaS = dt / (0.045 + dt);
-      const smoothDynamic = (1 - alphaS) * smoothedDynamicRef.current + alphaS * rawDynamic;
-      smoothedDynamicRef.current = smoothDynamic;
+      // ETAPA C: Estimación de Umbral Dinámico Adaptativo
+      // Actualizar línea base de gravedad adaptativa (tau_g = 1.2s)
+      const alphaG = dt / (1.20 + dt);
+      gravityNormRef.current = alphaG * filteredSignal + (1 - alphaG) * gravityNormRef.current;
+      const dynamicDelta = filteredSignal - gravityNormRef.current;
 
       const profile = SENSITIVITY_PROFILES[sensitivityRef.current] || SENSITIVITY_PROFILES.standard;
 
-      // FASE 1: Detección y armado de cresta
-      if (smoothDynamic >= profile.peakThreshold) {
+      // 1. Armar cresta cuando la señal supera el umbral adaptativo
+      if (dynamicDelta >= profile.peakThreshold) {
         if (!isRisingPeakRef.current) {
           isRisingPeakRef.current = true;
           peakStartTimeRef.current = now;
-          peakMaxValRef.current = smoothDynamic;
+          peakMaxValRef.current = dynamicDelta;
         } else {
-          if (smoothDynamic > peakMaxValRef.current) {
-            peakMaxValRef.current = smoothDynamic;
+          if (dynamicDelta > peakMaxValRef.current) {
+            peakMaxValRef.current = dynamicDelta;
           }
         }
       }
 
-      // FASE 2: Detección de caída de cresta (Ciclo de zancada completado)
+      // 2. Confirmar ciclo cuando desciende tras la cresta (Peak-to-Valley con delta mínimo)
       if (isRisingPeakRef.current) {
-        const drop = peakMaxValRef.current - smoothDynamic;
+        const drop = peakMaxValRef.current - dynamicDelta;
         if (drop >= profile.valleyDrop) {
           const pulseDuration = now - peakStartTimeRef.current;
           isRisingPeakRef.current = false;
           peakMaxValRef.current = 0;
 
-          // Validar que la duración física corresponda a una zancada humana
+          // ETAPA D: Ventana de Tiempo (Debounce 250ms - 1800ms) y Ráfaga (Step Windowing de 4 Pasos)
           if (pulseDuration >= profile.minPulseMs && pulseDuration <= profile.maxPulseMs) {
             const timeSinceLastCandidate = now - lastCandidateTimeRef.current;
 
-            // A) Frecuencia imposible (>2.9 Hz = sacudida rápida de mano o vibración) -> RECHAZAR
-            if (timeSinceLastCandidate < MIN_HUMAN_CADENCE_MS) {
+            // Frecuencia mayor a 3.3 Hz (<300ms) -> Descartar vibración rápida de mano
+            if (timeSinceLastCandidate < 300) {
               candidateStepsBufferRef.current = [];
               isWalkingConfirmedRef.current = false;
               return;
             }
 
-            // B) Más de 1.8 segundos sin movimiento (usuario detenido / pausa) -> Reiniciar ventana
+            // Más de 1.8 segundos sin zancadas -> Reinicio a modo reposo
             if (timeSinceLastCandidate > MAX_HUMAN_CADENCE_MS) {
               candidateStepsBufferRef.current = [now];
               lastCandidateTimeRef.current = now;
@@ -338,21 +341,23 @@ export function usePedometerSensor(
               return;
             }
 
-            // C) Intervalo en rango de marcha humana [340ms - 1800ms]
             lastCandidateTimeRef.current = now;
 
             if (!isWalkingConfirmedRef.current) {
-              // Evaluación estricta de cadencia periódica inicial (Anti-Movimiento de Mano)
+              // Ráfaga de Validación (Step Windowing): Acumular 4 pasos rítmicos antes de sumar
               candidateStepsBufferRef.current.push(now);
 
-              if (candidateStepsBufferRef.current.length >= 3) {
+              if (candidateStepsBufferRef.current.length >= 4) {
                 const times = candidateStepsBufferRef.current;
                 const int1 = times[1] - times[0];
                 const int2 = times[2] - times[1];
-                const variance = Math.abs(int1 - int2);
+                const int3 = times[3] - times[2];
+                const maxInt = Math.max(int1, int2, int3);
+                const minInt = Math.min(int1, int2, int3);
+                const variance = maxInt - minInt;
 
-                // Si los 3 pasos consecutivos tienen ritmo humano periódico coherente
-                if (variance <= MAX_CADENCE_VARIANCE_MS && int1 <= 1400 && int2 <= 1400) {
+                // Validación de periodicidad humana (cadencia estable)
+                if (variance <= MAX_CADENCE_VARIANCE_MS && maxInt <= 1500 && minInt >= 300) {
                   isWalkingConfirmedRef.current = true;
                   const verifiedSteps = times.length;
                   candidateStepsBufferRef.current = [];
@@ -367,13 +372,11 @@ export function usePedometerSensor(
                     onStepDetectedRef.current(verifiedSteps);
                   }
                 } else {
-                  // Si no hubo ritmo periódico (ej: agitación aleatoria de mano), descartar el más viejo
                   candidateStepsBufferRef.current.shift();
                 }
               }
             } else {
-              // ¡MARCHA CONFIRMADA Y ACTIVA! El atleta está caminando rítmicamente
-              // Cada nuevo paso se suma de inmediato (+1 en tiempo real con cero desfase)
+              // Marcha confirmada: sumar cada zancada rítmica en tiempo real (+1)
               setLiveSessionSteps((prev) => {
                 const updated = prev + 1;
                 try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
