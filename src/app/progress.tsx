@@ -9,57 +9,178 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
-import { LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS, EquipmentType } from '@/types/onboarding';
+import { SafeStorage } from '@/utils/safeStorage';
 import { MonthlyResolution, DayAudit } from '@/lib/monthlyResolutionEngine';
 
-const PATH_MANDATORY_ROUTINES: Record<LegendaryPath, {
+export interface ProgramExercise {
+  id: string;
+  n: string;
+  s: string;
+  targetRpe: number;
+  muscleGroup: string;
+  cue: string;
+}
+
+export interface PathEquipmentRoutine {
   name: string;
   focus: string;
-  exercises: { id: string; n: string; s: string; targetRpe: number; muscleGroup: string }[];
-}> = {
+  equipmentLabel: string;
+  exercises: ProgramExercise[];
+}
+
+export const MANDATORY_PROGRAM_MATRIX: Record<LegendaryPath, Record<EquipmentType, PathEquipmentRoutine>> = {
   spartan: {
-    name: 'Senda del Espartano',
-    focus: 'Fuerza Máxima & Hipertrofia Titánica (RIR 1-2)',
-    exercises: [
-      { id: 'sp1', n: 'Sentadilla Trasera Pesada con Barra', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Piernas' },
-      { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Pecho' },
-      { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, muscleGroup: 'Espalda / Isquios' },
-      { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Hombros' },
-      { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Espalda' },
-    ],
+    gym: {
+      name: 'Senda del Espartano • Gimnasio Completo',
+      focus: 'Fuerza Máxima, Cargas Pesadas & Sobrecarga Progresiva (RIR 1-2)',
+      equipmentLabel: '🏋️ Gimnasio Completo',
+      exercises: [
+        { id: 'sp_g1', n: 'Sentadilla Trasera Pesada con Barra', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Piernas', cue: 'Profundidad paralela y empuje desde los talones.' },
+        { id: 'sp_g2', n: 'Press de Banca Plano Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Pecho', cue: 'Retracción escapular sólida y arco natural.' },
+        { id: 'sp_g3', n: 'Peso Muerto Convencional Pesado', s: '3 series x 5 reps', targetRpe: 9.0, muscleGroup: 'Espalda / Isquios', cue: 'Bloqueo dorsal antes de despegar la barra.' },
+        { id: 'sp_g4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Hombros', cue: 'Glúteos y abdomen contraídos sin arquear lumbar.' },
+        { id: 'sp_g5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, muscleGroup: 'Espalda', cue: 'Torso paralelo al suelo con tirón explosivo.' },
+      ],
+    },
+    home_dumbbell: {
+      name: 'Senda del Espartano • Mancuernas en Casa',
+      focus: 'Tensión Mecánica Alta & Sobrecarga con Mancuernas',
+      equipmentLabel: '🏠 Mancuernas en Casa',
+      exercises: [
+        { id: 'sp_d1', n: 'Sentadilla Goblet Pesada con Mancuerna', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Piernas', cue: 'Mancuerna pegada al esternón con codos cerrados.' },
+        { id: 'sp_d2', n: 'Press de Pecho en Suelo/Banco con Mancuernas', s: '4 series x 8 reps', targetRpe: 8.5, muscleGroup: 'Pecho', cue: 'Pausa de 1 segundo en el punto de máximo estiramiento.' },
+        { id: 'sp_d3', n: 'Peso Muerto Rumano con Mancuernas', s: '4 series x 8 reps', targetRpe: 8.5, muscleGroup: 'Espalda / Isquios', cue: 'Empuja la cadera hacia atrás sintiendo los isquios.' },
+        { id: 'sp_d4', n: 'Press de Hombros Sentado con Mancuernas', s: '3 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Hombros', cue: 'Trayectoria limpia en arco sin chocar mancuernas.' },
+        { id: 'sp_d5', n: 'Remo Unilateral con Mancuerna Pesada', s: '4 series x 10 reps/lado', targetRpe: 8.5, muscleGroup: 'Espalda', cue: 'Lleva el codo hacia el bolsillo sin rotar el torso.' },
+      ],
+    },
+    calisthenics: {
+      name: 'Senda del Espartano • Peso Corporal Puro',
+      focus: 'Fuerza Relativa Máxima, Cargas Unilaterales & Pausas',
+      equipmentLabel: '🤸‍♂️ Peso Corporal',
+      exercises: [
+        { id: 'sp_c1', n: 'Pistol Squats Asistidas / Búlgaras al Fallo', s: '4 series x 8 reps/lado', targetRpe: 8.5, muscleGroup: 'Piernas', cue: 'Control excéntrico de 3 segundos por repetición.' },
+        { id: 'sp_c2', n: 'Flexiones Declinadas con Pies Elevados y Pausa', s: '4 series x 12-15 reps', targetRpe: 8.5, muscleGroup: 'Pecho', cue: 'Pies sobre silla/cama con pecho al suelo.' },
+        { id: 'sp_c3', n: 'Dominadas Pronas Estrictas o Lentas', s: '4 series x 6-8 reps', targetRpe: 9.0, muscleGroup: 'Espalda', cue: 'Barbilla sobre la barra y descenso completo.' },
+        { id: 'sp_c4', n: 'Flexiones en Pica Elevadas (Pike Push-ups)', s: '4 series x 8 reps', targetRpe: 8.5, muscleGroup: 'Hombros', cue: 'Cabeza desciende en trípode hacia adelante.' },
+        { id: 'sp_c5', n: 'Remo Invertido en Mesa o Anillas', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Espalda', cue: 'Cuerpo recto como tabla tocando el pecho al borde.' },
+      ],
+    },
   },
   hoplite: {
-    name: 'Senda del Hoplita',
-    focus: 'Resistencia Inagotable & Densidad Mitocondrial',
-    exercises: [
-      { id: 'hop1', n: 'Circuito Táctico de Resistencia', s: '4 rondas x 45 seg', targetRpe: 8.0, muscleGroup: 'Full Body' },
-      { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 min continuos', targetRpe: 7.0, muscleGroup: 'Cardiovascular' },
-      { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, muscleGroup: 'Pecho / Tríceps' },
-      { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, muscleGroup: 'Espalda' },
-      { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, muscleGroup: 'Core' },
-    ],
+    gym: {
+      name: 'Senda del Hoplita • Gimnasio Completo',
+      focus: 'Capacidad Mitocondrial, Cadenas Funcionales & Cardio Zona 2',
+      equipmentLabel: '🏋️ Gimnasio Completo',
+      exercises: [
+        { id: 'hop_g1', n: 'Sentadilla Frontal con Barra Olímpica', s: '4 series x 10 reps', targetRpe: 7.5, muscleGroup: 'Piernas', cue: 'Codos altos manteniendo el torso vertical.' },
+        { id: 'hop_g2', n: 'Circuito Táctico de Cardio (Remo / Bici Zona 2)', s: '25 minutos continuos', targetRpe: 7.0, muscleGroup: 'Cardiovascular', cue: 'Ritmo conversacional sostenido (65-75% FC).' },
+        { id: 'hop_g3', n: 'Press de Pecho en Máquina / Polea', s: '4 series x 12 reps', targetRpe: 8.0, muscleGroup: 'Pecho', cue: 'Tensión constante sin bloquear codos.' },
+        { id: 'hop_g4', n: 'Jalón al Pecho en Polea Alta', s: '4 series x 12 reps', targetRpe: 8.0, muscleGroup: 'Espalda', cue: 'Tira con los codos y abre la caja torácica.' },
+        { id: 'hop_g5', n: 'Paseo del Granjero Pesado (Farmer Walk)', s: '3 series x 40 metros', targetRpe: 8.5, muscleGroup: 'Core / Agarre', cue: 'Hombros atrás y pasos firmes sin oscilar.' },
+      ],
+    },
+    home_dumbbell: {
+      name: 'Senda del Hoplita • Mancuernas en Casa',
+      focus: 'Resistencia Funcional Táctica & Capacidad de Trabajo',
+      equipmentLabel: '🏠 Mancuernas en Casa',
+      exercises: [
+        { id: 'hop_d1', n: 'Thrusters Tácticos (Sentadilla + Press)', s: '4 series x 12 reps', targetRpe: 8.0, muscleGroup: 'Full Body', cue: 'Usa el impulso de las piernas para elevar el peso.' },
+        { id: 'hop_d2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '30 minutos continuos', targetRpe: 7.0, muscleGroup: 'Cardiovascular', cue: 'Ritmo constante sin pausas para acelerar quema de grasa.' },
+        { id: 'hop_d3', n: 'Renegade Rows con Mancuernas en Plancha', s: '4 series x 10 reps/lado', targetRpe: 8.0, muscleGroup: 'Core / Espalda', cue: 'Caderas quietas sin balancear al remar.' },
+        { id: 'hop_d4', n: 'Zancadas Caminando con Mancuernas', s: '3 series x 14 pasos', targetRpe: 7.5, muscleGroup: 'Piernas', cue: 'Rodilla trasera roza suavemente el suelo.' },
+        { id: 'hop_d5', n: 'Plancha con Arrastre de Mancuerna', s: '3 series x 45 seg', targetRpe: 8.0, muscleGroup: 'Core', cue: 'Pasa la mancuerna de un lado al otro sin girar pelvis.' },
+      ],
+    },
+    calisthenics: {
+      name: 'Senda del Hoplita • Peso Corporal',
+      focus: 'Densidad Mitocondrial & Resistencia Inagotable',
+      equipmentLabel: '🤸‍♂️ Peso Corporal',
+      exercises: [
+        { id: 'hop_c1', n: 'Circuito Táctico (Burpees + Zancadas Explosivas)', s: '4 rondas x 45 seg', targetRpe: 8.0, muscleGroup: 'Full Body', cue: 'Movimientos fluidos sin golpear articulaciones.' },
+        { id: 'hop_c2', n: 'Carrera Continua NeAT / Saltos de Cuerda', s: '30 minutos Zona 2', targetRpe: 7.0, muscleGroup: 'Cardiovascular', cue: 'Respiración nasal controlada y cadencia rítmica.' },
+        { id: 'hop_c3', n: 'Flexiones Tácticas con Pausa en Suelo', s: '4 series x 15 reps', targetRpe: 8.0, muscleGroup: 'Pecho / Tríceps', cue: 'Pecho al suelo y despegue de manos 0.5s.' },
+        { id: 'hop_c4', n: 'Dominadas Australianas o Pronas', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Espalda', cue: 'Contracción dorsal en el punto más alto.' },
+        { id: 'hop_c5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, muscleGroup: 'Core', cue: 'Retroversión pélvica y máxima tensión abdominal.' },
+      ],
+    },
   },
   apollo: {
-    name: 'Senda de Apolo',
-    focus: 'Escultura Estética, V-Taper & Proporciones Áureas',
-    exercises: [
-      { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, muscleGroup: 'Pecho Superior' },
-      { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, muscleGroup: 'Hombros Laterales' },
-      { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Dorsales' },
-      { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, muscleGroup: 'Cuádriceps / Glúteos' },
-      { id: 'ap5', n: 'Elevación de Piernas Colgado en Barra', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Abdomen' },
-    ],
+    gym: {
+      name: 'Senda de Apolo • Gimnasio Completo',
+      focus: 'Escultura Estética, V-Taper & Proporciones Áureas',
+      equipmentLabel: '🏋️ Gimnasio Completo',
+      exercises: [
+        { id: 'ap_g1', n: 'Press Inclinado con Mancuernas a 30°', s: '4 series x 10-12 reps', targetRpe: 8.5, muscleGroup: 'Pecho Superior', cue: 'Énfasis en la clavícula con estiramiento profundo.' },
+        { id: 'ap_g2', n: 'Elevaciones Laterales en Polea / Mancuerna en V', s: '4 series x 15 reps', targetRpe: 9.0, muscleGroup: 'Hombros Laterales', cue: 'Codos ligeramente flexionados guiando el movimiento.' },
+        { id: 'ap_g3', n: 'Jalón al Pecho Agarre Neutro (V-Taper)', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Dorsales', cue: 'Deprime escápulas antes de iniciar la tracción.' },
+        { id: 'ap_g4', n: 'Prensa Inclinada de Piernas / Sentadilla Hack', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Cuádriceps', cue: 'Pies en parte baja de la plataforma con descenso lento.' },
+        { id: 'ap_g5', n: 'Elevación de Piernas Colgado en Barra (V-Cut)', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Abdomen', cue: 'Eleva la pelvis enrollando la columna sin balanceo.' },
+      ],
+    },
+    home_dumbbell: {
+      name: 'Senda de Apolo • Mancuernas en Casa',
+      focus: 'Definición Muscular Esculpida con Mancuernas',
+      equipmentLabel: '🏠 Mancuernas en Casa',
+      exercises: [
+        { id: 'ap_d1', n: 'Press Inclinado con Mancuernas en Cojín/Banco', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Pecho Superior', cue: 'Inclinación de 30 grados para llenar el pecho alto.' },
+        { id: 'ap_d2', n: 'Elevaciones Laterales Estrictas con Mancuerna', s: '5 series x 15 reps', targetRpe: 9.0, muscleGroup: 'Hombros', cue: 'Pausa de 1 segundo arriba para crear el efecto V.' },
+        { id: 'ap_d3', n: 'Remo con Mancuernas Agarre Supino', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Dorsales', cue: 'Codos pegados al cuerpo estimulando el dorsal bajo.' },
+        { id: 'ap_d4', n: 'Sentadilla Búlgara Esculpida con Mancuerna', s: '3 series x 12 reps/lado', targetRpe: 8.5, muscleGroup: 'Piernas', cue: 'Tronco erguido enfocando cuádriceps y glúteos.' },
+        { id: 'ap_d5', n: 'Crunch Abdominal en V (V-Ups)', s: '4 series x 15 reps', targetRpe: 8.0, muscleGroup: 'Abdomen', cue: 'Toca las puntas de los pies contrayendo el core.' },
+      ],
+    },
+    calisthenics: {
+      name: 'Senda de Apolo • Peso Corporal',
+      focus: 'Físico Esculpido Clásico mediante Calistenia Estética',
+      equipmentLabel: '🤸‍♂️ Peso Corporal',
+      exercises: [
+        { id: 'ap_c1', n: 'Flexiones Declinadas con Pies en Silla', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Pecho Superior', cue: 'Concentra la tensión en la porción clavicular.' },
+        { id: 'ap_c2', n: 'Pseudo Planche Push-ups', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Hombros / Pecho', cue: 'Manos a la altura de la cintura con cuerpo inclinado.' },
+        { id: 'ap_c3', n: 'Dominadas Abiertas con Énfasis Dorsal', s: '4 series x 8-10 reps', targetRpe: 8.5, muscleGroup: 'V-Taper Dorsal', cue: 'Agarre ancho llevando el esternón hacia la barra.' },
+        { id: 'ap_c4', n: 'Sissy Squats / Búlgaras de Peso Corporal', s: '4 series x 12 reps', targetRpe: 8.0, muscleGroup: 'Cuádriceps', cue: 'Aislamiento supremo de cuádriceps sin pesas.' },
+        { id: 'ap_c5', n: 'Hanging L-Sit / Leg Raises en Barra', s: '4 series x 12 reps', targetRpe: 9.0, muscleGroup: 'Abdomen', cue: 'Piernas totalmente rectas formando un ángulo de 90°.' },
+      ],
+    },
   },
   philosopher: {
-    name: 'Senda del Filósofo Guerrero',
-    focus: 'Calistenia Pura, Autodominio & Temple Corporal',
-    exercises: [
-      { id: 'ph1', n: 'Dominadas Estrictas en Barra', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Dorsales / Bíceps' },
-      { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, muscleGroup: 'Pecho / Tríceps' },
-      { id: 'ph3', n: 'Pistol Squats (Sentadilla a 1 Pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, muscleGroup: 'Piernas' },
-      { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Tríceps' },
-      { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, muscleGroup: 'Core / Abdomen' },
-    ],
+    gym: {
+      name: 'Senda del Filósofo • Gimnasio',
+      focus: 'Fuerza Pura Calisténica & Ejercicios Compuestos',
+      equipmentLabel: '🏋️ Gimnasio Completo',
+      exercises: [
+        { id: 'ph_g1', n: 'Dominadas Lastradas Estrictas', s: '4 series x 6 reps', targetRpe: 8.5, muscleGroup: 'Dorsales / Bíceps', cue: 'Carga añadida en cinturón manteniendo técnica perfecta.' },
+        { id: 'ph_g2', n: 'Fondos en Paralelas Lastrados', s: '4 series x 8 reps', targetRpe: 8.5, muscleGroup: 'Pecho / Tríceps', cue: 'Inclinación leve de 15° y descenso controlado.' },
+        { id: 'ph_g3', n: 'Sentadilla Zercher con Barra', s: '3 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Core / Piernas', cue: 'Barra en la flexura de los codos con espalda neutra.' },
+        { id: 'ph_g4', n: 'Remo Invertido en Multipower', s: '4 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Espalda Alta', cue: 'Talones apoyados con pecho tocando la barra fija.' },
+        { id: 'ph_g5', n: 'Dragon Flags / Toes to Bar', s: '4 series x 8 reps', targetRpe: 9.0, muscleGroup: 'Core Stoic', cue: 'Cuerpo rígido en descenso sin doblar caderas.' },
+      ],
+    },
+    home_dumbbell: {
+      name: 'Senda del Filósofo • Mancuernas en Casa',
+      focus: 'Autodominio Físico con Mancuernas & Peso Corporal',
+      equipmentLabel: '🏠 Mancuernas en Casa',
+      exercises: [
+        { id: 'ph_d1', n: 'Dominadas en Barra de Puerta / Remo Mancuerna', s: '4 series x 8 reps', targetRpe: 8.5, muscleGroup: 'Espalda', cue: 'Pausa en contracción máxima dorsal.' },
+        { id: 'ph_d2', n: 'Fondos entre Dos Sillas con Mancuerna en Regazo', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Tríceps / Pecho', cue: 'Codos hacia atrás protegiendo los hombros.' },
+        { id: 'ph_d3', n: 'Pistol Squats con Mancuerna de Contrapeso', s: '3 series x 8 reps/lado', targetRpe: 8.0, muscleGroup: 'Piernas', cue: 'Sostén una mancuerna ligera al frente para equilibrio.' },
+        { id: 'ph_d4', n: 'Press Arnold con Mancuernas', s: '3 series x 10 reps', targetRpe: 8.0, muscleGroup: 'Hombros', cue: 'Rotación fluida desde palmas hacia adentro.' },
+        { id: 'ph_d5', n: 'Hollow Body Hold con Mancuerna Ligera', s: '4 series x 30 seg', targetRpe: 8.5, muscleGroup: 'Core', cue: 'Lumbar pegada al suelo con brazos extendidos.' },
+      ],
+    },
+    calisthenics: {
+      name: 'Senda del Filósofo • Calistenia Pura',
+      focus: 'Calistenia Pura, Dominio Gravitacional & Paz Mental',
+      equipmentLabel: '🤸‍♂️ Peso Corporal',
+      exercises: [
+        { id: 'ph_c1', n: 'Dominadas Estrictas en Barra', s: '4 series x 10 reps', targetRpe: 8.5, muscleGroup: 'Dorsales / Bíceps', cue: 'Tirón simétrico sin balancear las piernas.' },
+        { id: 'ph_c2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, muscleGroup: 'Pecho / Tríceps', cue: 'Descenso a 90 grados y bloqueo controlado.' },
+        { id: 'ph_c3', n: 'Pistol Squats (Sentadilla a 1 Pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, muscleGroup: 'Piernas', cue: 'Autodominio absoluto del equilibrio y fuerza unilateral.' },
+        { id: 'ph_c4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, muscleGroup: 'Tríceps', cue: 'Pulgares e índices unidos con codos cerrados.' },
+        { id: 'ph_c5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, muscleGroup: 'Core / Abdomen', cue: 'Temple mental sosteniendo la posición inmóvil.' },
+      ],
+    },
   },
 };
 
@@ -83,6 +204,32 @@ export default function ProgressScreen() {
   // Estado local para los checkboxes de la sesión obligatoria del día
   const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
 
+  const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
+  const activePathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
+
+  // Equipamiento activo: detectado del perfil, SafeStorage o fallback a 'gym'
+  const initialEquip: EquipmentType =
+    (log.prokoptonProfile?.equipment as EquipmentType) ||
+    (SafeStorage.getItem('ataraxia_user_equipment_v1') as EquipmentType) ||
+    activePathInfo.equipment ||
+    'gym';
+
+  const [activeEquipment, setActiveEquipment] = useState<EquipmentType>(initialEquip);
+
+  React.useEffect(() => {
+    if (log.prokoptonProfile?.equipment) {
+      setActiveEquipment(log.prokoptonProfile.equipment);
+    }
+  }, [log.prokoptonProfile?.equipment]);
+
+  const handleSelectEquipment = (equip: EquipmentType) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    setActiveEquipment(equip);
+    SafeStorage.setItem('ataraxia_user_equipment_v1', equip);
+  };
+
   if (loading || loadingHistory) {
     return (
       <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#050507' }]}>
@@ -92,9 +239,8 @@ export default function ProgressScreen() {
     );
   }
 
-  const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
-  const activePathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
-  const mandatoryProgram = PATH_MANDATORY_ROUTINES[activePathKey] || PATH_MANDATORY_ROUTINES.spartan;
+  const pathRoutines = MANDATORY_PROGRAM_MATRIX[activePathKey] || MANDATORY_PROGRAM_MATRIX.spartan;
+  const mandatoryProgram = pathRoutines[activeEquipment] || pathRoutines.gym;
 
   const cycle = log.monthlyCycle || {
     currentDay: 1,
@@ -243,24 +389,57 @@ export default function ProgressScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* 1. SECCIÓN OBLIGATORIA: SESIÓN MARCIAL DEL DÍA (INMUTABLE) */}
+          {/* 1. SECCIÓN OBLIGATORIA: SESIÓN MARCIAL DEL DÍA (ADAPTADA AL EQUIPAMIENTO) */}
           <View style={styles.mandatoryCard}>
             <View style={styles.mandatoryHeaderRow}>
               <View style={styles.mandatoryBadge}>
-                <ThemedText style={styles.mandatoryBadgeText}>⚔️ PILAR 1: RUTINA SAGRADA • OBLIGATORIO</ThemedText>
+                <ThemedText style={styles.mandatoryBadgeText}>⚔️ PROGRAMA SAGRADO • OBLIGATORIO</ThemedText>
               </View>
               <ThemedText style={[styles.statusText, log.trainingCompleted ? { color: '#10B981' } : { color: '#F59E0B' }]}>
                 {log.trainingCompleted ? 'SELLADO ✓ (+20 PTS)' : 'PENDIENTE (0/20)'}
               </ThemedText>
             </View>
 
+            {/* SELECTOR INTERACTIVO DE EQUIPAMIENTO DEL DÍA */}
+            <View style={styles.equipSelectorRow}>
+              <TouchableOpacity
+                style={[styles.equipChip, activeEquipment === 'gym' && styles.equipChipActive]}
+                onPress={() => handleSelectEquipment('gym')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={[styles.equipChipText, activeEquipment === 'gym' && styles.equipChipTextActive]}>
+                  🏋️ Gimnasio
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.equipChip, activeEquipment === 'home_dumbbell' && styles.equipChipActive]}
+                onPress={() => handleSelectEquipment('home_dumbbell')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={[styles.equipChipText, activeEquipment === 'home_dumbbell' && styles.equipChipTextActive]}>
+                  🏠 Mancuernas
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.equipChip, activeEquipment === 'calisthenics' && styles.equipChipActive]}
+                onPress={() => handleSelectEquipment('calisthenics')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={[styles.equipChipText, activeEquipment === 'calisthenics' && styles.equipChipTextActive]}>
+                  🤸‍♂️ Calistenia
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+
             <ThemedText style={styles.mandatoryTitle}>{mandatoryProgram.name}</ThemedText>
             <ThemedText style={styles.mandatoryFocus}>{mandatoryProgram.focus}</ThemedText>
 
-            {/* AVISO DE INMUTABILIDAD */}
+            {/* AVISO DE INMUTABILIDAD & CALIBRACIÓN */}
             <View style={styles.immutableNoticeBox}>
               <ThemedText style={styles.immutableNoticeText}>
-                🔒 Esta rutina es inmutable y obligatoria. Sellar esta sesión es requisito sagrado para validar el día en tu ciclo.
+                🔒 Rutina inmutable calibrada para <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>{mandatoryProgram.equipmentLabel}</ThemedText>. Cumplir esta sesión es requisito sagrado para validar tu día.
               </ThemedText>
             </View>
 
@@ -288,6 +467,7 @@ export default function ProgressScreen() {
                         <ThemedText style={styles.exerciseRpe}>• RPE {ex.targetRpe}</ThemedText>
                         <ThemedText style={styles.exerciseGroup}>• {ex.muscleGroup}</ThemedText>
                       </View>
+                      <ThemedText style={styles.exerciseCue}>💡 {ex.cue}</ThemedText>
                     </View>
                   </TouchableOpacity>
                 );
@@ -311,6 +491,10 @@ export default function ProgressScreen() {
                 </ThemedText>
               </LinearGradient>
             </TouchableOpacity>
+
+            <ThemedText style={styles.optionalHintText}>
+              💡 ¿Quieres más entreno? Usa la pestaña "Entreno" para sesiones libres o con IA (Opcional).
+            </ThemedText>
           </View>
 
           {/* 2. TARJETA DE CALIFICACIÓN DEL DÍA & LOS 7 PILARES SAGRADOS */}
@@ -941,6 +1125,33 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
+  equipSelectorRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 2,
+  },
+  equipChip: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.25)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  equipChipActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.22)',
+    borderColor: '#FFE259',
+  },
+  equipChipText: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  equipChipTextActive: {
+    color: '#FFE259',
+  },
   mandatoryTitle: {
     fontSize: 18,
     fontWeight: '900',
@@ -1034,6 +1245,12 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
     fontFamily: 'monospace',
   },
+  exerciseCue: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
   sealWorkoutBtn: {
     marginTop: 6,
     borderRadius: 12,
@@ -1056,7 +1273,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textAlign: 'center',
     fontFamily: 'monospace',
-    marginTop: 2,
+    marginTop: 4,
   },
   todayCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.90)',
