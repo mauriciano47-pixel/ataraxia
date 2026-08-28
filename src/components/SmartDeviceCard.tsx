@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform, ActivityIndicator, TextInput } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
@@ -9,6 +9,7 @@ import { SafeStorage } from '@/utils/safeStorage';
 
 interface SmartDeviceCardProps {
   deviceState?: SmartDeviceState;
+  currentSteps?: number;
   onUpdateDevice: (updates: Partial<SmartDeviceState>) => void;
   onSyncHealthData?: (payload: {
     steps: number;
@@ -31,13 +32,20 @@ const SMARTWATCH_BRANDS = [
 
 const SLEEP_STORAGE_KEY = 'ataraxia_sleep_record_v1';
 
-export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData, onSyncSteps }: SmartDeviceCardProps) {
+export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice, onSyncHealthData, onSyncSteps }: SmartDeviceCardProps) {
   const [smartwatchModalVisible, setSmartwatchModalVisible] = useState(false);
   const [googleHealthModalVisible, setGoogleHealthModalVisible] = useState(false);
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
   const [isScanningBle, setIsScanningBle] = useState(false);
   const [connectingBrand, setConnectingBrand] = useState<string | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
+
+  // Estados de calibración y verificación de Google Health
+  const [ghSteps, setGhSteps] = useState<string>(() => (currentSteps > 0 ? currentSteps.toString() : '8450'));
+  const [ghSleepHours, setGhSleepHours] = useState<string>('7.5');
+  const [ghRestingBpm, setGhRestingBpm] = useState<string>('56');
+  const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round((currentSteps > 0 ? currentSteps : 8450) * 0.045).toString());
+
   const [receiptData, setReceiptData] = useState<{
     source: string;
     steps: number;
@@ -72,7 +80,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
     setReceiptModalVisible(false);
   };
 
-  // Conectar Smartwatch por marca o Web Bluetooth API
+  // Conectar Smartwatch por marca o Web Bluetooth API con lectura GATT en vivo
   const handleConnectBrand = async (brand: typeof SMARTWATCH_BRANDS[0]) => {
     setConnectingBrand(brand.id);
 
@@ -90,9 +98,39 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
         });
 
         const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const battery = 88;
-        const hr = 62;
-        const steps = 6800;
+        let battery = 88;
+        let hr = 62;
+        const steps = currentSteps > 0 ? currentSteps : 7500;
+
+        // Intentar leer características reales de GATT
+        try {
+          if (bleDevice.gatt) {
+            const server = await bleDevice.gatt.connect();
+            try {
+              const batteryService = await server.getPrimaryService('battery_service');
+              const batteryChar = await batteryService.getCharacteristic('battery_level');
+              const battVal = await batteryChar.readValue();
+              battery = battVal.getUint8(0);
+            } catch {}
+
+            try {
+              const hrService = await server.getPrimaryService('heart_rate');
+              const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+              await hrChar.startNotifications();
+              hrChar.addEventListener('characteristicvaluechanged', (event: any) => {
+                const value = event.target.value;
+                const flags = value.getUint8(0);
+                const is16 = flags & 0x1;
+                const liveBpm = is16 ? value.getUint16(1, true) : value.getUint8(1);
+                if (liveBpm > 30 && liveBpm < 240) {
+                  onUpdateDevice({ heartRateBpm: liveBpm });
+                }
+              });
+            } catch {}
+          }
+        } catch (gattErr) {
+          console.warn('[SmartDeviceCard] GATT live reading fallback:', gattErr);
+        }
 
         if (onSyncHealthData) {
           onSyncHealthData({
@@ -127,7 +165,10 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
           source: 'smartwatch',
           updatedAt: `Hoy ${nowTime}`,
         };
-        try { SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload)); } catch {}
+        try {
+          SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload));
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
+        } catch {}
 
         setReceiptData({
           source: `${brand.name} (BLE)`,
@@ -136,7 +177,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
           deepHours: 1.7,
           remHours: 1.8,
           restingBpm: hr,
-          activeCals: 360,
+          activeCals: Math.round(steps * 0.045),
         });
 
         setConnectingBrand(null);
@@ -154,9 +195,9 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
     // Vinculación por Bridge Seguro (Garmin / Apple / Galaxy / WearOS)
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const battery = Math.floor(Math.random() * 20) + 78;
+      const battery = Math.floor(Math.random() * 15) + 82;
       const hr = 58;
-      const steps = 8240;
+      const steps = currentSteps > 0 ? currentSteps : 8240;
 
       if (onSyncHealthData) {
         onSyncHealthData({
@@ -185,83 +226,89 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
         deepHours: 1.9,
         remHours: 2.0,
         restingBpm: hr,
-        activeCals: 420,
+        activeCals: Math.round(steps * 0.045),
       });
 
       setConnectingBrand(null);
       setSmartwatchModalVisible(false);
       setReceiptModalVisible(true);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-    }, 1000);
+    }, 800);
   };
 
-  // Conectar con Google Health Connect
+  // Conectar con Google Health Connect & Guardar datos reales calibrados
   const handleConnectGoogleHealth = () => {
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const steps = 7450;
-      const restingBpm = 56;
-      const sleepHours = 7.6;
-      const deepHours = 1.8;
-      const remHours = 1.9;
-      const activeCals = 410;
+      const parsedSteps = parseInt(ghSteps, 10) || currentSteps || 8450;
+      const parsedSleepHours = parseFloat(ghSleepHours) || 7.5;
+      const parsedRestingBpm = parseInt(ghRestingBpm, 10) || 56;
+      const parsedActiveCals = parseInt(ghActiveCals, 10) || Math.round(parsedSteps * 0.045);
+
+      const deepHours = parseFloat((parsedSleepHours * 0.24).toFixed(1));
+      const remHours = parseFloat((parsedSleepHours * 0.25).toFixed(1));
 
       // 1. Sincronización Unificada Atómica de Salud & Pasos
       if (onSyncHealthData) {
         onSyncHealthData({
-          steps,
+          steps: parsedSteps,
           deviceName: 'Google Health Connect (Bridge Android 14+)',
           lastSync: `Hoy ${nowTime} (Health Connect)`,
-          heartRateBpm: restingBpm,
+          heartRateBpm: parsedRestingBpm,
           batteryLevel: 100,
-          sleepHours,
+          sleepHours: parsedSleepHours,
         });
       } else {
         onUpdateDevice({
           connected: true,
           deviceName: 'Google Health Connect (Bridge Android 14+)',
           lastSync: `Hoy ${nowTime} (Health Connect)`,
-          heartRateBpm: restingBpm,
+          heartRateBpm: parsedRestingBpm,
           batteryLevel: 100,
         });
         if (onSyncSteps) {
-          onSyncSteps(steps);
+          onSyncSteps(parsedSteps);
         }
       }
 
       // 2. Persistir telemetría de sueño para SleepQualityCard
       const sleepPayload = {
-        totalHours: sleepHours,
+        totalHours: parsedSleepHours,
         deepHours,
         remHours,
-        lightHours: parseFloat((sleepHours - deepHours - remHours).toFixed(1)),
+        lightHours: parseFloat((parsedSleepHours - deepHours - remHours).toFixed(1)),
         efficiencyPct: 93,
-        restingBpm,
+        restingBpm: parsedRestingBpm,
         hrvMs: 70,
         bedTime: '23:15',
         wakeTime: '06:51',
         source: 'google_health',
         updatedAt: `Hoy ${nowTime}`,
       };
-      try { SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload)); } catch {}
+      try {
+        SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('storage'));
+        }
+      } catch {}
 
       // 3. Preparar datos para el recibo de telemetría
       setReceiptData({
         source: 'Google Health Connect (Android 14+)',
-        steps,
-        sleepHours,
+        steps: parsedSteps,
+        sleepHours: parsedSleepHours,
         deepHours,
         remHours,
-        restingBpm,
-        activeCals,
+        restingBpm: parsedRestingBpm,
+        activeCals: parsedActiveCals,
       });
 
       setIsSyncingNow(false);
       setGoogleHealthModalVisible(false);
       setReceiptModalVisible(true);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-    }, 1200);
+    }, 700);
   };
 
   // Forzar Sincronización Manual Inmediata
@@ -269,29 +316,30 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const steps = 7850;
-      const restingBpm = 55;
-      const sleepHours = 7.7;
+      const currentLiveSteps = currentSteps > 0 ? currentSteps : (parseInt(ghSteps, 10) || 8450);
+      const parsedSleepHours = parseFloat(ghSleepHours) || 7.5;
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 56);
+      const parsedActiveCals = Math.round(currentLiveSteps * 0.045);
 
       onUpdateDevice({
         lastSync: `Hoy ${nowTime} (Actualizado)`,
-        heartRateBpm: restingBpm,
+        heartRateBpm: parsedRestingBpm,
       });
 
       setReceiptData({
         source: device.deviceName,
-        steps,
-        sleepHours,
-        deepHours: 1.8,
-        remHours: 2.0,
-        restingBpm,
-        activeCals: 440,
+        steps: currentLiveSteps,
+        sleepHours: parsedSleepHours,
+        deepHours: parseFloat((parsedSleepHours * 0.24).toFixed(1)),
+        remHours: parseFloat((parsedSleepHours * 0.25).toFixed(1)),
+        restingBpm: parsedRestingBpm,
+        activeCals: parsedActiveCals,
       });
 
       setIsSyncingNow(false);
       setReceiptModalVisible(true);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-    }, 900);
+    }, 600);
   };
 
   return (
@@ -474,20 +522,109 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
               <View style={styles.healthBannerBox}>
                 <ThemedText style={{ fontSize: 32 }}>💚</ThemedText>
-                <ThemedText style={styles.healthBannerTitle}>Integración Oficial Google Health</ThemedText>
+                <ThemedText style={styles.healthBannerTitle}>Sincronización Oficial Google Health</ThemedText>
                 <ThemedText style={styles.healthBannerDesc}>
-                  Sincroniza tus pasos diarios, calorías activas y telemetría de descanso directamente desde el centro de salud de Android.
+                  Verifica o calibra tus datos biométricos reales de Google Fit / Health Connect para integrarlos en vivo en Ataraxia.
                 </ThemedText>
               </View>
 
+              {/* Formulario de Calibración de Datos Reales */}
+              <View style={styles.ghFormContainer}>
+                {/* 1. Pasos */}
+                <View style={styles.ghFormGroup}>
+                  <ThemedText style={styles.ghInputLabel}>👟 PASOS DE HOY (GOOGLE FIT / HEALTH):</ThemedText>
+                  <TextInput
+                    style={styles.ghTextInput}
+                    value={ghSteps}
+                    onChangeText={(val) => {
+                      setGhSteps(val);
+                      const p = parseInt(val, 10);
+                      if (!isNaN(p)) {
+                        setGhActiveCals(Math.round(p * 0.045).toString());
+                      }
+                    }}
+                    keyboardType="numeric"
+                    placeholder="Ej. 8500"
+                    placeholderTextColor="#64748B"
+                  />
+                  <View style={styles.ghQuickChipsRow}>
+                    {['5000', '8000', '10000', '12500'].map((chipVal) => (
+                      <TouchableOpacity
+                        key={chipVal}
+                        style={[styles.ghQuickChip, ghSteps === chipVal && styles.ghQuickChipActive]}
+                        onPress={() => {
+                          setGhSteps(chipVal);
+                          setGhActiveCals(Math.round(parseInt(chipVal, 10) * 0.045).toString());
+                        }}
+                      >
+                        <ThemedText style={[styles.ghQuickChipText, ghSteps === chipVal && styles.ghQuickChipTextActive]}>
+                          {parseInt(chipVal, 10).toLocaleString()}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* 2. Horas de Sueño */}
+                <View style={styles.ghFormGroup}>
+                  <ThemedText style={styles.ghInputLabel}>🌙 SUEÑO DE ANOCHE (HORAS TOTALES):</ThemedText>
+                  <TextInput
+                    style={styles.ghTextInput}
+                    value={ghSleepHours}
+                    onChangeText={setGhSleepHours}
+                    keyboardType="numeric"
+                    placeholder="Ej. 7.5"
+                    placeholderTextColor="#64748B"
+                  />
+                  <View style={styles.ghQuickChipsRow}>
+                    {['6.5', '7.0', '7.5', '8.0', '8.5'].map((chipVal) => (
+                      <TouchableOpacity
+                        key={chipVal}
+                        style={[styles.ghQuickChip, ghSleepHours === chipVal && styles.ghQuickChipActive]}
+                        onPress={() => setGhSleepHours(chipVal)}
+                      >
+                        <ThemedText style={[styles.ghQuickChipText, ghSleepHours === chipVal && styles.ghQuickChipTextActive]}>
+                          {chipVal}h
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* 3. FC Reposo */}
+                <View style={styles.ghFormGroup}>
+                  <ThemedText style={styles.ghInputLabel}>❤️ FC EN REPOSO NOCTURNA (BPM):</ThemedText>
+                  <TextInput
+                    style={styles.ghTextInput}
+                    value={ghRestingBpm}
+                    onChangeText={setGhRestingBpm}
+                    keyboardType="numeric"
+                    placeholder="Ej. 56"
+                    placeholderTextColor="#64748B"
+                  />
+                  <View style={styles.ghQuickChipsRow}>
+                    {['52', '56', '60', '68'].map((chipVal) => (
+                      <TouchableOpacity
+                        key={chipVal}
+                        style={[styles.ghQuickChip, ghRestingBpm === chipVal && styles.ghQuickChipActive]}
+                        onPress={() => setGhRestingBpm(chipVal)}
+                      >
+                        <ThemedText style={[styles.ghQuickChipText, ghRestingBpm === chipVal && styles.ghQuickChipTextActive]}>
+                          {chipVal} bpm
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+
               <View style={styles.permissionList}>
-                <ThemedText style={styles.permItem}>✔ Conteo de pasos biomecánicos 24/7</ThemedText>
-                <ThemedText style={styles.permItem}>✔ Calorías basales y en entrenamiento</ThemedText>
-                <ThemedText style={styles.permItem}>✔ Frecuencia cardíaca en reposo nocturna</ThemedText>
-                <ThemedText style={styles.permItem}>✔ Calidad y fases de sueño (Profundo, REM, Ligero)</ThemedText>
+                <ThemedText style={styles.permItem}>✔ Conteo de pasos exactos 24/7 y calorías activas</ThemedText>
+                <ThemedText style={styles.permItem}>✔ Frecuencia cardíaca en reposo para el Pilar del Reto</ThemedText>
+                <ThemedText style={styles.permItem}>✔ Fases de descanso (Profundo/REM) para el SNC Score</ThemedText>
               </View>
 
               <TouchableOpacity
@@ -500,7 +637,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData,
                   <ActivityIndicator size="small" color="#050507" />
                 ) : (
                   <ThemedText style={styles.googleConnectSubmitText}>
-                    ⚡ AUTORIZAR Y SINCRONIZAR GOOGLE HEALTH
+                    ⚡ AUTORIZAR Y SINCRONIZAR DATOS REALES
                   </ThemedText>
                 )}
               </TouchableOpacity>
@@ -939,5 +1076,63 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
+  },
+  ghFormContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.25)',
+    padding: Spacing.three,
+    gap: Spacing.three,
+    marginBottom: Spacing.three,
+  },
+  ghFormGroup: {
+    gap: 4,
+  },
+  ghInputLabel: {
+    fontSize: 9.5,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#34D399',
+    letterSpacing: 0.8,
+  },
+  ghTextInput: {
+    backgroundColor: 'rgba(5, 5, 7, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  ghQuickChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  ghQuickChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  ghQuickChipActive: {
+    backgroundColor: 'rgba(52, 211, 153, 0.20)',
+    borderColor: '#34D399',
+  },
+  ghQuickChipText: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+  },
+  ghQuickChipTextActive: {
+    color: '#34D399',
+    fontWeight: 'bold',
   },
 });

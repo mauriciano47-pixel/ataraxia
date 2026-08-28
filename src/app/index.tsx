@@ -489,6 +489,7 @@ export default function HoyScreen() {
 
             <SmartDeviceCard
               deviceState={log.smartDevice}
+              currentSteps={currentSteps}
               onUpdateDevice={updateSmartDevice}
               onSyncHealthData={syncExternalHealthData}
               onSyncSteps={setSteps}
