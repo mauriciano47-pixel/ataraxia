@@ -359,7 +359,7 @@ export default function AboutScreen() {
 
               <View style={styles.infoRow}>
                 <Ionicons name="globe-outline" size={16} color="#94A3B8" />
-                <ThemedText style={styles.infoRowText}>Instancia de Producción: ataraxia-app-nine.vercel.app</ThemedText>
+                <ThemedText style={styles.infoRowText}>Instancia de Producción: ataraxia-app.vercel.app</ThemedText>
               </View>
 
               <View style={styles.infoRow}>
