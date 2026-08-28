@@ -27,7 +27,7 @@ import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore } = useDailyLog();
+  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore, syncExternalHealthData } = useDailyLog();
   const router = useRouter();
 
   // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7
@@ -206,6 +206,7 @@ export default function HoyScreen() {
             <StepCounterCard
               steps={log.steps || 0}
               stepGoal={log.stepGoal || 10000}
+              deviceName={log.smartDevice?.deviceName}
               onOpenCalibration={() => setShowStepCalibration(true)}
               onAddSteps={addSteps}
               onSetStepGoal={setStepGoal}
@@ -434,6 +435,7 @@ export default function HoyScreen() {
             <SmartDeviceCard
               deviceState={log.smartDevice}
               onUpdateDevice={updateSmartDevice}
+              onSyncHealthData={syncExternalHealthData}
               onSyncSteps={setSteps}
             />
           </View>

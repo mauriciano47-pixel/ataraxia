@@ -10,6 +10,14 @@ import { SafeStorage } from '@/utils/safeStorage';
 interface SmartDeviceCardProps {
   deviceState?: SmartDeviceState;
   onUpdateDevice: (updates: Partial<SmartDeviceState>) => void;
+  onSyncHealthData?: (payload: {
+    steps: number;
+    deviceName: string;
+    lastSync: string;
+    heartRateBpm?: number;
+    batteryLevel?: number;
+    sleepHours?: number;
+  }) => void;
   onSyncSteps?: (syncedSteps: number) => void;
 }
 
@@ -23,7 +31,7 @@ const SMARTWATCH_BRANDS = [
 
 const SLEEP_STORAGE_KEY = 'ataraxia_sleep_record_v1';
 
-export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: SmartDeviceCardProps) {
+export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncHealthData, onSyncSteps }: SmartDeviceCardProps) {
   const [smartwatchModalVisible, setSmartwatchModalVisible] = useState(false);
   const [googleHealthModalVisible, setGoogleHealthModalVisible] = useState(false);
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
@@ -86,13 +94,25 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
         const hr = 62;
         const steps = 6800;
 
-        onUpdateDevice({
-          connected: true,
-          deviceName: `${bleDevice.name || brand.name} (BLE)`,
-          lastSync: `Hoy ${nowTime} (Bluetooth Seguro)`,
-          heartRateBpm: hr,
-          batteryLevel: battery,
-        });
+        if (onSyncHealthData) {
+          onSyncHealthData({
+            steps,
+            deviceName: `${bleDevice.name || brand.name} (BLE)`,
+            lastSync: `Hoy ${nowTime} (Bluetooth Seguro)`,
+            heartRateBpm: hr,
+            batteryLevel: battery,
+            sleepHours: 7.4,
+          });
+        } else {
+          onUpdateDevice({
+            connected: true,
+            deviceName: `${bleDevice.name || brand.name} (BLE)`,
+            lastSync: `Hoy ${nowTime} (Bluetooth Seguro)`,
+            heartRateBpm: hr,
+            batteryLevel: battery,
+          });
+          if (onSyncSteps) onSyncSteps(steps);
+        }
 
         const sleepPayload = {
           totalHours: 7.4,
@@ -108,7 +128,6 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
           updatedAt: `Hoy ${nowTime}`,
         };
         try { SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload)); } catch {}
-        if (onSyncSteps) onSyncSteps(steps);
 
         setReceiptData({
           source: `${brand.name} (BLE)`,
@@ -139,29 +158,25 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       const hr = 58;
       const steps = 8240;
 
-      onUpdateDevice({
-        connected: true,
-        deviceName: `${brand.name} (Bridge Seguro)`,
-        lastSync: `Hoy ${nowTime} (Telemetría Activa)`,
-        heartRateBpm: hr,
-        batteryLevel: battery,
-      });
-
-      const sleepPayload = {
-        totalHours: 7.8,
-        deepHours: 1.9,
-        remHours: 2.0,
-        lightHours: 3.9,
-        efficiencyPct: 94,
-        restingBpm: hr,
-        hrvMs: 68,
-        bedTime: '23:10',
-        wakeTime: '07:00',
-        source: 'smartwatch',
-        updatedAt: `Hoy ${nowTime}`,
-      };
-      try { SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload)); } catch {}
-      if (onSyncSteps) onSyncSteps(steps);
+      if (onSyncHealthData) {
+        onSyncHealthData({
+          steps,
+          deviceName: `${brand.name} (Bridge Seguro)`,
+          lastSync: `Hoy ${nowTime} (Telemetría Activa)`,
+          heartRateBpm: hr,
+          batteryLevel: battery,
+          sleepHours: 7.8,
+        });
+      } else {
+        onUpdateDevice({
+          connected: true,
+          deviceName: `${brand.name} (Bridge Seguro)`,
+          lastSync: `Hoy ${nowTime} (Telemetría Activa)`,
+          heartRateBpm: hr,
+          batteryLevel: battery,
+        });
+        if (onSyncSteps) onSyncSteps(steps);
+      }
 
       setReceiptData({
         source: `${brand.name} (Bridge Seguro)`,
@@ -192,14 +207,28 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       const remHours = 1.9;
       const activeCals = 410;
 
-      // 1. Actualizar estado del dispositivo
-      onUpdateDevice({
-        connected: true,
-        deviceName: 'Google Health Connect (Bridge Android 14+)',
-        lastSync: `Hoy ${nowTime} (Health Connect)`,
-        heartRateBpm: restingBpm,
-        batteryLevel: 100,
-      });
+      // 1. Sincronización Unificada Atómica de Salud & Pasos
+      if (onSyncHealthData) {
+        onSyncHealthData({
+          steps,
+          deviceName: 'Google Health Connect (Bridge Android 14+)',
+          lastSync: `Hoy ${nowTime} (Health Connect)`,
+          heartRateBpm: restingBpm,
+          batteryLevel: 100,
+          sleepHours,
+        });
+      } else {
+        onUpdateDevice({
+          connected: true,
+          deviceName: 'Google Health Connect (Bridge Android 14+)',
+          lastSync: `Hoy ${nowTime} (Health Connect)`,
+          heartRateBpm: restingBpm,
+          batteryLevel: 100,
+        });
+        if (onSyncSteps) {
+          onSyncSteps(steps);
+        }
+      }
 
       // 2. Persistir telemetría de sueño para SleepQualityCard
       const sleepPayload = {
@@ -217,12 +246,7 @@ export function SmartDeviceCard({ deviceState, onUpdateDevice, onSyncSteps }: Sm
       };
       try { SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload)); } catch {}
 
-      // 3. Sincronizar pasos si está disponible
-      if (onSyncSteps) {
-        onSyncSteps(steps);
-      }
-
-      // 4. Preparar datos para el recibo de telemetría
+      // 3. Preparar datos para el recibo de telemetría
       setReceiptData({
         source: 'Google Health Connect (Android 14+)',
         steps,

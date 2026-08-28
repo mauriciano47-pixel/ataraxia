@@ -9,6 +9,7 @@ interface StepCounterCardProps {
   goal?: number;
   steps?: number;
   stepGoal?: number;
+  deviceName?: string;
   onOpenCalibration?: () => void;
   onAddSteps?: (amount: number) => void;
   onSetStepGoal?: (goal: number) => void;
@@ -24,6 +25,7 @@ export function StepCounterCard({
   goal,
   steps,
   stepGoal,
+  deviceName,
   onOpenCalibration,
   onAddSteps,
   onSetStepGoal,
@@ -65,6 +67,8 @@ export function StepCounterCard({
                 ? '🚗 MODO VEHÍCULO DETECTADO (>20 km/h)'
                 : isTransitMode
                 ? '🚗 MODO TRÁNSITO ACTIVO (PAUSADO)'
+                : deviceName && deviceName !== 'Ninguno (Desconectado)'
+                ? `⚡ ${deviceName} (CALIBRADO)`
                 : '🟢 SENSOR DINÁMICO ACTIVO (ZERO-LAG)'}
             </ThemedText>
           </View>

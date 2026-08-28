@@ -195,6 +195,14 @@ interface DailyLogContextType {
   updateEffectiveSets: (count: number) => void;
   logMealWithEnrichedMacros: (cals: number, p: number, c: number, f: number, densityScore?: number, verdict?: string) => void;
   setCustomRoutine: (routine: CustomExercise[]) => void;
+  syncExternalHealthData: (payload: {
+    steps: number;
+    deviceName: string;
+    lastSync: string;
+    heartRateBpm?: number;
+    batteryLevel?: number;
+    sleepHours?: number;
+  }) => void;
 }
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
@@ -762,6 +770,47 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveProfileToFirestore({ smartDevice: newDevice });
   };
 
+  const syncExternalHealthData = (payload: {
+    steps: number;
+    deviceName: string;
+    lastSync: string;
+    heartRateBpm?: number;
+    batteryLevel?: number;
+    sleepHours?: number;
+  }) => {
+    const currentDevice = logRef.current.smartDevice || DEFAULT_LOG.smartDevice!;
+    const newDevice: SmartDeviceState = {
+      ...currentDevice,
+      connected: true,
+      deviceName: payload.deviceName,
+      lastSync: payload.lastSync,
+      heartRateBpm: payload.heartRateBpm ?? currentDevice.heartRateBpm ?? 0,
+      batteryLevel: payload.batteryLevel ?? 100,
+    };
+
+    updateLog({
+      steps: Math.max(0, payload.steps),
+      smartDevice: newDevice,
+      ...(payload.sleepHours ? {
+        readinessScore: {
+          sleep: payload.sleepHours,
+          stress: logRef.current.readinessScore?.stress || 2,
+          soreness: logRef.current.readinessScore?.soreness || 2,
+          total: Math.round((payload.sleepHours * 0.4) + ((10 - 2) * 0.3) + ((10 - 2) * 0.3)),
+        }
+      } : {})
+    });
+
+    saveProfileToFirestore({ smartDevice: newDevice });
+
+    try {
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(payload.steps));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('storage'));
+      }
+    } catch {}
+  };
+
   const saveOnboardingProfile = (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => {
     const updatedMetrics: UserMetrics = {
       weightKg: profile.weightKg,
@@ -1046,6 +1095,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         updateEffectiveSets,
         logMealWithEnrichedMacros,
         setCustomRoutine,
+        syncExternalHealthData,
       }}
     >
       {children}
