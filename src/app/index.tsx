@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Animated, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -127,9 +127,28 @@ export default function HoyScreen() {
 
             <View style={styles.titleCenterGroup}>
               <View style={styles.titleWithFlankRow}>
-                <ThemedText style={styles.titleFlankSparkle}>⚡</ThemedText>
-                <ThemedText style={styles.brandTitleClassic}>ATARAXIA</ThemedText>
-                <ThemedText style={styles.titleFlankSparkle}>⚡</ThemedText>
+                {Platform.OS === 'web' ? (
+                  <img
+                    src="/ataraxia_gold_title_banner.png"
+                    alt="ATARAXIA"
+                    width={180}
+                    height={46}
+                    style={{
+                      width: '180px',
+                      height: '46px',
+                      objectFit: 'contain',
+                      display: 'block',
+                      filter: 'drop-shadow(0 0 12px rgba(255, 226, 89, 0.55))',
+                      userSelect: 'none',
+                    }}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../assets/images/ataraxia_gold_title_banner.png')}
+                    style={{ width: 180, height: 46 }}
+                    resizeMode="contain"
+                  />
+                )}
               </View>
               <View style={styles.brandSubtitleBadge}>
                 <ThemedText style={styles.brandSubtitle}>

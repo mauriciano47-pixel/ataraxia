@@ -207,11 +207,31 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
 
               {/* SECCIÓN DE TÍTULO, MENCIONES Y SABIDURÍA ESTOICA */}
               <View style={styles.titleSection}>
-                {/* TÍTULO MONUMENTAL */}
+                {/* TÍTULO MONUMENTAL EN BRONCE ESPARTANO Y RAYO DE ORO */}
                 <View style={styles.titleWingsRow}>
-                  <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
-                  <ThemedText style={styles.divineMainTitle}>ATARAXIA</ThemedText>
-                  <ThemedText style={styles.divineSparkleWing}>⚡</ThemedText>
+                  {Platform.OS === 'web' ? (
+                    <img
+                      src="/ataraxia_gold_title_banner.png"
+                      alt="ATARAXIA"
+                      width={280}
+                      height={68}
+                      style={{
+                        width: '280px',
+                        height: '68px',
+                        maxWidth: '85vw',
+                        objectFit: 'contain',
+                        display: 'block',
+                        filter: 'drop-shadow(0 0 16px rgba(255, 226, 89, 0.65))',
+                        userSelect: 'none',
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      source={require('../../assets/images/ataraxia_gold_title_banner.png')}
+                      style={{ width: 280, height: 68 }}
+                      resizeMode="contain"
+                    />
+                  )}
                 </View>
 
                 {/* INSIGNIA CELESTIAL */}
