@@ -12,27 +12,28 @@ export type PedometerSensitivity = 'high' | 'standard' | 'low';
 // Parámetros por nivel de sensibilidad (AOSP StepDetector Calibrated)
 const SENSITIVITY_PROFILES = {
   high: {
-    peakThreshold: 0.42,      // Para caminata suave / bolsillo holgado / mochila
-    valleyDrop: 0.22,
-    minPulseMs: 80,
-    maxPulseMs: 480,
+    peakThreshold: 0.52,      // Para caminata suave / bolsillo holgado / mochila
+    valleyDrop: 0.25,
+    minPulseMs: 90,
+    maxPulseMs: 500,
   },
   standard: {
-    peakThreshold: 0.58,      // Calibración balanceada óptima (mano y bolsillo)
-    valleyDrop: 0.28,
-    minPulseMs: 90,
-    maxPulseMs: 450,
+    peakThreshold: 0.72,      // Calibración balanceada óptima (mano y bolsillo)
+    valleyDrop: 0.35,
+    minPulseMs: 100,
+    maxPulseMs: 460,
   },
   low: {
-    peakThreshold: 0.85,      // Anti-vibración / trabajo activo
-    valleyDrop: 0.40,
-    minPulseMs: 100,
+    peakThreshold: 0.98,      // Anti-vibración / trabajo activo
+    valleyDrop: 0.48,
+    minPulseMs: 110,
     maxPulseMs: 420,
   },
 };
 
-const MIN_STEP_CADENCE_MS = 260;    // Máxima cadencia humana admisible: 230 pasos/min
-const MAX_STEP_CADENCE_MS = 1600;   // Mínima cadencia humana admisible: 37 pasos/min
+const MIN_HUMAN_CADENCE_MS = 340;   // Máxima frecuencia humana real: 176 pasos/min (340ms)
+const MAX_HUMAN_CADENCE_MS = 1800;  // Mínima frecuencia humana: 33 pasos/min (1800ms)
+const MAX_CADENCE_VARIANCE_MS = 180;// Varianza máxima permitida entre zancadas periódicas (180ms)
 const MAX_VIOLENT_ACCEL_MS2 = 14.50;// Límite de aceleración biológica humana
 const MAX_VEHICLE_SPEED_MS = 5.55;  // >20 km/h = Modo Vehículo
 
@@ -70,14 +71,16 @@ export function usePedometerSensor(
     }
   });
 
-  // Estados matemáticos internos para filtrado temporal continuo (Delta-t)
+  // Estados matemáticos internos para filtrado temporal continuo (Delta-t) y cadencia periódica
   const lastSampleTimeRef = useRef<number>(0);
   const gravityNormRef = useRef<number>(9.80);
   const smoothedDynamicRef = useRef<number>(0);
   const isRisingPeakRef = useRef<boolean>(false);
   const peakStartTimeRef = useRef<number>(0);
   const peakMaxValRef = useRef<number>(0);
-  const lastStepTimestampRef = useRef<number>(0);
+  const lastCandidateTimeRef = useRef<number>(0);
+  const candidateStepsBufferRef = useRef<number[]>([]);
+  const isWalkingConfirmedRef = useRef<boolean>(false);
 
   const pedometerSubscriptionRef = useRef<any>(null);
   const lastWatcherReportedRef = useRef<number | null>(null);
@@ -235,7 +238,7 @@ export function usePedometerSensor(
     };
   }, [syncNativeHistoricalSteps]);
 
-  // 4. Sensor Web: Motor Continuo AOSP Delta-t Invariante
+  // 4. Sensor Web: Motor Biomecánico con Bloqueo de Cadencia Periódica (Cadence Periodicity Lock)
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
@@ -246,7 +249,7 @@ export function usePedometerSensor(
       const lastTime = lastSampleTimeRef.current || now;
       lastSampleTimeRef.current = now;
 
-      // Calcular Delta-t real en segundos (acotado para robustez)
+      // Calcular Delta-t real en segundos (acotado para estabilidad matemática)
       const dt = Math.min(0.1, Math.max(0.005, (now - lastTime) / 1000));
 
       let rx = 0, ry = 0, rz = 0;
@@ -278,6 +281,8 @@ export function usePedometerSensor(
       if (totalNorm > MAX_VIOLENT_ACCEL_MS2 + 9.8) {
         isRisingPeakRef.current = false;
         peakMaxValRef.current = 0;
+        candidateStepsBufferRef.current = [];
+        isWalkingConfirmedRef.current = false;
         return;
       }
 
@@ -306,7 +311,7 @@ export function usePedometerSensor(
         }
       }
 
-      // FASE 2: Detección de caída de cresta (Zancada Confirmada)
+      // FASE 2: Detección de caída de cresta (Ciclo de zancada completado)
       if (isRisingPeakRef.current) {
         const drop = peakMaxValRef.current - smoothDynamic;
         if (drop >= profile.valleyDrop) {
@@ -314,14 +319,61 @@ export function usePedometerSensor(
           isRisingPeakRef.current = false;
           peakMaxValRef.current = 0;
 
-          // Validar duración física del pulso de zancada humana
+          // Validar que la duración física corresponda a una zancada humana
           if (pulseDuration >= profile.minPulseMs && pulseDuration <= profile.maxPulseMs) {
-            const timeSinceLastStep = now - lastStepTimestampRef.current;
+            const timeSinceLastCandidate = now - lastCandidateTimeRef.current;
 
-            // Validar intervalo de cadencia humana [260ms - 1600ms]
-            if (lastStepTimestampRef.current === 0 || timeSinceLastStep >= MIN_STEP_CADENCE_MS) {
-              lastStepTimestampRef.current = now;
+            // A) Frecuencia imposible (>2.9 Hz = sacudida rápida de mano o vibración) -> RECHAZAR
+            if (timeSinceLastCandidate < MIN_HUMAN_CADENCE_MS) {
+              candidateStepsBufferRef.current = [];
+              isWalkingConfirmedRef.current = false;
+              return;
+            }
 
+            // B) Más de 1.8 segundos sin movimiento (usuario detenido / pausa) -> Reiniciar ventana
+            if (timeSinceLastCandidate > MAX_HUMAN_CADENCE_MS) {
+              candidateStepsBufferRef.current = [now];
+              lastCandidateTimeRef.current = now;
+              isWalkingConfirmedRef.current = false;
+              return;
+            }
+
+            // C) Intervalo en rango de marcha humana [340ms - 1800ms]
+            lastCandidateTimeRef.current = now;
+
+            if (!isWalkingConfirmedRef.current) {
+              // Evaluación estricta de cadencia periódica inicial (Anti-Movimiento de Mano)
+              candidateStepsBufferRef.current.push(now);
+
+              if (candidateStepsBufferRef.current.length >= 3) {
+                const times = candidateStepsBufferRef.current;
+                const int1 = times[1] - times[0];
+                const int2 = times[2] - times[1];
+                const variance = Math.abs(int1 - int2);
+
+                // Si los 3 pasos consecutivos tienen ritmo humano periódico coherente
+                if (variance <= MAX_CADENCE_VARIANCE_MS && int1 <= 1400 && int2 <= 1400) {
+                  isWalkingConfirmedRef.current = true;
+                  const verifiedSteps = times.length;
+                  candidateStepsBufferRef.current = [];
+
+                  setLiveSessionSteps((prev) => {
+                    const updated = prev + verifiedSteps;
+                    try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+                    return updated;
+                  });
+
+                  if (onStepDetectedRef.current) {
+                    onStepDetectedRef.current(verifiedSteps);
+                  }
+                } else {
+                  // Si no hubo ritmo periódico (ej: agitación aleatoria de mano), descartar el más viejo
+                  candidateStepsBufferRef.current.shift();
+                }
+              }
+            } else {
+              // ¡MARCHA CONFIRMADA Y ACTIVA! El atleta está caminando rítmicamente
+              // Cada nuevo paso se suma de inmediato (+1 en tiempo real con cero desfase)
               setLiveSessionSteps((prev) => {
                 const updated = prev + 1;
                 try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
@@ -370,6 +422,8 @@ export function usePedometerSensor(
           isRisingPeakRef.current = false;
           peakMaxValRef.current = 0;
           smoothedDynamicRef.current = 0;
+          candidateStepsBufferRef.current = [];
+          isWalkingConfirmedRef.current = false;
         }
       }
     };
@@ -387,6 +441,8 @@ export function usePedometerSensor(
       isRisingPeakRef.current = false;
       peakMaxValRef.current = 0;
       smoothedDynamicRef.current = 0;
+      candidateStepsBufferRef.current = [];
+      isWalkingConfirmedRef.current = false;
 
       if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
         (DeviceMotionEvent as any).requestPermission().catch(() => {});
