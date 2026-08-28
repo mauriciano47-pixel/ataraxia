@@ -511,17 +511,46 @@ En Ataraxia no promovemos polvos mágicos; solo suplementos con respaldo clínic
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 6. DEFAULT SOCRÁTICO Y ADAPTATIVO (NUNCA VOLCADO DE DATOS)
+  // 6. RESPUESTA SOCRÁTICA ADAPTATIVA & FILOSÓFICA (CONSULTAS INÉDITAS)
   // ─────────────────────────────────────────────────────────────
 
-  return `🏛️ **Mentoría Estoica Ataraxia — Senda del ${path.toUpperCase()}**
+  const userSnippet = userPrompt.length > 75 ? `${userPrompt.slice(0, 70)}...` : userPrompt;
 
-Te escucho con total atención, ${userName}. Como tu mentor estoico y coach de rendimiento, estoy aquí para guiarte en cada pilar de tu transformación:
+  if (archetype === 'sports_scientist') {
+    return `🔬 **Análisis & Enfoque del Fisiólogo Deportivo**
 
-• ⚔️ **Entrenamiento & Biomecánica**: Rutinas personalizadas a tu Senda y equipo, prevención de lesiones y sobrecarga progresiva.
-• 🥗 **Nutrición & Macros**: Calorías exactas, fuentes de proteína magra y recetas según tu objetivo de peso.
-• 🩺 **Alivio de Dolores & Movilidad**: Fisioterapia para cuello, espalda, hombros y rodillas.
-• 🧠 **Psicología Estoica**: Estrategias contra la desmotivación, cansancio mental, pérdida de foco o dudas sobre el Día 30.
+He procesado tu planteamiento: *«${userSnippet}»*.
 
-Dime con total franqueza: **¿Qué desafío físico, nutricional o mental estás enfrentando en este preciso instante?**`;
+Como especialista en rendimiento y neurofisiología, abordo cada variable desde la bioindividualidad y la evidencia científica. Para darte una recomendación biomecánica o metabólica exacta para tu Senda del **${path.toUpperCase()}**:
+
+1. **Contexto Específico**: ¿Este factor está afectando tu nivel de energía diaria, tu rendimiento en el entrenamiento o tu capacidad de recuperación?
+2. **Variable Principal**: ¿Se relaciona con la intensidad del estímulo físico, la nutrición/hidratación, el descanso o la gestión del estrés neurovegetativo?
+
+Detállame un poco más el contexto, ${userName}, y diseñaremos el protocolo de intervención óptimo.`;
+  }
+
+  if (archetype === 'spartan_commander') {
+    return `⚔️ **Comandante en Guardia: Evaluando la Situación**
+
+He escuchado tu mensaje, guerrero: *«${userSnippet}»*.
+
+En la falange espartana ningún desafío se ignora; cada obstáculo que se presenta ante un atleta de la Senda del **${path.toUpperCase()}** es una oportunidad para templar el carácter y afilar la determinación.
+
+Marco Aurelio nos legó la máxima de combate:
+> *«El impedimento a la acción avanza la acción. Lo que se interpone en el camino se convierte en el camino.»*
+
+Dime con claridad, ${userName}: **¿De qué manera este obstáculo está desafiando tu disciplina hoy, y qué acción concreta necesitas que planifiquemos juntos para vencerlo?**`;
+  }
+
+  // Default: stoic_mentor
+  return `🏛️ **Reflexión Socrática — Senda del ${path.toUpperCase()}**
+
+Comprendo lo que planteas, ${userName}: *«${userSnippet}»*.
+
+El sabio estoico no juzga los acontecimientos como buenos o malos en sí mismos, sino que examina la mente y la intención con la que los enfrentamos. Epicteto nos enseñaba que ante cualquier situación de la vida, el primer paso es aplicar la **Dicotomía del Control**:
+
+1. **Lo que no depende de ti**: Las circunstancias externas, el pasado o las acciones de otros (se aceptan con *Amor Fati*).
+2. **Lo que sí depende de ti**: Tu juicio, tu actitud, tu esfuerzo diario y el cuidado de tu templo físico y mental.
+
+Cuéntame con más detalle cómo estás viviendo este momento, ${userName}. ¿Qué aspecto de esta situación te preocupa más y cómo podemos enfocarlo con serenidad y virtud práctica hoy?`;
 }

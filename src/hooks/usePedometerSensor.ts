@@ -6,18 +6,18 @@ import { SafeStorage } from '@/utils/safeStorage';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos Calibrados Anti-Shock con Filtro de Duración de Zancada Real
+// Parámetros Biomecánicos Calibrados de Alta Sensibilidad y Filtro de Zancada Natural
 const GRAVITY_ALPHA = 0.85;             // Coeficiente paso-bajo de convergencia rápida (~200ms)
-const GAIT_EMA_ALPHA = 0.35;            // Filtro paso-bajo de marcha humana (~3 Hz, atenúa impactos táctiles rápidos)
-const WEB_STEP_THRESHOLD = 1.35;        // Umbral dinámico de activación de zancada (m/s²)
-const WEB_STEP_RESET_THRESHOLD = 0.50;  // Umbral de caída de ciclo para detector de picos
-const MIN_PEAK_DURATION_MS = 85;        // Duración mínima del pico (m descarta toques rápidos en pantalla <85ms)
-const MAX_PEAK_DURATION_MS = 600;       // Duración máxima del pico de aceleración de zancada
-const MIN_CADENCE_INTERVAL_MS = 300;    // Intervalo mínimo entre pasos (hasta 200 pasos/min, trote/marcha)
-const MAX_CADENCE_INTERVAL_MS = 1500;   // Intervalo máximo entre pasos (caminata pausada)
-const MAX_HUMAN_ACCEL_MS2 = 12.00;      // Aceleración máxima permitida (rechaza sacudidas violentas de mano)
-const MAX_INTERVAL_VARIANCE_MS = 500;   // Tolerancia de variación de ritmo al girar o cambiar de velocidad
-const REQUIRED_CADENCE_STEPS = 4;       // Marcha real confirmada: 4 pasos rítmicos antes de sumar a la cuenta
+const GAIT_EMA_ALPHA = 0.65;            // Filtro dinámico: preserva picos de zancada real atenuando vibraciones
+const WEB_STEP_THRESHOLD = 1.18;        // Umbral dinámico de activación de zancada (m/s²), óptimo para bolsillo y mano
+const WEB_STEP_RESET_THRESHOLD = 0.42;  // Umbral de caída de ciclo para detector de picos
+const MIN_PEAK_DURATION_MS = 35;        // Duración mínima del pico (descarta toques rápidos <35ms, permite zancada humana)
+const MAX_PEAK_DURATION_MS = 750;       // Duración máxima del pico de aceleración de zancada
+const MIN_CADENCE_INTERVAL_MS = 280;    // Intervalo mínimo entre pasos (hasta 214 pasos/min, permite trote/marcha)
+const MAX_CADENCE_INTERVAL_MS = 1600;   // Intervalo máximo entre pasos (caminata relajada o pausada)
+const MAX_HUMAN_ACCEL_MS2 = 13.50;      // Aceleración máxima permitida (rechaza sacudidas violentas destructivas)
+const MAX_INTERVAL_VARIANCE_MS = 600;   // Tolerancia de variación de ritmo al girar o cambiar de velocidad
+const REQUIRED_CADENCE_STEPS = 2;       // Confirmación rápida de marcha: 2 zancadas rítmicas para iniciar conteo en vivo
 const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(
