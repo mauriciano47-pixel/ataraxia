@@ -45,12 +45,14 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 }
 
 import { DailyLogProvider } from '@/context/DailyLogContext';
+import { TempleAccessGate } from '@/components/TempleAccessGate';
 
 export default function TabLayout() {
   return (
     <GlobalErrorBoundary>
       <DailyLogProvider>
-        <Tabs
+        <TempleAccessGate>
+          <Tabs
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: '#D4AF37',
@@ -141,6 +143,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+        </TempleAccessGate>
       </DailyLogProvider>
     </GlobalErrorBoundary>
   );

@@ -17,6 +17,7 @@ import { GreekParchmentPact } from '@/components/GreekParchmentPact';
 import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
 import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
+import { lockTempleAccess } from '@/components/TempleAccessGate';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -526,6 +527,27 @@ export default function ProfileScreen() {
                 {'Tu sesión está vinculada a este templo y respaldada con tu Llave Sagrada.'}
               </ThemedText>
             </View>
+          </ThemedView>
+
+          {/* Zona de Seguridad del Templo */}
+          <ThemedView style={[styles.section, { borderColor: 'rgba(212, 175, 55, 0.35)', marginTop: Spacing.two }]}>
+            <TouchableOpacity 
+              style={[styles.dangerButton, { backgroundColor: 'rgba(212, 175, 55, 0.08)', borderColor: 'rgba(212, 175, 55, 0.3)' }]} 
+              onPress={() => {
+                Alert.alert(
+                  "🔒 Bloquear Templo",
+                  "¿Deseas cerrar el acceso en este dispositivo? Deberás ingresar la Llave Maestra para volver a entrar.",
+                  [
+                    { text: "Cancelar", style: "cancel" },
+                    { text: "Bloquear Ahora", style: "destructive", onPress: lockTempleAccess }
+                  ]
+                );
+              }} 
+              activeOpacity={0.8}
+            >
+              <Ionicons name="lock-closed-outline" size={18} color="#FFE259" />
+              <ThemedText style={[styles.dangerText, { color: '#FFE259' }]}>Bloquear Templo (Cerrar Sesión Privada)</ThemedText>
+            </TouchableOpacity>
           </ThemedView>
 
           {/* Sección de Peligro */}
