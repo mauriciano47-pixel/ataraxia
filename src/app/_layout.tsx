@@ -9,6 +9,7 @@ import {
   NutritionIcon,
   ProfileIcon,
   ArchonCrownIcon,
+  SculptureCameraIcon,
 } from '@/components/TabSvgIcons';
 
 class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorText: string }> {
@@ -83,6 +84,14 @@ export default function TabLayout() {
             title: 'Programa',
             tabBarLabel: '🏛️ Programa',
             tabBarIcon: ({ color, focused }) => <ProgressIcon color={focused ? '#D4AF37' : color} size={22} />,
+          }}
+        />
+        <Tabs.Screen
+          name="transformation"
+          options={{
+            title: 'Escultura',
+            tabBarLabel: '📸 Escultura',
+            tabBarIcon: ({ color, focused }) => <SculptureCameraIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen

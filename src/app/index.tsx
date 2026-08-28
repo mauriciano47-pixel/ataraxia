@@ -139,6 +139,9 @@ export default function HoyScreen() {
             </View>
 
             <View style={styles.headerRightActions}>
+              <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/transformation')}>
+                <ThemedText style={{ fontSize: 16, color: '#38BDF8' }}>📸</ThemedText>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7} onPress={() => router.navigate('/journal')}>
                 <ThemedText style={{ fontSize: 16, color: '#D4AF37' }}>📖</ThemedText>
               </TouchableOpacity>

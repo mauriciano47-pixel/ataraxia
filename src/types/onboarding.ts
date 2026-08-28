@@ -197,3 +197,77 @@ export interface CustomExercise {
   rpe: number | null;
   muscleGroup?: string;
 }
+
+export type BodyZone = 'full_front' | 'chest' | 'back' | 'arms' | 'core' | 'legs' | 'side';
+
+export interface BodyZoneInfo {
+  id: BodyZone;
+  name: string;
+  shortName: string;
+  icon: string;
+  description: string;
+}
+
+export const BODY_ZONES_INFO: Record<BodyZone, BodyZoneInfo> = {
+  full_front: {
+    id: 'full_front',
+    name: 'Frontal Completo (Full Body)',
+    shortName: 'Frontal',
+    icon: '🏛️',
+    description: 'Postura erecta frontal completa para evaluar silueta y composición general.',
+  },
+  chest: {
+    id: 'chest',
+    name: 'Pecho / Torso Superior',
+    shortName: 'Pecho',
+    icon: '⚔️',
+    description: 'Enfoque en pectorales, deltoides anteriores y clavícula.',
+  },
+  back: {
+    id: 'back',
+    name: 'Espalda & V-Taper',
+    shortName: 'Espalda',
+    icon: '🦅',
+    description: 'Expansión dorsal, trapecios y densidad de la espalda.',
+  },
+  arms: {
+    id: 'arms',
+    name: 'Brazos & Hombros',
+    shortName: 'Brazos',
+    icon: '💪',
+    description: 'Bíceps, tríceps, antebrazos y redondez deltoidea.',
+  },
+  core: {
+    id: 'core',
+    name: 'Abdomen & Core',
+    shortName: 'Abdomen',
+    icon: '🛡️',
+    description: 'Definición abdominal, oblicuos y cintura escapular.',
+  },
+  legs: {
+    id: 'legs',
+    name: 'Piernas & Tren Inferior',
+    shortName: 'Piernas',
+    icon: '🦵',
+    description: 'Cuádriceps, isquiosurales, glúteos y pantorrillas.',
+  },
+  side: {
+    id: 'side',
+    name: 'Perfil Lateral',
+    shortName: 'Perfil',
+    icon: '📐',
+    description: 'Alineación de columna, proyección de pecho y profundidad corporal.',
+  },
+};
+
+export interface BodySnapshot {
+  id: string;
+  dayNumber: number; // 1 to 30
+  date: string; // ISO string
+  bodyZone: BodyZone;
+  photoBase64: string;
+  weightKg?: number;
+  notes?: string;
+  createdAt: number;
+}
+

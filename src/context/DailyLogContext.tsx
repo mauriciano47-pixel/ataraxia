@@ -18,6 +18,8 @@ import {
   SessionDurationMinutes,
   ExperienceLevel,
   InjuryCare,
+  BodyZone,
+  BodySnapshot,
 } from '@/types/onboarding';
 import { generate30DayResolution, MonthlyResolution } from '@/lib/monthlyResolutionEngine';
 
@@ -134,6 +136,20 @@ const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
 const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
 const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v1';
 const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v1';
+const BODY_SNAPSHOTS_STORAGE_KEY = 'ataraxia_body_snapshots_v1';
+
+function loadLocalBodySnapshots(): BodySnapshot[] {
+  try {
+    const raw = SafeStorage.getItem(BODY_SNAPSHOTS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    console.warn('[DailyLogContext] Error cargando fotos de evolución:', e);
+  }
+  return [];
+}
 
 type UserProfile = {
   userName: string;
@@ -215,6 +231,9 @@ interface DailyLogContextType {
     batteryLevel?: number;
     sleepHours?: number;
   }) => void;
+  bodySnapshots: BodySnapshot[];
+  addBodySnapshot: (snapshot: Omit<BodySnapshot, 'id' | 'createdAt'>) => Promise<BodySnapshot>;
+  deleteBodySnapshot: (id: string) => Promise<void>;
 }
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
@@ -346,6 +365,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const [log, setLog] = useState<DailyLog>(() => loadLocalDailyLog(today));
   const loading = false;
   const [isLocalMode, setIsLocalMode] = useState(() => !auth);
+  const [bodySnapshots, setBodySnapshots] = useState<BodySnapshot[]>(() => loadLocalBodySnapshots());
 
   const logRef = useRef<DailyLog>(log);
   const prevTodayRef = useRef(today);
@@ -1191,6 +1211,52 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveProfileToFirestore({ customRoutine: routine });
   };
 
+  const addBodySnapshot = useCallback(async (snapshotData: Omit<BodySnapshot, 'id' | 'createdAt'>): Promise<BodySnapshot> => {
+    const newSnapshot: BodySnapshot = {
+      ...snapshotData,
+      id: `snap_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      createdAt: Date.now(),
+    };
+
+    setBodySnapshots((prev) => {
+      const updated = [newSnapshot, ...prev];
+      try {
+        SafeStorage.setItem(BODY_SNAPSHOTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('[DailyLogContext] Error guardando foto local:', e);
+      }
+      return updated;
+    });
+
+    if (db && user) {
+      try {
+        const snapDoc = doc(db, `users/${user.uid}/bodySnapshots/${newSnapshot.id}`);
+        await setDoc(snapDoc, newSnapshot, { merge: true });
+      } catch (e) {
+        console.warn('[DailyLogContext] Error sincronizando foto en Firestore:', e);
+      }
+    }
+
+    return newSnapshot;
+  }, [user]);
+
+  const deleteBodySnapshot = useCallback(async (id: string): Promise<void> => {
+    setBodySnapshots((prev) => {
+      const updated = prev.filter((s) => s.id !== id);
+      try {
+        SafeStorage.setItem(BODY_SNAPSHOTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    if (db && user) {
+      try {
+        const snapDoc = doc(db, `users/${user.uid}/bodySnapshots/${id}`);
+        await setDoc(snapDoc, { deleted: true, deletedAt: Date.now() }, { merge: true });
+      } catch (e) {}
+    }
+  }, [user]);
+
   return (
     <DailyLogContext.Provider
       value={{
@@ -1228,6 +1294,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         logMealWithEnrichedMacros,
         setCustomRoutine,
         syncExternalHealthData,
+        bodySnapshots,
+        addBodySnapshot,
+        deleteBodySnapshot,
       }}
     >
       {children}
