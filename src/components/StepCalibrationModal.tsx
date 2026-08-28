@@ -14,6 +14,8 @@ import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
 
+import { SafeStorage } from '@/utils/safeStorage';
+
 interface StepCalibrationModalProps {
   visible: boolean;
   onClose: () => void;
@@ -40,49 +42,74 @@ export function StepCalibrationModal({
   const [exactInput, setExactInput] = useState<string>(currentSteps.toString());
   const [goalInput, setGoalInput] = useState<string>(stepGoal.toString());
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false);
+  const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
 
   const { km, caloriesBurned } = estimateStepMetrics(currentSteps);
   const toggleLiveTracking = onToggleLiveTracking ?? (() => {});
 
+  const showFeedback = (msg: string) => {
+    setFeedbackBanner(msg);
+    setTimeout(() => setFeedbackBanner(null), 3000);
+  };
+
   const handleSaveExact = () => {
     const val = parseInt(exactInput, 10);
     if (isNaN(val) || val < 0) {
-      Alert.alert('Error', 'Por favor ingresa un número de pasos válido.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Por favor ingresa un número de pasos válido.');
+      } else {
+        Alert.alert('Error', 'Por favor ingresa un número de pasos válido.');
+      }
       return;
     }
     onSetSteps(val);
-    Alert.alert('⚡ Podómetro Calibrado', `Conteo de pasos fijado exactamente en ${val.toLocaleString()} pasos.`);
+    try {
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(val));
+    } catch {}
+    showFeedback(`⚡ Pasos fijados en ${val.toLocaleString()} pasos.`);
   };
 
   const handleSaveGoal = () => {
     const val = parseInt(goalInput, 10);
     if (isNaN(val) || val < 1000) {
-      Alert.alert('Error', 'La meta diaria mínima debe ser de al menos 1,000 pasos.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('La meta diaria mínima debe ser de al menos 1,000 pasos.');
+      } else {
+        Alert.alert('Error', 'La meta diaria mínima debe ser de al menos 1,000 pasos.');
+      }
       return;
     }
     if (onSetStepGoal) {
       onSetStepGoal(val);
     }
     setShowGoalEditor(false);
-    Alert.alert('🎯 Meta Actualizada', `Nueva meta diaria: ${val.toLocaleString()} pasos.`);
+    showFeedback(`🎯 Nueva meta diaria: ${val.toLocaleString()} pasos.`);
+  };
+
+  const handleAddChunk = (amount: number) => {
+    const nextVal = Math.max(0, currentSteps + amount);
+    onSetSteps(nextVal);
+    setExactInput(nextVal.toString());
+    try {
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(nextVal));
+    } catch {}
+    showFeedback(amount > 0 ? `+${amount.toLocaleString()} pasos sumados` : `${amount.toLocaleString()} pasos`);
   };
 
   const handleResetSteps = () => {
-    Alert.alert(
-      'Reiniciar Contador',
-      '¿Deseas reiniciar el conteo de pasos de hoy a 0?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Reiniciar',
-          style: 'destructive',
-          onPress: () => {
-            onSetSteps(0);
-            setExactInput('0');
-          },
-        },
-      ]
-    );
+    let confirmed = true;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      confirmed = window.confirm('🔄 ¿Deseas reiniciar el conteo de pasos de hoy a 0?');
+    }
+
+    if (confirmed) {
+      onSetSteps(0);
+      setExactInput('0');
+      try {
+        SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', '0');
+      } catch {}
+      showFeedback('🔄 Podómetro reiniciado a 0 pasos.');
+    }
   };
 
   return (
@@ -107,6 +134,12 @@ export function StepCalibrationModal({
               <Ionicons name="close" size={22} color="#CBD5E1" />
             </TouchableOpacity>
           </View>
+
+          {feedbackBanner && (
+            <View style={styles.feedbackBannerBox}>
+              <ThemedText style={styles.feedbackBannerText}>{feedbackBanner}</ThemedText>
+            </View>
+          )}
 
           <ScrollView contentContainerStyle={styles.scrollBody} showsVerticalScrollIndicator={false}>
             {/* Display de Métricas Actuales */}
@@ -136,12 +169,12 @@ export function StepCalibrationModal({
               </View>
             </View>
 
-            {/* Sensor Podómetro 24/7 */}
+            {/* Selector de Sensor Automático */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeaderRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ionicons name="hardware-chip-outline" size={18} color="#FFE259" />
-                  <ThemedText style={styles.sectionTitle}>SENSOR FÍSICO DE HARDWARE</ThemedText>
+                  <ThemedText style={styles.sectionTitle}>DETECCIÓN EN SEGUNDO PLANO</ThemedText>
                 </View>
                 <View style={[styles.statusPill, isLiveTracking ? styles.statusPillActive : styles.statusPillInactive]}>
                   <ThemedText style={styles.statusPillText}>
@@ -202,22 +235,22 @@ export function StepCalibrationModal({
               </View>
               <ThemedText style={styles.sectionDesc}>Suma o resta cantidades realistas de pasos:</ThemedText>
               <View style={styles.chipsGrid}>
-                <TouchableOpacity style={styles.stepChip} onPress={() => { onAddSteps(50); setExactInput((currentSteps + 50).toString()); }}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(50)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+50 pasos</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => { onAddSteps(250); setExactInput((currentSteps + 250).toString()); }}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(250)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+250 paseo</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => { onAddSteps(500); setExactInput((currentSteps + 500).toString()); }}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(500)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+500 caminata</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => { onAddSteps(1000); setExactInput((currentSteps + 1000).toString()); }}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(1000)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+1,000 cardio</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => { onAddSteps(-100); setExactInput(Math.max(0, currentSteps - 100).toString()); }}>
+                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => handleAddChunk(-100)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipTextNegative}>-100 pasos</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => { onAddSteps(-500); setExactInput(Math.max(0, currentSteps - 500).toString()); }}>
+                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => handleAddChunk(-500)} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipTextNegative}>-500 pasos</ThemedText>
                 </TouchableOpacity>
               </View>
@@ -235,18 +268,18 @@ export function StepCalibrationModal({
                     placeholder="Meta pasos"
                     placeholderTextColor="#64748B"
                   />
-                  <TouchableOpacity style={styles.applyBtn} onPress={handleSaveGoal}>
+                  <TouchableOpacity style={styles.applyBtn} onPress={handleSaveGoal} activeOpacity={0.8}>
                     <ThemedText style={styles.applyBtnText}>Guardar Meta</ThemedText>
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowGoalEditor(true)}>
+                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowGoalEditor(true)} activeOpacity={0.8}>
                   <Ionicons name="flag-outline" size={16} color="#FFE259" />
                   <ThemedText style={styles.secondaryBtnText}>Cambiar Meta ({stepGoal.toLocaleString()})</ThemedText>
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={styles.resetBtn} onPress={handleResetSteps}>
+              <TouchableOpacity style={styles.resetBtn} onPress={handleResetSteps} activeOpacity={0.8}>
                 <Ionicons name="refresh-outline" size={16} color="#EF4444" />
                 <ThemedText style={styles.resetBtnText}>Reiniciar a 0</ThemedText>
               </TouchableOpacity>
@@ -310,6 +343,21 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  feedbackBannerBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(16, 185, 129, 0.40)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  feedbackBannerText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: 'bold',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    textAlign: 'center',
   },
   scrollBody: {
     padding: 20,

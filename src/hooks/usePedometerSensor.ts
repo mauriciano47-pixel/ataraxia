@@ -70,6 +70,15 @@ export function usePedometerSensor(
   const onSetStepsRef = useRef(onSetSteps);
   onSetStepsRef.current = onSetSteps;
 
+  // Sincronizar referencia autoritativa cuando cambia el conteo diario (ej. reinicio a 0 o fijación manual)
+  useEffect(() => {
+    highestAuthoritativeCountRef.current = currentDailySteps;
+    if (currentDailySteps === 0) {
+      setLiveSessionSteps(0);
+      try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, '0'); } catch {}
+    }
+  }, [currentDailySteps]);
+
   // 1. Sincronización de Pasos Nativos 24h desde las 00:00 locales (Hardware Coprocessor)
   const syncNativeHistoricalSteps = useCallback(async () => {
     if (Platform.OS === 'web') return;
