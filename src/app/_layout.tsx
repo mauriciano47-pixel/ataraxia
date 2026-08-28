@@ -10,6 +10,7 @@ import {
   ProfileIcon,
   ArchonCrownIcon,
   SculptureCameraIcon,
+  InfoTabIcon,
 } from '@/components/TabSvgIcons';
 
 class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorText: string }> {
@@ -134,6 +135,14 @@ export default function TabLayout() {
             title: 'Arconte',
             tabBarLabel: '👑 Trono',
             tabBarIcon: ({ color, focused }) => <ArchonCrownIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="about"
+          options={{
+            title: 'Info',
+            tabBarLabel: 'ℹ️ Info',
+            tabBarIcon: ({ color, focused }) => <InfoTabIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen
