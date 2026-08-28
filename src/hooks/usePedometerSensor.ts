@@ -5,19 +5,36 @@ import { SafeStorage } from '@/utils/safeStorage';
 
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
+const SENSITIVITY_STORAGE_KEY = 'ataraxia_pedometer_sensitivity_v1';
 
-// ─────────────────────────────────────────────────────────────
-// PARÁMETROS DSP BIOMECÁNICOS (FILTRO PASA-BANDA 0.7 Hz - 3.2 Hz)
-// ─────────────────────────────────────────────────────────────
-const HP_GRAVITY_ALPHA = 0.94;        // Pasa-altos (~0.7 Hz): elimina gravedad y rotaciones lentas
-const LP_NOISE_ALPHA = 0.40;          // Pasa-bajos (~3.2 Hz): elimina sacudidas de mano, clics y vibración
-const POSITIVE_PEAK_THRESHOLD = 0.65; // Umbral de elevación de zancada (m/s²)
-const ZERO_CROSS_FALL_THRESHOLD = -0.45; // Umbral de caída por debajo de cero para confirmar zancada
-const MIN_GAIT_INTERVAL_MS = 300;     // Máxima cadencia humana admisible: 200 pasos/min (300ms)
-const MAX_GAIT_INTERVAL_MS = 1500;    // Mínima cadencia humana admisible: 40 pasos/min (1500ms)
-const MAX_CADENCE_VARIANCE_MS = 480;  // Tolerancia de variación temporal entre pasos consecutivos
-const MAX_VIOLENT_ACCEL_MS2 = 14.00;  // Límite de aceleración: descarta caídas o sacudidas violentas
-const MAX_VEHICLE_SPEED_MS = 5.55;    // >20 km/h = Modo Vehículo (desactiva podómetro en auto/bus)
+export type PedometerSensitivity = 'high' | 'standard' | 'low';
+
+// Parámetros por nivel de sensibilidad (AOSP StepDetector Calibrated)
+const SENSITIVITY_PROFILES = {
+  high: {
+    peakThreshold: 0.42,      // Para caminata suave / bolsillo holgado / mochila
+    valleyDrop: 0.22,
+    minPulseMs: 80,
+    maxPulseMs: 480,
+  },
+  standard: {
+    peakThreshold: 0.58,      // Calibración balanceada óptima (mano y bolsillo)
+    valleyDrop: 0.28,
+    minPulseMs: 90,
+    maxPulseMs: 450,
+  },
+  low: {
+    peakThreshold: 0.85,      // Anti-vibración / trabajo activo
+    valleyDrop: 0.40,
+    minPulseMs: 100,
+    maxPulseMs: 420,
+  },
+};
+
+const MIN_STEP_CADENCE_MS = 260;    // Máxima cadencia humana admisible: 230 pasos/min
+const MAX_STEP_CADENCE_MS = 1600;   // Mínima cadencia humana admisible: 37 pasos/min
+const MAX_VIOLENT_ACCEL_MS2 = 14.50;// Límite de aceleración biológica humana
+const MAX_VEHICLE_SPEED_MS = 5.55;  // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(
   onStepDetected?: (stepsAdded: number) => void,
@@ -26,6 +43,16 @@ export function usePedometerSensor(
 ) {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [isVehicleDetected, setIsVehicleDetected] = useState<boolean>(false);
+  const [sensitivity, setSensitivityState] = useState<PedometerSensitivity>(() => {
+    try {
+      const saved = SafeStorage.getItem(SENSITIVITY_STORAGE_KEY);
+      if (saved === 'high' || saved === 'standard' || saved === 'low') return saved;
+      return 'standard';
+    } catch {
+      return 'standard';
+    }
+  });
+
   const [isTransitMode, setIsTransitMode] = useState<boolean>(() => {
     try {
       return SafeStorage.getItem(TRANSIT_MODE_STORAGE_KEY) === 'true';
@@ -43,18 +70,22 @@ export function usePedometerSensor(
     }
   });
 
-  // Estados internos del procesador DSP de señales
-  const gravityBaselineRef = useRef<number>(9.80);
-  const lowPassSignalRef = useRef<number>(0);
-  const isPositivePeakArmedRef = useRef<boolean>(false);
+  // Estados matemáticos internos para filtrado temporal continuo (Delta-t)
+  const lastSampleTimeRef = useRef<number>(0);
+  const gravityNormRef = useRef<number>(9.80);
+  const smoothedDynamicRef = useRef<number>(0);
+  const isRisingPeakRef = useRef<boolean>(false);
+  const peakStartTimeRef = useRef<number>(0);
+  const peakMaxValRef = useRef<number>(0);
   const lastStepTimestampRef = useRef<number>(0);
-  const lastIntervalRef = useRef<number>(0);
-  const consecutiveRhythmicStepsRef = useRef<number>(0);
 
   const pedometerSubscriptionRef = useRef<any>(null);
   const lastWatcherReportedRef = useRef<number | null>(null);
   const highestAuthoritativeCountRef = useRef<number>(currentDailySteps);
   const lastSyncTimestampRef = useRef<number>(0);
+
+  const sensitivityRef = useRef<PedometerSensitivity>(sensitivity);
+  sensitivityRef.current = sensitivity;
 
   const transitModeRef = useRef<boolean>(isTransitMode);
   transitModeRef.current = isTransitMode;
@@ -76,6 +107,14 @@ export function usePedometerSensor(
       SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(currentDailySteps));
     } catch {}
   }, [currentDailySteps]);
+
+  // Cambiar y persistir sensibilidad
+  const setSensitivity = useCallback((newSensitivity: PedometerSensitivity) => {
+    setSensitivityState(newSensitivity);
+    try {
+      SafeStorage.setItem(SENSITIVITY_STORAGE_KEY, newSensitivity);
+    } catch {}
+  }, []);
 
   // 1. Sincronización con Coprocesador de Hardware Nativo (Android / iOS)
   const syncNativeHistoricalSteps = useCallback(async () => {
@@ -196,12 +235,19 @@ export function usePedometerSensor(
     };
   }, [syncNativeHistoricalSteps]);
 
-  // 4. Sensor Web: Motor DSP Pasa-Banda con Cruce por Cero y Coherencia Periódica
+  // 4. Sensor Web: Motor Continuo AOSP Delta-t Invariante
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (transitModeRef.current || isVehicleDetectedRef.current) return;
+
+      const now = Date.now();
+      const lastTime = lastSampleTimeRef.current || now;
+      lastSampleTimeRef.current = now;
+
+      // Calcular Delta-t real en segundos (acotado para robustez)
+      const dt = Math.min(0.1, Math.max(0.005, (now - lastTime) / 1000));
 
       let rx = 0, ry = 0, rz = 0;
 
@@ -228,74 +274,64 @@ export function usePedometerSensor(
       const totalNorm = Math.sqrt(rx * rx + ry * ry + rz * rz);
       if (totalNorm === 0) return;
 
-      // Descartar sacudidas destructivas violentas (>14.0 m/s²)
+      // Descartar sacudidas destructivas violentas (>14.5 m/s²)
       if (totalNorm > MAX_VIOLENT_ACCEL_MS2 + 9.8) {
-        isPositivePeakArmedRef.current = false;
-        consecutiveRhythmicStepsRef.current = 0;
+        isRisingPeakRef.current = false;
+        peakMaxValRef.current = 0;
         return;
       }
 
-      // ETAPA 1 DSP: Filtro Pasa-Altos (HPF ~0.7 Hz) para eliminar gravedad estática y giros lentos
-      gravityBaselineRef.current = HP_GRAVITY_ALPHA * gravityBaselineRef.current + (1 - HP_GRAVITY_ALPHA) * totalNorm;
-      const highPassed = totalNorm - gravityBaselineRef.current;
+      // Constante temporal de gravedad tau_g = 0.8s (invariante a FPS)
+      const alphaG = dt / (0.80 + dt);
+      gravityNormRef.current = (1 - alphaG) * gravityNormRef.current + alphaG * totalNorm;
+      const rawDynamic = Math.abs(totalNorm - gravityNormRef.current);
 
-      // ETAPA 2 DSP: Filtro Pasa-Bajos (LPF ~3.2 Hz) para eliminar temblores de mano, clics y sacudidas
-      const bandPassed = LP_NOISE_ALPHA * highPassed + (1 - LP_NOISE_ALPHA) * lowPassSignalRef.current;
-      lowPassSignalRef.current = bandPassed;
+      // Constante temporal de suavizado tau_s = 0.045s (invariante a FPS)
+      const alphaS = dt / (0.045 + dt);
+      const smoothDynamic = (1 - alphaS) * smoothedDynamicRef.current + alphaS * rawDynamic;
+      smoothedDynamicRef.current = smoothDynamic;
 
-      const now = Date.now();
+      const profile = SENSITIVITY_PROFILES[sensitivityRef.current] || SENSITIVITY_PROFILES.standard;
 
-      // ETAPA 3 DSP: Detector de Cruce por Cero con Histéresis
-      // 1. Armar si la onda filtrada sube al umbral positivo (+0.65 m/s²)
-      if (bandPassed >= POSITIVE_PEAK_THRESHOLD && !isPositivePeakArmedRef.current) {
-        isPositivePeakArmedRef.current = true;
+      // FASE 1: Detección y armado de cresta
+      if (smoothDynamic >= profile.peakThreshold) {
+        if (!isRisingPeakRef.current) {
+          isRisingPeakRef.current = true;
+          peakStartTimeRef.current = now;
+          peakMaxValRef.current = smoothDynamic;
+        } else {
+          if (smoothDynamic > peakMaxValRef.current) {
+            peakMaxValRef.current = smoothDynamic;
+          }
+        }
       }
 
-      // 2. Disparar cuando la onda cruza por debajo de cero (-0.45 m/s²)
-      if (isPositivePeakArmedRef.current && bandPassed <= ZERO_CROSS_FALL_THRESHOLD) {
-        isPositivePeakArmedRef.current = false;
+      // FASE 2: Detección de caída de cresta (Zancada Confirmada)
+      if (isRisingPeakRef.current) {
+        const drop = peakMaxValRef.current - smoothDynamic;
+        if (drop >= profile.valleyDrop) {
+          const pulseDuration = now - peakStartTimeRef.current;
+          isRisingPeakRef.current = false;
+          peakMaxValRef.current = 0;
 
-        const interval = now - lastStepTimestampRef.current;
+          // Validar duración física del pulso de zancada humana
+          if (pulseDuration >= profile.minPulseMs && pulseDuration <= profile.maxPulseMs) {
+            const timeSinceLastStep = now - lastStepTimestampRef.current;
 
-        // Si el intervalo es menor a 300ms, es frecuencia >3.3Hz (agitación rápida de mano) -> IGNORAR
-        if (interval > 0 && interval < MIN_GAIT_INTERVAL_MS) {
-          consecutiveRhythmicStepsRef.current = 0;
-          return;
-        }
+            // Validar intervalo de cadencia humana [260ms - 1600ms]
+            if (lastStepTimestampRef.current === 0 || timeSinceLastStep >= MIN_STEP_CADENCE_MS) {
+              lastStepTimestampRef.current = now;
 
-        // Si pasó demasiado tiempo (>1500ms), es un reinicio de caminata
-        if (lastStepTimestampRef.current === 0 || interval > MAX_GAIT_INTERVAL_MS) {
-          lastStepTimestampRef.current = now;
-          lastIntervalRef.current = 0;
-          consecutiveRhythmicStepsRef.current = 1;
-          return;
-        }
+              setLiveSessionSteps((prev) => {
+                const updated = prev + 1;
+                try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+                return updated;
+              });
 
-        // Intervalo en rango de marcha humana [300ms - 1500ms]
-        const intervalVariance = lastIntervalRef.current > 0 ? Math.abs(interval - lastIntervalRef.current) : 0;
-        lastIntervalRef.current = interval;
-        lastStepTimestampRef.current = now;
-
-        // Comprobación de ritmo periódico humano
-        if (intervalVariance > MAX_CADENCE_VARIANCE_MS && consecutiveRhythmicStepsRef.current === 0) {
-          consecutiveRhythmicStepsRef.current = 1;
-          return;
-        }
-
-        consecutiveRhythmicStepsRef.current += 1;
-
-        // Cuando se confirman al menos 2 pasos rítmicos o la marcha ya está activa
-        if (consecutiveRhythmicStepsRef.current >= 2) {
-          const stepsToCredit = consecutiveRhythmicStepsRef.current === 2 ? 2 : 1;
-
-          setLiveSessionSteps((prev) => {
-            const updated = prev + stepsToCredit;
-            try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-            return updated;
-          });
-
-          if (onStepDetectedRef.current) {
-            onStepDetectedRef.current(stepsToCredit);
+              if (onStepDetectedRef.current) {
+                onStepDetectedRef.current(1);
+              }
+            }
           }
         }
       }
@@ -330,10 +366,10 @@ export function usePedometerSensor(
         if (Platform.OS !== 'web') {
           syncNativeHistoricalSteps();
         } else {
-          lastStepTimestampRef.current = 0;
-          lastIntervalRef.current = 0;
-          consecutiveRhythmicStepsRef.current = 0;
-          isPositivePeakArmedRef.current = false;
+          lastSampleTimeRef.current = 0;
+          isRisingPeakRef.current = false;
+          peakMaxValRef.current = 0;
+          smoothedDynamicRef.current = 0;
         }
       }
     };
@@ -347,10 +383,10 @@ export function usePedometerSensor(
     if (Platform.OS !== 'web') {
       syncNativeHistoricalSteps();
     } else {
-      lastStepTimestampRef.current = 0;
-      lastIntervalRef.current = 0;
-      consecutiveRhythmicStepsRef.current = 0;
-      isPositivePeakArmedRef.current = false;
+      lastSampleTimeRef.current = 0;
+      isRisingPeakRef.current = false;
+      peakMaxValRef.current = 0;
+      smoothedDynamicRef.current = 0;
 
       if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
         (DeviceMotionEvent as any).requestPermission().catch(() => {});
@@ -373,6 +409,8 @@ export function usePedometerSensor(
     isLiveTracking: isAvailable && !isTransitMode && !isVehicleDetected,
     isTransitMode,
     isVehicleDetected,
+    sensitivity,
+    setSensitivity,
     liveSessionSteps,
     forceSyncSteps,
     toggleTransitMode,

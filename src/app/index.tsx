@@ -35,6 +35,8 @@ export default function HoyScreen() {
     isLiveTracking,
     isTransitMode,
     isVehicleDetected,
+    sensitivity,
+    setSensitivity,
     toggleTransitMode,
     forceSyncSteps,
   } = usePedometerSensor(addSteps, setSteps, log.steps ?? 0);
@@ -471,6 +473,8 @@ export default function HoyScreen() {
             onSetStepGoal={setStepGoal}
             isLiveTracking={isLiveTracking}
             onToggleLiveTracking={toggleTransitMode}
+            sensitivity={sensitivity}
+            onSetSensitivity={setSensitivity}
           />
         )}
 

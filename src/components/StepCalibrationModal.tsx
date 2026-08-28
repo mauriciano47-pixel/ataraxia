@@ -15,6 +15,7 @@ import { Spacing } from '@/constants/theme';
 import { estimateStepMetrics } from '@/lib/fitnessCalculator';
 
 import { SafeStorage } from '@/utils/safeStorage';
+import { PedometerSensitivity } from '@/hooks/usePedometerSensor';
 
 interface StepCalibrationModalProps {
   visible: boolean;
@@ -26,6 +27,8 @@ interface StepCalibrationModalProps {
   onSetStepGoal?: (goal: number) => void;
   isLiveTracking?: boolean;
   onToggleLiveTracking?: () => void;
+  sensitivity?: PedometerSensitivity;
+  onSetSensitivity?: (sens: PedometerSensitivity) => void;
 }
 
 export function StepCalibrationModal({
@@ -38,6 +41,8 @@ export function StepCalibrationModal({
   onSetStepGoal,
   isLiveTracking = true,
   onToggleLiveTracking,
+  sensitivity = 'standard',
+  onSetSensitivity,
 }: StepCalibrationModalProps) {
   const [exactInput, setExactInput] = useState<string>(currentSteps.toString());
   const [goalInput, setGoalInput] = useState<string>(stepGoal.toString());
@@ -201,6 +206,60 @@ export function StepCalibrationModal({
                   {isLiveTracking ? 'Pausar Detección Automática' : 'Activar Detección Automática'}
                 </ThemedText>
               </TouchableOpacity>
+            </View>
+
+            {/* Perfil de Sensibilidad Biomecánica */}
+            <View style={styles.sectionCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Ionicons name="speedometer-outline" size={18} color="#38BDF8" />
+                <ThemedText style={styles.sectionTitle}>SENSIBILIDAD DEL SENSOR</ThemedText>
+              </View>
+              <ThemedText style={styles.sectionDesc}>
+                Ajusta la respuesta del acelerómetro según cómo lleves tu dispositivo:
+              </ThemedText>
+              <View style={styles.sensitivityRow}>
+                <TouchableOpacity
+                  style={[styles.sensBtn, sensitivity === 'high' && styles.sensBtnActive]}
+                  onPress={() => {
+                    if (onSetSensitivity) onSetSensitivity('high');
+                    showFeedback('⚡ Sensibilidad Alta: Calibrada para caminata suave o bolso.');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={[styles.sensBtnTitle, sensitivity === 'high' && styles.sensBtnTitleActive]}>
+                    ⚡ ALTA
+                  </ThemedText>
+                  <ThemedText style={styles.sensBtnDesc}>Paso suave / Bolso</ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.sensBtn, sensitivity === 'standard' && styles.sensBtnActive]}
+                  onPress={() => {
+                    if (onSetSensitivity) onSetSensitivity('standard');
+                    showFeedback('🟡 Sensibilidad Estándar: Balance óptimo mano y bolsillo.');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={[styles.sensBtnTitle, sensitivity === 'standard' && styles.sensBtnTitleActive]}>
+                    🏃 ESTÁNDAR
+                  </ThemedText>
+                  <ThemedText style={styles.sensBtnDesc}>Mano / Bolsillo</ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.sensBtn, sensitivity === 'low' && styles.sensBtnActive]}
+                  onPress={() => {
+                    if (onSetSensitivity) onSetSensitivity('low');
+                    showFeedback('🛡️ Anti-Vibración: Filtro estricto para trabajo o vehículos.');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={[styles.sensBtnTitle, sensitivity === 'low' && styles.sensBtnTitleActive]}>
+                    🛡️ ESTRICTA
+                  </ThemedText>
+                  <ThemedText style={styles.sensBtnDesc}>Anti-Sacudida</ThemedText>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Ajuste Numérico Exacto */}
@@ -593,5 +652,40 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '800',
     color: '#EF4444',
+  },
+  sensitivityRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  sensBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sensBtnActive: {
+    backgroundColor: 'rgba(56, 189, 248, 0.16)',
+    borderColor: '#38BDF8',
+  },
+  sensBtnTitle: {
+    fontSize: 10.5,
+    fontWeight: '900',
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  sensBtnTitleActive: {
+    color: '#38BDF8',
+  },
+  sensBtnDesc: {
+    fontSize: 8.5,
+    color: '#64748B',
+    marginTop: 2,
+    textAlign: 'center',
   },
 });
