@@ -108,6 +108,10 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
     weightKg: number;
     heightCm: number;
     age: number;
+    equipment: any;
+    sessionDurationMinutes: any;
+    experienceLevel: any;
+    injuryCare: any;
   }) => {
     saveGuardianKey({
       email: data.email,
@@ -116,12 +120,17 @@ export default function SplashScreenWrapper({ children }: { children: React.Reac
       heightCm: data.heightCm,
       age: data.age,
       path: chosenPath,
+      equipment: data.equipment,
+      sessionDurationMinutes: data.sessionDurationMinutes,
+      experienceLevel: data.experienceLevel,
+      injuryCare: data.injuryCare,
     });
 
     SafeStorage.setItem('ataraxia_guardian_key_v1', 'true');
     SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
     SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
     SafeStorage.setItem('ataraxia_user_email_v1', data.email);
+    SafeStorage.setItem('ataraxia_user_equipment_v1', data.equipment || 'gym');
 
     setIsDismissing(true);
     setTimeout(() => {

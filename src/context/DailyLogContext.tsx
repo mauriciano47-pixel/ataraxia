@@ -14,7 +14,12 @@ import {
   DailyGrade,
   DailyGradeStatus,
   CycleTier,
+  EquipmentType,
+  SessionDurationMinutes,
+  ExperienceLevel,
+  InjuryCare,
 } from '@/types/onboarding';
+import { generate30DayResolution, MonthlyResolution } from '@/lib/monthlyResolutionEngine';
 
 export interface UserMetrics {
   weightKg: number;
@@ -183,11 +188,16 @@ interface DailyLogContextType {
     heightCm: number;
     age: number;
     path: LegendaryPath;
+    equipment?: EquipmentType;
+    sessionDurationMinutes?: SessionDurationMinutes;
+    experienceLevel?: ExperienceLevel;
+    injuryCare?: InjuryCare;
   }) => void;
   setCoachArchetype: (archetype: CoachArchetype) => void;
   selectLegendaryPath: (path: LegendaryPath) => void;
   calculateTodayGrade: () => DailyGrade;
-  executeJudgment: () => { promoted: boolean; title: string; message: string };
+  executeJudgment: () => { promoted: boolean; title: string; message: string; resolution?: MonthlyResolution };
+  get30DayResolution: () => MonthlyResolution;
   resetMonthlyCycle: () => void;
   start30DayPact: (path?: LegendaryPath) => void;
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
@@ -647,6 +657,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     heightCm,
     age,
     path,
+    equipment,
+    sessionDurationMinutes,
+    experienceLevel,
+    injuryCare,
   }: {
     email: string;
     userName: string;
@@ -654,8 +668,14 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     heightCm: number;
     age: number;
     path: LegendaryPath;
+    equipment?: EquipmentType;
+    sessionDurationMinutes?: SessionDurationMinutes;
+    experienceLevel?: ExperienceLevel;
+    injuryCare?: InjuryCare;
   }) => {
     const pathInfo = LEGENDARY_PATHS[path];
+    const userEquip: EquipmentType = equipment || pathInfo.equipment || 'gym';
+    const userDuration: SessionDurationMinutes = sessionDurationMinutes || 45;
     const bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
     const baseCals = Math.round(bmr * 1.4);
     const targetCals = Math.max(1400, baseCals + pathInfo.recommendedCalsDelta);
@@ -720,10 +740,12 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     const profileData: ProkoptonProfile = {
       userName,
       focus: pathInfo.focus,
-      equipment: pathInfo.equipment,
+      equipment: userEquip,
       daysPerWeek: 4,
-      sessionDurationMinutes: 45,
+      sessionDurationMinutes: userDuration,
       dietPreference: pathInfo.dietPreference,
+      experienceLevel: experienceLevel || 'intermediate',
+      injuryCare: injuryCare || 'none',
       age,
       weightKg,
       targetWeightKg: weightKg,
@@ -970,18 +992,42 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       preciseDay = Math.min(30, Math.max(1, diffDays));
     }
 
-    return {
+    const todayGradeResult: DailyGrade = {
       day: preciseDay,
       date: today,
       score: totalScore,
       status,
       pillars,
       trainingDone,
+      steps: current.steps || 0,
+      stepGoal: stepsGoal,
       stepsRatio: parseFloat(stepsRatio.toFixed(2)),
+      waterLitres: current.waterLitres || 0,
       waterRatio: parseFloat(Math.min(1, (current.waterLitres || 0) / 2.5).toFixed(2)),
       caloriesLogged: nutritionPassed,
+      totalCalories: current.totalCalories || 0,
+      sleepHours,
+      heartRateBpm: current.smartDevice?.heartRateBpm || 0,
       verdict,
+      recordedAt: new Date().toISOString(),
     };
+
+    return todayGradeResult;
+  }, []);
+
+  const get30DayResolution = useCallback((): MonthlyResolution => {
+    const current = logRef.current;
+    const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+    const path = current.legendaryPath || 'spartan';
+    const userName = current.userName || 'Ciudadano Prokopton';
+
+    return generate30DayResolution({
+      dailyGrades: cycle.dailyGrades || [],
+      path,
+      userName,
+      startDate: cycle.startDate,
+      archetype: current.coachArchetype || 'stoic_mentor',
+    });
   }, []);
 
   const start30DayPact = useCallback((path?: LegendaryPath) => {
@@ -1088,34 +1134,37 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const executeJudgment = useCallback(() => {
     const current = logRef.current;
     const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const passedRatio = cycle.dailyGrades.length > 0
-      ? cycle.passedDaysCount / cycle.dailyGrades.length
-      : (cycle.averageScore >= 75 ? 1 : 0);
+    const path = current.legendaryPath || 'spartan';
+    const userName = current.userName || 'Ciudadano Prokopton';
 
-    const isPromoted = (cycle.averageScore >= 80 || passedRatio >= 0.8);
-    let title = '';
-    let message = '';
+    // Generar la auditoría y resolución integral de los 30 días
+    const resolution = generate30DayResolution({
+      dailyGrades: cycle.dailyGrades || [],
+      path,
+      userName,
+      startDate: cycle.startDate,
+      archetype: current.coachArchetype || 'stoic_mentor',
+    });
 
-    if (isPromoted) {
-      title = '👑 ¡ASCENSO OTORGADO: SEMIDIÓS DEL OLIMPO!';
-      message = `Has completado el Ciclo de 30 Días con ${Math.round(cycle.averageScore)}% de excelencia. Has demostrado templanza, honor y fuerza real. Tu rango asciende y desbloqueas el nivel superior del Templo.`;
-    } else {
-      title = '💀 JUICIO ADVERSO: REPRENSIÓN POR MEDIOCRIDAD';
-      message = `Tu promedio de disciplina fue de apenas ${Math.round(cycle.averageScore)}%. En Ataraxia no toleramos quejas ni excusas de niños. Tu rango queda revocado y deberás reiniciar el Ciclo de 30 Días desde el Día 1 con absoluta seriedad.`;
-    }
+    const isPromoted = resolution.promoted;
+    const title = isPromoted ? '👑 ¡ASCENSO OTORGADO: SEMIDIÓS DEL OLIMPO!' : '💀 JUICIO ADVERSO: REPRENSIÓN POR MEDIOCRIDAD';
+    const message = resolution.masterDecreeMarkdown;
 
     const updatedCycle: MonthlyCycleState = {
       ...cycle,
       isJudgmentReady: true,
       judgmentVerdict: isPromoted ? 'promoted' : 'scolded',
-      judgmentText: message,
-      tier: isPromoted ? 'Semidiós del Olimpo' : 'Novicio de Esparta',
+      judgmentText: isPromoted
+        ? `Has completado el Ciclo de 30 Días con ${resolution.totalScoreAverage}% de excelencia (${resolution.victoriousDaysCount} días dignos). Tu rango asciende a ${resolution.tierAwarded}.`
+        : `Tu promedio de disciplina fue de apenas ${resolution.totalScoreAverage}%. Tu rango queda en ${resolution.tierAwarded}. Deberás reiniciar con honor.`,
+      resolutionMarkdown: resolution.masterDecreeMarkdown,
+      tier: resolution.tierAwarded as any,
     };
 
     updateLog({ monthlyCycle: updatedCycle });
     saveProfileToFirestore({ monthlyCycle: updatedCycle });
 
-    return { promoted: isPromoted, title, message };
+    return { promoted: isPromoted, title, message, resolution };
   }, []);
 
   const resetMonthlyCycle = useCallback(() => {
@@ -1167,6 +1216,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         selectLegendaryPath,
         calculateTodayGrade,
         executeJudgment,
+        get30DayResolution,
         resetMonthlyCycle,
         start30DayPact,
         updateSmartDevice,

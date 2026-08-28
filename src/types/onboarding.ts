@@ -105,8 +105,15 @@ export interface DailyGrade {
   trainingDone: boolean;
   stepsRatio: number;
   waterRatio: number;
+  waterLitres?: number;
   caloriesLogged: boolean;
+  steps?: number;
+  stepGoal?: number;
+  totalCalories?: number;
+  sleepHours?: number;
+  heartRateBpm?: number;
   verdict: string;
+  recordedAt?: string;
 }
 
 export interface MonthlyCycleState {
@@ -122,6 +129,7 @@ export interface MonthlyCycleState {
   isPactActive: boolean;
   judgmentVerdict?: 'promoted' | 'scolded';
   judgmentText?: string;
+  resolutionMarkdown?: string;
 }
 
 export interface CoachArchetypeInfo {
@@ -160,6 +168,9 @@ export const COACH_ARCHETYPES: Record<CoachArchetype, CoachArchetypeInfo> = {
   },
 };
 
+export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+export type InjuryCare = 'none' | 'back' | 'knees' | 'shoulders';
+
 export interface ProkoptonProfile {
   userName: string;
   focus: StoicFocus;
@@ -167,6 +178,8 @@ export interface ProkoptonProfile {
   daysPerWeek: DaysPerWeek;
   sessionDurationMinutes: SessionDurationMinutes;
   dietPreference: DietPreference;
+  experienceLevel?: ExperienceLevel;
+  injuryCare?: InjuryCare;
   age: number;
   weightKg: number;
   targetWeightKg: number;

@@ -10,6 +10,7 @@ import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import { MonthlyResolution, DayAudit } from '@/lib/monthlyResolutionEngine';
 
 const PATH_MANDATORY_ROUTINES: Record<LegendaryPath, {
   name: string;
@@ -75,8 +76,10 @@ export default function ProgressScreen() {
   const { historyMap, loadingHistory } = useHistoryLog();
   const [modalVisible, setModalVisible] = useState(false);
   const [pactModalVisible, setPactModalVisible] = useState(false);
-  const [judgmentResult, setJudgmentResult] = useState<{ promoted: boolean; title: string; message: string } | null>(null);
-  
+  const [judgmentResult, setJudgmentResult] = useState<{ promoted: boolean; title: string; message: string; resolution?: MonthlyResolution } | null>(null);
+  const [activeResolutionTab, setActiveResolutionTab] = useState<'verdict' | 'feedback' | 'audit'>('verdict');
+  const [copiedDecree, setCopiedDecree] = useState(false);
+
   // Estado local para los checkboxes de la sesión obligatoria del día
   const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
 
@@ -154,9 +157,24 @@ export default function ProgressScreen() {
   };
 
   const handleOpenJudgment = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } catch {}
     const res = executeJudgment();
     setJudgmentResult(res);
+    setActiveResolutionTab('verdict');
     setModalVisible(true);
+  };
+
+  const handleCopyDecree = () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(judgmentResult?.resolution?.masterDecreeMarkdown || judgmentResult?.message || '');
+        setCopiedDecree(true);
+        setTimeout(() => setCopiedDecree(false), 3000);
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
   };
 
   const pillars = todayGrade.pillars || {
@@ -537,7 +555,7 @@ export default function ProgressScreen() {
             </View>
           </Modal>
 
-          {/* MODAL DEL JUICIO DEL DÍA 30 */}
+          {/* MODAL DEL JUICIO DEL DÍA 30 • DOSSIER SAGRADO */}
           <Modal
             visible={modalVisible}
             transparent={true}
@@ -546,42 +564,205 @@ export default function ProgressScreen() {
           >
             <View style={styles.modalBackdrop}>
               <View style={[
-                styles.modalCard,
+                styles.dossierModalCard,
                 judgmentResult?.promoted ? styles.modalCardSuccess : styles.modalCardScold
               ]}>
-                <ThemedText style={styles.modalEmblem}>
-                  {judgmentResult?.promoted ? '👑' : '💀'}
-                </ThemedText>
-                <ThemedText style={[
-                  styles.modalTitle,
-                  judgmentResult?.promoted ? { color: '#FFE259' } : { color: '#EF4444' }
-                ]}>
-                  {judgmentResult?.title}
-                </ThemedText>
-                <ThemedText style={styles.modalMessage}>
-                  {judgmentResult?.message}
-                </ThemedText>
+                {/* Cabecera del Juicio */}
+                <View style={styles.dossierHeaderRow}>
+                  <ThemedText style={styles.modalEmblem}>
+                    {judgmentResult?.promoted ? '👑' : '💀'}
+                  </ThemedText>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText style={styles.dossierHeaderTag}>TRIBUNAL DEL OLIMPO • RESOLUCIÓN DE 30 DÍAS</ThemedText>
+                    <ThemedText style={[
+                      styles.dossierMainTitle,
+                      judgmentResult?.promoted ? { color: '#FFE259' } : { color: '#EF4444' }
+                    ]}>
+                      {judgmentResult?.title}
+                    </ThemedText>
+                  </View>
+                </View>
 
-                {!judgmentResult?.promoted && (
+                {/* Selector de Pestañas de la Resolución */}
+                <View style={styles.dossierTabsRow}>
                   <TouchableOpacity
-                    style={styles.resetCycleBtn}
-                    onPress={() => {
-                      resetMonthlyCycle();
-                      setModalVisible(false);
-                    }}
+                    style={[styles.dossierTabBtn, activeResolutionTab === 'verdict' && styles.dossierTabBtnActive]}
+                    onPress={() => setActiveResolutionTab('verdict')}
                   >
-                    <ThemedText style={styles.resetCycleBtnText}>
-                      🔄 ACEPTAR REPRENSIÓN Y REINICIAR DÍA 1
+                    <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'verdict' && styles.dossierTabBtnTextActive]}>
+                      📜 Veredicto
                     </ThemedText>
                   </TouchableOpacity>
-                )}
 
-                <TouchableOpacity
-                  style={styles.closeModalBtn}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <ThemedText style={styles.closeModalBtnText}>CERRAR JUICIO</ThemedText>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.dossierTabBtn, activeResolutionTab === 'feedback' && styles.dossierTabBtnActive]}
+                    onPress={() => setActiveResolutionTab('feedback')}
+                  >
+                    <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'feedback' && styles.dossierTabBtnTextActive]}>
+                      🎖️ Elogios & Reprensión
+                    </ThemedText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.dossierTabBtn, activeResolutionTab === 'audit' && styles.dossierTabBtnActive]}
+                    onPress={() => setActiveResolutionTab('audit')}
+                  >
+                    <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'audit' && styles.dossierTabBtnTextActive]}>
+                      📊 30 Días (Auditoría)
+                    </ThemedText>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Contenido según Pestaña Activa con Scroll */}
+                <ScrollView style={styles.dossierContentScroll} showsVerticalScrollIndicator={false}>
+                  {activeResolutionTab === 'verdict' && (
+                    <View style={styles.dossierTabContent}>
+                      {/* Tarjeta de Rango y Estadísticas Maestras */}
+                      <View style={styles.rankAuditCard}>
+                        <ThemedText style={styles.rankAuditSub}>RANGO SAGRADO OTORGADO</ThemedText>
+                        <ThemedText style={styles.rankAuditTitle}>
+                          {judgmentResult?.resolution?.tierAwarded || cycle.tier}
+                        </ThemedText>
+                        <View style={styles.rankStatsGrid}>
+                          <View style={styles.rankStatBox}>
+                            <ThemedText style={styles.rankStatVal}>{judgmentResult?.resolution?.totalScoreAverage ?? cycle.averageScore}/100</ThemedText>
+                            <ThemedText style={styles.rankStatLbl}>Promedio Disciplina</ThemedText>
+                          </View>
+                          <View style={styles.rankStatBox}>
+                            <ThemedText style={[styles.rankStatVal, { color: '#10B981' }]}>{judgmentResult?.resolution?.victoriousDaysCount ?? 0}</ThemedText>
+                            <ThemedText style={styles.rankStatLbl}>Días Dignos</ThemedText>
+                          </View>
+                          <View style={styles.rankStatBox}>
+                            <ThemedText style={[styles.rankStatVal, { color: '#EF4444' }]}>{judgmentResult?.resolution?.failedDaysCount ?? 0}</ThemedText>
+                            <ThemedText style={styles.rankStatLbl}>Días en Deuda</ThemedText>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Directivas del Mentor para el Próximo Ciclo */}
+                      <View style={styles.directivesSection}>
+                        <ThemedText style={styles.directivesTitle}>🔮 DIRECTIVAS DEL MENTOR (PRÓXIMO CICLO)</ThemedText>
+                        {judgmentResult?.resolution?.nextCycleDirectives?.map((d, i) => (
+                          <View key={i} style={styles.directiveCard}>
+                            <ThemedText style={styles.directiveText}>{d}</ThemedText>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {activeResolutionTab === 'feedback' && (
+                    <View style={styles.dossierTabContent}>
+                      {/* Elogios y Méritos */}
+                      <ThemedText style={styles.feedbackSectionHeader}>🎖️ FELICITACIONES & MÉRITOS REALES</ThemedText>
+                      {judgmentResult?.resolution?.praises?.map((p, i) => (
+                        <View key={i} style={styles.praiseCard}>
+                          <ThemedText style={styles.praiseText}>{p}</ThemedText>
+                        </View>
+                      ))}
+
+                      {/* Llamadas de Atención */}
+                      <ThemedText style={[styles.feedbackSectionHeader, { color: '#EF4444', marginTop: Spacing.four }]}>
+                        💀 LLAMADAS DE ATENCIÓN & MEDIOCRIDAD
+                      </ThemedText>
+                      {judgmentResult?.resolution?.scoldings?.map((s, i) => (
+                        <View key={i} style={styles.scoldCard}>
+                          <ThemedText style={styles.scoldText}>{s}</ThemedText>
+                        </View>
+                      ))}
+
+                      {/* Balance de los 7 Pilares */}
+                      {judgmentResult?.resolution?.pillarAdherence && (
+                        <View style={styles.pillarAdherenceCard}>
+                          <ThemedText style={styles.pillarAdherenceTitle}>📊 BALANCE DE PILARES (30 DÍAS)</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>⚔️ Entrenamiento: {judgmentResult.resolution.pillarAdherence.trainingPct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>👟 Pasos & Movilidad: {judgmentResult.resolution.pillarAdherence.stepsPct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>🍽️ Nutrición & Macros: {judgmentResult.resolution.pillarAdherence.nutritionPct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>🌙 Calidad de Sueño: {judgmentResult.resolution.pillarAdherence.sleepPct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>📜 Lectura Estoica: {judgmentResult.resolution.pillarAdherence.stoicReadingPct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>🫀 Frecuencia Cardíaca: {judgmentResult.resolution.pillarAdherence.heartRatePct}%</ThemedText>
+                          <ThemedText style={styles.pillarAdherenceLine}>🏛️ Reporte al Coach: {judgmentResult.resolution.pillarAdherence.coachCheckInPct}%</ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {activeResolutionTab === 'audit' && (
+                    <View style={styles.dossierTabContent}>
+                      <ThemedText style={styles.auditIntroText}>
+                        Registro sagrado e inmutable de los 30 días de tu Senda:
+                      </ThemedText>
+                      {judgmentResult?.resolution?.dayAudits?.map((audit) => (
+                        <View
+                          key={audit.day}
+                          style={[
+                            styles.dayAuditRow,
+                            audit.score >= 75 ? styles.dayAuditRowSuccess : styles.dayAuditRowFailed
+                          ]}
+                        >
+                          <View style={styles.dayAuditTop}>
+                            <ThemedText style={styles.dayAuditDayTitle}>DÍA {audit.day} • {audit.date}</ThemedText>
+                            <ThemedText style={[
+                              styles.dayAuditScoreBadge,
+                              audit.score >= 90 ? { color: '#FFE259' } : audit.score >= 75 ? { color: '#10B981' } : { color: '#EF4444' }
+                            ]}>
+                              {audit.score >= 90 ? '👑' : audit.score >= 75 ? '⚔️' : '💀'} {audit.score}/100
+                            </ThemedText>
+                          </View>
+
+                          <View style={styles.dayAuditPillarsRow}>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.training && styles.dayAuditPillarTagActive]}>⚔️</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.steps && styles.dayAuditPillarTagActive]}>👟</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.nutrition && styles.dayAuditPillarTagActive]}>🍽️</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.sleep && styles.dayAuditPillarTagActive]}>🌙</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.stoicChallenge && styles.dayAuditPillarTagActive]}>📜</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.heartRate && styles.dayAuditPillarTagActive]}>🫀</ThemedText>
+                            <ThemedText style={[styles.dayAuditPillarTag, audit.pillars.coachCheckIn && styles.dayAuditPillarTagActive]}>🏛️</ThemedText>
+                            <ThemedText style={styles.dayAuditPassedCount}>({audit.passedPillarsCount}/7)</ThemedText>
+                          </View>
+
+                          <ThemedText style={styles.dayAuditVerdictText}>{audit.verdict}</ThemedText>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </ScrollView>
+
+                {/* Acciones del Modal */}
+                <View style={styles.dossierActionsRow}>
+                  <TouchableOpacity
+                    style={styles.copyDecreeBtn}
+                    onPress={handleCopyDecree}
+                    activeOpacity={0.8}
+                  >
+                    <ThemedText style={styles.copyDecreeBtnText}>
+                      {copiedDecree ? '✅ COPIADO AL PORTAPAPELES' : '📋 COPIAR RESOLUCIÓN COMPLETA'}
+                    </ThemedText>
+                  </TouchableOpacity>
+
+                  {!judgmentResult?.promoted && (
+                    <TouchableOpacity
+                      style={styles.resetCycleBtn}
+                      onPress={() => {
+                        resetMonthlyCycle();
+                        setModalVisible(false);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <ThemedText style={styles.resetCycleBtnText}>
+                        🔄 REINICIAR DÍA 1
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.closeModalBtn}
+                    onPress={() => setModalVisible(false)}
+                    activeOpacity={0.8}
+                  >
+                    <ThemedText style={styles.closeModalBtnText}>CERRAR JUICIO</ThemedText>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>
@@ -1086,6 +1267,268 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  dossierModalCard: {
+    width: '100%',
+    maxWidth: 460,
+    maxHeight: '90%',
+    backgroundColor: '#0A0F1D',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  dossierHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingBottom: 10,
+  },
+  dossierHeaderTag: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    letterSpacing: 1,
+  },
+  dossierMainTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    fontFamily: 'serif',
+  },
+  dossierTabsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 10,
+    padding: 3,
+    gap: 4,
+  },
+  dossierTabBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  dossierTabBtnActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+  },
+  dossierTabBtnText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  dossierTabBtnTextActive: {
+    color: '#FFE259',
+    fontWeight: 'bold',
+  },
+  dossierContentScroll: {
+    maxHeight: 380,
+  },
+  dossierTabContent: {
+    paddingVertical: 6,
+    gap: 10,
+  },
+  rankAuditCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rankAuditSub: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    letterSpacing: 1,
+  },
+  rankAuditTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFE259',
+    fontFamily: 'serif',
+  },
+  rankStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  rankStatBox: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  rankStatVal: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+  },
+  rankStatLbl: {
+    fontSize: 8.5,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  directivesSection: {
+    gap: 6,
+    marginTop: 6,
+  },
+  directivesTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#38BDF8',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  directiveCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    borderRadius: 10,
+    padding: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#38BDF8',
+  },
+  directiveText: {
+    fontSize: 11,
+    color: '#E2E8F0',
+    lineHeight: 16,
+  },
+  feedbackSectionHeader: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#10B981',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  praiseCard: {
+    backgroundColor: 'rgba(6, 78, 59, 0.25)',
+    borderRadius: 10,
+    padding: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#10B981',
+  },
+  praiseText: {
+    fontSize: 11,
+    color: '#A7F3D0',
+    lineHeight: 16,
+  },
+  scoldCard: {
+    backgroundColor: 'rgba(127, 29, 29, 0.25)',
+    borderRadius: 10,
+    padding: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#EF4444',
+  },
+  scoldText: {
+    fontSize: 11,
+    color: '#FECACA',
+    lineHeight: 16,
+  },
+  pillarAdherenceCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginTop: 6,
+  },
+  pillarAdherenceTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFE259',
+    fontFamily: 'monospace',
+    marginBottom: 4,
+  },
+  pillarAdherenceLine: {
+    fontSize: 10.5,
+    color: '#CBD5E1',
+    fontFamily: 'monospace',
+  },
+  auditIntroText: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    marginBottom: 4,
+  },
+  dayAuditRow: {
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    gap: 4,
+  },
+  dayAuditRowSuccess: {
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  dayAuditRowFailed: {
+    backgroundColor: 'rgba(20, 10, 15, 0.85)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  dayAuditTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dayAuditDayTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+  },
+  dayAuditScoreBadge: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+  },
+  dayAuditPillarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  dayAuditPillarTag: {
+    fontSize: 12,
+    opacity: 0.35,
+  },
+  dayAuditPillarTagActive: {
+    opacity: 1,
+  },
+  dayAuditPassedCount: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    marginLeft: 4,
+  },
+  dayAuditVerdictText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    lineHeight: 14,
+  },
+  dossierActionsRow: {
+    gap: 8,
+    marginTop: 4,
+  },
+  copyDecreeBtn: {
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    paddingVertical: 9,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  copyDecreeBtnText: {
+    color: '#FFE259',
+    fontWeight: 'bold',
+    fontSize: 11,
+    fontFamily: 'monospace',
+  },
   modalCard: {
     width: '100%',
     maxWidth: 420,
@@ -1103,12 +1546,11 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   modalEmblem: {
-    fontSize: 36,
+    fontSize: 32,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
-    textAlign: 'center',
     fontFamily: 'serif',
   },
   modalMessage: {
@@ -1134,7 +1576,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   closeModalBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -1142,7 +1584,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeModalBtnText: {
-    color: '#FFFFFF',
+    color: '#94A3B8',
     fontWeight: 'bold',
     fontSize: 11,
     fontFamily: 'monospace',

@@ -6,14 +6,19 @@ import {
   TouchableOpacity,
   TextInput,
   Dimensions,
-  Platform,
-  Alert,
 } from 'react-native';
 import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { ThemedText } from './themed-text';
-import { LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import * as Haptics from 'expo-haptics';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { ThemedText } from './themed-text';
+import {
+  LegendaryPath,
+  LEGENDARY_PATHS,
+  EquipmentType,
+  SessionDurationMinutes,
+  ExperienceLevel,
+  InjuryCare,
+} from '@/types/onboarding';
 
 interface Props {
   selectedPath: LegendaryPath;
@@ -23,6 +28,10 @@ interface Props {
     weightKg: number;
     heightCm: number;
     age: number;
+    equipment: EquipmentType;
+    sessionDurationMinutes: SessionDurationMinutes;
+    experienceLevel: ExperienceLevel;
+    injuryCare: InjuryCare;
   }) => void;
 }
 
@@ -34,7 +43,21 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
   const [weightKg, setWeightKg] = useState<string>('78');
   const [heightCm, setHeightCm] = useState<string>('176');
   const [age, setAge] = useState<string>('28');
+
+  // Calibración táctica de entrenamiento
+  const [equipment, setEquipment] = useState<EquipmentType>(pathInfo.equipment || 'gym');
+  const [duration, setDuration] = useState<SessionDurationMinutes>(45);
+  const [experience, setExperience] = useState<ExperienceLevel>('intermediate');
+  const [injury, setInjury] = useState<InjuryCare>('none');
+
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const handleSelectOption = (callback: () => void) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    callback();
+  };
 
   const validateAndSubmit = () => {
     setErrorMessage('');
@@ -62,6 +85,10 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
       weightKg: weightNum,
       heightCm: heightNum,
       age: ageNum,
+      equipment,
+      sessionDurationMinutes: duration,
+      experienceLevel: experience,
+      injuryCare: injury,
     });
   };
 
@@ -84,7 +111,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
       {/* TARJETA PAPIRO DE CONSAGRACIÓN */}
       <View style={styles.mainCard}>
-        {/* GRECAS Y ADORNOS DE ESQUINAS */}
+        {/* GRECAS DE ESQUINA */}
         <View style={styles.cornerTL}><ThemedText style={styles.greekCornerSymbol}>╔═</ThemedText></View>
         <View style={styles.cornerTR}><ThemedText style={styles.greekCornerSymbol}>═╗</ThemedText></View>
         <View style={styles.cornerBL}><ThemedText style={styles.greekCornerSymbol}>╚═</ThemedText></View>
@@ -95,7 +122,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* SELLO DE LA LLAVE & RAYO */}
+          {/* SELLO DE LA LLAVE */}
           <View style={styles.sealContainer}>
             <View style={styles.sealRing}>
               <ThemedText style={styles.sealEmblem}>🗝️</ThemedText>
@@ -106,10 +133,10 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
           </View>
 
           <ThemedText style={styles.instructionText}>
-            Para cruzar el umbral y sellar tus victorias ante los Dioses, adjunta tu correo electrónico. <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>Será tu Llave Sagrada</ThemedText> para respaldar tu progreso y sincronizar tu destino.
+            Adjunta tu correo y calibra tu entorno. Tu <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>Programa de 30 Días</ThemedText> se forjará con exactitud según tu equipamiento y disponibilidad.
           </ThemedText>
 
-          {/* TARJETA RESUMEN DE LA SENDA SELECCIONADA */}
+          {/* RESUMEN DE LA SENDA */}
           <View style={styles.pathSummaryCard}>
             <ThemedText style={styles.pathSummaryIcon}>{pathInfo.icon}</ThemedText>
             <View style={{ flex: 1 }}>
@@ -120,10 +147,10 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
           {/* FORMULARIO DE INGRESO */}
           <View style={styles.formContainer}>
-            {/* 1. CORREO ELECTRÓNICO (LLAVE SAGRADA) */}
+            {/* 1. CORREO ELECTRÓNICO */}
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>
-                📧 CORREO ELECTRÓNICO (LLAVE DE INGRESO) *
+                📧 CORREO ELECTRÓNICO (LLAVE SAGRADA) *
               </ThemedText>
               <TextInput
                 style={[styles.inputField, styles.inputHighlight]}
@@ -137,7 +164,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               />
             </View>
 
-            {/* 2. NOMBRE O PSEUDÓNIMO */}
+            {/* 2. NOMBRE */}
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>
                 👤 NOMBRE O PSEUDÓNIMO ESTOICO
@@ -152,7 +179,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               />
             </View>
 
-            {/* 3. FILA DE BIOMETRÍA */}
+            {/* 3. BIOMETRÍA */}
             <View style={styles.metricsRow}>
               <View style={styles.metricColumn}>
                 <ThemedText style={styles.inputLabel}>⚖️ PESO (KG)</ThemedText>
@@ -191,32 +218,174 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               </View>
             </View>
 
-            {/* MENSAJE DE ERROR SI FALTA EL CORREO */}
+            {/* 4. PREGUNTA 1: EQUIPAMIENTO DISPONIBLE */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>
+                🏟️ EQUIPAMIENTO PARA TU PROGRAMA DE 30 DÍAS
+              </ThemedText>
+              <View style={styles.chipsRow}>
+                <TouchableOpacity
+                  style={[styles.chipBtn, equipment === 'gym' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setEquipment('gym'))}
+                >
+                  <ThemedText style={[styles.chipText, equipment === 'gym' && styles.chipTextActive]}>
+                    🏋️ Gimnasio
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, equipment === 'home_dumbbell' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setEquipment('home_dumbbell'))}
+                >
+                  <ThemedText style={[styles.chipText, equipment === 'home_dumbbell' && styles.chipTextActive]}>
+                    🏠 Mancuernas
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, equipment === 'calisthenics' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setEquipment('calisthenics'))}
+                >
+                  <ThemedText style={[styles.chipText, equipment === 'calisthenics' && styles.chipTextActive]}>
+                    🤸‍♂️ Peso Corporal
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 5. PREGUNTA 2: TIEMPO DISPONIBLE */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>
+                ⏱️ DURACIÓN DE TU SESIÓN DIARIA
+              </ThemedText>
+              <View style={styles.chipsRow}>
+                <TouchableOpacity
+                  style={[styles.chipBtn, duration === 30 && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setDuration(30))}
+                >
+                  <ThemedText style={[styles.chipText, duration === 30 && styles.chipTextActive]}>
+                    ⚡ 30 min (Express)
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, duration === 45 && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setDuration(45))}
+                >
+                  <ThemedText style={[styles.chipText, duration === 45 && styles.chipTextActive]}>
+                    🏛️ 45 min (Óptimo)
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, duration === 60 && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setDuration(60))}
+                >
+                  <ThemedText style={[styles.chipText, duration === 60 && styles.chipTextActive]}>
+                    ⚔️ 60 min (Intenso)
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 6. PREGUNTA 3: EXPERIENCIA */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>
+                🎯 NIVEL DE EXPERIENCIA FÍSICA
+              </ThemedText>
+              <View style={styles.chipsRow}>
+                <TouchableOpacity
+                  style={[styles.chipBtn, experience === 'beginner' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setExperience('beginner'))}
+                >
+                  <ThemedText style={[styles.chipText, experience === 'beginner' && styles.chipTextActive]}>
+                    🌿 Principiante
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, experience === 'intermediate' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setExperience('intermediate'))}
+                >
+                  <ThemedText style={[styles.chipText, experience === 'intermediate' && styles.chipTextActive]}>
+                    ⚔️ Intermedio
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, experience === 'advanced' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setExperience('advanced'))}
+                >
+                  <ThemedText style={[styles.chipText, experience === 'advanced' && styles.chipTextActive]}>
+                    👑 Avanzado
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 7. PREGUNTA 4: ZONAS A CUIDAR */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>
+                🛡️ ARTICULACIÓN O ZONA A PROTEGER
+              </ThemedText>
+              <View style={styles.chipsRow}>
+                <TouchableOpacity
+                  style={[styles.chipBtn, injury === 'none' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setInjury('none'))}
+                >
+                  <ThemedText style={[styles.chipText, injury === 'none' && styles.chipTextActive]}>
+                    ✅ 100% Sano
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, injury === 'back' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setInjury('back'))}
+                >
+                  <ThemedText style={[styles.chipText, injury === 'back' && styles.chipTextActive]}>
+                    ⚠️ Lumbar
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, injury === 'knees' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setInjury('knees'))}
+                >
+                  <ThemedText style={[styles.chipText, injury === 'knees' && styles.chipTextActive]}>
+                    ⚠️ Rodillas
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chipBtn, injury === 'shoulders' && styles.chipBtnActive]}
+                  onPress={() => handleSelectOption(() => setInjury('shoulders'))}
+                >
+                  <ThemedText style={[styles.chipText, injury === 'shoulders' && styles.chipTextActive]}>
+                    ⚠️ Hombros
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* MENSAJE DE ERROR */}
             {!!errorMessage && (
               <View style={styles.errorBanner}>
                 <ThemedText style={styles.errorText}>⚠️ {errorMessage}</ThemedText>
               </View>
             )}
 
-            {/* BOTÓN DE CONSAGRACIÓN FINAL */}
-            <View style={styles.actionWrapper}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={validateAndSubmit}
-                activeOpacity={0.85}
-              >
-                <View style={styles.btnInner}>
-                  <ThemedText style={{ fontSize: 16 }}>⚡</ThemedText>
-                  <ThemedText style={styles.btnText}>
-                    CONSAGRAR LLAVE Y ENTRAR AL TEMPLO
-                  </ThemedText>
-                  <ThemedText style={{ fontSize: 16 }}>⚡</ThemedText>
-                </View>
-              </TouchableOpacity>
-              <ThemedText style={styles.footerHint}>
-                Tu plan de 30 días se calibrará en milisegundos según tus datos
-              </ThemedText>
-            </View>
+            {/* BOTÓN CONSAGRAR */}
+            <TouchableOpacity
+              style={styles.submitButton}
+              activeOpacity={0.85}
+              onPress={validateAndSubmit}
+            >
+              <View style={styles.submitButtonInner}>
+                <ThemedText style={styles.submitButtonText}>
+                  ⚡ CONSAGRAR LLAVE Y ENTRAR AL TEMPLO 🏛️
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
@@ -226,170 +395,142 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#020204',
-    zIndex: 100002,
+    flex: 1,
+    backgroundColor: '#040406',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
-    paddingVertical: Platform.OS === 'web' ? 24 : 36,
+    padding: 16,
   },
   mainCard: {
     width: '100%',
-    maxWidth: 520,
-    height: '100%',
-    maxHeight: 760,
-    backgroundColor: 'rgba(9, 12, 22, 0.98)',
+    maxWidth: 480,
+    maxHeight: '94%',
+    backgroundColor: 'rgba(11, 15, 25, 0.96)',
     borderRadius: 20,
-    borderWidth: 1.8,
-    borderColor: 'rgba(212, 175, 55, 0.65)',
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 10,
+    borderWidth: 2,
+    borderColor: '#D4AF37',
+    padding: 18,
     position: 'relative',
-    overflow: 'hidden',
+    shadowColor: '#FFE259',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   cornerTL: { position: 'absolute', top: 6, left: 8, zIndex: 10 },
   cornerTR: { position: 'absolute', top: 6, right: 8, zIndex: 10 },
   cornerBL: { position: 'absolute', bottom: 6, left: 8, zIndex: 10 },
   cornerBR: { position: 'absolute', bottom: 6, right: 8, zIndex: 10 },
   greekCornerSymbol: {
-    fontSize: 16,
-    color: '#FFE259',
-    fontWeight: '900',
-    opacity: 0.9,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 28,
-    alignItems: 'center',
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   sealContainer: {
     alignItems: 'center',
-    marginBottom: 12,
-    width: '100%',
+    marginBottom: 10,
   },
   sealRing: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(212, 175, 55, 0.20)',
-    borderWidth: 2,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1.5,
     borderColor: '#FFE259',
-    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: '#FFE259',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   sealEmblem: {
-    fontSize: 24,
+    fontSize: 22,
   },
   subHeaderGreek: {
-    fontSize: 9.5,
-    fontFamily: 'monospace',
     color: '#D4AF37',
-    letterSpacing: 2.2,
+    fontSize: 9.5,
+    letterSpacing: 2,
+    fontFamily: 'monospace',
     fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   parchmentTitle: {
-    fontSize: Platform.OS === 'web' ? 21 : 18,
-    fontWeight: '900',
-    color: '#FFFDE0',
-    letterSpacing: 2,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'serif',
+    letterSpacing: 1.5,
     textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'Cinzel' : 'serif',
-    textShadowColor: 'rgba(212, 175, 55, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
   },
   goldDividerLine: {
-    width: 140,
+    width: 60,
     height: 2,
     backgroundColor: '#D4AF37',
-    marginTop: 8,
-    borderRadius: 1,
+    marginTop: 6,
   },
   instructionText: {
-    fontSize: 12,
     color: '#CBD5E1',
-    lineHeight: 17,
+    fontSize: 11,
+    lineHeight: 16,
     textAlign: 'center',
-    marginTop: 8,
     marginBottom: 12,
-    paddingHorizontal: 6,
   },
   pathSummaryCard: {
-    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 226, 89, 0.40)',
+    gap: 10,
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
     borderRadius: 12,
     padding: 10,
-    gap: 10,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   pathSummaryIcon: {
     fontSize: 24,
   },
   pathSummaryTitle: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: 'bold',
     color: '#FFE259',
     fontFamily: 'serif',
   },
   pathSummaryMotto: {
-    fontSize: 10.5,
+    fontSize: 9.5,
+    color: '#94A3B8',
     fontStyle: 'italic',
-    color: '#E2E8F0',
-    marginTop: 1,
+    marginTop: 2,
   },
   formContainer: {
-    width: '100%',
-    gap: 12,
+    gap: 10,
   },
   inputGroup: {
-    width: '100%',
-    gap: 5,
+    gap: 4,
   },
   inputLabel: {
-    fontSize: 9.5,
-    fontWeight: '900',
-    fontFamily: 'monospace',
     color: '#D4AF37',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+    fontSize: 9,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   inputField: {
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    borderWidth: 1.2,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.30)',
     borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'web' ? 10 : 9,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 13,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: 'monospace',
   },
   inputHighlight: {
     borderColor: '#FFE259',
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    backgroundColor: 'rgba(255, 226, 89, 0.05)',
   },
   metricsRow: {
     flexDirection: 'row',
@@ -397,62 +538,69 @@ const styles = StyleSheet.create({
   },
   metricColumn: {
     flex: 1,
-    gap: 5,
+    gap: 4,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chipBtn: {
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.25)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  chipBtnActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.20)',
+    borderColor: '#FFE259',
+  },
+  chipText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  chipTextActive: {
+    color: '#FFE259',
   },
   errorBanner: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.45)',
+    borderColor: '#EF4444',
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 2,
+    padding: 8,
+    marginTop: 4,
   },
   errorText: {
-    fontSize: 11,
     color: '#FCA5A5',
-    fontWeight: '600',
+    fontSize: 11,
     textAlign: 'center',
-  },
-  actionWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 6,
+    fontWeight: 'bold',
   },
   submitButton: {
-    width: '100%',
     backgroundColor: '#D4AF37',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 10,
     shadowColor: '#FFE259',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.75,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  btnInner: {
+  submitButtonInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
-  btnText: {
-    fontSize: 11,
+  submitButtonText: {
+    color: '#040406',
     fontWeight: '900',
-    color: '#050507',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    letterSpacing: 1.1,
-    textAlign: 'center',
-  },
-  footerHint: {
-    fontSize: 9.5,
+    fontSize: 11,
+    letterSpacing: 1,
     fontFamily: 'monospace',
-    color: 'rgba(212, 175, 55, 0.65)',
-    letterSpacing: 0.8,
-    textAlign: 'center',
   },
 });
