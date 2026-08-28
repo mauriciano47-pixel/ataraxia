@@ -86,11 +86,22 @@ export type CycleTier = 'Novicio de Esparta' | 'Hoplita Probado' | 'Guerrero de 
 
 export type DailyGradeStatus = 'divine' | 'worthy' | 'mediocre' | 'failed';
 
+export interface DailyPillars {
+  training: boolean;       // 1. Ejercicios / rutina sellada
+  steps: boolean;          // 2. Pasos diarios vs meta
+  nutrition: boolean;      // 3. Ingesta de alimentos registrada
+  sleep: boolean;          // 4. Calidad / horas de sueño registradas
+  stoicChallenge: boolean; // 5. Lectura / Reto estoico diario completado
+  heartRate: boolean;      // 6. Medición de latidos / telemetría registrada
+  coachCheckIn: boolean;   // 7. Información dada al Coach / Check-in
+}
+
 export interface DailyGrade {
   day: number; // 1 to 30
   date: string;
   score: number; // 0 to 100
   status: DailyGradeStatus;
+  pillars: DailyPillars;
   trainingDone: boolean;
   stepsRatio: number;
   waterRatio: number;
@@ -108,6 +119,7 @@ export interface MonthlyCycleState {
   failedDaysCount: number;
   averageScore: number;
   isJudgmentReady: boolean;
+  isPactActive: boolean;
   judgmentVerdict?: 'promoted' | 'scolded';
   judgmentText?: string;
 }

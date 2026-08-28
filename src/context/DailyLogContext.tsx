@@ -92,6 +92,7 @@ export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
   failedDaysCount: 0,
   averageScore: 100,
   isJudgmentReady: false,
+  isPactActive: true,
 };
 
 export const DEFAULT_LOG: DailyLog = {
@@ -188,6 +189,7 @@ interface DailyLogContextType {
   calculateTodayGrade: () => DailyGrade;
   executeJudgment: () => { promoted: boolean; title: string; message: string };
   resetMonthlyCycle: () => void;
+  start30DayPact: (path?: LegendaryPath) => void;
   updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
   saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
   resetOnboarding: () => void;
@@ -712,6 +714,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       failedDaysCount: 0,
       averageScore: 100,
       isJudgmentReady: false,
+      isPactActive: true,
     };
 
     const profileData: ProkoptonProfile = {
@@ -886,50 +889,125 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const calculateTodayGrade = useCallback((): DailyGrade => {
     const current = logRef.current;
     const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+    const today = getLocalTodayDateString();
 
-    // 1. Entreno (40 pts)
-    const trainingPts = current.trainingCompleted ? 40 : 0;
+    // 1. Entreno (20 pts): Sesión sellada
+    const trainingDone = Boolean(current.trainingCompleted);
+    const trainingPts = trainingDone ? 20 : 0;
 
-    // 2. Pasos (30 pts vs meta)
+    // 2. Pasos (20 pts vs meta): >= 85% de la meta o meta cumplida
     const stepsGoal = current.stepGoal || 10000;
     const stepsRatio = Math.min(1, (current.steps || 0) / stepsGoal);
-    const stepsPts = Math.round(stepsRatio * 30);
+    const stepsPassed = (current.steps || 0) >= (stepsGoal * 0.85);
+    const stepsPts = Math.round(stepsRatio * 20);
 
-    // 3. Agua (15 pts vs 2.5L)
-    const waterRatio = Math.min(1, (current.waterLitres || 0) / 2.5);
-    const waterPts = Math.round(waterRatio * 15);
+    // 3. Ingesta de alimentos (15 pts): Comidas registradas
+    const nutritionPassed = (current.mealsLogged || 0) > 0 || (current.totalCalories || 0) > 0;
+    const nutritionPts = nutritionPassed ? 15 : 0;
 
-    // 4. Nutrición / Checkin (15 pts)
-    const mealsPts = (current.mealsLogged || 0) > 0 ? 10 : 0;
-    const checkinPts = current.checkInDone ? 5 : 0;
-    const nutritionPts = mealsPts + checkinPts;
+    // 4. Calidad de sueño (15 pts): Sueño registrado >= 6.5h
+    let sleepHours = current.readinessScore?.sleep || (current.sleepQuality ? current.sleepQuality * 1.0 : 0);
+    try {
+      const savedSleep = SafeStorage.getItem('ataraxia_sleep_record_v1');
+      if (savedSleep) {
+        const parsed = JSON.parse(savedSleep);
+        if (parsed.totalHours) sleepHours = parsed.totalHours;
+      }
+    } catch {}
+    const sleepPassed = sleepHours >= 6.5;
+    const sleepPts = sleepPassed ? 15 : 0;
 
-    const totalScore = trainingPts + stepsPts + waterPts + nutritionPts;
+    // 5. Lectura / Reto estoico (10 pts): Reto diario o diario completado
+    let stoicChallengePassed = false;
+    try {
+      stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${today}`)) ||
+                             Boolean(SafeStorage.getItem(`ataraxia_journal_${today}`));
+    } catch {}
+    const stoicChallengePts = stoicChallengePassed ? 10 : 0;
+
+    // 6. Medición de latidos / telemetría (10 pts)
+    const heartRatePassed = (current.smartDevice?.heartRateBpm && current.smartDevice.heartRateBpm > 0) ||
+                            (current.smartDevice?.connected === true);
+    const heartRatePts = heartRatePassed ? 10 : 0;
+
+    // 7. Info dada al Coach / Check-in SNC (10 pts)
+    const coachCheckInPassed = Boolean(current.checkInDone) || Boolean(current.readinessScore);
+    const coachCheckInPts = coachCheckInPassed ? 10 : 0;
+
+    const totalScore = trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
+
+    const pillars = {
+      training: trainingDone,
+      steps: stepsPassed,
+      nutrition: nutritionPassed,
+      sleep: sleepPassed,
+      stoicChallenge: stoicChallengePassed,
+      heartRate: heartRatePassed,
+      coachCheckIn: coachCheckInPassed,
+    };
 
     let status: DailyGradeStatus = 'failed';
-    let verdict = 'Día Indigno: La mediocridad no tiene cabida en este templo.';
+    let verdict = 'Día Indigno: La mediocridad no tiene cabida en este templo. Faltan pilares sagrados de tu Senda.';
+
     if (totalScore >= 90) {
       status = 'divine';
-      verdict = 'Corona de Laurel: Día de Semidiós impecable.';
+      verdict = 'Corona de Laurel: Día de Semidiós impecable. Los 7 pilares conquistados con excelencia.';
     } else if (totalScore >= 75) {
       status = 'worthy';
-      verdict = 'Hoplita Digno: Disciplina firme y honor cumplido.';
+      verdict = 'Hoplita Digno: Disciplina firme y honor militar cumplido conforme a tu Senda.';
     } else if (totalScore >= 50) {
       status = 'mediocre';
-      verdict = 'Tibio / En Peligro: Estás al borde de la debilidad.';
+      verdict = 'Tibio / Al Límite: Estás al borde de la deshonra. Completa los pilares pendientes.';
+    }
+
+    // Calcular día actual preciso basado en la fecha de inicio del pacto
+    let preciseDay = cycle.currentDay;
+    if (cycle.startDate) {
+      const start = new Date(cycle.startDate);
+      const now = new Date();
+      const diffMs = now.getTime() - start.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      preciseDay = Math.min(30, Math.max(1, diffDays));
     }
 
     return {
-      day: cycle.currentDay,
-      date: getLocalTodayDateString(),
+      day: preciseDay,
+      date: today,
       score: totalScore,
       status,
-      trainingDone: !!current.trainingCompleted,
+      pillars,
+      trainingDone,
       stepsRatio: parseFloat(stepsRatio.toFixed(2)),
-      waterRatio: parseFloat(waterRatio.toFixed(2)),
-      caloriesLogged: (current.mealsLogged || 0) > 0,
+      waterRatio: parseFloat(Math.min(1, (current.waterLitres || 0) / 2.5).toFixed(2)),
+      caloriesLogged: nutritionPassed,
       verdict,
     };
+  }, []);
+
+  const start30DayPact = useCallback((path?: LegendaryPath) => {
+    const activePath = path || logRef.current.legendaryPath || 'spartan';
+    const newCycle: MonthlyCycleState = {
+      currentDay: 1,
+      startDate: new Date().toISOString(),
+      path: activePath,
+      tier: 'Novicio de Esparta',
+      dailyGrades: [],
+      passedDaysCount: 0,
+      failedDaysCount: 0,
+      averageScore: 100,
+      isJudgmentReady: false,
+      isPactActive: true,
+    };
+
+    updateLog({
+      monthlyCycle: newCycle,
+      legendaryPath: activePath,
+    });
+
+    saveProfileToFirestore({
+      monthlyCycle: newCycle,
+      legendaryPath: activePath,
+    });
   }, []);
 
   const selectLegendaryPath = useCallback((path: LegendaryPath) => {
@@ -985,6 +1063,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       failedDaysCount: 0,
       averageScore: 100,
       isJudgmentReady: false,
+      isPactActive: true,
     };
 
     updateLog({
@@ -1052,6 +1131,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       failedDaysCount: 0,
       averageScore: 100,
       isJudgmentReady: false,
+      isPactActive: true,
     };
     updateLog({ monthlyCycle: newCycle });
     saveProfileToFirestore({ monthlyCycle: newCycle });
@@ -1088,6 +1168,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         calculateTodayGrade,
         executeJudgment,
         resetMonthlyCycle,
+        start30DayPact,
         updateSmartDevice,
         saveOnboardingProfile,
         resetOnboarding,

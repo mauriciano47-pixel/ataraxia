@@ -27,7 +27,7 @@ import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore, syncExternalHealthData } = useDailyLog();
+  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore, syncExternalHealthData, calculateTodayGrade } = useDailyLog();
   const router = useRouter();
 
   // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7
@@ -97,11 +97,9 @@ export default function HoyScreen() {
     philosopher: { title: '🧘‍♂️ SENDA FILOSÓFICA', focus: 'Calistenia & Claridad', target: 'Dominio Corporal & Ayuno' },
   }[currentPath] || { title: '⚔️ SENDA ESPARTANA', focus: 'Fuerza & Sobrecarga', target: '4-5 Series • RIR 2' };
 
-  const stepsCheck = currentSteps >= currentGoal;
-  const trainingCheck = Boolean(log.trainingCompleted);
-  const nutritionCheck = (log.mealsLogged ?? 0) >= 2 || (log.totalCalories ?? 0) > 0;
-  const waterCheck = waterLitres >= 2.5;
-  const completedPillarsCount = [stepsCheck, trainingCheck, nutritionCheck, waterCheck].filter(Boolean).length;
+  const todayGrade = calculateTodayGrade();
+  const pillars = todayGrade.pillars;
+  const completedPillarsCount = Object.values(pillars).filter(Boolean).length;
   const readinessScore = Math.min(100, Math.round(65 + (waterRatio * 15) + (log.trainingCompleted ? 10 : 0) + (log.checkInDone ? 10 : 0)));
 
   return (
@@ -297,47 +295,53 @@ export default function HoyScreen() {
 
                 <View style={styles.gradeBadgeContainer}>
                   <LinearGradient
-                    colors={completedPillarsCount === 4 ? ['#059669', '#10B981'] : completedPillarsCount >= 2 ? ['#B45309', '#F59E0B'] : ['#1E293B', '#334155']}
+                    colors={
+                      todayGrade.status === 'divine' ? ['#D4AF37', '#FFE259'] :
+                      todayGrade.status === 'worthy' ? ['#059669', '#10B981'] :
+                      todayGrade.status === 'mediocre' ? ['#B45309', '#F59E0B'] : ['#7F1D1D', '#EF4444']
+                    }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.gradeBadgeGradient}
                   >
                     <ThemedText style={styles.gradeBadgeText}>
-                      {completedPillarsCount === 4 ? 'A+ • 100%' : completedPillarsCount === 3 ? 'A • 75%' : completedPillarsCount === 2 ? 'B • 50%' : '⏳ EN CURSO'}
+                      {todayGrade.status === 'divine' ? '👑 SEMIDIÓS' :
+                       todayGrade.status === 'worthy' ? '⚔️ DIGNO' :
+                       todayGrade.status === 'mediocre' ? '⚠️ AL LÍMITE' : '💀 INDIGNO'}
                     </ThemedText>
                   </LinearGradient>
                 </View>
               </View>
 
-              {/* 4 Pilares del Día */}
+              {/* Pilares Clave del Día */}
               <View style={styles.pillarsGridRow}>
-                <View style={[styles.pillarPill, stepsCheck && styles.pillarPillActive]}>
-                  <ThemedText style={styles.pillarIconText}>{stepsCheck ? '👟 ✓' : '👟 ⏳'}</ThemedText>
-                  <ThemedText style={[styles.pillarLabel, stepsCheck && styles.pillarLabelActive]}>Pasos</ThemedText>
+                <View style={[styles.pillarPill, pillars.training && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{pillars.training ? '⚔️ ✓' : '⚔️ ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, pillars.training && styles.pillarLabelActive]}>Entreno</ThemedText>
                 </View>
 
-                <View style={[styles.pillarPill, trainingCheck && styles.pillarPillActive]}>
-                  <ThemedText style={styles.pillarIconText}>{trainingCheck ? '🏋️‍♂️ ✓' : '🏋️‍♂️ ⏳'}</ThemedText>
-                  <ThemedText style={[styles.pillarLabel, trainingCheck && styles.pillarLabelActive]}>Entreno</ThemedText>
+                <View style={[styles.pillarPill, pillars.steps && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{pillars.steps ? '👟 ✓' : '👟 ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, pillars.steps && styles.pillarLabelActive]}>Pasos</ThemedText>
                 </View>
 
-                <View style={[styles.pillarPill, nutritionCheck && styles.pillarPillActive]}>
-                  <ThemedText style={styles.pillarIconText}>{nutritionCheck ? '🥗 ✓' : '🥗 ⏳'}</ThemedText>
-                  <ThemedText style={[styles.pillarLabel, nutritionCheck && styles.pillarLabelActive]}>Nutrición</ThemedText>
+                <View style={[styles.pillarPill, pillars.nutrition && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{pillars.nutrition ? '🍽️ ✓' : '🍽️ ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, pillars.nutrition && styles.pillarLabelActive]}>Nutrición</ThemedText>
                 </View>
 
-                <View style={[styles.pillarPill, waterCheck && styles.pillarPillActive]}>
-                  <ThemedText style={styles.pillarIconText}>{waterCheck ? '💧 ✓' : '💧 ⏳'}</ThemedText>
-                  <ThemedText style={[styles.pillarLabel, waterCheck && styles.pillarLabelActive]}>Agua</ThemedText>
+                <View style={[styles.pillarPill, pillars.sleep && styles.pillarPillActive]}>
+                  <ThemedText style={styles.pillarIconText}>{pillars.sleep ? '🌙 ✓' : '🌙 ⏳'}</ThemedText>
+                  <ThemedText style={[styles.pillarLabel, pillars.sleep && styles.pillarLabelActive]}>Sueño</ThemedText>
                 </View>
               </View>
 
               {/* Estado de texto militar y botón al juicio de progreso */}
               <View style={styles.pactFooterRow}>
                 <ThemedText style={styles.pactStatusText}>
-                  {completedPillarsCount === 4
-                    ? '✨ Los 4 pilares sellados hoy con honor militar.'
-                    : `⚔️ Faltan ${4 - completedPillarsCount} pilares para sellar el pacto de hoy.`}
+                  {completedPillarsCount === 7
+                    ? '✨ Los 7 pilares sagrados sellados con honor militar.'
+                    : `⚔️ ${completedPillarsCount}/7 pilares activos hoy (${7 - completedPillarsCount} pendientes).`}
                 </ThemedText>
 
                 <TouchableOpacity
@@ -345,7 +349,7 @@ export default function HoyScreen() {
                   activeOpacity={0.8}
                   onPress={() => router.navigate('/progress')}
                 >
-                  <ThemedText style={styles.viewJudgmentBtnText}>Ver Juicio 🏛️</ThemedText>
+                  <ThemedText style={styles.viewJudgmentBtnText}>Ver Programa 🏛️</ThemedText>
                 </TouchableOpacity>
               </View>
             </View>

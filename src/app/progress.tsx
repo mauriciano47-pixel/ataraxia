@@ -63,9 +63,18 @@ const PATH_MANDATORY_ROUTINES: Record<LegendaryPath, {
 };
 
 export default function ProgressScreen() {
-  const { log, loading, calculateTodayGrade, executeJudgment, resetMonthlyCycle, toggleTraining } = useDailyLog();
+  const {
+    log,
+    loading,
+    calculateTodayGrade,
+    executeJudgment,
+    resetMonthlyCycle,
+    start30DayPact,
+    toggleTraining,
+  } = useDailyLog();
   const { historyMap, loadingHistory } = useHistoryLog();
   const [modalVisible, setModalVisible] = useState(false);
+  const [pactModalVisible, setPactModalVisible] = useState(false);
   const [judgmentResult, setJudgmentResult] = useState<{ promoted: boolean; title: string; message: string } | null>(null);
   
   // Estado local para los checkboxes de la sesión obligatoria del día
@@ -94,6 +103,7 @@ export default function ProgressScreen() {
     failedDaysCount: 0,
     averageScore: 100,
     isJudgmentReady: false,
+    isPactActive: true,
   };
 
   const todayGrade = calculateTodayGrade();
@@ -106,6 +116,17 @@ export default function ProgressScreen() {
   const victoriousDays = fullMap.filter(Boolean).length;
   const adherencePercent = Math.round((victoriousDays / 30) * 100);
   const isAboveThreshold = adherencePercent >= 80;
+
+  // Formato de fecha de inicio
+  const formattedStartDate = cycle.startDate
+    ? new Date(cycle.startDate).toLocaleDateString(undefined, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'No iniciado';
 
   const handleToggleExercise = (id: string) => {
     try {
@@ -124,10 +145,28 @@ export default function ProgressScreen() {
     toggleTraining();
   };
 
+  const handleStartPact = () => {
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+    start30DayPact(activePathKey);
+    setPactModalVisible(false);
+  };
+
   const handleOpenJudgment = () => {
     const res = executeJudgment();
     setJudgmentResult(res);
     setModalVisible(true);
+  };
+
+  const pillars = todayGrade.pillars || {
+    training: Boolean(log.trainingCompleted),
+    steps: Boolean((log.steps || 0) >= (log.stepGoal || 10000) * 0.85),
+    nutrition: Boolean((log.mealsLogged || 0) > 0 || (log.totalCalories || 0) > 0),
+    sleep: Boolean(log.readinessScore?.sleep || log.sleepQuality),
+    stoicChallenge: false,
+    heartRate: Boolean(log.smartDevice?.heartRateBpm && log.smartDevice.heartRateBpm > 0),
+    coachCheckIn: Boolean(log.checkInDone || log.readinessScore),
   };
 
   return (
@@ -148,14 +187,52 @@ export default function ProgressScreen() {
             </ThemedText>
           </View>
 
+          {/* 0. TARJETA DEL PACTO SAGRADO & CRONÓMETRO DE 30 DÍAS */}
+          <View style={styles.pactCard}>
+            <View style={styles.pactCardHeaderRow}>
+              <View style={styles.pactStatusBadge}>
+                <ThemedText style={styles.pactStatusBadgeText}>
+                  {cycle.isPactActive ? '⚡ PACTO ACTIVO • CUENTA INICIADA' : '⏳ PACTO PENDIENTE'}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.pactDayCounterText}>
+                DÍA {cycle.currentDay} / 30
+              </ThemedText>
+            </View>
+
+            <ThemedText style={styles.pactStartDateText}>
+              📅 Inicio oficial: {formattedStartDate}
+            </ThemedText>
+            <ThemedText style={styles.pactDescText}>
+              En este santuario cada día cuenta. Si no alcanzas los 7 pilares obligatorios de tu Senda, el día será calificado implacablemente como <ThemedText style={{ color: '#EF4444', fontWeight: 'bold' }}>INDIGNO</ThemedText>.
+            </ThemedText>
+
+            <TouchableOpacity
+              style={styles.startPactBtn}
+              activeOpacity={0.85}
+              onPress={() => setPactModalVisible(true)}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#F59E0B', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.startPactGradient}
+              >
+                <ThemedText style={styles.startPactBtnText}>
+                  {cycle.isPactActive ? '🔄 REINICIAR PACTO DESDE EL DÍA 1' : '🏛️ ACEPTAR EL PACTO DE LOS 30 DÍAS'}
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
           {/* 1. SECCIÓN OBLIGATORIA: SESIÓN MARCIAL DEL DÍA (INMUTABLE) */}
           <View style={styles.mandatoryCard}>
             <View style={styles.mandatoryHeaderRow}>
               <View style={styles.mandatoryBadge}>
-                <ThemedText style={styles.mandatoryBadgeText}>⚔️ PROGRAMA SAGRADO • OBLIGATORIO</ThemedText>
+                <ThemedText style={styles.mandatoryBadgeText}>⚔️ PILAR 1: RUTINA SAGRADA • OBLIGATORIO</ThemedText>
               </View>
               <ThemedText style={[styles.statusText, log.trainingCompleted ? { color: '#10B981' } : { color: '#F59E0B' }]}>
-                {log.trainingCompleted ? 'SELLADO ✓' : 'PENDIENTE'}
+                {log.trainingCompleted ? 'SELLADO ✓ (+20 PTS)' : 'PENDIENTE (0/20)'}
               </ThemedText>
             </View>
 
@@ -165,7 +242,7 @@ export default function ProgressScreen() {
             {/* AVISO DE INMUTABILIDAD */}
             <View style={styles.immutableNoticeBox}>
               <ThemedText style={styles.immutableNoticeText}>
-                🔒 Esta rutina es inmutable y no modificable. Cumplir esta sesión es requisito sagrado para validar el día en tu ciclo de 30 días.
+                🔒 Esta rutina es inmutable y obligatoria. Sellar esta sesión es requisito sagrado para validar el día en tu ciclo.
               </ThemedText>
             </View>
 
@@ -212,17 +289,13 @@ export default function ProgressScreen() {
                 style={styles.sealWorkoutGradient}
               >
                 <ThemedText style={styles.sealWorkoutText}>
-                  {log.trainingCompleted ? '🏆 SESIÓN SELLADA EN EL PACTO (COMPLETADA)' : '⚔️ SELLAR SESIÓN OBLIGATORIA (+40 PTS)'}
+                  {log.trainingCompleted ? '🏆 SESIÓN SELLADA EN EL PACTO (COMPLETADA)' : '⚔️ SELLAR SESIÓN OBLIGATORIA (+20 PTS)'}
                 </ThemedText>
               </LinearGradient>
             </TouchableOpacity>
-
-            <ThemedText style={styles.optionalHintText}>
-              💡 ¿Quieres más entrenamiento? Usa la pestaña "Entreno" para sesiones libres o con IA (Opcional).
-            </ThemedText>
           </View>
 
-          {/* 2. TARJETA DE CALIFICACIÓN DE HOY */}
+          {/* 2. TARJETA DE CALIFICACIÓN DEL DÍA & LOS 7 PILARES SAGRADOS */}
           <View style={styles.todayCard}>
             <View style={styles.todayCardHeader}>
               <View style={styles.scorePill}>
@@ -230,7 +303,7 @@ export default function ProgressScreen() {
                 <ThemedText style={styles.scoreMax}>/100</ThemedText>
               </View>
               <View style={{ flex: 1 }}>
-                <ThemedText style={styles.todayGradeLabel}>CALIFICACIÓN DE HOY</ThemedText>
+                <ThemedText style={styles.todayGradeLabel}>VEREDICTO DEL DÍA {cycle.currentDay}</ThemedText>
                 <ThemedText style={[
                   styles.todayGradeStatus,
                   todayGrade.status === 'divine' ? { color: '#FFE259' } :
@@ -238,33 +311,98 @@ export default function ProgressScreen() {
                   todayGrade.status === 'mediocre' ? { color: '#F59E0B' } : { color: '#EF4444' }
                 ]}>
                   {todayGrade.status === 'divine' ? '👑 SEMIDIÓS (IMPECABLE)' :
-                   todayGrade.status === 'worthy' ? '⚔️ HOPLITA DIGNO' :
+                   todayGrade.status === 'worthy' ? '⚔️ DÍA DIGNO (CUMPLIDO)' :
                    todayGrade.status === 'mediocre' ? '⚠️ TIBIO / AL LÍMITE' : '💀 DÍA INDIGNO'}
                 </ThemedText>
               </View>
             </View>
 
-            {/* DESGLOSE DE LOS 4 PILARES */}
-            <View style={styles.pillarsRow}>
-              <View style={styles.pillarItem}>
-                <ThemedText style={styles.pillarIcon}>{log.trainingCompleted ? '✅' : '❌'}</ThemedText>
-                <ThemedText style={styles.pillarName}>Entreno</ThemedText>
-                <ThemedText style={styles.pillarPts}>{log.trainingCompleted ? '40' : '0'}/40</ThemedText>
+            {/* TABLA DE LOS 7 PILARES SAGRADOS */}
+            <ThemedText style={styles.pillarsGridTitle}>🛡️ ESTADO DE LOS 7 PILARES OBLIGATORIOS:</ThemedText>
+            
+            <View style={styles.pillarsListGrid}>
+              {/* 1. Entreno */}
+              <View style={[styles.pillarRowCard, pillars.training && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.training ? '✅' : '❌'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>1. Sesión Marcial de la Senda</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{log.trainingCompleted ? 'Rutina sagrada sellada' : 'Falta sellar la rutina del día'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.training && styles.pillarRowPtsActive]}>
+                  {pillars.training ? '+20' : '0'}/20
+                </ThemedText>
               </View>
-              <View style={styles.pillarItem}>
-                <ThemedText style={styles.pillarIcon}>{Math.round(todayGrade.stepsRatio * 30) >= 25 ? '✅' : '⚡'}</ThemedText>
-                <ThemedText style={styles.pillarName}>Pasos</ThemedText>
-                <ThemedText style={styles.pillarPts}>{Math.round(todayGrade.stepsRatio * 30)}/30</ThemedText>
+
+              {/* 2. Pasos */}
+              <View style={[styles.pillarRowCard, pillars.steps && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.steps ? '✅' : '👟'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>2. Pasos Diarios ({log.steps || 0} / {log.stepGoal || 10000})</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.steps ? 'Meta de movilidad alcanzada' : 'En camino hacia la meta'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.steps && styles.pillarRowPtsActive]}>
+                  {Math.round(todayGrade.stepsRatio * 20)}/20
+                </ThemedText>
               </View>
-              <View style={styles.pillarItem}>
-                <ThemedText style={styles.pillarIcon}>{Math.round(todayGrade.waterRatio * 15) >= 12 ? '✅' : '💧'}</ThemedText>
-                <ThemedText style={styles.pillarName}>Agua</ThemedText>
-                <ThemedText style={styles.pillarPts}>{Math.round(todayGrade.waterRatio * 15)}/15</ThemedText>
+
+              {/* 3. Nutrición */}
+              <View style={[styles.pillarRowCard, pillars.nutrition && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.nutrition ? '✅' : '🍽️'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>3. Ingesta de Alimentos & Macros</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.nutrition ? `${log.mealsLogged || 1} comidas registradas (${log.totalCalories || 0} kcal)` : 'Sin registro de alimentos hoy'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.nutrition && styles.pillarRowPtsActive]}>
+                  {pillars.nutrition ? '+15' : '0'}/15
+                </ThemedText>
               </View>
-              <View style={styles.pillarItem}>
-                <ThemedText style={styles.pillarIcon}>{todayGrade.caloriesLogged ? '✅' : '🍽️'}</ThemedText>
-                <ThemedText style={styles.pillarName}>Nutrición</ThemedText>
-                <ThemedText style={styles.pillarPts}>{todayGrade.caloriesLogged ? '15' : '0'}/15</ThemedText>
+
+              {/* 4. Sueño */}
+              <View style={[styles.pillarRowCard, pillars.sleep && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.sleep ? '✅' : '🌙'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>4. Calidad de Sueño Anabólico</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.sleep ? 'Registro de descanso validado' : 'Falta calibrar / registrar sueño'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.sleep && styles.pillarRowPtsActive]}>
+                  {pillars.sleep ? '+15' : '0'}/15
+                </ThemedText>
+              </View>
+
+              {/* 5. Lectura / Reto Estoico */}
+              <View style={[styles.pillarRowCard, pillars.stoicChallenge && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.stoicChallenge ? '✅' : '📜'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>5. Lectura & Reto Estoico Diario</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.stoicChallenge ? 'Prueba de temple superada' : 'Pendiente prueba o diario estoico'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.stoicChallenge && styles.pillarRowPtsActive]}>
+                  {pillars.stoicChallenge ? '+10' : '0'}/10
+                </ThemedText>
+              </View>
+
+              {/* 6. Medición de Latidos */}
+              <View style={[styles.pillarRowCard, pillars.heartRate && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.heartRate ? '✅' : '🫀'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>6. Telemetría de Frecuencia Cardíaca</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.heartRate ? `${log.smartDevice?.heartRateBpm || 60} BPM registrado` : 'Falta escaneo PPG o Smartwatch'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.heartRate && styles.pillarRowPtsActive]}>
+                  {pillars.heartRate ? '+10' : '0'}/10
+                </ThemedText>
+              </View>
+
+              {/* 7. Info dada al Coach */}
+              <View style={[styles.pillarRowCard, pillars.coachCheckIn && styles.pillarRowCardActive]}>
+                <ThemedText style={styles.pillarRowIcon}>{pillars.coachCheckIn ? '✅' : '🏛️'}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.pillarRowName}>7. Reporte al Coach / Check-in SNC</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.coachCheckIn ? 'Preparación del SNC evaluada' : 'Falta realizar check-in matutino'}</ThemedText>
+                </View>
+                <ThemedText style={[styles.pillarRowPts, pillars.coachCheckIn && styles.pillarRowPtsActive]}>
+                  {pillars.coachCheckIn ? '+10' : '0'}/10
+                </ThemedText>
               </View>
             </View>
 
@@ -290,7 +428,7 @@ export default function ProgressScreen() {
               ]} />
             </View>
             <ThemedText style={styles.adherenceSub}>
-              {victoriousDays} de 30 días cumplidos con honor militar.
+              {victoriousDays} de 30 días cumplidos con honor militar ({30 - victoriousDays} días en deuda o pendientes).
             </ThemedText>
           </View>
 
@@ -298,11 +436,12 @@ export default function ProgressScreen() {
           <View style={styles.constellationCard}>
             <ThemedText style={styles.constellationTitle}>⚡ CONSTELACIÓN DE FUERZA (30 DÍAS)</ThemedText>
             <ThemedText style={styles.constellationDesc}>
-              Cada estrella dorada es un día conquistado. Un espacio vacío representa debilidad.
+              Cada estrella dorada es un día digno conquistado. Las calaveras rojas representan días indignos en deuda.
             </ThemedText>
             <View style={styles.starMap}>
               {fullMap.map((success, index) => {
-                const isToday = index === 29;
+                const isToday = index === (cycle.currentDay - 1);
+                const isFuture = index >= cycle.currentDay;
                 return (
                   <View 
                     key={index} 
@@ -313,20 +452,26 @@ export default function ProgressScreen() {
                   >
                     <View style={[
                       styles.star,
-                      success ? {
+                      success && !isFuture ? {
                         backgroundColor: '#FFE259',
                         shadowColor: '#D4AF37',
                         shadowOpacity: 1,
                         shadowRadius: 8,
                         elevation: 5,
+                      } : !isFuture ? {
+                        backgroundColor: 'rgba(239, 68, 68, 0.35)',
+                        borderColor: '#EF4444',
+                        borderWidth: 1,
                       } : {
-                        backgroundColor: 'rgba(239, 68, 68, 0.20)',
-                        borderColor: 'rgba(239, 68, 68, 0.40)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
                         borderWidth: 1,
                       },
-                      isToday && { borderWidth: 1.5, borderColor: '#FFE259' }
+                      isToday && { borderWidth: 2, borderColor: '#38BDF8' }
                     ]} />
-                    <ThemedText style={styles.starDayLabel}>D{index + 1}</ThemedText>
+                    <ThemedText style={[styles.starDayLabel, isToday && { color: '#38BDF8', fontWeight: 'bold' }]}>
+                      D{index + 1}
+                    </ThemedText>
                   </View>
                 );
               })}
@@ -342,11 +487,55 @@ export default function ProgressScreen() {
             <View style={styles.judgmentBtnInner}>
               <ThemedText style={{ fontSize: 18 }}>⚖️</ThemedText>
               <ThemedText style={styles.judgmentBtnText}>
-                CONSULTAR EL JUICIO DEL OLIMPO
+                CONSULTAR EL JUICIO DEL OLIMPO (DÍA 30)
               </ThemedText>
               <ThemedText style={{ fontSize: 18 }}>⚖️</ThemedText>
             </View>
           </TouchableOpacity>
+
+          {/* MODAL PARA ACEPTAR / REINICIAR EL PACTO DE LOS 30 DÍAS */}
+          <Modal
+            visible={pactModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setPactModalVisible(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={[styles.modalCard, styles.modalCardSuccess]}>
+                <ThemedText style={styles.modalEmblem}>🏛️</ThemedText>
+                <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>
+                  PACTO SAGRADO DE LOS 30 DÍAS
+                </ThemedText>
+                <ThemedText style={styles.modalMessage}>
+                  Al aceptar este reto en la <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>{activePathInfo.name.toUpperCase()}</ThemedText>, la cuenta regresiva comenzará en este instante exacto. Cada día deberás cumplir con los 7 pilares obligatorios. Si fallas, el día se registrará como <ThemedText style={{ color: '#EF4444', fontWeight: 'bold' }}>INDIGNO</ThemedText>.
+                </ThemedText>
+
+                <TouchableOpacity
+                  style={styles.confirmPactBtn}
+                  activeOpacity={0.85}
+                  onPress={handleStartPact}
+                >
+                  <LinearGradient
+                    colors={['#D4AF37', '#F59E0B', '#B45309']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.sealWorkoutGradient}
+                  >
+                    <ThemedText style={styles.confirmPactBtnText}>
+                      ⚡ SELLAR PACTO E INICIAR CUENTA (DÍA 1)
+                    </ThemedText>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.closeModalBtn}
+                  onPress={() => setPactModalVisible(false)}
+                >
+                  <ThemedText style={styles.closeModalBtnText}>CANCELAR</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
 
           {/* MODAL DEL JUICIO DEL DÍA 30 */}
           <Modal
@@ -454,6 +643,85 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     fontWeight: 'bold',
     marginTop: 2,
+  },
+  pactCard: {
+    backgroundColor: 'rgba(14, 20, 36, 0.95)',
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    borderRadius: 18,
+    padding: 16,
+    gap: 8,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  pactCardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pactStatusBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    borderWidth: 1,
+    borderColor: '#FFE259',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  pactStatusBadgeText: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    color: '#FFE259',
+    letterSpacing: 1,
+  },
+  pactDayCounterText: {
+    fontSize: 12.5,
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    color: '#38BDF8',
+  },
+  pactStartDateText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+  },
+  pactDescText: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    lineHeight: 16,
+  },
+  startPactBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  startPactGradient: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startPactBtnText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+  confirmPactBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    width: '100%',
+    marginTop: 6,
+  },
+  confirmPactBtnText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+    textAlign: 'center',
   },
   mandatoryCard: {
     backgroundColor: 'rgba(14, 20, 36, 0.95)',
@@ -654,31 +922,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'serif',
   },
-  pillarsRow: {
+  pillarsGridTitle: {
+    fontSize: 10.5,
+    color: '#D4AF37',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    marginTop: 4,
+    letterSpacing: 0.5,
+  },
+  pillarsListGrid: {
+    gap: 6,
+  },
+  pillarRowCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 10,
-    padding: 8,
-  },
-  pillarItem: {
     alignItems: 'center',
-    flex: 1,
-    gap: 2,
+    gap: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  pillarIcon: {
-    fontSize: 14,
+  pillarRowCardActive: {
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
   },
-  pillarName: {
+  pillarRowIcon: {
+    fontSize: 15,
+  },
+  pillarRowName: {
+    fontSize: 11.5,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  pillarRowDesc: {
     fontSize: 9.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
+    marginTop: 1,
   },
-  pillarPts: {
-    fontSize: 10,
+  pillarRowPts: {
+    fontSize: 10.5,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#94A3B8',
     fontFamily: 'monospace',
+  },
+  pillarRowPtsActive: {
+    color: '#10B981',
   },
   todayVerdictText: {
     fontSize: 10.5,
