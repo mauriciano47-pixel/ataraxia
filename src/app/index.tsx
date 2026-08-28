@@ -20,13 +20,14 @@ import { StepCalibrationModal } from '@/components/StepCalibrationModal';
 import { BoxBreathingModal } from '@/components/BoxBreathingModal';
 import { DailyStoicChallengeCard } from '@/components/DailyStoicChallengeCard';
 import { StoicTwinMetabolicCards } from '@/components/StoicTwinMetabolicCards';
+import { SleepQualityCard } from '@/components/SleepQualityCard';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice } = useDailyLog();
+  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore } = useDailyLog();
   const router = useRouter();
 
   // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7
@@ -407,6 +408,14 @@ export default function HoyScreen() {
                 </ThemedText>
               </TouchableOpacity>
             </View>
+
+            {/* Módulo Especializado: Calidad del Sueño & Arquitectura del Descanso */}
+            <SleepQualityCard
+              initialHours={log.readinessScore?.sleep || 7.5}
+              onUpdateSleepHours={(hours) => {
+                saveReadinessScore(hours, log.readinessScore?.stress || 3, log.readinessScore?.soreness || 3);
+              }}
+            />
           </View>
 
           {/* 5. SECCIÓN 3: BALANCE ENERGÉTICO & NUTRICIÓN */}
@@ -425,6 +434,7 @@ export default function HoyScreen() {
             <SmartDeviceCard
               deviceState={log.smartDevice}
               onUpdateDevice={updateSmartDevice}
+              onSyncSteps={setSteps}
             />
           </View>
 
