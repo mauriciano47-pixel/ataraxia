@@ -131,21 +131,22 @@ export default function HoyScreen() {
                   <img
                     src="/ataraxia_gold_title_banner.png"
                     alt="ATARAXIA"
-                    width={180}
-                    height={46}
+                    width={210}
+                    height={52}
                     style={{
-                      width: '180px',
-                      height: '46px',
+                      width: '210px',
+                      height: '52px',
+                      maxWidth: '56vw',
                       objectFit: 'contain',
                       display: 'block',
-                      filter: 'drop-shadow(0 0 12px rgba(255, 226, 89, 0.55))',
+                      filter: 'drop-shadow(0 0 14px rgba(255, 226, 89, 0.65))',
                       userSelect: 'none',
                     }}
                   />
                 ) : (
                   <Image
                     source={require('../../assets/images/ataraxia_gold_title_banner.png')}
-                    style={{ width: 180, height: 46 }}
+                    style={{ width: 210, height: 52, maxWidth: '56%' }}
                     resizeMode="contain"
                   />
                 )}

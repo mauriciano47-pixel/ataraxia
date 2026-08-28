@@ -7,6 +7,7 @@ import {
   Platform,
   Linking,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -108,7 +109,31 @@ export default function AboutScreen() {
               <View style={styles.versionBadge}>
                 <ThemedText style={styles.versionBadgeText}>EDICIÓN OFICIAL • v2.4.0 (2026)</ThemedText>
               </View>
-              <ThemedText style={styles.heroTitle}>ATARAXIA</ThemedText>
+              <View style={{ marginVertical: 6, alignItems: 'center' }}>
+                {Platform.OS === 'web' ? (
+                  <img
+                    src="/ataraxia_gold_title_banner.png"
+                    alt="ATARAXIA"
+                    width={230}
+                    height={56}
+                    style={{
+                      width: '230px',
+                      height: '56px',
+                      maxWidth: '85vw',
+                      objectFit: 'contain',
+                      display: 'block',
+                      filter: 'drop-shadow(0 0 16px rgba(255, 226, 89, 0.65))',
+                      userSelect: 'none',
+                    }}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../assets/images/ataraxia_gold_title_banner.png')}
+                    style={{ width: 230, height: 56 }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
               <ThemedText style={styles.heroSubtitle}>TEMPLO DEL AUTODOMINIO & FITNESS ESTOICO</ThemedText>
               <ThemedText style={styles.heroMotto}>
                 &ldquo;Visto desde arriba, todo pesa menos.&rdquo;
