@@ -1,103 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, TouchableOpacity, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '@/components/themed-text';
-import { SafeStorage } from '@/utils/safeStorage';
 import { LegendaryPath } from '@/types/onboarding';
 
 interface StoicTwinMetabolicCardsProps {
   totalBurnedCalories: number;
   consumedCalories: number;
   legendaryPath?: LegendaryPath;
+  trainingCompleted?: boolean;
+  effectiveSets?: number;
+  sleepHours?: number;
+  waterLitres?: number;
 }
-
-const FASTING_START_KEY = 'ataraxia_fasting_start_time_v1';
-const FASTING_IS_ACTIVE_KEY = 'ataraxia_fasting_is_active_v1';
 
 export function StoicTwinMetabolicCards({
   totalBurnedCalories,
   consumedCalories,
   legendaryPath = 'spartan',
+  trainingCompleted = false,
+  effectiveSets = 0,
+  sleepHours = 7.5,
+  waterLitres = 2.5,
 }: StoicTwinMetabolicCardsProps) {
   // 1. Balanza Energética Neta
   const netCalories = consumedCalories - totalBurnedCalories;
   const isDeficit = netCalories < 0;
 
-  // 2. Cronómetro de Ayuno Intermitente / Ventana Metabólica
-  const [isFasting, setIsFasting] = useState<boolean>(true);
-  const [fastingSeconds, setFastingSeconds] = useState<number>(14 * 3600 + 15 * 60); // Default 14h 15m
+  // 2. Módulo de Recuperación Muscular & Regeneración Fisiológica
+  const [showRecoveryModal, setShowRecoveryModal] = useState<boolean>(false);
 
-  useEffect(() => {
-    const rawActive = SafeStorage.getItem(FASTING_IS_ACTIVE_KEY);
-    const rawStart = SafeStorage.getItem(FASTING_START_KEY);
+  // Cálculo de recuperación científica basada en entreno, sueño e hidratación
+  let recoveryScore = 95;
+  if (trainingCompleted) {
+    recoveryScore = 72; // En fase de reparación celular activa tras el entreno
+  } else {
+    if (sleepHours >= 7.5) recoveryScore += 5;
+    if (waterLitres >= 2.5) recoveryScore += 0;
+  }
+  recoveryScore = Math.min(100, Math.max(50, recoveryScore));
 
-    if (rawActive === 'false') {
-      setIsFasting(false);
-    } else {
-      setIsFasting(true);
-      if (rawStart) {
-        const startTime = parseInt(rawStart, 10);
-        const elapsed = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
-        setFastingSeconds(elapsed);
-      } else {
-        // Inicializar inicio de ayuno si no existe
-        const defaultStart = Date.now() - (14 * 3600 * 1000);
-        SafeStorage.setItem(FASTING_START_KEY, String(defaultStart));
-        setFastingSeconds(14 * 3600);
-      }
-    }
-  }, []);
+  const isOptimal = recoveryScore >= 90;
+  const recoveryColor = isOptimal ? '#10B981' : '#F59E0B';
 
-  useEffect(() => {
-    if (!isFasting) return;
-    const interval = setInterval(() => {
-      setFastingSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isFasting]);
+  const muscleTargetByPath = {
+    spartan: 'Piernas / Empuje',
+    hoplite: 'Cadena Posterior & Core',
+    apollo: 'Pecho Superior & Hombros',
+    philosopher: 'Dorsales & Autodominio',
+  }[legendaryPath] || 'Full Body';
 
-  const toggleFasting = () => {
+  const handleOpenRecovery = () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
-
-    if (isFasting) {
-      // Romper ayuno -> Ventana de alimentación
-      setIsFasting(false);
-      SafeStorage.setItem(FASTING_IS_ACTIVE_KEY, 'false');
-    } else {
-      // Iniciar nuevo ayuno
-      setIsFasting(true);
-      SafeStorage.setItem(FASTING_IS_ACTIVE_KEY, 'true');
-      const nowMs = Date.now();
-      SafeStorage.setItem(FASTING_START_KEY, String(nowMs));
-      setFastingSeconds(0);
-    }
+    setShowRecoveryModal(true);
   };
-
-  const hoursFasting = Math.floor(fastingSeconds / 3600);
-  const minutesFasting = Math.floor((fastingSeconds % 3600) / 60);
-
-  // Estado Metabólico Celular según horas de ayuno
-  let metabolicState = 'Digestión & Asimilación';
-  let metabolicColor = '#38BDF8';
-  if (isFasting) {
-    if (hoursFasting >= 16) {
-      metabolicState = '⚡ Autofagia & Renovación';
-      metabolicColor = '#10B981';
-    } else if (hoursFasting >= 12) {
-      metabolicState = '🔥 Quema de Grasas (Beta)';
-      metabolicColor = '#F59E0B';
-    } else {
-      metabolicState = '⏳ Vaciado de Glucógeno';
-      metabolicColor = '#D4AF37';
-    }
-  } else {
-    metabolicState = '🥗 Ventana de Nutrición';
-    metabolicColor = '#38BDF8';
-  }
 
   return (
     <View style={styles.twoColRow}>
@@ -129,41 +89,98 @@ export function StoicTwinMetabolicCards({
         </ThemedText>
       </View>
 
-      {/* 2. Tarjeta: Cronómetro de Ventana Metabólica & Ayuno */}
+      {/* 2. Tarjeta: Regeneración Muscular & Estado del SNC */}
       <View style={styles.halfCard}>
         <View style={styles.cardHeaderRow}>
-          <ThemedText style={styles.cardHeaderGoldText}>⏳ AYUNO CELULAR</ThemedText>
-          <ThemedText style={[styles.statusBadgeText, { color: metabolicColor }]}>
-            {isFasting ? 'EN AYUNO' : 'NUTRICIÓN'}
+          <ThemedText style={styles.cardHeaderGoldText}>🧬 REGENERACIÓN</ThemedText>
+          <ThemedText style={[styles.statusBadgeText, { color: recoveryColor }]}>
+            {trainingCompleted ? 'REPARANDO' : '100% ÓPTIMO'}
           </ThemedText>
         </View>
 
         <View style={styles.balanceDataBox}>
-          <ThemedText style={styles.fastingTimerNumber}>
-            {isFasting ? `${hoursFasting}h ${minutesFasting}m` : 'Comiendo'}
+          <ThemedText style={[styles.recoveryPctNumber, { color: recoveryColor }]}>
+            {recoveryScore}%
           </ThemedText>
-          <ThemedText style={[styles.metabolicPhaseText, { color: metabolicColor }]}>
-            {metabolicState}
+          <ThemedText style={[styles.metabolicPhaseText, { color: recoveryColor }]}>
+            {trainingCompleted ? 'Síntesis Proteica Activa' : 'Músculos Listos para Entrenar'}
+          </ThemedText>
+          <ThemedText style={styles.subDetailText}>
+            🎯 {muscleTargetByPath}: {trainingCompleted ? 'Reparación 24h' : 'Máxima Potencia'}
           </ThemedText>
         </View>
 
         <TouchableOpacity
           style={styles.fastingActionTouch}
           activeOpacity={0.8}
-          onPress={toggleFasting}
+          onPress={handleOpenRecovery}
         >
           <LinearGradient
-            colors={isFasting ? ['rgba(212, 175, 55, 0.25)', 'rgba(212, 175, 55, 0.08)'] : ['#059669', '#10B981']}
+            colors={isOptimal ? ['#059669', '#10B981'] : ['#B45309', '#F59E0B']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fastingActionGradient}
           >
             <ThemedText style={styles.fastingBtnText}>
-              {isFasting ? '🍽️ Romper Ayuno' : '⏳ Iniciar Ayuno'}
+              {trainingCompleted ? '🧬 Protocolo de Recuperación' : '⚡ Ver Estado Muscular'}
             </ThemedText>
           </LinearGradient>
         </TouchableOpacity>
       </View>
+
+      {/* Modal: Protocolo Científico de Recuperación y Fisiología */}
+      <Modal visible={showRecoveryModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ThemedText style={styles.modalTitle}>🧬 Regeneración Muscular & SNC</ThemedText>
+            <ThemedText style={styles.modalSub}>
+              {trainingCompleted
+                ? 'Tus fibras musculares están en plena fase anabólica de supercompensación:'
+                : 'Tu cuerpo se encuentra en estado óptimo de preparación física:'}
+            </ThemedText>
+
+            <View style={styles.protocolList}>
+              <View style={styles.protocolItem}>
+                <ThemedText style={styles.protocolIcon}>🥩</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.protocolItemTitle}>Síntesis Proteica (2.0g/kg)</ThemedText>
+                  <ThemedText style={styles.protocolItemDesc}>
+                    Asegura tu meta de proteína para reconstruir las micro-roturas miofibrilares.
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.protocolItem}>
+                <ThemedText style={styles.protocolIcon}>😴</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.protocolItemTitle}>Sueño Profundo (Fase 4 & GH)</ThemedText>
+                  <ThemedText style={styles.protocolItemDesc}>
+                    El 80% de la hormona del crecimiento se libera durante el sueño no-REM profundo.
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.protocolItem}>
+                <ThemedText style={styles.protocolIcon}>💧</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.protocolItemTitle}>Hidratación & Electrolitos</ThemedText>
+                  <ThemedText style={styles.protocolItemDesc}>
+                    El músculo hidratado rinde un 15% más y reduce calambres y fatiga del SNC.
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => setShowRecoveryModal(false)}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={styles.closeBtnText}>Entendido • Volver al Santuario</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -219,6 +236,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'monospace',
   },
+  recoveryPctNumber: {
+    fontSize: 19,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+  },
   unitText: {
     fontSize: 11,
     color: '#94A3B8',
@@ -238,16 +260,17 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     lineHeight: 13,
   },
-  fastingTimerNumber: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    fontFamily: 'monospace',
-  },
   metabolicPhaseText: {
     fontSize: 9.5,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  subDetailText: {
+    fontSize: 8.5,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    textAlign: 'center',
+    marginTop: 2,
   },
   fastingActionTouch: {
     borderRadius: 12,
@@ -261,9 +284,79 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   fastingBtnText: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: 'bold',
     color: '#FDE68A',
     fontFamily: 'monospace',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 4, 8, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#0F172A',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    gap: 14,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFE259',
+    textAlign: 'center',
+    fontFamily: 'serif',
+  },
+  modalSub: {
+    fontSize: 12,
+    color: '#CBD5E1',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  protocolList: {
+    gap: 10,
+  },
+  protocolItem: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    alignItems: 'center',
+  },
+  protocolIcon: {
+    fontSize: 20,
+  },
+  protocolItemTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FDE68A',
+  },
+  protocolItemDesc: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  closeBtn: {
+    backgroundColor: '#D4AF37',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  closeBtnText: {
+    color: '#050507',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    fontSize: 12,
   },
 });

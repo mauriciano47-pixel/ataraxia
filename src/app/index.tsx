@@ -425,11 +425,15 @@ export default function HoyScreen() {
               <ThemedText style={styles.sectionPillarTitle}>📊 BALANCE METABÓLICO & NUTRICIÓN</ThemedText>
             </View>
 
-            {/* Módulo Doble: Balanza Energética Neta & Ventana de Ayuno */}
+            {/* Módulo Doble: Balanza Energética Neta & Regeneración Muscular */}
             <StoicTwinMetabolicCards
               totalBurnedCalories={totalBurnedCalories}
               consumedCalories={currentCalories}
               legendaryPath={currentPath}
+              trainingCompleted={Boolean(log.trainingCompleted)}
+              effectiveSets={log.effectiveSets || 0}
+              sleepHours={log.readinessScore?.sleep || 7.5}
+              waterLitres={waterLitres}
             />
 
             <SmartDeviceCard
