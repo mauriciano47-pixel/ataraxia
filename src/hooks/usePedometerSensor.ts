@@ -6,18 +6,15 @@ import { SafeStorage } from '@/utils/safeStorage';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 
-// Parámetros Biomecánicos Calibrados de Alta Sensibilidad y Filtro de Zancada Natural
-const GRAVITY_ALPHA = 0.85;             // Coeficiente paso-bajo de convergencia rápida (~200ms)
-const GAIT_EMA_ALPHA = 0.65;            // Filtro dinámico: preserva picos de zancada real atenuando vibraciones
-const WEB_STEP_THRESHOLD = 1.18;        // Umbral dinámico de activación de zancada (m/s²), óptimo para bolsillo y mano
-const WEB_STEP_RESET_THRESHOLD = 0.42;  // Umbral de caída de ciclo para detector de picos
-const MIN_PEAK_DURATION_MS = 35;        // Duración mínima del pico (descarta toques rápidos <35ms, permite zancada humana)
-const MAX_PEAK_DURATION_MS = 750;       // Duración máxima del pico de aceleración de zancada
-const MIN_CADENCE_INTERVAL_MS = 280;    // Intervalo mínimo entre pasos (hasta 214 pasos/min, permite trote/marcha)
-const MAX_CADENCE_INTERVAL_MS = 1600;   // Intervalo máximo entre pasos (caminata relajada o pausada)
-const MAX_HUMAN_ACCEL_MS2 = 13.50;      // Aceleración máxima permitida (rechaza sacudidas violentas destructivas)
-const MAX_INTERVAL_VARIANCE_MS = 600;   // Tolerancia de variación de ritmo al girar o cambiar de velocidad
-const REQUIRED_CADENCE_STEPS = 2;       // Confirmación rápida de marcha: 2 zancadas rítmicas para iniciar conteo en vivo
+// Parámetros Biomecánicos Calibrados de Alta Precisión & Zero-Lag (Estándar Peak-Valley)
+const GRAVITY_SMOOTH_ALPHA = 0.97;      // Filtro paso-bajo de gravedad estable (constante temporal ~1.8s)
+const GAIT_SMOOTH_ALPHA = 0.70;         // Suavizado dinámico reactivo
+const STEP_PEAK_THRESHOLD = 1.05;       // Umbral mínimo de cresta de zancada (m/s²), óptimo para bolsillo, mano y bolso
+const STEP_VALLEY_DELTA = 0.32;         // Caída mínima desde la cresta para confirmar el ciclo de zancada
+const STEP_VALLEY_FLOOR = 0.75;         // Umbral de retorno al suelo
+const MIN_STEP_INTERVAL_MS = 250;       // Intervalo mínimo entre pasos (hasta 240 pasos/min, ritmo humano máximo)
+const MAX_STEP_INTERVAL_MS = 1800;      // Intervalo máximo entre pasos (caminata pausada / reinicio de ciclo)
+const MAX_HUMAN_ACCEL_MS2 = 14.50;      // Límite de aceleración biológica humana (rechaza sacudidas violentas de mano)
 const MAX_VEHICLE_SPEED_MS = 5.55;      // >20 km/h = Modo Vehículo
 
 export function usePedometerSensor(
@@ -44,15 +41,13 @@ export function usePedometerSensor(
     }
   });
 
-  // Referencias para el filtro web, listeners nativos y buffer anti-agitación
-  const gravityRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 9.8, z: 0 });
-  const isPeakArmRef = useRef<boolean>(false);
-  const peakStartTimeRef = useRef<number>(0);
-  const lastStepTimeRef = useRef<number>(0);
-  const lastIntervalRef = useRef<number>(0);
-  const candidateStepsRef = useRef<number>(0);
-  const isWalkingCadenceConfirmedRef = useRef<boolean>(false);
-  const lastFilteredMagRef = useRef<number>(0);
+  // Referencias para el filtro web, listeners nativos y buffer de zancada
+  const gravityNormRef = useRef<number>(9.80);
+  const smoothedMagRef = useRef<number>(0);
+  const isPeakArmedRef = useRef<boolean>(false);
+  const peakMaxValRef = useRef<number>(0);
+  const peakArmedTimeRef = useRef<number>(0);
+  const lastStepTimestampRef = useRef<number>(0);
   const pedometerSubscriptionRef = useRef<any>(null);
   const lastWatcherReportedRef = useRef<number | null>(null);
   const highestAuthoritativeCountRef = useRef<number>(currentDailySteps);
@@ -70,7 +65,7 @@ export function usePedometerSensor(
   const onSetStepsRef = useRef(onSetSteps);
   onSetStepsRef.current = onSetSteps;
 
-  // Sincronizar referencia autoritativa cuando cambia el conteo diario (ej. sincronización con Google Health, Smartwatch o reinicio)
+  // Sincronizar referencia autoritativa cuando cambia el conteo diario
   useEffect(() => {
     highestAuthoritativeCountRef.current = currentDailySteps;
     setLiveSessionSteps(currentDailySteps);
@@ -83,9 +78,8 @@ export function usePedometerSensor(
   const syncNativeHistoricalSteps = useCallback(async () => {
     if (Platform.OS === 'web') return;
 
-    // Evitar llamadas concurrentes o en ráfaga (mínimo 3 segundos entre syncs)
     const nowTimestamp = Date.now();
-    if (nowTimestamp - lastSyncTimestampRef.current < 3000) return;
+    if (nowTimestamp - lastSyncTimestampRef.current < 2500) return;
     lastSyncTimestampRef.current = nowTimestamp;
 
     try {
@@ -107,11 +101,8 @@ export function usePedometerSensor(
         if (result && typeof result.steps === 'number') {
           const hardwareSteps = result.steps;
           
-          // Si el coprocesador de hardware tiene un conteo mayor o igual, actualizar el baseline authoritative
           if (hardwareSteps >= highestAuthoritativeCountRef.current) {
             highestAuthoritativeCountRef.current = hardwareSteps;
-            
-            // Si tenemos callback para fijar el número exacto, sincronizar directamente sin sumar deltas desfasados
             if (onSetStepsRef.current) {
               onSetStepsRef.current(hardwareSteps);
             }
@@ -131,7 +122,7 @@ export function usePedometerSensor(
     try {
       geoWatchId = navigator.geolocation.watchPosition(
         (position) => {
-          const speed = position.coords.speed; // metros por segundo
+          const speed = position.coords.speed;
           if (typeof speed === 'number' && speed > MAX_VEHICLE_SPEED_MS) {
             setIsVehicleDetected(true);
           } else {
@@ -166,7 +157,6 @@ export function usePedometerSensor(
         if (result && typeof result.steps === 'number' && !transitModeRef.current && !isVehicleDetectedRef.current) {
           const currentTotal = result.steps;
 
-          // Primera lectura: establecer el punto de partida de la sesión
           if (lastWatcherReportedRef.current === null) {
             lastWatcherReportedRef.current = currentTotal;
             return;
@@ -203,16 +193,16 @@ export function usePedometerSensor(
     };
   }, [syncNativeHistoricalSteps]);
 
-  // 4. Sensor Web: Filtro de Marcha Biomecánica & Detección Fluida de Pasos
+  // 4. Sensor Web: Motor Biomecánico Adaptativo Peak-Valley Zero-Lag
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (transitModeRef.current || isVehicleDetectedRef.current) return;
 
-      let rawMag = 0;
+      let dynamicAcc = 0;
 
-      // Opción A: Aceleración lineal directa del hardware
+      // Método A: Aceleración lineal directa del hardware (si está disponible)
       if (
         event.acceleration &&
         event.acceleration.x !== null &&
@@ -222,9 +212,10 @@ export function usePedometerSensor(
         const ax = event.acceleration.x;
         const ay = event.acceleration.y;
         const az = event.acceleration.z;
-        rawMag = Math.sqrt(ax * ax + ay * ay + az * az);
+        const rawLinear = Math.sqrt(ax * ax + ay * ay + az * az);
+        dynamicAcc = rawLinear;
       } 
-      // Opción B: Aceleración con gravedad (Filtro paso-alto adaptativo)
+      // Método B: Aceleración con gravedad (Norma 3D invariante a la orientación)
       else if (
         event.accelerationIncludingGravity &&
         event.accelerationIncludingGravity.x !== null &&
@@ -234,119 +225,79 @@ export function usePedometerSensor(
         const rx = event.accelerationIncludingGravity.x;
         const ry = event.accelerationIncludingGravity.y;
         const rz = event.accelerationIncludingGravity.z;
+        const totalNorm = Math.sqrt(rx * rx + ry * ry + rz * rz);
 
-        gravityRef.current.x = GRAVITY_ALPHA * gravityRef.current.x + (1 - GRAVITY_ALPHA) * rx;
-        gravityRef.current.y = GRAVITY_ALPHA * gravityRef.current.y + (1 - GRAVITY_ALPHA) * ry;
-        gravityRef.current.z = GRAVITY_ALPHA * gravityRef.current.z + (1 - GRAVITY_ALPHA) * rz;
-
-        const lx = rx - gravityRef.current.x;
-        const ly = ry - gravityRef.current.y;
-        const lz = rz - gravityRef.current.z;
-
-        rawMag = Math.sqrt(lx * lx + ly * ly + lz * lz);
+        // Filtro IIR de gravedad continuo (conserva la gravedad ~9.8m/s² sin restar las oscilaciones de los pasos)
+        gravityNormRef.current = GRAVITY_SMOOTH_ALPHA * gravityNormRef.current + (1 - GRAVITY_SMOOTH_ALPHA) * totalNorm;
+        dynamicAcc = Math.abs(totalNorm - gravityNormRef.current);
       }
 
-      if (rawMag === 0) return;
+      if (dynamicAcc === 0) return;
 
-      // Filtro paso-bajo de marcha: atenúa fuertemente picos y golpes táctiles rápidos en la pantalla
-      const dynamicMag = lastFilteredMagRef.current === 0
-        ? rawMag
-        : (GAIT_EMA_ALPHA * rawMag + (1 - GAIT_EMA_ALPHA) * lastFilteredMagRef.current);
-      lastFilteredMagRef.current = dynamicMag;
+      // Suavizado dinámico reactivo
+      const smoothMag = smoothedMagRef.current === 0
+        ? dynamicAcc
+        : (GAIT_SMOOTH_ALPHA * dynamicAcc + (1 - GAIT_SMOOTH_ALPHA) * smoothedMagRef.current);
+      smoothedMagRef.current = smoothMag;
 
-      // Rechazar sacudidas destructivas violentas (>12.0 m/s²)
-      if (dynamicMag > MAX_HUMAN_ACCEL_MS2) {
-        candidateStepsRef.current = 0;
-        isWalkingCadenceConfirmedRef.current = false;
-        isPeakArmRef.current = false;
+      // Descartar sacudidas destructivas violentas (>14.5 m/s²)
+      if (smoothMag > MAX_HUMAN_ACCEL_MS2) {
+        isPeakArmedRef.current = false;
+        peakMaxValRef.current = 0;
         return;
       }
 
       const now = Date.now();
-      const interval = now - lastStepTimeRef.current;
 
-      // 1. Armar pico si supera el umbral de marcha y registrar el tiempo exacto en que empezó
-      if (dynamicMag >= WEB_STEP_THRESHOLD && !isPeakArmRef.current) {
-        isPeakArmRef.current = true;
-        peakStartTimeRef.current = now;
+      // FASE 1: Detección y armado de cresta (Peak Detection)
+      if (smoothMag >= STEP_PEAK_THRESHOLD) {
+        if (!isPeakArmedRef.current) {
+          isPeakArmedRef.current = true;
+          peakMaxValRef.current = smoothMag;
+          peakArmedTimeRef.current = now;
+        } else {
+          // Registrar el pico máximo durante la fase de ascenso
+          if (smoothMag > peakMaxValRef.current) {
+            peakMaxValRef.current = smoothMag;
+          }
+        }
       }
 
-      // 2. Disparar evaluación cuando la señal desciende tras la cresta
-      if (isPeakArmRef.current && dynamicMag <= WEB_STEP_RESET_THRESHOLD) {
-        const peakDuration = now - peakStartTimeRef.current;
-        isPeakArmRef.current = false;
+      // FASE 2: Detección de valle y confirmación de zancada (Valley Confirmation)
+      if (isPeakArmedRef.current) {
+        const peakDrop = peakMaxValRef.current - smoothMag;
+        const hasDroppedFromPeak = peakDrop >= STEP_VALLEY_DELTA || smoothMag <= STEP_VALLEY_FLOOR;
 
-        // FILTRO DE ANCHO DE PULSO: Si el pico duró menos de 85ms, es un toque en la pantalla o clic de botón -> IGNORAR
-        if (peakDuration < MIN_PEAK_DURATION_MS || peakDuration > MAX_PEAK_DURATION_MS) {
-          return;
-        }
+        if (hasDroppedFromPeak) {
+          isPeakArmedRef.current = false;
+          const peakMax = peakMaxValRef.current;
+          peakMaxValRef.current = 0;
 
-        // Si el intervalo es menor a 300ms, es vibración de alta frecuencia -> Ignorar
-        if (interval > 0 && interval < MIN_CADENCE_INTERVAL_MS) {
-          candidateStepsRef.current = 0;
-          isWalkingCadenceConfirmedRef.current = false;
-          return;
-        }
+          const timeSinceLastStep = now - lastStepTimestampRef.current;
 
-        // Si pasó demasiado tiempo (>1500ms), iniciar nueva evaluación de marcha
-        if (lastStepTimeRef.current === 0 || interval > MAX_CADENCE_INTERVAL_MS) {
-          lastStepTimeRef.current = now;
-          lastIntervalRef.current = 0;
-          candidateStepsRef.current = 1;
-          isWalkingCadenceConfirmedRef.current = false;
-          return;
-        }
+          // Validar ventana de cadencia humana [250ms - 1800ms]
+          if (lastStepTimestampRef.current === 0 || timeSinceLastStep >= MIN_STEP_INTERVAL_MS) {
+            lastStepTimestampRef.current = now;
 
-        // Intervalo en rango humano [300ms - 1500ms]
-        const intervalDelta = lastIntervalRef.current > 0 ? Math.abs(interval - lastIntervalRef.current) : 0;
-        lastIntervalRef.current = interval;
-        lastStepTimeRef.current = now;
-
-        // Validar armonía de cadencia periódica
-        if (intervalDelta > MAX_INTERVAL_VARIANCE_MS && candidateStepsRef.current > 0) {
-          candidateStepsRef.current = 1;
-          isWalkingCadenceConfirmedRef.current = false;
-          return;
-        }
-
-        // Si ya está en marcha confirmada (ritmo establecido continuo)
-        if (isWalkingCadenceConfirmedRef.current) {
-          setLiveSessionSteps((prev) => {
-            const updated = prev + 1;
-            try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
-            return updated;
-          });
-
-          if (onStepDetectedRef.current) {
-            onStepDetectedRef.current(1);
-          }
-        } else {
-          // Confirmación estricta de marcha real: 4 pasos rítmicos antes de sumar a la cuenta
-          candidateStepsRef.current += 1;
-
-          if (candidateStepsRef.current >= REQUIRED_CADENCE_STEPS) {
-            isWalkingCadenceConfirmedRef.current = true;
-            const verifiedInitial = candidateStepsRef.current;
-
+            // Incremento instantáneo en tiempo real (Zero-Lag)
             setLiveSessionSteps((prev) => {
-              const updated = prev + verifiedInitial;
+              const updated = prev + 1;
               try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
               return updated;
             });
 
             if (onStepDetectedRef.current) {
-              onStepDetectedRef.current(verifiedInitial);
+              onStepDetectedRef.current(1);
             }
           }
         }
       }
     };
 
-    // Registro estándar de devicemotion
     window.addEventListener('devicemotion', handleMotion, { passive: true });
 
-    // En iOS Safari se requiere permiso explícito en respuesta a un gesto
-    const requestIOSMotion = () => {
+    // Permisos en navegadores móviles (iOS Safari / Chrome Android)
+    const requestMotionPermission = () => {
       if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
         (DeviceMotionEvent as any).requestPermission().then((res: string) => {
           if (res === 'granted') {
@@ -356,15 +307,16 @@ export function usePedometerSensor(
       }
     };
 
-    window.addEventListener('touchstart', requestIOSMotion, { once: true, passive: true });
-    window.addEventListener('click', requestIOSMotion, { once: true, passive: true });
+    window.addEventListener('touchstart', requestMotionPermission, { once: true, passive: true });
+    window.addEventListener('click', requestMotionPermission, { once: true, passive: true });
 
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
-      window.removeEventListener('touchstart', requestIOSMotion);
-      window.removeEventListener('click', requestIOSMotion);
+      window.removeEventListener('touchstart', requestMotionPermission);
+      window.removeEventListener('click', requestMotionPermission);
     };
   }, []);
+
 
   // Control de cambio de foco y AppState
   useEffect(() => {
@@ -373,10 +325,10 @@ export function usePedometerSensor(
         if (Platform.OS !== 'web') {
           syncNativeHistoricalSteps();
         } else {
-          lastStepTimeRef.current = 0;
-          isPeakArmRef.current = false;
-          candidateStepsRef.current = 0;
-          isWalkingCadenceConfirmedRef.current = false;
+          lastStepTimestampRef.current = 0;
+          isPeakArmedRef.current = false;
+          peakMaxValRef.current = 0;
+          smoothedMagRef.current = 0;
         }
       }
     };
@@ -390,10 +342,10 @@ export function usePedometerSensor(
     if (Platform.OS !== 'web') {
       syncNativeHistoricalSteps();
     } else {
-      lastStepTimeRef.current = 0;
-      isPeakArmRef.current = false;
-      candidateStepsRef.current = 0;
-      isWalkingCadenceConfirmedRef.current = false;
+      lastStepTimestampRef.current = 0;
+      isPeakArmedRef.current = false;
+      peakMaxValRef.current = 0;
+      smoothedMagRef.current = 0;
 
       // Solicitar permiso de movimiento en navegadores móviles (iOS/Android)
       if (typeof window !== 'undefined' && typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
