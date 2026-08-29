@@ -37,6 +37,35 @@ const MAX_CADENCE_VARIANCE_MS = 180;// Varianza máxima permitida entre zancadas
 const MAX_VIOLENT_ACCEL_MS2 = 14.50;// Límite de aceleración biológica humana
 const MAX_VEHICLE_SPEED_MS = 5.55;  // >20 km/h = Modo Vehículo
 
+// Gestión de sesión de audio en silencio (Background Audio Session) para PWAs móviles
+let silentAudioCtx: any = null;
+let silentOscillator: any = null;
+
+function activateBackgroundKeepAlive() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    if (!silentAudioCtx) {
+      silentAudioCtx = new AudioCtx();
+    }
+    if (silentAudioCtx.state === 'suspended') {
+      silentAudioCtx.resume().catch(() => {});
+    }
+
+    if (!silentOscillator && silentAudioCtx.state === 'running') {
+      const osc = silentAudioCtx.createOscillator();
+      const gain = silentAudioCtx.createGain();
+      gain.gain.value = 0.00001; // Inaudible pero mantiene el hilo del kernel activo en segundo plano
+      osc.connect(gain);
+      gain.connect(silentAudioCtx.destination);
+      osc.start();
+      silentOscillator = osc;
+    }
+  } catch (e) {}
+}
+
 export function usePedometerSensor(
   onStepDetected?: (stepsAdded: number) => void,
   onSetSteps?: (exactDailySteps: number) => void,
@@ -398,7 +427,10 @@ export function usePedometerSensor(
 
                   setLiveSessionSteps((prev) => {
                     const updated = prev + verifiedSteps;
-                    try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+                    try {
+                      SafeStorage.setItem(`ataraxia_pedometer_steps_${getLocalTodayDateString()}`, String(updated));
+                      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(updated));
+                    } catch {}
                     return updated;
                   });
 
@@ -413,7 +445,10 @@ export function usePedometerSensor(
               // Marcha confirmada: sumar cada zancada rítmica en tiempo real (+1)
               setLiveSessionSteps((prev) => {
                 const updated = prev + 1;
-                try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
+                try {
+                  SafeStorage.setItem(`ataraxia_pedometer_steps_${getLocalTodayDateString()}`, String(updated));
+                  SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(updated));
+                } catch {}
                 return updated;
               });
 
@@ -428,7 +463,8 @@ export function usePedometerSensor(
 
     window.addEventListener('devicemotion', handleMotion, { passive: true });
 
-    const requestMotionPermission = () => {
+    const enableFullSensors = () => {
+      activateBackgroundKeepAlive();
       if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
         (DeviceMotionEvent as any).requestPermission().then((res: string) => {
           if (res === 'granted') {
@@ -438,13 +474,23 @@ export function usePedometerSensor(
       }
     };
 
-    window.addEventListener('touchstart', requestMotionPermission, { once: true, passive: true });
-    window.addEventListener('click', requestMotionPermission, { once: true, passive: true });
+    window.addEventListener('touchstart', enableFullSensors, { once: true, passive: true });
+    window.addEventListener('click', enableFullSensors, { once: true, passive: true });
+
+    const handleVis = () => {
+      if (document.visibilityState === 'visible') {
+        if (silentAudioCtx && silentAudioCtx.state === 'suspended') {
+          silentAudioCtx.resume().catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVis);
 
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
-      window.removeEventListener('touchstart', requestMotionPermission);
-      window.removeEventListener('click', requestMotionPermission);
+      window.removeEventListener('touchstart', enableFullSensors);
+      window.removeEventListener('click', enableFullSensors);
+      document.removeEventListener('visibilitychange', handleVis);
     };
   }, []);
 
