@@ -67,6 +67,7 @@ export default function JournalScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showArchetypeModal, setShowArchetypeModal] = useState(false);
+  const [applyingRoutineMsgId, setApplyingRoutineMsgId] = useState<string | null>(null);
   const initializedRef = useRef(false);
 
   const [typingDots] = useState(() => new Animated.Value(0));
@@ -232,21 +233,22 @@ export default function JournalScreen() {
     handleSendQuery(inputText);
   };
 
-  const handleApplyWorkout = (exercises: ReturnType<typeof extractExercisesFromText>) => {
-    setCustomRoutine(exercises);
-    Alert.alert(
-      "⚡ Rutina Cargada con Éxito",
-      `Se han importado ${exercises.length} ejercicios a tu sesión de entrenamiento. ¿Deseas ir al Trainer ahora?`,
-      [
-        { text: "Seguir en el Chat", style: "cancel" },
-        { text: "Ir al Trainer 🏋️‍♂️", onPress: () => router.navigate('/trainer') }
-      ]
-    );
-  };
+  const handleApplyWorkout = (exercises: ReturnType<typeof extractExercisesFromText>, msgKey: string) => {
+    if (!exercises || exercises.length === 0) return;
+    setApplyingRoutineMsgId(msgKey);
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
 
-  const handleQuickAddWater = () => {
-    addWater(0.5);
-    Alert.alert("💧 Hidratación Registrada", "Se han sumado +0.5L (500 ml) a tu registro diario.");
+    setCustomRoutine(exercises);
+    try {
+      SafeStorage.setItem('ataraxia_custom_routine_v1', JSON.stringify(exercises));
+    } catch {}
+
+    setTimeout(() => {
+      setApplyingRoutineMsgId(null);
+      router.push('/trainer');
+    }, 400);
   };
 
   const handleSelectArchetype = (archetype: CoachArchetype) => {
@@ -367,60 +369,29 @@ export default function JournalScreen() {
                   {msg.text}
                 </ThemedText>
 
-                {/* BOTONES DE ACCIÓN DIRECTA (SMART ACTION CARDS) */}
-                {msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT && (
+                {/* BOTÓN DE ACCIÓN DIRECTA: CARGAR RUTINA EN TRAINER */}
+                {msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT && isWorkoutMsg && (
                   <View style={styles.actionsContainer}>
-                    {/* Botón de cargar rutina al Trainer */}
-                    {isWorkoutMsg && (
-                      <TouchableOpacity
-                        style={styles.actionWorkoutBtn}
-                        activeOpacity={0.8}
-                        onPress={() => handleApplyWorkout(detectedExercises)}
-                      >
-                        <Ionicons name="flash" size={14} color="#050507" />
-                        <ThemedText style={styles.actionWorkoutBtnText}>
-                          ⚡ Cargar Rutina en Trainer ({detectedExercises.length} ej.)
-                        </ThemedText>
-                      </TouchableOpacity>
-                    )}
-
-                    <View style={styles.actionPillsRow}>
-                      {/* Botón rápido de agua */}
-                      {isWaterMsg && (
-                        <TouchableOpacity
-                          style={styles.actionPillChip}
-                          activeOpacity={0.8}
-                          onPress={handleQuickAddWater}
-                        >
-                          <Ionicons name="water" size={12} color="#60A5FA" />
-                          <ThemedText style={styles.actionPillText}>+0.5L Agua</ThemedText>
-                        </TouchableOpacity>
-                      )}
-
-                      {/* Botón rápido de Nutrición */}
-                      {isMealMsg && (
-                        <TouchableOpacity
-                          style={styles.actionPillChip}
-                          activeOpacity={0.8}
-                          onPress={() => router.navigate('/nutrition')}
-                        >
-                          <Ionicons name="restaurant" size={12} color="#34D399" />
-                          <ThemedText style={styles.actionPillText}>Abrir Nutrición</ThemedText>
-                        </TouchableOpacity>
-                      )}
-
-                      {/* Botón al Trainer */}
-                      {isWorkoutMsg && (
-                        <TouchableOpacity
-                          style={styles.actionPillChip}
-                          activeOpacity={0.8}
-                          onPress={() => router.navigate('/trainer')}
-                        >
-                          <Ionicons name="barbell" size={12} color="#F59E0B" />
-                          <ThemedText style={styles.actionPillText}>Ver Trainer</ThemedText>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.actionWorkoutBtn,
+                        applyingRoutineMsgId === `${msg.timestamp}-${index}` && styles.actionWorkoutBtnSuccess,
+                      ]}
+                      activeOpacity={0.8}
+                      onPress={() => handleApplyWorkout(detectedExercises, `${msg.timestamp}-${index}`)}
+                      disabled={applyingRoutineMsgId !== null}
+                    >
+                      <Ionicons
+                        name={applyingRoutineMsgId === `${msg.timestamp}-${index}` ? "checkmark-circle" : "flash"}
+                        size={15}
+                        color="#050507"
+                      />
+                      <ThemedText style={styles.actionWorkoutBtnText}>
+                        {applyingRoutineMsgId === `${msg.timestamp}-${index}`
+                          ? "✅ ¡Rutina Cargada! Abriendo Trainer..."
+                          : `⚡ Cargar Rutina en Trainer (${detectedExercises.length} Ejercicios) →`}
+                      </ThemedText>
+                    </TouchableOpacity>
                   </View>
                 )}
 
@@ -728,42 +699,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#D4AF37',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
+  actionWorkoutBtnSuccess: {
+    backgroundColor: '#34D399',
+    shadowColor: '#34D399',
+  },
   actionWorkoutBtnText: {
     fontSize: 11.5,
     fontWeight: '900',
     color: '#050507',
     letterSpacing: 0.5,
-  },
-  actionPillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 2,
-  },
-  actionPillChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  actionPillText: {
-    fontSize: 10.5,
     fontFamily: 'monospace',
-    color: '#FDE68A',
-    fontWeight: 'bold',
   },
 
   // Typing indicator
