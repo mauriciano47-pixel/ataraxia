@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { Pedometer } from 'expo-sensors';
 import { SafeStorage } from '@/utils/safeStorage';
+import { getLocalTodayDateString } from '@/utils/dateUtils';
 
-const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 const SENSITIVITY_STORAGE_KEY = 'ataraxia_pedometer_sensitivity_v1';
 
@@ -42,6 +42,9 @@ export function usePedometerSensor(
   onSetSteps?: (exactDailySteps: number) => void,
   currentDailySteps: number = 0
 ) {
+  const todayStr = getLocalTodayDateString();
+  const dateKey = `ataraxia_pedometer_steps_${todayStr}`;
+
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [isVehicleDetected, setIsVehicleDetected] = useState<boolean>(false);
   const [sensitivity, setSensitivityState] = useState<PedometerSensitivity>(() => {
@@ -64,10 +67,10 @@ export function usePedometerSensor(
 
   const [liveSessionSteps, setLiveSessionSteps] = useState<number>(() => {
     try {
-      const saved = SafeStorage.getItem(PEDOMETER_SESSION_STEPS_KEY);
-      return saved ? parseInt(saved, 10) : 0;
+      const saved = SafeStorage.getItem(dateKey);
+      return saved ? parseInt(saved, 10) : currentDailySteps;
     } catch {
-      return 0;
+      return currentDailySteps;
     }
   });
 
@@ -102,12 +105,43 @@ export function usePedometerSensor(
   const onSetStepsRef = useRef(onSetSteps);
   onSetStepsRef.current = onSetSteps;
 
+  // Screen WakeLock para mantener sensor activo en caminatas con PWA Web
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !(navigator as any).wakeLock) return;
+
+    let wakeLockSentinel: any = null;
+    const acquireLock = async () => {
+      try {
+        if (document.visibilityState === 'visible') {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch {}
+    };
+
+    acquireLock();
+
+    const handleVisChange = () => {
+      if (document.visibilityState === 'visible') {
+        acquireLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisChange);
+      if (wakeLockSentinel) {
+        wakeLockSentinel.release().catch(() => {});
+      }
+    };
+  }, []);
+
   // Sincronizar referencia autoritativa cuando cambia el conteo diario (Firestore / Google Health / Modales)
   useEffect(() => {
-    highestAuthoritativeCountRef.current = currentDailySteps;
-    setLiveSessionSteps(currentDailySteps);
+    highestAuthoritativeCountRef.current = Math.max(highestAuthoritativeCountRef.current, currentDailySteps);
+    setLiveSessionSteps(highestAuthoritativeCountRef.current);
     try {
-      SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(currentDailySteps));
+      SafeStorage.setItem(`ataraxia_pedometer_steps_${getLocalTodayDateString()}`, String(highestAuthoritativeCountRef.current));
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(highestAuthoritativeCountRef.current));
     } catch {}
   }, [currentDailySteps]);
 

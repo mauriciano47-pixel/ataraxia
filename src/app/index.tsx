@@ -30,7 +30,7 @@ export default function HoyScreen() {
   const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore, syncExternalHealthData, calculateTodayGrade } = useDailyLog();
   const router = useRouter();
 
-  // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7
+  // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7 (Gestionado a nivel raíz por GlobalPedometerRootTracker)
   const {
     isLiveTracking,
     isTransitMode,
@@ -39,7 +39,7 @@ export default function HoyScreen() {
     setSensitivity,
     toggleTransitMode,
     forceSyncSteps,
-  } = usePedometerSensor(addSteps, setSteps, log.steps ?? 0);
+  } = usePedometerSensor(undefined, undefined, log.steps ?? 0);
 
   const isRegisteredUser = Boolean(
     log.hasCompletedOnboarding ||

@@ -360,7 +360,8 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
 }
 
 export function DailyLogProvider({ children }: { children: React.ReactNode }) {
-  const today = getLocalTodayDateString();
+  const [currentDateString, setCurrentDateString] = useState<string>(() => getLocalTodayDateString());
+  const today = currentDateString;
   const [user, setUser] = useState<User | null>(null);
   const [log, setLog] = useState<DailyLog>(() => loadLocalDailyLog(today));
   const loading = false;
@@ -371,14 +372,22 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const prevTodayRef = useRef(today);
   const firestoreDebounceTimer = useRef<any>(null);
 
+  // Monitor continuo de medianoche local (00:00:00 exacto)
   useEffect(() => {
-    if (prevTodayRef.current !== today) {
-      prevTodayRef.current = today;
-      const initial = loadLocalDailyLog(today);
-      logRef.current = initial;
-      setLog(initial);
-    }
-  }, [today]);
+    const midnightInterval = setInterval(() => {
+      const liveToday = getLocalTodayDateString();
+      if (liveToday !== prevTodayRef.current) {
+        console.log(`[DailyLogContext] 🕛 Medianoche local alcanzada: cambio de fecha de ${prevTodayRef.current} a ${liveToday}.`);
+        prevTodayRef.current = liveToday;
+        setCurrentDateString(liveToday);
+        const initial = loadLocalDailyLog(liveToday);
+        logRef.current = initial;
+        setLog(initial);
+      }
+    }, 5000);
+
+    return () => clearInterval(midnightInterval);
+  }, []);
 
   useEffect(() => {
     if (!auth) {
@@ -439,14 +448,15 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       ...DEFAULT_LOG,
       ...remote,
       ...local,
-      waterLitres: typeof local.waterLitres === 'number' ? local.waterLitres : (remote.waterLitres || 0),
-      totalCalories: typeof local.totalCalories === 'number' ? local.totalCalories : (remote.totalCalories || 0),
-      mealsLogged: typeof local.mealsLogged === 'number' ? local.mealsLogged : (remote.mealsLogged || 0),
-      steps: typeof local.steps === 'number' ? local.steps : (remote.steps || 0),
+      waterLitres: Math.max(local.waterLitres || 0, remote.waterLitres || 0),
+      totalCalories: Math.max(local.totalCalories || 0, remote.totalCalories || 0),
+      mealsLogged: Math.max(local.mealsLogged || 0, remote.mealsLogged || 0),
+      steps: Math.max(local.steps || 0, remote.steps || 0),
       stepGoal: local.stepGoal || remote.stepGoal || 10000,
       targetCalories: local.targetCalories || remote.targetCalories || 2200,
       trainingCompleted: Boolean(local.trainingCompleted || remote.trainingCompleted),
       checkInDone: Boolean(local.checkInDone || remote.checkInDone),
+      effectiveSets: Math.max(local.effectiveSets || 0, remote.effectiveSets || 0),
       userName: (local.userName && local.userName !== DEFAULT_LOG.userName)
         ? local.userName
         : (remote.userName || DEFAULT_LOG.userName),

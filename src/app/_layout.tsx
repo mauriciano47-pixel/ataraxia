@@ -47,11 +47,13 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 
 import { DailyLogProvider } from '@/context/DailyLogContext';
 import { TempleAccessGate } from '@/components/TempleAccessGate';
+import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
 
 export default function TabLayout() {
   return (
     <GlobalErrorBoundary>
       <DailyLogProvider>
+        <GlobalPedometerRootTracker />
         <TempleAccessGate>
           <Tabs
         screenOptions={{
