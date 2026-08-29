@@ -167,11 +167,11 @@ export function usePedometerSensor(
 
   // Sincronizar referencia autoritativa cuando cambia el conteo diario (Firestore / Google Health / Modales)
   useEffect(() => {
-    highestAuthoritativeCountRef.current = Math.max(highestAuthoritativeCountRef.current, currentDailySteps);
-    setLiveSessionSteps(highestAuthoritativeCountRef.current);
+    highestAuthoritativeCountRef.current = currentDailySteps;
+    setLiveSessionSteps(currentDailySteps);
     try {
-      SafeStorage.setItem(`ataraxia_pedometer_steps_${getLocalTodayDateString()}`, String(highestAuthoritativeCountRef.current));
-      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(highestAuthoritativeCountRef.current));
+      SafeStorage.setItem(`ataraxia_pedometer_steps_${getLocalTodayDateString()}`, String(currentDailySteps));
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(currentDailySteps));
     } catch {}
   }, [currentDailySteps]);
 

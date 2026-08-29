@@ -121,8 +121,8 @@ export function StoicTwinMetabolicCards({
             end={{ x: 1, y: 1 }}
             style={styles.fastingActionGradient}
           >
-            <ThemedText style={styles.fastingBtnText}>
-              {trainingCompleted ? '🧬 Protocolo de Recuperación' : '⚡ Ver Estado Muscular'}
+            <ThemedText style={styles.fastingBtnText} numberOfLines={1}>
+              {trainingCompleted ? '🧬 Protocolo' : '⚡ Ver Estado'}
             </ThemedText>
           </LinearGradient>
         </TouchableOpacity>
@@ -188,43 +188,47 @@ export function StoicTwinMetabolicCards({
 const styles = StyleSheet.create({
   twoColRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   halfCard: {
     flex: 1,
     backgroundColor: 'rgba(13, 17, 28, 0.92)',
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.35)',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
+    overflow: 'hidden',
   },
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
   },
   cardHeaderGoldText: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontFamily: 'monospace',
     fontWeight: 'bold',
     color: '#C5A869',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    flexShrink: 1,
   },
   statusBadgeText: {
-    fontSize: 8.5,
+    fontSize: 8,
     fontFamily: 'monospace',
     fontWeight: 'bold',
   },
   balanceDataBox: {
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
     borderRadius: 10,
-    padding: 8,
+    padding: 6,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.15)',
     alignItems: 'center',

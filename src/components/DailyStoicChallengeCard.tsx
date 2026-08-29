@@ -135,15 +135,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
+    overflow: 'hidden',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
     gap: 8,
   },
   titleGroup: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 160,
     gap: 2,
   },
   categoryGoldText: {
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   pillarBadge: {
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
@@ -165,6 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
+    alignSelf: 'flex-start',
   },
   pillarBadgeText: {
     fontSize: 8.5,
@@ -178,11 +184,14 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontStyle: 'italic',
     lineHeight: 16,
+    flexShrink: 1,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 4,
     paddingTop: 8,
     borderTopWidth: 1,
@@ -192,13 +201,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'monospace',
     color: '#C5A869',
+    flexShrink: 1,
   },
   toggleTouch: {
     borderRadius: 14,
     overflow: 'hidden',
   },
   toggleGradient: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
@@ -208,7 +218,7 @@ const styles = StyleSheet.create({
     borderColor: '#10B981',
   },
   toggleBtnText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: 'bold',
     color: '#FDE68A',
     fontFamily: 'monospace',

@@ -19,6 +19,7 @@ import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CustomExercise } from '@/types/onboarding';
+import { ExerciseTechniqueModal, ExerciseGuideData } from '@/components/ExerciseTechniqueModal';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -162,6 +163,7 @@ export default function TrainerScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [exerciseNameInput, setExerciseNameInput] = useState('');
+  const [selectedGuideExercise, setSelectedGuideExercise] = useState<ExerciseGuideData | null>(null);
   const [exerciseSetsInput, setExerciseSetsInput] = useState('4x8 (RIR 2)');
   const [exerciseMuscleInput, setExerciseMuscleInput] = useState('Pecho');
 
@@ -1336,9 +1338,11 @@ const styles = StyleSheet.create({
     gap: 8,
     marginVertical: Spacing.two,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   actionToolBtnPrimary: {
-    flex: 1.4,
+    flex: 1.2,
+    minWidth: 130,
     borderRadius: 10,
     overflow: 'hidden',
     shadowColor: '#D4AF37',
@@ -1349,7 +1353,7 @@ const styles = StyleSheet.create({
   },
   actionToolGradient: {
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1357,11 +1361,12 @@ const styles = StyleSheet.create({
     color: '#050507',
     fontWeight: '900',
     fontFamily: 'monospace',
-    fontSize: 11.5,
+    fontSize: 11,
     letterSpacing: 0.5,
   },
   actionToolBtnSecondary: {
     flex: 1,
+    minWidth: 95,
     backgroundColor: 'rgba(212, 175, 55, 0.12)',
     borderWidth: 1.5,
     borderColor: 'rgba(212, 175, 55, 0.40)',

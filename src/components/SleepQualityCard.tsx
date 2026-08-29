@@ -121,14 +121,14 @@ export function SleepQualityCard({ onUpdateSleepHours }: SleepQualityCardProps) 
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <View style={{ gap: 2 }}>
+        <View style={styles.titleGroup}>
           <ThemedText style={styles.badgeText}>🌙 RECUPERACIÓN & SUEÑO ANABÓLICO</ThemedText>
           <ThemedText style={styles.titleText}>Arquitectura del Descanso</ThemedText>
         </View>
 
         <View style={[styles.statusTag, isOptimal ? styles.statusTagOptimal : styles.statusTagWarning]}>
           <ThemedText style={[styles.statusTagText, isOptimal ? styles.statusTagTextOptimal : styles.statusTagTextWarning]}>
-            {isOptimal ? '👑 ÓPTIMO (ANABÓLICO)' : '⚠️ DÉFICIT / ADAPTACIÓN'}
+            {isOptimal ? '👑 ÓPTIMO' : '⚠️ ADAPTACIÓN'}
           </ThemedText>
         </View>
       </View>
@@ -300,11 +300,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    overflow: 'hidden',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  titleGroup: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 160,
+    gap: 2,
   },
   badgeText: {
     fontSize: 9,
@@ -319,11 +328,13 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     color: '#FFFFFF',
     marginTop: 1,
+    flexShrink: 1,
   },
   statusTag: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   statusTagOptimal: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
@@ -346,10 +357,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
     marginVertical: Spacing.two,
   },
   durationCol: {
     gap: 2,
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 140,
   },
   hoursNumber: {
     fontSize: 32,
@@ -364,9 +380,10 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   goalSubtext: {
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#94A3B8',
     fontFamily: 'monospace',
+    flexShrink: 1,
   },
   efficiencyBadgeBox: {
     backgroundColor: 'rgba(129, 140, 248, 0.12)',
@@ -409,6 +426,9 @@ const styles = StyleSheet.create({
   phaseLegendRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   legendItem: {
     flexDirection: 'row',

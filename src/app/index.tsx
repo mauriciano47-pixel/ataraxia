@@ -295,8 +295,8 @@ export default function HoyScreen() {
                     end={{ x: 1, y: 1 }}
                     style={styles.startButtonGradient}
                   >
-                    <ThemedText style={styles.startButtonText}>
-                      {log.trainingCompleted ? 'Programa Cumplido ✓' : '🏛️ Ir al Programa (Obligatorio)'}
+                    <ThemedText style={styles.startButtonText} numberOfLines={1}>
+                      {log.trainingCompleted ? 'Programa Listo ✓' : '🏛️ Ir al Programa'}
                     </ThemedText>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -821,7 +821,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   startButtonGradient: {
-    paddingVertical: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -832,63 +833,71 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   startButtonText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '900',
     color: '#050507',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
   stoicQuoteText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontFamily: 'serif',
     fontStyle: 'italic',
     color: '#E2E8F0',
-    lineHeight: 18,
+    lineHeight: 17,
+    flexShrink: 1,
   },
   stoicAuthorText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontFamily: 'monospace',
     color: '#C5A869',
     alignSelf: 'flex-end',
     marginTop: 4,
+    flexShrink: 1,
   },
   healthMetricsCard: {
     backgroundColor: 'rgba(14, 20, 36, 0.88)',
     borderRadius: 16,
-    padding: Spacing.four,
+    padding: Spacing.three,
     borderWidth: 1,
     borderColor: 'rgba(226, 192, 104, 0.35)',
     gap: 8,
+    overflow: 'hidden',
   },
   metricsGridRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
     marginTop: 4,
   },
   metricCol: {
     flex: 1,
+    minWidth: 65,
     alignItems: 'center',
     gap: 2,
   },
   metricLabelText: {
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
+    textAlign: 'center',
   },
   metricValText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
     fontFamily: 'monospace',
   },
   unitText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#94A3B8',
     fontWeight: 'normal',
   },
   metricDividerLine: {
     width: 1,
-    height: 28,
+    height: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.10)',
   },
   extraModulesContainer: {

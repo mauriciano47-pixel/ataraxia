@@ -46,6 +46,13 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
   const [ghRestingBpm, setGhRestingBpm] = useState<string>('56');
   const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round((currentSteps > 0 ? currentSteps : 8450) * 0.045).toString());
 
+  useEffect(() => {
+    if (currentSteps && currentSteps > 0) {
+      setGhSteps(currentSteps.toString());
+      setGhActiveCals(Math.round(currentSteps * 0.045).toString());
+    }
+  }, [currentSteps]);
+
   const [receiptData, setReceiptData] = useState<{
     source: string;
     steps: number;
@@ -267,9 +274,9 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
           heartRateBpm: parsedRestingBpm,
           batteryLevel: 100,
         });
-        if (onSyncSteps) {
-          onSyncSteps(parsedSteps);
-        }
+      }
+      if (onSyncSteps) {
+        onSyncSteps(parsedSteps);
       }
 
       // 2. Persistir telemetría de sueño para SleepQualityCard
@@ -308,7 +315,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       setGoogleHealthModalVisible(false);
       setReceiptModalVisible(true);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-    }, 700);
+    }, 600);
   };
 
   // Forzar Sincronización Manual Inmediata
@@ -316,18 +323,33 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const currentLiveSteps = currentSteps > 0 ? currentSteps : (parseInt(ghSteps, 10) || 8450);
+      const currentLiveSteps = parseInt(ghSteps, 10) || currentSteps || 8450;
       const parsedSleepHours = parseFloat(ghSleepHours) || 7.5;
       const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 56);
       const parsedActiveCals = Math.round(currentLiveSteps * 0.045);
 
-      onUpdateDevice({
-        lastSync: `Hoy ${nowTime} (Actualizado)`,
-        heartRateBpm: parsedRestingBpm,
-      });
+      if (onSyncHealthData) {
+        onSyncHealthData({
+          steps: currentLiveSteps,
+          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Bridge Android 14+)',
+          lastSync: `Hoy ${nowTime} (Actualizado)`,
+          heartRateBpm: parsedRestingBpm,
+          sleepHours: parsedSleepHours,
+        });
+      } else {
+        onUpdateDevice({
+          connected: true,
+          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Bridge Android 14+)',
+          lastSync: `Hoy ${nowTime} (Actualizado)`,
+          heartRateBpm: parsedRestingBpm,
+        });
+      }
+      if (onSyncSteps) {
+        onSyncSteps(currentLiveSteps);
+      }
 
       setReceiptData({
-        source: device.deviceName,
+        source: isConnected ? device.deviceName : 'Google Health Connect (Android 14+)',
         steps: currentLiveSteps,
         sleepHours: parsedSleepHours,
         deepHours: parseFloat((parsedSleepHours * 0.24).toFixed(1)),
@@ -339,7 +361,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       setIsSyncingNow(false);
       setReceiptModalVisible(true);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-    }, 600);
+    }, 500);
   };
 
   return (

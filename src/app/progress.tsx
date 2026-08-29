@@ -1471,6 +1471,22 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 2,
   },
+  techGuideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFE259',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  techGuideBtnText: {
+    fontSize: 9.5,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
   sealWorkoutBtn: {
     marginTop: 6,
     borderRadius: 12,

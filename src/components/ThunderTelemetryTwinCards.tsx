@@ -165,8 +165,10 @@ export function ThunderTelemetryTwinCards({
 
         {/* Card Footer: Goal & Km */}
         <View style={styles.cardFooter}>
-          <ThemedText style={styles.footerGoalText}>Goal: {stepGoal.toLocaleString()}</ThemedText>
-          <ThemedText style={styles.footerMilesText}>{km} km</ThemedText>
+          <View style={styles.footerFlexRow}>
+            <ThemedText style={styles.footerGoalText} numberOfLines={1}>Meta: {stepGoal.toLocaleString()}</ThemedText>
+            <ThemedText style={styles.footerMilesText} numberOfLines={1}>{km} km</ThemedText>
+          </View>
         </View>
       </TouchableOpacity>
 
@@ -178,10 +180,10 @@ export function ThunderTelemetryTwinCards({
       >
         {/* Card Header */}
         <View style={styles.cardHeader}>
-          <ThemedText style={styles.cardHeaderTitle}>HEART RATE</ThemedText>
+          <ThemedText style={styles.cardHeaderTitle} numberOfLines={1}>HEART RATE</ThemedText>
           <View style={styles.headerIconWrapper}>
             <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-              <ThemedText style={{ fontSize: 16 }}>💓</ThemedText>
+              <ThemedText style={{ fontSize: 15 }}>💓</ThemedText>
             </Animated.View>
           </View>
         </View>
@@ -240,12 +242,18 @@ export function ThunderTelemetryTwinCards({
 
         {/* Card Footer: Avg & Scan prompt */}
         <View style={styles.cardFooter}>
-          <ThemedText style={styles.footerEcgText}>
-            {hasMeasurement
-              ? <>Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm} BPM</ThemedText> • <ThemedText style={{ color: '#F59E0B', fontWeight: 'bold' }}>⚡ Toca p/ Escanear</ThemedText></>
-              : <ThemedText style={{ color: '#64748B' }}>Sin Medición • Toca para Escanear</ThemedText>
-            }
-          </ThemedText>
+          <View style={styles.footerFlexRow}>
+            {hasMeasurement ? (
+              <>
+                <ThemedText style={styles.footerGoalText} numberOfLines={1}>
+                  Avg: <ThemedText style={{ color: '#FDE68A', fontWeight: 'bold' }}>{avgBpm}</ThemedText>
+                </ThemedText>
+                <ThemedText style={styles.footerActionText} numberOfLines={1}>⚡ Medir</ThemedText>
+              </>
+            ) : (
+              <ThemedText style={styles.footerNoMeasureText} numberOfLines={1}>⚡ Toca p/ Medir</ThemedText>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
 
@@ -284,6 +292,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     justifyContent: 'space-between',
     minHeight: 180,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -291,11 +300,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardHeaderTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     fontFamily: 'monospace',
     color: '#CBD5E1',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
+    flexShrink: 1,
   },
   headerIconWrapper: {
     width: 28,
@@ -346,7 +356,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   bpmNumberText: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '900',
     color: '#FFFFFF',
     fontFamily: 'serif',
@@ -356,7 +366,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   bpmUnitText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     color: '#FDE68A',
     fontFamily: 'monospace',
@@ -370,19 +380,33 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingTop: 6,
   },
+  footerFlexRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 2,
+  },
   footerGoalText: {
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#94A3B8',
     fontFamily: 'monospace',
+    flexShrink: 1,
   },
   footerMilesText: {
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#E2E8F0',
     fontWeight: '700',
-    marginTop: 1,
+    fontFamily: 'monospace',
   },
-  footerEcgText: {
-    fontSize: 10.5,
+  footerActionText: {
+    fontSize: 9.5,
+    color: '#F59E0B',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+  },
+  footerNoMeasureText: {
+    fontSize: 9.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
   },
