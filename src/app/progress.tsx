@@ -1570,13 +1570,14 @@ const styles = StyleSheet.create({
   pillarRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.12)',
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
+    overflow: 'hidden',
   },
   pillarRowCardActive: {
     borderColor: 'rgba(16, 185, 129, 0.45)',
@@ -1589,18 +1590,21 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   pillarRowDesc: {
     fontSize: 9.5,
     color: '#94A3B8',
     fontFamily: 'monospace',
     marginTop: 1,
+    flexShrink: 1,
   },
   pillarRowPts: {
     fontSize: 10.5,
     fontWeight: 'bold',
     color: '#94A3B8',
     fontFamily: 'monospace',
+    flexShrink: 0,
   },
   pillarRowPtsActive: {
     color: '#10B981',
@@ -1610,6 +1614,7 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontStyle: 'italic',
     lineHeight: 14,
+    flexShrink: 1,
   },
   adherenceCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.90)',
@@ -1618,11 +1623,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.35)',
     gap: 8,
+    overflow: 'hidden',
   },
   adherenceHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   adherenceTitle: {
     fontSize: 10,
@@ -2222,21 +2230,6 @@ const styles = StyleSheet.create({
   },
   closeLockedModalBtnText: {
     fontSize: 11,
-    fontWeight: '900',
-    color: '#050507',
-    fontFamily: 'monospace',
-  },
-  techGuideBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FFE259',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  techGuideBtnText: {
-    fontSize: 9.5,
     fontWeight: '900',
     color: '#050507',
     fontFamily: 'monospace',

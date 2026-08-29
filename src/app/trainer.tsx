@@ -863,8 +863,22 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                       )}
                     </View>
 
-                    {/* Botones de Gestión de Ejercicio (Editar, Subir/Bajar, Borrar) */}
+                    {/* Botones de Gestión de Ejercicio (Técnica, Editar, Subir/Bajar, Borrar) */}
                     <View style={styles.exerciseControlsRow}>
+                      <TouchableOpacity
+                        style={[styles.iconCtrlBtn, { backgroundColor: 'rgba(255, 226, 89, 0.15)', borderColor: '#FFE259' }]}
+                        onPress={() => setSelectedGuideExercise({
+                          id: e.id,
+                          name: e.n,
+                          setsReps: e.s,
+                          muscleGroup: e.muscleGroup || 'General',
+                          cue: 'Mantén la técnica estricta y el control en cada repetición.',
+                        })}
+                        activeOpacity={0.7}
+                      >
+                        <ThemedText style={styles.iconCtrlText}>💡</ThemedText>
+                      </TouchableOpacity>
+
                       <TouchableOpacity
                         style={styles.iconCtrlBtn}
                         onPress={() => openEditExerciseModal(e)}

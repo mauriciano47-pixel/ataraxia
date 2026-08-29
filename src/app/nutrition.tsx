@@ -300,17 +300,17 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
             onUpdateMetrics={updateUserMetrics}
           />
 
-          <View style={[styles.card, { backgroundColor: 'rgba(13, 17, 28, 0.94)', borderColor: 'rgba(212, 175, 55, 0.35)' }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <View>
-                <ThemedText style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'monospace' }}>
-                  Calorías Ingeridas Hoy (Rango Flexible ±100 kcal)
+          <View style={[styles.card, { backgroundColor: 'rgba(13, 17, 28, 0.94)', borderColor: 'rgba(212, 175, 55, 0.35)', overflow: 'hidden' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ flex: 1, minWidth: 160 }}>
+                <ThemedText style={{ fontSize: 10.5, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'monospace' }}>
+                  Calorías Ingeridas Hoy (Rango ±100 kcal)
                 </ThemedText>
                 <ThemedText style={{ fontSize: 24, fontFamily: 'serif', marginTop: 2, color: '#FFE259', fontWeight: '900' }}>
                   {currentCalories} <ThemedText style={{ fontSize: 13, color: '#94A3B8' }}>/ {rangeMin} - {rangeMax} kcal</ThemedText>
                 </ThemedText>
               </View>
-              <View style={[styles.badgeContainer, { backgroundColor: isInRange ? 'rgba(212, 175, 55, 0.20)' : 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(212, 175, 55, 0.40)', borderWidth: 1 }]}>
+              <View style={[styles.badgeContainer, { backgroundColor: isInRange ? 'rgba(212, 175, 55, 0.20)' : 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(212, 175, 55, 0.40)', borderWidth: 1, alignSelf: 'flex-start' }]}>
                 <ThemedText style={{ fontSize: 11, color: '#FDE68A', fontWeight: 'bold' }}>
                   {isInRange ? "⚡ En Zona Óptima" : `Restan ${Math.max(rangeMin - currentCalories, 0)} kcal`}
                 </ThemedText>
