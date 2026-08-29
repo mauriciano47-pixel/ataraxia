@@ -6,6 +6,7 @@ import { getLocalTodayDateString } from '@/utils/dateUtils';
 
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 const SENSITIVITY_STORAGE_KEY = 'ataraxia_pedometer_sensitivity_v1';
+const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
 
 export type PedometerSensitivity = 'high' | 'standard' | 'low';
 

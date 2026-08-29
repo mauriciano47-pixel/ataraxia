@@ -23,6 +23,8 @@ import { Spacing, MaxContentWidth, Colors } from '@/constants/theme';
 import { useCoachContext } from '@/hooks/useCoachContext';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { useJournalHistory, JournalMessage } from '@/hooks/useJournalHistory';
+import * as Haptics from 'expo-haptics';
+import { SafeStorage } from '@/utils/safeStorage';
 import { buildCoachSystemPrompt, generateWelcomeMessage, extractExercisesFromText } from '@/lib/coachPrompt';
 import { generateStoicMentorResponse } from '@/lib/stoicMentorEngine';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';

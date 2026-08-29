@@ -828,37 +828,38 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
               return (
                 <View key={e.id} style={styles.card}>
-                  {/* Fila Principal del Ejercicio */}
-                  <View style={styles.cardTopRow}>
-                    <TouchableOpacity 
-                      style={styles.cardHeaderTouch}
-                      onPress={() => toggleDone(e.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.checkbox,
-                        e.done ? styles.checkboxDone : styles.checkboxPending
-                      ]}>
-                        {e.done && <ThemedText style={styles.checkboxCheck}>✓</ThemedText>}
+                  {/* Fila Superior: Checkbox y Título del Ejercicio con ancho completo */}
+                  <TouchableOpacity 
+                    style={styles.cardHeaderTouch}
+                    onPress={() => toggleDone(e.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.checkbox,
+                      e.done ? styles.checkboxDone : styles.checkboxPending
+                    ]}>
+                      {e.done && <ThemedText style={styles.checkboxCheck}>✓</ThemedText>}
+                    </View>
+
+                    <View style={{ flex: 1, flexShrink: 1 }}>
+                      <ThemedText style={[styles.exerciseName, e.done && styles.exerciseNameDone]}>
+                        {e.n}
+                      </ThemedText>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Fila Intermedia: Badges y Controles Responsive */}
+                  <View style={styles.cardMetaAndControlsRow}>
+                    <View style={styles.exerciseBadgesRow}>
+                      <View style={styles.setsBadge}>
+                        <ThemedText style={styles.setsBadgeText}>{e.s}</ThemedText>
                       </View>
-
-                      <View style={{ flex: 1 }}>
-                        <ThemedText style={[styles.exerciseName, e.done && styles.exerciseNameDone]}>
-                          {e.n}
-                        </ThemedText>
-
-                        <View style={styles.exerciseBadgesRow}>
-                          <View style={styles.setsBadge}>
-                            <ThemedText style={styles.setsBadgeText}>{e.s}</ThemedText>
-                          </View>
-                          {e.muscleGroup && (
-                            <View style={styles.muscleBadge}>
-                              <ThemedText style={styles.muscleBadgeText}>{e.muscleGroup}</ThemedText>
-                            </View>
-                          )}
+                      {e.muscleGroup && (
+                        <View style={styles.muscleBadge}>
+                          <ThemedText style={styles.muscleBadgeText}>{e.muscleGroup}</ThemedText>
                         </View>
-                      </View>
-                    </TouchableOpacity>
+                      )}
+                    </View>
 
                     {/* Botones de Gestión de Ejercicio (Editar, Subir/Bajar, Borrar) */}
                     <View style={styles.exerciseControlsRow}>
@@ -1671,6 +1672,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
+    overflow: 'hidden',
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -1709,23 +1711,33 @@ const styles = StyleSheet.create({
 
   // HIGH CONTRAST EXERCISE TITLE & BADGES
   exerciseName: {
-    fontSize: 16,
+    fontSize: 15.5,
     fontWeight: '900',
     fontFamily: 'serif',
     color: '#FFFFFF', // High-contrast crisp white!
     letterSpacing: 0.3,
     lineHeight: 22,
+    flexShrink: 1,
   },
   exerciseNameDone: {
     textDecorationLine: 'line-through',
     opacity: 0.6,
     color: '#94A3B8',
   },
+  cardMetaAndControlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
   exerciseBadgesRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 6,
-    marginTop: 6,
+    flexShrink: 1,
   },
   setsBadge: {
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
@@ -1737,7 +1749,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   setsBadgeText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: 'bold',
     fontFamily: 'monospace',
     color: '#FFE259',
@@ -1752,7 +1764,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   muscleBadgeText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: 'bold',
     fontFamily: 'monospace',
     color: '#38BDF8',
@@ -1763,7 +1775,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginLeft: 6,
+    flexShrink: 0,
   },
   iconCtrlBtn: {
     width: 28,

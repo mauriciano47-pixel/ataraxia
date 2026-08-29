@@ -14,6 +14,7 @@ import { LegendaryPath, LEGENDARY_PATHS, EquipmentType } from '@/types/onboardin
 import { SafeStorage } from '@/utils/safeStorage';
 import { MonthlyResolution, DayAudit } from '@/lib/monthlyResolutionEngine';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
+import { ExerciseTechniqueModal, ExerciseGuideData } from '@/components/ExerciseTechniqueModal';
 
 export interface ProgramExercise {
   id: string;
@@ -207,6 +208,7 @@ export default function ProgressScreen() {
 
   // Estado local para los checkboxes de la sesión obligatoria del día
   const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
+  const [selectedGuideExercise, setSelectedGuideExercise] = useState<ExerciseGuideData | null>(null);
 
   const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
   const activePathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
@@ -466,9 +468,30 @@ export default function ProgressScreen() {
                     </View>
 
                     <View style={{ flex: 1 }}>
-                      <ThemedText style={[styles.exerciseName, isChecked && styles.exerciseNameChecked]}>
-                        {ex.n}
-                      </ThemedText>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <ThemedText style={[styles.exerciseName, isChecked && styles.exerciseNameChecked, { flex: 1 }]}>
+                          {ex.n}
+                        </ThemedText>
+                        <TouchableOpacity
+                          style={styles.techGuideBtn}
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            setSelectedGuideExercise({
+                              id: ex.id,
+                              name: ex.n,
+                              setsReps: ex.s,
+                              targetRpe: ex.targetRpe,
+                              muscleGroup: ex.muscleGroup,
+                              cue: ex.cue,
+                            });
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="help-circle-outline" size={13} color="#050507" />
+                          <ThemedText style={styles.techGuideBtnText}>Técnica</ThemedText>
+                        </TouchableOpacity>
+                      </View>
+
                       <View style={styles.exerciseMetaRow}>
                         <ThemedText style={styles.exerciseSeries}>{ex.s}</ThemedText>
                         <ThemedText style={styles.exerciseRpe}>• RPE {ex.targetRpe}</ThemedText>
@@ -1139,6 +1162,13 @@ export default function ProgressScreen() {
             coachArchetype={log.coachArchetype || 'stoic_mentor'}
             observations={judgmentResult?.resolution?.praises}
             recommendations={judgmentResult?.resolution?.nextCycleDirectives}
+          />
+
+          {/* MODAL DE GUÍA TÉCNICA Y BIOMECÁNICA PASO A PASO */}
+          <ExerciseTechniqueModal
+            visible={Boolean(selectedGuideExercise)}
+            exercise={selectedGuideExercise}
+            onClose={() => setSelectedGuideExercise(null)}
           />
 
         </ScrollView>
@@ -2176,6 +2206,21 @@ const styles = StyleSheet.create({
   },
   closeLockedModalBtnText: {
     fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+  },
+  techGuideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFE259',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  techGuideBtnText: {
+    fontSize: 9.5,
     fontWeight: '900',
     color: '#050507',
     fontFamily: 'monospace',
