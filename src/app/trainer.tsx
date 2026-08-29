@@ -1240,6 +1240,13 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           </View>
         </Modal>
 
+        {/* MODAL DE GUÍA TÉCNICA Y BIOMECÁNICA */}
+        <ExerciseTechniqueModal
+          visible={Boolean(selectedGuideExercise)}
+          exercise={selectedGuideExercise}
+          onClose={() => setSelectedGuideExercise(null)}
+        />
+
         </ScrollView>
       </SafeAreaView>
     </PearlElectricBackground>
