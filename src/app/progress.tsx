@@ -203,6 +203,7 @@ export default function ProgressScreen() {
   const [activeResolutionTab, setActiveResolutionTab] = useState<'verdict' | 'feedback' | 'audit'>('verdict');
   const [copiedDecree, setCopiedDecree] = useState(false);
   const [diplomaModalVisible, setDiplomaModalVisible] = useState(false);
+  const [lockedDiplomaModalVisible, setLockedDiplomaModalVisible] = useState(false);
 
   // Estado local para los checkboxes de la sesión obligatoria del día
   const [completedExerciseIds, setCompletedExerciseIds] = useState<Record<string, boolean>>({});
@@ -265,9 +266,12 @@ export default function ProgressScreen() {
     fullMap[fullMap.length - 1] = isTodaySuccess;
   }
 
+  const currentDay = cycle.currentDay || 1;
+  const isDay30Reached = currentDay >= 30 || Boolean(cycle.isJudgmentReady);
   const victoriousDays = fullMap.filter(Boolean).length;
   const adherencePercent = Math.round((victoriousDays / 30) * 100);
   const isAboveThreshold = adherencePercent >= 80;
+  const isDiplomaUnlocked = isDay30Reached && isAboveThreshold;
 
   // Formato de fecha de inicio
   const formattedStartDate = cycle.startDate
@@ -683,8 +687,8 @@ export default function ProgressScreen() {
             </View>
           </View>
 
-          {/* BANNER DE DIPLOMA DE HONOR (SI ADHERENCIA >= 80% o PROMOVIDO) */}
-          {isAboveThreshold && (
+          {/* SECCIÓN DEL DIPLOMA DE HONOR ESTOICO (BLOQUEADO HASTA EL DÍA 30 CON >=80% DÍAS GOBERNADOS) */}
+          {isDiplomaUnlocked ? (
             <TouchableOpacity
               style={styles.diplomaBannerBtn}
               onPress={() => {
@@ -701,14 +705,69 @@ export default function ProgressScreen() {
                 end={{ x: 1, y: 1 }}
                 style={styles.diplomaBannerGradient}
               >
-                <ThemedText style={{ fontSize: 24 }}>📜</ThemedText>
+                <ThemedText style={{ fontSize: 28 }}>👑</ThemedText>
                 <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.diplomaBannerTag}>EXCELENCIA CONQUISTADA ({adherencePercent}%)</ThemedText>
+                  <ThemedText style={styles.diplomaBannerTag}>
+                    CONQUISTA DEL DÍA 30 • {adherencePercent}% GOBERNADO
+                  </ThemedText>
                   <ThemedText style={styles.diplomaBannerTitle}>DIPLOMA DE HONOR ESTOICO</ThemedText>
-                  <ThemedText style={styles.diplomaBannerSub}>Fase II: La Forja de los Titanes • Desbloqueada (Coming Soon)</ThemedText>
+                  <ThemedText style={styles.diplomaBannerSub}>
+                    📜 Toca para ver tu Diploma Oficial y la Evaluación Final del Coach
+                  </ThemedText>
                 </View>
-                <Ionicons name="ribbon" size={24} color="#050507" />
+                <Ionicons name="ribbon" size={26} color="#050507" />
               </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.diplomaLockedCard}
+              onPress={() => setLockedDiplomaModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.diplomaLockedHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <ThemedText style={{ fontSize: 24 }}>🔒</ThemedText>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText style={styles.diplomaLockedTag}>
+                      REQUISITOS DE GRADUACIÓN DEL SANTUARIO
+                    </ThemedText>
+                    <ThemedText style={styles.diplomaLockedTitle}>
+                      DIPLOMA DE HONOR (BLOQUEADO)
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.diplomaLockBadge}>
+                  <Ionicons name="lock-closed" size={13} color="#F59E0B" />
+                  <ThemedText style={styles.diplomaLockBadgeText}>
+                    DÍA {currentDay}/30
+                  </ThemedText>
+                </View>
+              </View>
+
+              {/* Medidores de Progreso de Desbloqueo */}
+              <View style={styles.diplomaProgressBoxes}>
+                <View style={styles.diplomaProgBox}>
+                  <ThemedText style={styles.diplomaProgVal}>Día {currentDay} / 30</ThemedText>
+                  <ThemedText style={styles.diplomaProgLbl}>Evaluación de 30 Días</ThemedText>
+                  <View style={styles.diplomaMiniTrack}>
+                    <View style={[styles.diplomaMiniFill, { width: `${Math.min(100, Math.round((currentDay / 30) * 100))}%`, backgroundColor: isDay30Reached ? '#10B981' : '#38BDF8' }]} />
+                  </View>
+                </View>
+
+                <View style={styles.diplomaProgBox}>
+                  <ThemedText style={[styles.diplomaProgVal, isAboveThreshold ? { color: '#10B981' } : { color: '#F59E0B' }]}>
+                    {adherencePercent}% / 80%
+                  </ThemedText>
+                  <ThemedText style={styles.diplomaProgLbl}>Días Gobernados ({victoriousDays}/24)</ThemedText>
+                  <View style={styles.diplomaMiniTrack}>
+                    <View style={[styles.diplomaMiniFill, { width: `${Math.min(100, adherencePercent)}%`, backgroundColor: isAboveThreshold ? '#10B981' : '#F59E0B' }]} />
+                  </View>
+                </View>
+              </View>
+
+              <ThemedText style={styles.diplomaLockedNotice}>
+                «El diploma y la evaluación final del coach con recomendaciones se otorgarán únicamente al finalizar el <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>Día 30</ThemedText> si gobiernas al menos el <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>80% de los días</ThemedText> (mínimo 24 días dignos).»
+              </ThemedText>
             </TouchableOpacity>
           )}
 
@@ -1006,6 +1065,68 @@ export default function ProgressScreen() {
             </View>
           </Modal>
 
+          {/* MODAL INFORMATIVO DE DIPLOMA BLOQUEADO */}
+          <Modal
+            visible={lockedDiplomaModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setLockedDiplomaModalVisible(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={[styles.modalCard, { borderColor: '#F59E0B' }]}>
+                <ThemedText style={styles.modalEmblem}>🔒</ThemedText>
+                <ThemedText style={[styles.modalTitle, { color: '#FFE259' }]}>
+                  DIPLOMA EN EVALUACIÓN
+                </ThemedText>
+                <ThemedText style={{ fontSize: 9.5, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: 1 }}>
+                  REQUISITO SAGRADO DEL DÍA 30
+                </ThemedText>
+
+                <ThemedText style={styles.modalMessage}>
+                  Para consagrar tu nombre en el <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>Diploma de Honor Estoico</ThemedText> y recibir la <ThemedText style={{ color: '#38BDF8', fontWeight: 'bold' }}>Evaluación Final del Coach</ThemedText>, debes cumplir los dos requisitos inmutables:
+                </ThemedText>
+
+                <View style={styles.lockedModalReqsBox}>
+                  <View style={styles.lockedReqRow}>
+                    <Ionicons
+                      name={isDay30Reached ? "checkmark-circle" : "time-outline"}
+                      size={18}
+                      color={isDay30Reached ? "#10B981" : "#38BDF8"}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={styles.lockedReqTitle}>1. Finalizar los 30 Días de la Evaluación</ThemedText>
+                      <ThemedText style={styles.lockedReqDesc}>
+                        Progreso actual: Día {currentDay} de 30 ({30 - currentDay > 0 ? `${30 - currentDay} días restantes` : 'Completado'})
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <View style={styles.lockedReqRow}>
+                    <Ionicons
+                      name={isAboveThreshold ? "checkmark-circle" : "alert-circle-outline"}
+                      size={18}
+                      color={isAboveThreshold ? "#10B981" : "#F59E0B"}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={styles.lockedReqTitle}>2. Alcanzar al menos el 80% de Días Gobernados</ThemedText>
+                      <ThemedText style={styles.lockedReqDesc}>
+                        Actual: {adherencePercent}% ({victoriousDays} de 24 días mínimos requeridos)
+                      </ThemedText>
+                    </View>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.closeLockedModalBtn}
+                  onPress={() => setLockedDiplomaModalVisible(false)}
+                  activeOpacity={0.85}
+                >
+                  <ThemedText style={styles.closeLockedModalBtnText}>ENTENDIDO, SEGUIR ENTRENANDO</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
           {/* MODAL DEL DIPLOMA DE HONOR */}
           <HonorDiplomaModal
             visible={diplomaModalVisible}
@@ -1015,6 +1136,9 @@ export default function ProgressScreen() {
             scoreAverage={judgmentResult?.resolution?.totalScoreAverage ?? cycle.averageScore}
             adherencePct={judgmentResult?.resolution?.adherencePct ?? adherencePercent}
             tier={judgmentResult?.resolution?.tierAwarded || cycle.tier}
+            coachArchetype={log.coachArchetype || 'stoic_mentor'}
+            observations={judgmentResult?.resolution?.praises}
+            recommendations={judgmentResult?.resolution?.nextCycleDirectives}
           />
 
         </ScrollView>
@@ -1929,5 +2053,131 @@ const styles = StyleSheet.create({
     color: '#050507',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
+  },
+  diplomaLockedCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    padding: 14,
+    marginVertical: 4,
+    gap: 10,
+  },
+  diplomaLockedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  diplomaLockedTag: {
+    fontSize: 8.5,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+    fontWeight: 'bold',
+  },
+  diplomaLockedTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#F59E0B',
+    fontFamily: 'serif',
+    marginTop: 1,
+  },
+  diplomaLockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  diplomaLockBadgeText: {
+    fontSize: 9.5,
+    fontWeight: 'bold',
+    color: '#F59E0B',
+    fontFamily: 'monospace',
+  },
+  diplomaProgressBoxes: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  diplomaProgBox: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 5, 8, 0.6)',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  diplomaProgVal: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'monospace',
+  },
+  diplomaProgLbl: {
+    fontSize: 8,
+    color: '#94A3B8',
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  diplomaMiniTrack: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  diplomaMiniFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  diplomaLockedNotice: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    lineHeight: 14,
+    fontStyle: 'italic',
+  },
+  lockedModalReqsBox: {
+    width: '100%',
+    backgroundColor: 'rgba(5, 5, 8, 0.6)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 10,
+    marginVertical: 8,
+  },
+  lockedReqRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  lockedReqTitle: {
+    fontSize: 10.5,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  lockedReqDesc: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    marginTop: 2,
+    fontFamily: 'monospace',
+  },
+  closeLockedModalBtn: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 10,
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  closeLockedModalBtnText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
   },
 });

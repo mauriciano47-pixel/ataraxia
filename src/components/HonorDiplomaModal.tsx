@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { StyleSheet, View, Modal, TouchableOpacity, ScrollView, Platform, Share, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { LegendaryPath, LEGENDARY_PATHS, CycleTier } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS, CycleTier, CoachArchetype, COACH_ARCHETYPES } from '@/types/onboarding';
 
 interface HonorDiplomaModalProps {
   visible: boolean;
@@ -17,6 +17,10 @@ interface HonorDiplomaModalProps {
   adherencePct: number;
   tier: CycleTier | string;
   completionDate?: string;
+  coachArchetype?: CoachArchetype;
+  observations?: string[];
+  recommendations?: string[];
+  coachVerdict?: string;
 }
 
 export function HonorDiplomaModal({
@@ -28,25 +32,60 @@ export function HonorDiplomaModal({
   adherencePct,
   tier,
   completionDate,
+  coachArchetype = 'stoic_mentor',
+  observations,
+  recommendations,
+  coachVerdict,
 }: HonorDiplomaModalProps) {
   const pathInfo = LEGENDARY_PATHS[path] || LEGENDARY_PATHS.spartan;
+  const coachInfo = COACH_ARCHETYPES[coachArchetype] || COACH_ARCHETYPES.stoic_mentor;
   const formattedDate = completionDate || new Date().toLocaleDateString('es-ES', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
 
+  // Observaciones predeterminadas de élite si no vienen del motor
+  const defaultObservations: string[] = [
+    `🏆 **Dominio de la Voluntad**: Conquistaste el ${adherencePct}% de los días con rango de honor, superando con creces la barrera del 80% exigida por el Templo.`,
+    `⚔️ **Consistencia Marcial**: Mantuviste la adhesión a la Senda del ${pathInfo.name} con un promedio de excelencia del ${scoreAverage}/100 puntos.`,
+    `🛡️ **Resiliencia & Temple**: Demostraste capacidad de autocontrol y soberanía sobre los impulsos durante los 30 días ininterrumpidos del Juicio.`,
+  ];
+
+  // Recomendaciones tácticas del Coach según la Senda
+  const defaultRecommendations: string[] = path === 'spartan' ? [
+    '1. **Sobrecarga Progresiva Fase II**: Incrementa un 5% las cargas base en ejercicios multiarticulares (sentadilla y banca olímpica).',
+    '2. **Optimización Proteica**: Asegura 2.0g a 2.2g de proteína por kg de peso corporal para consolidar la densidad miofibrilar.',
+    '3. **Higiene de Sueño Innegociable**: Mantén un mínimo de 7.5 horas de descanso profundo para evitar el catabolismo del SNC.',
+  ] : path === 'apollo' ? [
+    '1. **Escultura Estética & V-Taper**: Mantén el enfoque en elevaciones laterales y dorsal ancho con cadencia excéntrica controlada (3-1-1).',
+    '2. **Movilidad NeAT Constante**: No bajes de 10,000 pasos diarios para mantener la definición muscular sin elevar el cortisol.',
+    '3. **Nutrición de Precisión**: Mantén el balance calórico ajustado a tus macros calculados para preservar masa magra.',
+  ] : path === 'hoplite' ? [
+    '1. **Capacidad Mitocondrial Superior**: Introduce 3 sesiones semanales de Cardio Zona 2 de 40 minutos en ayunas o post-pesas.',
+    '2. **Circuitos Tácticos & Potencia**: Realiza transiciones con pausas de 45 segundos para forjar una resistencia inagotable.',
+    '3. **Recuperación Activa**: Dedica 15 minutos diarios a movilidad articular de cadera y tobillos.',
+  ] : [
+    '1. **Calistenia Estricta & Anillas**: Perfecciona el control de palancas y dominadas con peso corporal antes de añadir lastre.',
+    '2. **Examen de Conciencia Nocturno**: Dedica 5 minutos antes de dormir a vaciar el juicio en tu diario estoico.',
+    '3. **Ayuno Intermitente 16/8**: Mantén la claridad mental entrenando en la ventana de mayor lucidez matutina.',
+  ];
+
+  const finalObservations = (observations && observations.length > 0) ? observations : defaultObservations;
+  const finalRecommendations = (recommendations && recommendations.length > 0) ? recommendations : defaultRecommendations;
+  const finalVerdict = coachVerdict || `«${userName.toUpperCase()}, has demostrado que la mente es el amo supremo del cuerpo. Tu consagración en el Día 30 es un testimonio vivo de virtud y templanza. La Fase II te espera.»`;
+
   const handleShareOrPrint = async () => {
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {}
 
-    const shareText = `🏛️ DIPLOMA DE HONOR ESTOICO • SANTUARIO DE ATARAXIA\n\nPor el presente decreto del Tribunal del Olimpo, se consagra a ${userName.toUpperCase()} con el rango de ${tier.toUpperCase()} en la Senda del ${pathInfo.name.toUpperCase()}.\n\n📊 Disciplina Conquistada: ${scoreAverage}% de Excelencia (${adherencePct}% de Días Dignos).\n⚡ Desbloqueado: Fase II - La Forja de los Titanes.\n\n«No expliques tu filosofía; encárnala en tus actos.»\nVerificado en Ataraxia: https://ataraxia-stoic.vercel.app`;
+    const shareText = `🏛️ DIPLOMA DE HONOR ESTOICO • SANTUARIO DE ATARAXIA\n\nPor el presente decreto del Tribunal del Olimpo, se consagra a ${userName.toUpperCase()} con el rango de ${tier.toUpperCase()} en la Senda del ${pathInfo.name.toUpperCase()}.\n\n📊 Evaluación Final del Día 30: ${scoreAverage}% de Excelencia (${adherencePct}% de Días Gobernados).\n\n🏛️ Veredicto del ${coachInfo.name}:\n${finalVerdict}\n\n⚡ Desbloqueado: Fase II - La Forja de los Titanes.\n\n«No expliques tu filosofía; encárnala en tus actos.»\nVerificado en Ataraxia: https://ataraxia-stoic.vercel.app`;
 
     if (Platform.OS === 'web') {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         navigator.clipboard.writeText(shareText);
-        Alert.alert('📜 Diploma Copiado', 'El texto sagrado de tu Diploma ha sido copiado para compartirlo.');
+        Alert.alert('📜 Diploma Copiado', 'El texto sagrado de tu Diploma y Evaluación del Coach ha sido copiado para compartirlo.');
       }
       if (typeof window !== 'undefined' && window.print) {
         window.print();
@@ -95,13 +134,13 @@ export function HonorDiplomaModal({
 
                   <ThemedText style={styles.diplomaSubTitle}>ACADEMIA & SANTUARIO DE ATARAXIA</ThemedText>
                   <ThemedText style={styles.diplomaMainTitle}>DIPLOMA DE HONOR ESTOICO</ThemedText>
-                  <ThemedText style={styles.confermentTag}>CONSAGRACIÓN DEL TRIBUNAL DEL OLIMPO</ThemedText>
+                  <ThemedText style={styles.confermentTag}>CONSAGRACIÓN OFICIAL DEL TRIBUNAL DEL OLIMPO</ThemedText>
 
                   <View style={styles.goldenDivider} />
 
                   {/* Cuerpo del Certificado */}
                   <ThemedText style={styles.certBodyIntro}>
-                    Por cuanto ha demostrado temple inquebrantable, dominio corporal y disciplina militar durante el Ciclo de 30 Días, superando el 80% de excelencia exigido por los dioses del Olimpo, se confiere el presente título a:
+                    Por cuanto ha demostrado temple inquebrantable, dominio corporal y disciplina militar durante los 30 Días de la Evaluación, alcanzando el <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>{adherencePct}% de Días Gobernados</ThemedText> exigido por el Santuario, se confiere el presente título con honores a:
                   </ThemedText>
 
                   {/* Nombre del Prokopton Consagrado */}
@@ -124,19 +163,69 @@ export function HonorDiplomaModal({
                     </LinearGradient>
                   </View>
 
-                  {/* Métricas de Virtud */}
+                  {/* Métricas de Virtud de los 30 Días */}
                   <View style={styles.metricsRow}>
+                    <View style={styles.metricItem}>
+                      <ThemedText style={styles.metricVal}>30 / 30</ThemedText>
+                      <ThemedText style={styles.metricLbl}>Días Evaluados</ThemedText>
+                    </View>
+                    <View style={styles.metricItem}>
+                      <ThemedText style={styles.metricVal}>{adherencePct}%</ThemedText>
+                      <ThemedText style={styles.metricLbl}>Días Gobernados (80%+)</ThemedText>
+                    </View>
                     <View style={styles.metricItem}>
                       <ThemedText style={styles.metricVal}>{scoreAverage}%</ThemedText>
                       <ThemedText style={styles.metricLbl}>Excelencia Media</ThemedText>
                     </View>
-                    <View style={styles.metricItem}>
-                      <ThemedText style={styles.metricVal}>{adherencePct}%</ThemedText>
-                      <ThemedText style={styles.metricLbl}>Días Dignos (80%+)</ThemedText>
+                  </View>
+
+                  {/* ───────────────────────────────────────────────────────────── */}
+                  {/* SECCIÓN DEDICADA: EVALUACIÓN FINAL DEL COACH (DÍA 30) */}
+                  {/* ───────────────────────────────────────────────────────────── */}
+                  <View style={styles.coachEvaluationCard}>
+                    <View style={styles.coachEvalHeader}>
+                      <ThemedText style={{ fontSize: 20 }}>{coachInfo.icon}</ThemedText>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={styles.coachEvalTag}>EVALUACIÓN FINAL DEL DÍA 30</ThemedText>
+                        <ThemedText style={styles.coachEvalTitle}>{coachInfo.name.toUpperCase()}</ThemedText>
+                      </View>
+                      <View style={styles.coachEvalBadge}>
+                        <ThemedText style={styles.coachEvalBadgeText}>APROBADO</ThemedText>
+                      </View>
                     </View>
-                    <View style={styles.metricItem}>
-                      <ThemedText style={styles.metricVal}>30 / 30</ThemedText>
-                      <ThemedText style={styles.metricLbl}>Días Conquistados</ThemedText>
+
+                    {/* Veredicto del Coach */}
+                    <View style={styles.verdictQuoteBox}>
+                      <ThemedText style={styles.verdictQuoteText}>{finalVerdict}</ThemedText>
+                    </View>
+
+                    {/* Observaciones del Coach */}
+                    <View style={styles.evalSectionBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Ionicons name="clipboard-outline" size={14} color="#10B981" />
+                        <ThemedText style={styles.evalSectionTitle}>OBSERVACIONES DEL DESEMPEÑO:</ThemedText>
+                      </View>
+                      {finalObservations.map((obs, idx) => (
+                        <View key={idx} style={styles.obsItemRow}>
+                          <ThemedText style={styles.obsBullet}>•</ThemedText>
+                          <ThemedText style={styles.obsText}>{obs.replace(/\*\*/g, '')}</ThemedText>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Recomendaciones Tácticas para la Siguiente Etapa */}
+                    <View style={styles.evalSectionBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Ionicons name="bulb-outline" size={14} color="#38BDF8" />
+                        <ThemedText style={[styles.evalSectionTitle, { color: '#38BDF8' }]}>
+                          RECOMENDACIONES PARA LA FASE SIGUIENTE:
+                        </ThemedText>
+                      </View>
+                      {finalRecommendations.map((rec, idx) => (
+                        <View key={idx} style={styles.recItemRow}>
+                          <ThemedText style={styles.recText}>{rec.replace(/\*\*/g, '')}</ThemedText>
+                        </View>
+                      ))}
                     </View>
                   </View>
 
@@ -151,13 +240,13 @@ export function HonorDiplomaModal({
                     </LinearGradient>
                   </View>
 
-                  {/* Distinción del Próximo Nivel (Coming Soon) */}
+                  {/* Distinción del Próximo Nivel (Fase II) */}
                   <View style={styles.nextLevelTeaserBox}>
-                    <ThemedText style={styles.nextLevelBadge}>⚡ DISTINCIÓN PERMANENTE DESBLOQUEADA</ThemedText>
+                    <ThemedText style={styles.nextLevelBadge}>⚡ DISTINCIÓN PERMANENTE OTORGADA</ThemedText>
                     <ThemedText style={styles.nextLevelTitle}>FASE II: LA FORJA DE LOS TITANES</ThemedText>
                     <ThemedText style={styles.nextLevelStatus}>🔒 ACCESO PRIORITARIO • (COMING SOON)</ThemedText>
                     <ThemedText style={styles.nextLevelDesc}>
-                      Has demostrado estar por encima del promedio mortal. Tu perfil ha sido condecorado para recibir la próxima actualización con la rutina del Templo Superior.
+                      Has demostrado estar por encima del promedio mortal al superar el 80% de días gobernados en los 30 días. Tu perfil ha sido consagrado para recibir la próxima gran actualización del Templo.
                     </ThemedText>
                   </View>
 
@@ -181,7 +270,7 @@ export function HonorDiplomaModal({
                   </View>
 
                   <ThemedText style={styles.dateStamp}>
-                    Consagrado en el Santuario el {formattedDate}
+                    Consagrado oficialmente en el Santuario el {formattedDate}
                   </ThemedText>
                 </View>
               </View>
@@ -532,5 +621,103 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     fontFamily: 'monospace',
+  },
+  coachEvaluationCard: {
+    width: '100%',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    padding: 12,
+    marginVertical: 10,
+    gap: 8,
+  },
+  coachEvalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingBottom: 6,
+  },
+  coachEvalTag: {
+    fontSize: 8,
+    fontFamily: 'monospace',
+    color: '#D4AF37',
+    letterSpacing: 1,
+    fontWeight: 'bold',
+  },
+  coachEvalTitle: {
+    fontSize: 11.5,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: 'serif',
+  },
+  coachEvalBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  coachEvalBadgeText: {
+    fontSize: 8.5,
+    fontWeight: '900',
+    color: '#34D399',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  verdictQuoteBox: {
+    backgroundColor: 'rgba(5, 5, 8, 0.7)',
+    borderRadius: 8,
+    padding: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFE259',
+    marginVertical: 2,
+  },
+  verdictQuoteText: {
+    fontSize: 10,
+    color: '#FFE259',
+    fontStyle: 'italic',
+    lineHeight: 14,
+  },
+  evalSectionBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  evalSectionTitle: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#10B981',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  obsItemRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginVertical: 2,
+  },
+  obsBullet: {
+    fontSize: 10,
+    color: '#10B981',
+    fontWeight: 'bold',
+  },
+  obsText: {
+    fontSize: 9.5,
+    color: '#E2E8F0',
+    lineHeight: 14,
+    flex: 1,
+  },
+  recItemRow: {
+    marginVertical: 3,
+  },
+  recText: {
+    fontSize: 9.5,
+    color: '#E2E8F0',
+    lineHeight: 14,
   },
 });

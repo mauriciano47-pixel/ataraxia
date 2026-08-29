@@ -36,6 +36,7 @@ export default function ProfileScreen() {
   const [showParchmentModal, setShowParchmentModal] = useState(false);
   const [showPathModal, setShowPathModal] = useState(false);
   const [showDiplomaModal, setShowDiplomaModal] = useState(false);
+  const [showLockedDiplomaModal, setShowLockedDiplomaModal] = useState(false);
 
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
@@ -49,9 +50,13 @@ export default function ProfileScreen() {
   const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
   const pathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
   const cycle = log.monthlyCycle;
+  const currentDay = cycle?.currentDay || 1;
+  const isDay30Reached = currentDay >= 30 || Boolean(cycle?.isJudgmentReady);
   const passedDays = cycle?.passedDaysCount ?? (cycle?.dailyGrades?.filter((g) => g.score >= 75).length || 0);
   const adherencePct = Math.round((passedDays / 30) * 100);
-  const isWorthyHonor = (cycle?.averageScore ?? 100) >= 80 || cycle?.tier === 'Semidiós del Olimpo' || cycle?.tier === 'Guerrero de Élite';
+  const isAboveThreshold = adherencePct >= 80;
+  const isDiplomaUnlocked = isDay30Reached && isAboveThreshold;
+  const isWorthyHonor = isDiplomaUnlocked;
 
   const uid = auth?.currentUser?.uid || null;
   const shortUid = uid ? uid.substring(0, 8) : '????????';
@@ -242,44 +247,61 @@ export default function ProfileScreen() {
           <View style={styles.condecorationCard}>
             <View style={styles.condecorationHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                <ThemedText style={{ fontSize: 26 }}>👑</ThemedText>
+                <ThemedText style={{ fontSize: 26 }}>{isDiplomaUnlocked ? '👑' : '🔒'}</ThemedText>
                 <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.condecorationTag}>DISTINCIÓN OFICIAL DEL OLIMPO</ThemedText>
+                  <ThemedText style={styles.condecorationTag}>
+                    {isDiplomaUnlocked ? 'DISTINCIÓN OFICIAL DEL OLIMPO' : 'EVALUACIÓN DE 30 DÍAS EN CURSO'}
+                  </ThemedText>
                   <ThemedText style={styles.condecorationRankTitle}>
-                    {cycle?.tier || 'Novicio de Esparta'}
+                    {isDiplomaUnlocked ? (cycle?.tier || 'Novicio de Esparta') : 'Diploma en Evaluación'}
                   </ThemedText>
                 </View>
               </View>
-              <View style={styles.condecorationBadge}>
-                <ThemedText style={styles.condecorationBadgeText}>
-                  {(cycle?.averageScore ?? 100) >= 80 ? '80%+ HONOR' : 'EN CURSO'}
+              <View style={[styles.condecorationBadge, isDiplomaUnlocked ? { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: '#10B981' } : { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B' }]}>
+                <ThemedText style={[styles.condecorationBadgeText, isDiplomaUnlocked ? { color: '#34D399' } : { color: '#F59E0B' }]}>
+                  {isDiplomaUnlocked ? 'OTORGADO (80%+)' : `DÍA ${currentDay}/30 • ${adherencePct}%`}
                 </ThemedText>
               </View>
             </View>
 
             <ThemedText style={styles.condecorationDesc}>
-              {(cycle?.averageScore ?? 100) >= 80
-                ? '🎖️ Has completado el Ciclo con templanza superior. Tu perfil cuenta con acreditación oficial del Santuario.'
-                : '⚔️ Mantén tu disciplina diaria por encima del 80% durante los 30 días para consagrar tu rango.'}
+              {isDiplomaUnlocked
+                ? '🎖️ Has completado los 30 Días con más del 80% de días gobernados. Tu Diploma de Honor Estoico y la Evaluación del Coach han sido desbloqueados.'
+                : `⚔️ El Diploma se otorgará en el Día 30 si alcanzas al menos el 80% de días gobernados (${passedDays}/24 días dignos actuales - ${adherencePct}%).`}
             </ThemedText>
 
-            <TouchableOpacity
-              style={styles.openDiplomaBtn}
-              onPress={() => setShowDiplomaModal(true)}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={['#D4AF37', '#FFE259', '#B45309']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.openDiplomaBtnGradient}
+            {isDiplomaUnlocked ? (
+              <TouchableOpacity
+                style={styles.openDiplomaBtn}
+                onPress={() => setShowDiplomaModal(true)}
+                activeOpacity={0.85}
               >
-                <Ionicons name="ribbon" size={18} color="#050507" />
-                <ThemedText style={styles.openDiplomaBtnText}>
-                  📜 VER DIPLOMA DE HONOR ESTOICO
-                </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#D4AF37', '#FFE259', '#B45309']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.openDiplomaBtnGradient}
+                >
+                  <Ionicons name="ribbon" size={18} color="#050507" />
+                  <ThemedText style={styles.openDiplomaBtnText}>
+                    📜 VER DIPLOMA & EVALUACIÓN DEL COACH
+                  </ThemedText>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.openDiplomaBtn, { borderColor: 'rgba(245, 158, 11, 0.4)' }]}
+                onPress={() => setShowLockedDiplomaModal(true)}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.openDiplomaBtnGradient, { backgroundColor: 'rgba(15, 23, 42, 0.9)' }]}>
+                  <Ionicons name="lock-closed" size={18} color="#F59E0B" />
+                  <ThemedText style={[styles.openDiplomaBtnText, { color: '#F59E0B' }]}>
+                    🔒 DIPLOMA BLOQUEADO (DÍA {currentDay}/30 • {adherencePct}%/80%)
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
+            )}
 
             {/* Módulo Próximo Nivel: Fase II - La Forja de los Titanes */}
             <View style={styles.nextLevelCard}>
@@ -679,6 +701,76 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Modal Informativo de Diploma Bloqueado */}
+      <Modal
+        visible={showLockedDiplomaModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLockedDiplomaModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: '#0A0D16', borderColor: '#F59E0B', maxWidth: 440, gap: 10 }]}>
+            <View style={{ alignItems: 'center', marginBottom: 4 }}>
+              <ThemedText style={{ fontSize: 32 }}>🔒</ThemedText>
+              <ThemedText style={[styles.modalTitle, { color: '#FFE259', textAlign: 'center', marginTop: 4 }]}>
+                DIPLOMA EN EVALUACIÓN
+              </ThemedText>
+              <ThemedText style={{ fontSize: 9.5, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: 1 }}>
+                REQUISITO SAGRADO DEL DÍA 30
+              </ThemedText>
+            </View>
+
+            <ThemedText style={{ fontSize: 11, color: '#CBD5E1', textAlign: 'center', lineHeight: 16 }}>
+              Para consagrar tu nombre en el <ThemedText style={{ color: '#FFE259', fontWeight: 'bold' }}>Diploma de Honor Estoico</ThemedText> y recibir la <ThemedText style={{ color: '#38BDF8', fontWeight: 'bold' }}>Evaluación Final del Coach</ThemedText>, debes cumplir los dos requisitos inmutables:
+            </ThemedText>
+
+            <View style={{ backgroundColor: 'rgba(5, 5, 8, 0.6)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', gap: 10, marginVertical: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <Ionicons
+                  name={isDay30Reached ? "checkmark-circle" : "time-outline"}
+                  size={18}
+                  color={isDay30Reached ? "#10B981" : "#38BDF8"}
+                />
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={{ fontSize: 11, fontWeight: 'bold', color: '#FFFFFF' }}>
+                    1. Finalizar los 30 Días de la Evaluación
+                  </ThemedText>
+                  <ThemedText style={{ fontSize: 9.5, color: '#94A3B8', marginTop: 2, fontFamily: 'monospace' }}>
+                    Progreso actual: Día {currentDay} de 30 ({30 - currentDay > 0 ? `${30 - currentDay} días restantes` : 'Completado'})
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <Ionicons
+                  name={isAboveThreshold ? "checkmark-circle" : "alert-circle-outline"}
+                  size={18}
+                  color={isAboveThreshold ? "#10B981" : "#F59E0B"}
+                />
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={{ fontSize: 11, fontWeight: 'bold', color: '#FFFFFF' }}>
+                    2. Alcanzar al menos el 80% de Días Gobernados
+                  </ThemedText>
+                  <ThemedText style={{ fontSize: 9.5, color: '#94A3B8', marginTop: 2, fontFamily: 'monospace' }}>
+                    Actual: {adherencePct}% ({passedDays} de 24 días mínimos requeridos)
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={{ backgroundColor: '#F59E0B', borderRadius: 10, paddingVertical: 10, width: '100%', alignItems: 'center', marginTop: 4 }}
+              onPress={() => setShowLockedDiplomaModal(false)}
+              activeOpacity={0.85}
+            >
+              <ThemedText style={{ fontSize: 11, fontWeight: '900', color: '#050507', fontFamily: 'monospace' }}>
+                ENTENDIDO, SEGUIR ENTRENANDO
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal del Diploma de Honor */}
       <HonorDiplomaModal
         visible={showDiplomaModal}
@@ -688,6 +780,7 @@ export default function ProfileScreen() {
         scoreAverage={cycle?.averageScore ?? 100}
         adherencePct={adherencePct}
         tier={cycle?.tier || 'Novicio de Esparta'}
+        coachArchetype={log.coachArchetype || 'stoic_mentor'}
       />
       </SafeAreaView>
     </PearlElectricBackground>
