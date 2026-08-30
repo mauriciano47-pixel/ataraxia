@@ -262,14 +262,55 @@ export function StepCalibrationModal({
               </View>
             </View>
 
-            {/* Ajuste Numérico Exacto */}
+            {/* Sincronización Directa con Google Health / Smartwatch */}
+            <View style={[styles.sectionCard, { borderColor: '#4285F4', borderWidth: 1.2, backgroundColor: 'rgba(66, 133, 244, 0.08)' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="fitness-outline" size={20} color="#4285F4" />
+                  <ThemedText style={[styles.sectionTitle, { color: '#60A5FA' }]}>SINCRONIZAR CON GOOGLE HEALTH</ThemedText>
+                </View>
+                <View style={{ backgroundColor: 'rgba(66, 133, 244, 0.2)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                  <ThemedText style={{ fontSize: 9, fontWeight: '900', color: '#93C5FD', fontFamily: 'monospace' }}>SISTEMA OS</ThemedText>
+                </View>
+              </View>
+
+              <ThemedText style={styles.sectionDesc}>
+                Google Health registra pasos las 24h a nivel de hardware del sistema. Si notas diferencia con Ataraxia Web/PWA, ingresa aquí los pasos de Google Health para igualarlos al instante:
+              </ThemedText>
+
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={[styles.numericInput, { borderColor: 'rgba(66, 133, 244, 0.5)' }]}
+                  keyboardType="numeric"
+                  value={exactInput}
+                  onChangeText={setExactInput}
+                  placeholder="Pasos en Google Health..."
+                  placeholderTextColor="#64748B"
+                />
+                <TouchableOpacity
+                  style={[styles.applyBtn, { backgroundColor: '#4285F4' }]}
+                  onPress={handleSaveExact}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={[styles.applyBtnText, { color: '#FFFFFF' }]}>📥 Sincronizar</ThemedText>
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ marginTop: 8, backgroundColor: 'rgba(0, 0, 0, 0.4)', padding: 8, borderRadius: 8, gap: 4 }}>
+                <ThemedText style={{ fontSize: 10, color: '#94A3B8', lineHeight: 14 }}>
+                  💡 <ThemedText style={{ color: '#E2E8F0', fontWeight: 'bold' }}>¿Por qué hay diferencia?</ThemedText> Los navegadores Web suspenden los sensores de movimiento cuando la pantalla del móvil se bloquea. Usa la <ThemedText style={{ color: '#FFE259' }}>Sensibilidad Alta</ThemedText> o este botón de sincronización al finalizar tu caminata.
+                </ThemedText>
+              </View>
+            </View>
+
+            {/* Ajuste Numérico Rápido */}
             <View style={styles.sectionCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Ionicons name="create-outline" size={18} color="#D4AF37" />
-                <ThemedText style={styles.sectionTitle}>FIJAR CONTEO EXACTO</ThemedText>
+                <ThemedText style={styles.sectionTitle}>FIJAR CONTEO PERSONALIZADO</ThemedText>
               </View>
               <ThemedText style={styles.sectionDesc}>
-                Si tu smartwatch o podómetro externo marca un valor diferente, fija el número exacto aquí:
+                Si deseas establecer un valor específico manualmente:
               </ThemedText>
               <View style={styles.inputRow}>
                 <TextInput
