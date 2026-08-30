@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   },
   dateRowCenter: {
     alignItems: 'center',
-    marginVertical: -2,
+    marginVertical: 2,
   },
   dateHeaderText: {
     fontSize: 11,

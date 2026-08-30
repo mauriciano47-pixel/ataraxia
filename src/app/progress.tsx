@@ -1382,7 +1382,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#D4AF37',
     fontFamily: 'monospace',
-    marginTop: -4,
+    marginTop: 3,
   },
   immutableNoticeBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.04)',

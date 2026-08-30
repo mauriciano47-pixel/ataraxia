@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontStyle: 'italic',
     marginTop: 4,
-    lineHeight: 13,
+    lineHeight: 15,
   },
   takePhotoBox: {
     backgroundColor: 'rgba(5, 5, 7, 0.7)',
