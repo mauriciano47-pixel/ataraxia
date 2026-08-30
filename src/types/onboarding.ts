@@ -180,6 +180,8 @@ export interface ProkoptonProfile {
   dietPreference: DietPreference;
   experienceLevel?: ExperienceLevel;
   injuryCare?: InjuryCare;
+  protectedZones?: string[];
+  gender?: 'male' | 'female';
   age: number;
   weightKg: number;
   targetWeightKg: number;

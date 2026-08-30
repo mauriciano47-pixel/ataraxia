@@ -15,6 +15,7 @@ import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
+import { useDailyLog } from '@/context/DailyLogContext';
 
 export interface ExerciseGuideData {
   id: string;
@@ -136,6 +137,7 @@ const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 export function ExerciseTechniqueModal({ visible, exercise, onClose }: Props) {
+  const { log } = useDailyLog();
   const [aiQuestion, setAiQuestion] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
@@ -169,14 +171,22 @@ export function ExerciseTechniqueModal({ visible, exercise, onClose }: Props) {
         return;
       }
 
-      const prompt = `Eres el Mentor de Entrenamiento y Biomecánica de Ataraxia. Explica de forma concisa, estoica y anatómicamente precisa cómo realizar este ejercicio:
+      const athleteName = log.userName && log.userName !== 'Ciudadano Prokopton' ? log.userName : 'Guerrero';
+      const path = log.legendaryPath || 'spartan';
+      const experienceLevel = log.prokoptonProfile?.experienceLevel || 'intermediate';
+      const protectedZones = log.prokoptonProfile?.protectedZones && log.prokoptonProfile.protectedZones.length > 0 && !log.prokoptonProfile.protectedZones.includes('none' as any)
+        ? log.prokoptonProfile.protectedZones.join(', ')
+        : 'ninguna';
+
+      const prompt = `Eres el Mentor de Entrenamiento y Biomecánica de Ataraxia. Explica de forma concisa, estoica y anatómicamente precisa cómo realizar este ejercicio para el atleta ${athleteName} (Senda: ${path.toUpperCase()}, Nivel: ${experienceLevel}):
 Ejercicio: "${exercise.name}"
 Grupo Muscular: "${exercise.muscleGroup}"
+Zonas anatómicas protegidas / articulaciones a cuidar: "${protectedZones}" (Si el ejercicio involucra o impacta estas áreas, incluye advertencias biomecánicas y adaptaciones específicas)
 Duda del alumno: "${aiQuestion || '¿Cuáles son las claves para hacerlo perfecto y no lesionarme?'}"
 
 Responde en máximo 3 párrafos breves con viñetas:
-1. Posición y técnica clave.
-2. Cómo sentir el músculo correcto.
+1. Posición y técnica clave adaptada a su nivel.
+2. Cómo sentir el músculo correcto y proteger articulaciones.
 3. Máxima de disciplina estoica para este levantamiento.`;
 
       const response = await ai.models.generateContent({

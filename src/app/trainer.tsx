@@ -434,9 +434,22 @@ export default function TrainerScreen() {
         return;
       }
 
-      const prompt = `Crea una rutina de entrenamiento de alta eficiencia científica y filosofía estoica para una sesión de ${selectedTime} minutos.
-Equipo disponible: ${selectedEquip}.
-Enfoque muscular / objetivo: ${selectedFocus}.
+      const athleteName = log.userName && log.userName !== 'Ciudadano Prokopton' ? log.userName : 'Guerrero';
+      const path = log.legendaryPath || 'spartan';
+      const experienceLevel = log.prokoptonProfile?.experienceLevel || 'intermediate';
+      const protectedZones = log.prokoptonProfile?.protectedZones && log.prokoptonProfile.protectedZones.length > 0 && !log.prokoptonProfile.protectedZones.includes('none' as any)
+        ? log.prokoptonProfile.protectedZones.join(', ')
+        : 'ninguna';
+      const readiness = log.readinessScore ? `${log.readinessScore.total}% (Dolor muscular: ${log.readinessScore.soreness}/10, Estrés: ${log.readinessScore.stress}/10)` : '100%';
+
+      const prompt = `Crea una rutina de entrenamiento personalizada, de alta eficiencia biomecánica y filosofía estoica para el atleta ${athleteName}.
+Senda Legendaria: ${path.toUpperCase()}
+Nivel del practicante: ${experienceLevel}
+Tiempo disponible: ${selectedTime} minutos
+Equipo disponible: ${selectedEquip}
+Enfoque muscular / objetivo: ${selectedFocus}
+Zonas anatómicas protegidas / articulaciones a cuidar: ${protectedZones} (NUNCA prescribir ejercicios que comprometan estas áreas)
+Estado de preparación del SNC (Readiness): ${readiness}
 
 Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura exacta:
 {

@@ -131,14 +131,21 @@ export default function NutritionScreen() {
     try {
       if (!ai) throw new Error("No Gemini API Key configurada.");
 
+      const athleteName = log.userName && log.userName !== 'Ciudadano Prokopton' ? log.userName : 'Guerrero';
+      const path = log.legendaryPath || 'spartan';
+      const userWeight = log.prokoptonProfile?.weightKg || log.userMetrics?.weightKg || 75;
+      const targetCals = log.targetCalories || 2200;
+      const consumedToday = log.totalCalories || 0;
+
       const prompt = `Actúa como un experto en Nutrición Clínica Deportiva y Visión Computacional Avanzada para Ataraxia.
+Contexto del Atleta: ${athleteName} (Senda: ${path.toUpperCase()}, Peso: ${userWeight}kg, Meta calórica diaria: ${targetCals} kcal, Calorías ingeridas hoy previo a este plato: ${consumedToday} kcal).
 Analiza la imagen del alimento/plato y realiza un desglose nutricional ultra-preciso:
 1. Identifica el nombre exacto, específico y descriptivo del plato con los alimentos principales visibles (ej: "Pechuga de pollo a la plancha con arroz blanco y brócoli").
 2. Desglosa individualmente CADA ingrediente visible en el plato con su peso estimado en gramos (ej. 180g pechuga, 150g arroz, 80g brócoli), calorías y macronutrientes correspondientes.
 3. Suma los valores para obtener el total de calorías (kcal), proteínas (g), carbohidratos (g), grasas (g), fibra (g), sodio (mg) y peso total aproximado (g).
 4. Asigna un porcentaje de confianza visual realista (entre 80% y 98% según la nitidez y visibilidad de los ingredientes).
 5. Lista 2 a 4 observaciones visuales clave (técnica de cocción detectada, tipo de salsa/grasa visible, tamaño relativo de porción).
-6. Asigna una puntuación de densidad nutricional (1 al 10) y una breve evaluación estoica del impacto metabólico.
+6. Asigna una puntuación de densidad nutricional (1 al 10) y una evaluación estoica personalizada de cómo este combustible ayuda al atleta en su jornada de hoy.
 
 Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
 {

@@ -379,6 +379,49 @@ Suelta el peso del día, ${userName}. Has hecho lo suficiente por hoy. Cierra lo
   }
 
   // ─────────────────────────────────────────────────────────────
+  // 2.5. EVALUACIÓN DE ESTADO DEL DÍA, TELEMETRÍA & BALANCE
+  // ─────────────────────────────────────────────────────────────
+  if (
+    p.includes('como voy') ||
+    p.includes('cómo voy') ||
+    p.includes('mi estado') ||
+    p.includes('resumen') ||
+    p.includes('cuanto me falta') ||
+    p.includes('cuánto me falta') ||
+    p.includes('mis pasos') ||
+    p.includes('mi sueño') ||
+    p.includes('mi recuperacion') ||
+    p.includes('mi recuperación') ||
+    p.includes('readiness') ||
+    p.includes('telemetria') ||
+    p.includes('telemetría')
+  ) {
+    const steps = log?.steps || 0;
+    const stepGoal = log?.stepGoal || 10000;
+    const cals = log?.totalCalories || 0;
+    const targetCals = log?.targetCalories || 2200;
+    const water = log?.waterLitres || 0;
+    const trainingDone = log?.trainingCompleted;
+    const readiness = log?.readinessScore?.total || 85;
+    const soreness = log?.readinessScore?.soreness || 2;
+    const targetProtein = Math.round(weight * (path === 'spartan' || path === 'apollo' ? 2.2 : 1.8));
+    const currentProtein = log?.macros?.protein || 0;
+
+    return `🏛️ **Diagnóstico y Balance del Templo Hoy — ${userName}**
+
+📊 **Telemetría & Biomarcadores en Vivo**:
+• **Disponibilidad del SNC (Readiness)**: **${readiness}%** ${readiness >= 80 ? '(⚡ Estado óptimo de potencia)' : '(🛡️ Autorregulación recomendada)'} | Dolor muscular: ${soreness}/10.
+• **Entrenamiento**: ${trainingDone ? '🏆 **Completado con honor**' : '⏳ **Pendiente de ejecutar**'}.
+• **Pasos Activos**: **${steps.toLocaleString()} / ${stepGoal.toLocaleString()} pasos** (${Math.round((steps / stepGoal) * 100)}% de la meta diaria).
+• **Nutrición & Balance**: **${cals} / ${targetCals} kcal** (Restan ${Math.max(0, targetCals - cals)} kcal).
+• **Proteína Ingerida**: **${currentProtein}g / ${targetProtein}g** (Faltan ${Math.max(0, targetProtein - currentProtein)}g para la síntesis proteica óptima).
+• **Hidratación**: **${water.toFixed(1)}L / 3.0L** ${water >= 2.5 ? '(✅ Óptima)' : '(💧 Recuerda beber otro vaso)'}.
+
+🎯 **Próxima Acción Asertiva**:
+${!trainingDone ? '1. Prepárate para el entrenamiento con un buen calentamiento articular.\n' : '1. Enfócate en la supercompensación y reabastecimiento con alimentos nobles.\n'}2. ${currentProtein < targetProtein ? `Prioriza tu próxima comida con al menos ${Math.min(40, targetProtein - currentProtein)}g de proteína sólida.` : 'Meta proteica alcanzada con éxito.'}`;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 3. NUTRICIÓN PERSONALIZADA SEGÚN LA SENDA
   // ─────────────────────────────────────────────────────────────
 
