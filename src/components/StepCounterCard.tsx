@@ -3,6 +3,14 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { ActivityMode } from '@/lib/fitnessCalculator';
+
+const ACTIVITY_CONFIG: Record<ActivityMode, { label: string; icon: string; color: string }> = {
+  idle:    { label: 'Reposo',  icon: '💤', color: '#64748B' },
+  walking: { label: 'Marcha',  icon: '🚶', color: '#10B981' },
+  jogging: { label: 'Trote',   icon: '🏃', color: '#F59E0B' },
+  running: { label: 'Carrera', icon: '⚡', color: '#EF4444' },
+};
 
 interface StepCounterCardProps {
   currentSteps?: number;
@@ -18,6 +26,14 @@ interface StepCounterCardProps {
   isVehicleDetected?: boolean;
   onToggleTransitMode?: () => void;
   onForceSync?: () => void;
+  // ─── Métricas Avanzadas (Nivel Google Fit / Fitbit) ──────────────────────
+  cadenceSpm?: number;
+  activityMode?: ActivityMode;
+  activeMinutes?: number;
+  distanceKm?: number;
+  speedKmh?: number;
+  paceMinKm?: string;
+  kcalBurned?: number;
 }
 
 export function StepCounterCard({
@@ -34,17 +50,25 @@ export function StepCounterCard({
   isVehicleDetected = false,
   onToggleTransitMode,
   onForceSync,
+  cadenceSpm = 0,
+  activityMode = 'idle',
+  activeMinutes = 0,
+  distanceKm,
+  speedKmh = 0,
+  paceMinKm = '--:--',
+  kcalBurned,
 }: StepCounterCardProps) {
   const [justSynced, setJustSynced] = useState(false);
 
   const actualSteps = currentSteps ?? steps ?? 0;
   const actualGoal = goal ?? stepGoal ?? 10000;
   const progressRatio = actualGoal > 0 ? Math.min(1, actualSteps / actualGoal) : 0;
-  const km = (actualSteps * 0.00075).toFixed(2);
-  const kcalBurned = Math.round(actualSteps * 0.045);
-  const activeMinutes = Math.round(actualSteps / 110);
+  const km = distanceKm !== undefined ? distanceKm.toFixed(2) : (actualSteps * 0.00075).toFixed(2);
+  const kcal = kcalBurned !== undefined ? kcalBurned : Math.round(actualSteps * 0.045);
+  const activeMin = activeMinutes > 0 ? activeMinutes : Math.round(actualSteps / 110);
 
   const isPaused = isTransitMode || isVehicleDetected;
+  const actCfg = ACTIVITY_CONFIG[activityMode] ?? ACTIVITY_CONFIG.idle;
 
   const handleSyncPress = () => {
     if (onForceSync) {
@@ -99,6 +123,24 @@ export function StepCounterCard({
         </View>
       </View>
 
+      {/* MODO DE ACTIVIDAD (Nivel Samsung Health / Garmin) */}
+      {cadenceSpm > 0 && (
+        <View style={[styles.activityModeRow, { borderColor: actCfg.color + '55' }]}>
+          <View style={[styles.activityModeDot, { backgroundColor: actCfg.color }]} />
+          <ThemedText style={[styles.activityModeText, { color: actCfg.color }]}>
+            {actCfg.icon} {actCfg.label.toUpperCase()}
+          </ThemedText>
+          <View style={styles.activityModeSep} />
+          <ThemedText style={styles.cadenceText}>{cadenceSpm} <ThemedText style={styles.cadenceUnit}>SPM</ThemedText></ThemedText>
+          {speedKmh > 0 && (
+            <>
+              <View style={styles.activityModeSep} />
+              <ThemedText style={styles.speedText}>{speedKmh} <ThemedText style={styles.cadenceUnit}>km/h</ThemedText></ThemedText>
+            </>
+          )}
+        </View>
+      )}
+
       {/* CONTADOR PRINCIPAL REAL */}
       <View style={styles.stepsMainRow}>
         <ThemedText style={styles.stepsCountText}>
@@ -120,25 +162,32 @@ export function StepCounterCard({
         />
       </View>
 
-      {/* TELEMETRÍA BIOMECÁNICA (SOLO DATOS REALES) */}
+      {/* TELEMETRÍA BIOMECÁNICA AVANZADA (4 columnas — nivel Fitbit) */}
       <View style={styles.telemetryGrid}>
         <View style={styles.telemetryCol}>
-          <ThemedText style={styles.telemetryLabel}>Distancia Real</ThemedText>
+          <ThemedText style={styles.telemetryLabel}>Distancia</ThemedText>
           <ThemedText style={styles.telemetryVal}>{km} <ThemedText style={styles.unitText}>km</ThemedText></ThemedText>
         </View>
 
         <View style={styles.telemetryDivider} />
 
         <View style={styles.telemetryCol}>
-          <ThemedText style={styles.telemetryLabel}>Calorías de Marcha</ThemedText>
-          <ThemedText style={styles.telemetryVal}>{kcalBurned} <ThemedText style={styles.unitText}>kcal</ThemedText></ThemedText>
+          <ThemedText style={styles.telemetryLabel}>Calorías MET</ThemedText>
+          <ThemedText style={styles.telemetryVal}>{kcal} <ThemedText style={styles.unitText}>kcal</ThemedText></ThemedText>
         </View>
 
         <View style={styles.telemetryDivider} />
 
         <View style={styles.telemetryCol}>
           <ThemedText style={styles.telemetryLabel}>Tiempo Activo</ThemedText>
-          <ThemedText style={styles.telemetryVal}>{activeMinutes} <ThemedText style={styles.unitText}>min</ThemedText></ThemedText>
+          <ThemedText style={styles.telemetryVal}>{activeMin} <ThemedText style={styles.unitText}>min</ThemedText></ThemedText>
+        </View>
+
+        <View style={styles.telemetryDivider} />
+
+        <View style={styles.telemetryCol}>
+          <ThemedText style={styles.telemetryLabel}>Ritmo</ThemedText>
+          <ThemedText style={styles.telemetryVal}>{paceMinKm} <ThemedText style={styles.unitText}>min/km</ThemedText></ThemedText>
         </View>
       </View>
 
@@ -282,6 +331,52 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#D4AF37',
     fontFamily: 'monospace',
+  },
+  // ─── Activity Mode Badge (Nivel Garmin / Samsung Health) ─────────────────
+  activityModeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.80)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.30)',
+  },
+  activityModeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  activityModeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+    color: '#10B981',
+  },
+  activityModeSep: {
+    width: 1,
+    height: 14,
+    backgroundColor: 'rgba(148, 163, 184, 0.3)',
+  },
+  cadenceText: {
+    fontSize: 13,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    color: '#FFFFFF',
+  },
+  cadenceUnit: {
+    fontSize: 9,
+    color: '#94A3B8',
+    fontWeight: 'normal',
+  },
+  speedText: {
+    fontSize: 13,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    color: '#FDE68A',
   },
   progressBarTrack: {
     height: 8,

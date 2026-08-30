@@ -3,12 +3,22 @@ import { Platform, AppState, AppStateStatus } from 'react-native';
 import { Pedometer } from 'expo-sensors';
 import { SafeStorage } from '@/utils/safeStorage';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
+import {
+  getActivityModeFromCadence,
+  calculateDistanceKm,
+  calculateSpeedKmh,
+  calculateStepCalories,
+  calculatePaceMinKm,
+  ActivityMode,
+} from '@/lib/fitnessCalculator';
 
 const TRANSIT_MODE_STORAGE_KEY = 'ataraxia_transit_mode_active_v1';
 const SENSITIVITY_STORAGE_KEY = 'ataraxia_pedometer_sensitivity_v1';
 const PEDOMETER_SESSION_STEPS_KEY = 'ataraxia_pedometer_session_steps_v1';
+const STRIDE_LENGTH_STORAGE_KEY = 'ataraxia_stride_length_manual_v1';
 
 export type PedometerSensitivity = 'high' | 'standard' | 'low';
+export type { ActivityMode };
 
 // Parámetros por nivel de sensibilidad (AOSP StepDetector Calibrated)
 const SENSITIVITY_PROFILES = {
@@ -70,7 +80,9 @@ function activateBackgroundKeepAlive() {
 export function usePedometerSensor(
   onStepDetected?: (stepsAdded: number) => void,
   onSetSteps?: (exactDailySteps: number) => void,
-  currentDailySteps: number = 0
+  currentDailySteps: number = 0,
+  userHeightCm: number = 170,
+  userWeightKg: number = 70,
 ) {
   const todayStr = getLocalTodayDateString();
   const dateKey = `ataraxia_pedometer_steps_${todayStr}`;
@@ -103,6 +115,33 @@ export function usePedometerSensor(
       return currentDailySteps;
     }
   });
+
+  // ─── Estados de métricas avanzadas (nivel Fitbit / Google Fit) ───────────────
+  const [cadenceSpm, setCadenceSpm] = useState<number>(0);
+  const [activityMode, setActivityMode] = useState<ActivityMode>('idle');
+  const [activeMinutes, setActiveMinutes] = useState<number>(0);
+
+  // Buffer de timestamps para cálculo de cadencia en ventana rodante de 30s (estándar Google Fit)
+  const cadenceWindowRef = useRef<number[]>([]);
+  const activeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastActiveTs = useRef<number>(0);
+
+  // Longitud de zancada manual persistida (calibración del usuario)
+  const manualStrideLengthRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    try {
+      const saved = SafeStorage.getItem(STRIDE_LENGTH_STORAGE_KEY);
+      if (saved) {
+        manualStrideLengthRef.current = parseFloat(saved);
+      }
+    } catch {}
+  }, []);
+
+  // Derivados en tiempo real (sin estado extra para evitar re-renders excesivos)
+  const distanceKm = calculateDistanceKm(liveSessionSteps, userHeightCm, activityMode, manualStrideLengthRef.current);
+  const speedKmh = calculateSpeedKmh(cadenceSpm, userHeightCm, activityMode, manualStrideLengthRef.current);
+  const kcalBurned = calculateStepCalories(liveSessionSteps, userWeightKg, userHeightCm, cadenceSpm, activeMinutes);
+  const paceMinKm = calculatePaceMinKm(speedKmh);
 
   // Estados matemáticos internos para filtrado temporal continuo (Delta-t) y cadencia periódica
   const lastSampleTimeRef = useRef<number>(0);
@@ -181,6 +220,51 @@ export function usePedometerSensor(
     try {
       SafeStorage.setItem(SENSITIVITY_STORAGE_KEY, newSensitivity);
     } catch {}
+  }, []);
+
+  // Guardar longitud de zancada manual del usuario (desde calibración)
+  const setManualStrideLength = useCallback((strideLengthM: number | undefined) => {
+    manualStrideLengthRef.current = strideLengthM;
+    try {
+      if (strideLengthM !== undefined) {
+        SafeStorage.setItem(STRIDE_LENGTH_STORAGE_KEY, String(strideLengthM));
+      } else {
+        SafeStorage.removeItem?.(STRIDE_LENGTH_STORAGE_KEY);
+      }
+    } catch {}
+  }, []);
+
+  // ─── MOTOR DE CADENCIA SPM (ventana rodante 30s — estándar Google Fit) ───────
+  const updateCadenceWindow = useCallback((nowTs: number) => {
+    const WINDOW_MS = 30000; // ventana de 30 segundos (estándar de la industria)
+    // Añadir el timestamp actual al buffer
+    cadenceWindowRef.current.push(nowTs);
+    // Purgar timestamps fuera de la ventana de 30s
+    cadenceWindowRef.current = cadenceWindowRef.current.filter(t => nowTs - t <= WINDOW_MS);
+
+    const count = cadenceWindowRef.current.length;
+    const windowSec = count > 1
+      ? (cadenceWindowRef.current[count - 1] - cadenceWindowRef.current[0]) / 1000
+      : 0;
+
+    const newCadence = windowSec > 1 ? Math.round((count / windowSec) * 60) : 0;
+    const newMode = getActivityModeFromCadence(newCadence);
+
+    setCadenceSpm(newCadence);
+    setActivityMode(newMode);
+
+    // Acumular tiempo activo: si cadencia > 60 SPM, el usuario está activo
+    if (newCadence >= 60) {
+      if (lastActiveTs.current > 0) {
+        const elapsed = (nowTs - lastActiveTs.current) / 60000; // en minutos
+        if (elapsed < 2) { // evitar saltos enormes al reanudar
+          setActiveMinutes(prev => parseFloat((prev + elapsed).toFixed(2)));
+        }
+      }
+      lastActiveTs.current = nowTs;
+    } else {
+      lastActiveTs.current = 0;
+    }
   }, []);
 
   // 1. Sincronización con Coprocesador de Hardware Nativo (Android / iOS)
@@ -277,12 +361,18 @@ export function usePedometerSensor(
           if (delta > 0) {
             lastWatcherReportedRef.current = currentTotal;
             highestAuthoritativeCountRef.current += delta;
+            const nowTs = Date.now();
 
             setLiveSessionSteps((prev) => {
               const updated = prev + delta;
               try { SafeStorage.setItem(PEDOMETER_SESSION_STEPS_KEY, String(updated)); } catch {}
               return updated;
             });
+
+            // Alimentar motor de cadencia SPM con cada paso nativo detectado
+            for (let i = 0; i < delta; i++) {
+              updateCadenceWindow(nowTs + i * 10); // pequeño offset para múltiples pasos juntos
+            }
 
             if (onStepDetectedRef.current) {
               onStepDetectedRef.current(delta);
@@ -424,6 +514,7 @@ export function usePedometerSensor(
                 if (variance <= MAX_CADENCE_VARIANCE_MS && maxInt <= 1500 && minInt >= 300) {
                   isWalkingConfirmedRef.current = true;
                   const verifiedSteps = times.length;
+                  const nowVerified = Date.now();
                   candidateStepsBufferRef.current = [];
 
                   setLiveSessionSteps((prev) => {
@@ -435,6 +526,9 @@ export function usePedometerSensor(
                     return updated;
                   });
 
+                  // Alimentar motor de cadencia SPM con los pasos verificados del buffer
+                  times.forEach((t, i) => updateCadenceWindow(nowVerified - (verifiedSteps - 1 - i) * 300));
+
                   if (onStepDetectedRef.current) {
                     onStepDetectedRef.current(verifiedSteps);
                   }
@@ -444,6 +538,7 @@ export function usePedometerSensor(
               }
             } else {
               // Marcha confirmada: sumar cada zancada rítmica en tiempo real (+1)
+              const nowStep = Date.now();
               setLiveSessionSteps((prev) => {
                 const updated = prev + 1;
                 try {
@@ -452,6 +547,9 @@ export function usePedometerSensor(
                 } catch {}
                 return updated;
               });
+
+              // Alimentar motor de cadencia SPM con cada paso confirmado
+              updateCadenceWindow(nowStep);
 
               if (onStepDetectedRef.current) {
                 onStepDetectedRef.current(1);
@@ -555,5 +653,15 @@ export function usePedometerSensor(
     forceSyncSteps,
     toggleTransitMode,
     toggleLiveTracking: toggleTransitMode,
+    // ─── Métricas Avanzadas (Nivel Google Fit / Fitbit) ───────────────────
+    cadenceSpm,
+    activityMode,
+    activeMinutes: Math.round(activeMinutes),
+    distanceKm,
+    speedKmh,
+    paceMinKm,
+    kcalBurned,
+    setManualStrideLength,
+    manualStrideLength: manualStrideLengthRef.current,
   };
 }

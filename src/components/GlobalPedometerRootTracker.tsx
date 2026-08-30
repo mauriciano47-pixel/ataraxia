@@ -12,9 +12,11 @@ import { usePedometerSensor } from "@/hooks/usePedometerSensor";
 export function GlobalPedometerRootTracker() {
   const { log, addSteps, setSteps } = useDailyLog();
   const currentSteps = log.steps ?? 0;
+  const heightCm = log.userMetrics?.heightCm ?? 170;
+  const weightKg = log.userMetrics?.weightKg ?? 70;
 
-  // Montar el sensor autoritativo a nivel raíz
-  usePedometerSensor(addSteps, setSteps, currentSteps);
+  // Montar el sensor autoritativo a nivel raíz con métricas personales del usuario
+  usePedometerSensor(addSteps, setSteps, currentSteps, heightCm, weightKg);
 
   return null;
 }

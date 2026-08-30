@@ -39,7 +39,21 @@ export default function HoyScreen() {
     setSensitivity,
     toggleTransitMode,
     forceSyncSteps,
-  } = usePedometerSensor(undefined, undefined, log.steps ?? 0);
+    // ─── Métricas Avanzadas (Nivel Google Fit / Fitbit / Samsung Health) ─────
+    cadenceSpm,
+    activityMode,
+    activeMinutes: pedometerActiveMinutes,
+    distanceKm,
+    speedKmh,
+    paceMinKm,
+    kcalBurned,
+  } = usePedometerSensor(
+    undefined,
+    undefined,
+    log.steps ?? 0,
+    log.userMetrics?.heightCm ?? 170,
+    log.userMetrics?.weightKg ?? 70,
+  );
 
   const isRegisteredUser = Boolean(
     log.hasCompletedOnboarding ||
@@ -260,6 +274,13 @@ export default function HoyScreen() {
               isVehicleDetected={isVehicleDetected}
               onToggleTransitMode={toggleTransitMode}
               onForceSync={forceSyncSteps}
+              cadenceSpm={cadenceSpm}
+              activityMode={activityMode}
+              activeMinutes={pedometerActiveMinutes}
+              distanceKm={distanceKm}
+              speedKmh={speedKmh}
+              paceMinKm={paceMinKm}
+              kcalBurned={kcalBurned}
             />
 
             {/* Fila Doble: Misión Táctica de la Senda & Principio Estoico */}
