@@ -12,7 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
-import { estimateStepMetrics } from '@/lib/fitnessCalculator';
+import {
+  calculateDistanceKm,
+  calculateStepCalories,
+  getPersonalStrideLength,
+} from '@/lib/fitnessCalculator';
 
 import { SafeStorage } from '@/utils/safeStorage';
 import { PedometerSensitivity } from '@/hooks/usePedometerSensor';
@@ -29,6 +33,10 @@ interface StepCalibrationModalProps {
   onToggleLiveTracking?: () => void;
   sensitivity?: PedometerSensitivity;
   onSetSensitivity?: (sens: PedometerSensitivity) => void;
+  userHeightCm?: number;
+  userWeightKg?: number;
+  manualStrideLength?: number;
+  onSetManualStrideLength?: (strideM: number | undefined) => void;
 }
 
 export function StepCalibrationModal({
@@ -43,13 +51,22 @@ export function StepCalibrationModal({
   onToggleLiveTracking,
   sensitivity = 'standard',
   onSetSensitivity,
+  userHeightCm = 170,
+  userWeightKg = 70,
+  manualStrideLength,
+  onSetManualStrideLength,
 }: StepCalibrationModalProps) {
   const [exactInput, setExactInput] = useState<string>(currentSteps.toString());
   const [goalInput, setGoalInput] = useState<string>(stepGoal.toString());
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false);
   const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
 
-  const { km, caloriesBurned } = estimateStepMetrics(currentSteps);
+  const defaultStrideCm = Math.round(getPersonalStrideLength(userHeightCm, 'walking') * 100);
+  const currentStrideCm = manualStrideLength ? Math.round(manualStrideLength * 100) : defaultStrideCm;
+  const [strideInput, setStrideInput] = useState<string>(currentStrideCm.toString());
+
+  const km = calculateDistanceKm(currentSteps, userHeightCm, 'walking', manualStrideLength);
+  const caloriesBurned = calculateStepCalories(currentSteps, userWeightKg, userHeightCm);
   const toggleLiveTracking = onToggleLiveTracking ?? (() => {});
 
   const showFeedback = (msg: string) => {
@@ -115,6 +132,31 @@ export function StepCalibrationModal({
       } catch {}
       showFeedback('🔄 Podómetro reiniciado a 0 pasos.');
     }
+  };
+
+  const handleSaveStride = () => {
+    const valCm = parseFloat(strideInput);
+    if (isNaN(valCm) || valCm < 30 || valCm > 180) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Por favor ingresa una zancada válida en cm (entre 30 y 180 cm).');
+      } else {
+        Alert.alert('Error', 'Por favor ingresa una zancada válida en cm (entre 30 y 180 cm).');
+      }
+      return;
+    }
+    const valM = parseFloat((valCm / 100).toFixed(3));
+    if (onSetManualStrideLength) {
+      onSetManualStrideLength(valM);
+    }
+    showFeedback(`📐 Longitud de zancada calibrada en ${valCm} cm (${valM} m).`);
+  };
+
+  const handleResetStride = () => {
+    if (onSetManualStrideLength) {
+      onSetManualStrideLength(undefined);
+    }
+    setStrideInput(defaultStrideCm.toString());
+    showFeedback(`🔄 Zancada restaurada a valor ACSM automático (${defaultStrideCm} cm).`);
   };
 
   return (
@@ -259,6 +301,48 @@ export function StepCalibrationModal({
                   </ThemedText>
                   <ThemedText style={styles.sensBtnDesc}>Anti-Sacudida</ThemedText>
                 </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Calibración Anatómica de Zancada (Estándar ACSM / Fitbit) */}
+            <View style={styles.sectionCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="resize-outline" size={18} color="#10B981" />
+                  <ThemedText style={styles.sectionTitle}>LONGITUD DE ZANCADA</ThemedText>
+                </View>
+                <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                  <ThemedText style={{ fontSize: 9, fontWeight: '900', color: '#34D399', fontFamily: 'monospace' }}>
+                    ACSM {defaultStrideCm} cm
+                  </ThemedText>
+                </View>
+              </View>
+
+              <ThemedText style={styles.sectionDesc}>
+                Calculada por tu estatura ({userHeightCm} cm). Puedes personalizar los centímetros de cada zancada para máxima precisión en km:
+              </ThemedText>
+
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.numericInput}
+                  keyboardType="numeric"
+                  value={strideInput}
+                  onChangeText={setStrideInput}
+                  placeholder="Ej: 72"
+                  placeholderTextColor="#64748B"
+                />
+                <TouchableOpacity style={styles.applyBtn} onPress={handleSaveStride} activeOpacity={0.8}>
+                  <ThemedText style={styles.applyBtnText}>Fijar (cm)</ThemedText>
+                </TouchableOpacity>
+                {manualStrideLength !== undefined && (
+                  <TouchableOpacity
+                    style={[styles.applyBtn, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}
+                    onPress={handleResetStride}
+                    activeOpacity={0.8}
+                  >
+                    <ThemedText style={[styles.applyBtnText, { color: '#CBD5E1' }]}>Auto</ThemedText>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 

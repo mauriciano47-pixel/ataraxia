@@ -47,6 +47,8 @@ export default function HoyScreen() {
     speedKmh,
     paceMinKm,
     kcalBurned,
+    setManualStrideLength,
+    manualStrideLength,
   } = usePedometerSensor(
     undefined,
     undefined,
@@ -539,6 +541,10 @@ export default function HoyScreen() {
             onToggleLiveTracking={toggleTransitMode}
             sensitivity={sensitivity}
             onSetSensitivity={setSensitivity}
+            userHeightCm={log.userMetrics?.heightCm ?? 170}
+            userWeightKg={log.userMetrics?.weightKg ?? 70}
+            manualStrideLength={manualStrideLength}
+            onSetManualStrideLength={setManualStrideLength}
           />
         )}
 
