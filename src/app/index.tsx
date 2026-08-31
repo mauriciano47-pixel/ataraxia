@@ -21,13 +21,30 @@ import { BoxBreathingModal } from '@/components/BoxBreathingModal';
 import { DailyStoicChallengeCard } from '@/components/DailyStoicChallengeCard';
 import { StoicTwinMetabolicCards } from '@/components/StoicTwinMetabolicCards';
 import { SleepQualityCard } from '@/components/SleepQualityCard';
+import { GreekParchmentPact } from '@/components/GreekParchmentPact';
+import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
+import { TempleGuardianKeyStep } from '@/components/TempleGuardianKeyStep';
+import { LegendaryPath } from '@/types/onboarding';
 import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 
 export default function HoyScreen() {
-  const { log, toggleTraining, addSteps, setSteps, addWater, setStepGoal, updateUserMetrics, updateSmartDevice, saveReadinessScore, syncExternalHealthData, calculateTodayGrade } = useDailyLog();
+  const {
+    log,
+    toggleTraining,
+    addSteps,
+    setSteps,
+    addWater,
+    setStepGoal,
+    updateUserMetrics,
+    updateSmartDevice,
+    saveReadinessScore,
+    syncExternalHealthData,
+    calculateTodayGrade,
+    saveGuardianKey,
+  } = useDailyLog();
   const router = useRouter();
 
   // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7 (Gestionado a nivel raíz por GlobalPedometerRootTracker)
@@ -62,10 +79,12 @@ export default function HoyScreen() {
     log.legendaryPath ||
     SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' ||
     SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' ||
+    SafeStorage.getItem('ataraxia_onboarding_completed_v1') === 'true' ||
     SafeStorage.getItem('ataraxia_onboarding_completed') === 'true'
   );
 
-  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(false);
+  const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key'>('pact');
+  const [chosenPath, setChosenPath] = useState<LegendaryPath>('spartan');
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
   const [showBoxBreathing, setShowBoxBreathing] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
@@ -521,11 +540,31 @@ export default function HoyScreen() {
 
         </Animated.ScrollView>
 
-        {(!isRegisteredUser && !onboardingDismissed) && (
-          <StoicOnboardingModal
-            visible={true}
-            onClose={() => setOnboardingDismissed(true)}
-          />
+        {!isRegisteredUser && (
+          <View style={StyleSheet.absoluteFill}>
+            {initiationStep === 'pact' && (
+              <GreekParchmentPact onAcceptPact={() => setInitiationStep('path')} />
+            )}
+            {initiationStep === 'path' && (
+              <LegendaryPathSelector
+                onSelectPath={(path) => {
+                  setChosenPath(path);
+                  setInitiationStep('key');
+                }}
+              />
+            )}
+            {initiationStep === 'key' && (
+              <TempleGuardianKeyStep
+                selectedPath={chosenPath}
+                onCompleteKey={(data) => {
+                  saveGuardianKey({
+                    ...data,
+                    path: chosenPath,
+                  });
+                }}
+              />
+            )}
+          </View>
         )}
 
         {showStepCalibration && (
