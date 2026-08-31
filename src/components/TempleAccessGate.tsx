@@ -15,6 +15,8 @@ import { SafeStorage } from '@/utils/safeStorage';
 
 // LLAVES DE ACCESO AUTORIZADAS (Tú + Tus 3 personas autorizadas)
 // Puedes usar el PIN numérico de 6 dígitos o la clave alfanumérica
+export const ARCHON_MASTER_KEYS = ['742091', 'MAURO-ARCHON'];
+
 export const AUTHORIZED_KEYS = [
   '742091',           // PIN Maestro Numérico (Mauro)
   'MAURO-ARCHON',     // Clave Maestra de Mauro
@@ -41,6 +43,13 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
         const urlKey = params.get('key')?.trim().toUpperCase();
         if (urlKey && AUTHORIZED_KEYS.includes(urlKey)) {
           SafeStorage.setItem(STORAGE_KEY, 'true');
+          // Si es el Arconte Maestro, autorizar bypass supremo
+          if (ARCHON_MASTER_KEYS.includes(urlKey)) {
+            SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+            SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+            SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+            SafeStorage.setItem('ataraxia_onboarding_completed_v1', 'true');
+          }
           return true;
         }
       } catch {}
@@ -72,6 +81,12 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       if (AUTHORIZED_KEYS.includes(cleanCode)) {
         SafeStorage.setItem(STORAGE_KEY, 'true');
+        if (ARCHON_MASTER_KEYS.includes(cleanCode)) {
+          SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+          SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+          SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+          SafeStorage.setItem('ataraxia_onboarding_completed_v1', 'true');
+        }
         setIsUnlocked(true);
       } else {
         setErrorMsg('❌ Clave no reconocida. El Santuario de Ataraxia permanece sellado.');

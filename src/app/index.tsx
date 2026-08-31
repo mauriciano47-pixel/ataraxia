@@ -74,7 +74,14 @@ export default function HoyScreen() {
     log.userMetrics?.weightKg ?? 70,
   );
 
+  const isArchonMaster = Boolean(
+    SafeStorage.getItem('ataraxia_is_archon_master') === 'true' ||
+    SafeStorage.getItem('ataraxia_archon_auth_v1') === 'true' ||
+    (log.userName && log.userName.toUpperCase().includes('MAURO'))
+  );
+
   const isRegisteredUser = Boolean(
+    isArchonMaster ||
     log.hasCompletedOnboarding ||
     log.legendaryPath ||
     SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' ||
