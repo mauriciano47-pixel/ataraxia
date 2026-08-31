@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useEffect } from 'react';
 import { Platform, View, Text, TouchableOpacity } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   HoyIcon,
   JournalIcon,
@@ -50,6 +51,11 @@ import { TempleAccessGate } from '@/components/TempleAccessGate';
 import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
 
 export default function TabLayout() {
+  useEffect(() => {
+    // Desactivar y ocultar el splash nativo de Android/iOS al montar la interfaz
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
   return (
     <GlobalErrorBoundary>
       <DailyLogProvider>

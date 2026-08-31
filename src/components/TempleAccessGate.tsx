@@ -8,7 +8,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   ScrollView,
+  Image,
 } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 import { SafeStorage } from '@/utils/safeStorage';
@@ -63,6 +65,7 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
 
   // Verificación en cliente post-montaje
   useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
     if (SafeStorage.getItem(STORAGE_KEY) === 'true') {
       setIsUnlocked(true);
     }
@@ -131,9 +134,11 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
                 }}
               />
             ) : (
-              <View style={styles.nativeEmblemPlaceholder}>
-                <Ionicons name="shield-checkmark" size={64} color="#FFE259" />
-              </View>
+              <Image
+                source={require('../../assets/images/zeus_master_emblem_transparent.png')}
+                style={{ width: 150, height: 150 }}
+                resizeMode="contain"
+              />
             )}
           </View>
 
