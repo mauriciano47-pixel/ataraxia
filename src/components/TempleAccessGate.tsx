@@ -15,11 +15,15 @@ import { SafeStorage } from '@/utils/safeStorage';
 
 // LLAVES DE ACCESO AUTORIZADAS (Tú + Tus 3 personas autorizadas)
 // Puedes usar el PIN numérico de 6 dígitos o la clave alfanumérica
-const AUTHORIZED_KEYS = [
-  '742091',           // PIN Maestro Numérico
-  'ZEUS777',          // Clave Maestra de Zeus
-  'ATARAXIA',         // Clave Clásica
-  'ATARAXIA-ROYAL',   // Clave Real
+export const AUTHORIZED_KEYS = [
+  '742091',           // PIN Maestro Numérico (Mauro)
+  'MAURO-ARCHON',     // Clave Maestra de Mauro
+  'ZEUS777',          // Clave Guardián 1
+  'GUARDIAN-1',       // Alias Guardián 1
+  'ATARAXIA',         // Clave Guardián 2
+  'GUARDIAN-2',       // Alias Guardián 2
+  'ATARAXIA-ROYAL',   // Clave Guardián 3
+  'GUARDIAN-3',       // Alias Guardián 3
 ];
 
 const STORAGE_KEY = 'ataraxia_temple_access_granted_v1';

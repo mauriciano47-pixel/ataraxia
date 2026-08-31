@@ -18,6 +18,7 @@ import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
 import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 import { lockTempleAccess } from '@/components/TempleAccessGate';
+import { GuardianInviteModal } from '@/components/GuardianInviteModal';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
   const [showPathModal, setShowPathModal] = useState(false);
   const [showDiplomaModal, setShowDiplomaModal] = useState(false);
   const [showLockedDiplomaModal, setShowLockedDiplomaModal] = useState(false);
+  const [showGuardianInviteModal, setShowGuardianInviteModal] = useState(false);
 
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
@@ -515,6 +517,37 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </ThemedView>
 
+          {/* Sección de Convocatoria de Guardianes */}
+          <ThemedView style={[styles.section, { borderColor: 'rgba(212, 175, 55, 0.45)', backgroundColor: 'rgba(15, 23, 42, 0.85)' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <ThemedText style={styles.sectionTitle}>CONSEJO DE LOS 4 GUARDIANES</ThemedText>
+              <View style={styles.guardianCuposBadge}>
+                <ThemedText style={styles.guardianCuposText}>3 CUPOS DISPONIBLES</ThemedText>
+              </View>
+            </View>
+            <ThemedText style={styles.hint}>
+              Genera y envía enlaces únicos a tus 3 compañeros para que configuren su propia biometría, senda y pacto desde el principio sin interferir con tus registros.
+            </ThemedText>
+
+            <TouchableOpacity
+              style={styles.guardianInviteBtn}
+              onPress={() => setShowGuardianInviteModal(true)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#FFE259', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.guardianInviteBtnGradient}
+              >
+                <Ionicons name="paper-plane" size={16} color="#050507" />
+                <ThemedText style={styles.guardianInviteBtnText}>
+                  ⚡ CONVOCAR & ENVIAR ENLACES A GUARDIANES
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          </ThemedView>
+
           {/* Sección Estado del Guardián */}
           <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>ESTADO DEL GUARDIÁN</ThemedText>
@@ -781,6 +814,12 @@ export default function ProfileScreen() {
         adherencePct={adherencePct}
         tier={cycle?.tier || 'Novicio de Esparta'}
         coachArchetype={log.coachArchetype || 'stoic_mentor'}
+      />
+
+      {/* Modal de Convocatoria de Guardianes */}
+      <GuardianInviteModal
+        visible={showGuardianInviteModal}
+        onClose={() => setShowGuardianInviteModal(false)}
       />
       </SafeAreaView>
     </PearlElectricBackground>
@@ -1267,5 +1306,39 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#94A3B8',
     lineHeight: 14,
+  },
+  guardianCuposBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FFE259',
+  },
+  guardianCuposText: {
+    fontSize: 9,
+    color: '#FFE259',
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  guardianInviteBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  guardianInviteBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  guardianInviteBtnText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#050507',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
   },
 });
