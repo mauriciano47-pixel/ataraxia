@@ -84,10 +84,9 @@ export default function HoyScreen() {
     isArchonMaster ||
     log.hasCompletedOnboarding ||
     log.legendaryPath ||
-    SafeStorage.getItem('ataraxia_pact_accepted_v1') === 'true' ||
-    SafeStorage.getItem('ataraxia_path_chosen_v1') === 'true' ||
-    SafeStorage.getItem('ataraxia_onboarding_completed_v1') === 'true' ||
-    SafeStorage.getItem('ataraxia_onboarding_completed') === 'true'
+    SafeStorage.getItem('ataraxia_pact_accepted_v2') === 'true' ||
+    SafeStorage.getItem('ataraxia_path_chosen_v2') === 'true' ||
+    SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true'
   );
 
   const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key'>('pact');

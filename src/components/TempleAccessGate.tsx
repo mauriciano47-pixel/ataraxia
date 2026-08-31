@@ -28,7 +28,7 @@ export const AUTHORIZED_KEYS = [
   'GUARDIAN-3',       // Alias Guardián 3
 ];
 
-const STORAGE_KEY = 'ataraxia_temple_access_granted_v1';
+const STORAGE_KEY = 'ataraxia_temple_access_granted_v2';
 
 export function TempleAccessGate({ children }: { children: React.ReactNode }) {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
@@ -47,8 +47,8 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
           if (ARCHON_MASTER_KEYS.includes(urlKey)) {
             SafeStorage.setItem('ataraxia_is_archon_master', 'true');
             SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
-            SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
-            SafeStorage.setItem('ataraxia_onboarding_completed_v1', 'true');
+            SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+            SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
           }
           return true;
         }
@@ -84,8 +84,8 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
         if (ARCHON_MASTER_KEYS.includes(cleanCode)) {
           SafeStorage.setItem('ataraxia_is_archon_master', 'true');
           SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
-          SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
-          SafeStorage.setItem('ataraxia_onboarding_completed_v1', 'true');
+          SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+          SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
         }
         setIsUnlocked(true);
       } else {

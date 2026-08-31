@@ -132,11 +132,11 @@ export const DEFAULT_LOG: DailyLog = {
   effectiveSets: 0,
 };
 
-const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v4';
-const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri';
-const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v1';
-const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v1';
-const BODY_SNAPSHOTS_STORAGE_KEY = 'ataraxia_body_snapshots_v1';
+const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v5';
+const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri_v2';
+const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v2';
+const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v2';
+const BODY_SNAPSHOTS_STORAGE_KEY = 'ataraxia_body_snapshots_v2';
 
 function loadLocalBodySnapshots(): BodySnapshot[] {
   try {
@@ -326,8 +326,8 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
     SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
 
     if (currentLog.legendaryPath) {
-      SafeStorage.setItem('ataraxia_path_chosen_v1', 'true');
-      SafeStorage.setItem('ataraxia_pact_accepted_v1', 'true');
+      SafeStorage.setItem('ataraxia_path_chosen_v2', 'true');
+      SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
     }
 
     if (currentLog.hasCompletedOnboarding) {
