@@ -34,18 +34,26 @@ const STORAGE_KEY = 'ataraxia_temple_access_granted_v2';
 
 export function TempleAccessGate({ children }: { children: React.ReactNode }) {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    // 1. En APK Nativo (Android / iOS / BlueStacks): Auto-desbloquear de inmediato como Arconte Supremo
+    if (Platform.OS !== 'web') {
+      SafeStorage.setItem(STORAGE_KEY, 'true');
+      SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+      SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+      SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+      SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+      return true;
+    }
+
+    // 2. En Web: Verificar almacenamiento o llave en URL
     if (typeof window !== 'undefined') {
-      // 1. Verificar si ya fue desbloqueado previamente en este dispositivo
       if (SafeStorage.getItem(STORAGE_KEY) === 'true') {
         return true;
       }
-      // 2. Verificar si viene con llave en la URL (ej: https://app.vercel.app/?key=742091)
       try {
         const params = new URLSearchParams(window.location.search);
         const urlKey = params.get('key')?.trim().toUpperCase();
         if (urlKey && AUTHORIZED_KEYS.includes(urlKey)) {
           SafeStorage.setItem(STORAGE_KEY, 'true');
-          // Si es el Arconte Maestro, autorizar bypass supremo
           if (ARCHON_MASTER_KEYS.includes(urlKey)) {
             SafeStorage.setItem('ataraxia_is_archon_master', 'true');
             SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');

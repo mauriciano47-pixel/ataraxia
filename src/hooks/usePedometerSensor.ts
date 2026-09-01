@@ -53,7 +53,7 @@ let silentAudioCtx: any = null;
 let silentOscillator: any = null;
 
 function activateBackgroundKeepAlive() {
-  if (typeof window === 'undefined') return;
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
