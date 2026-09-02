@@ -111,11 +111,11 @@ export const DEFAULT_LOG: DailyLog = {
   steps: 0,
   stepGoal: 10000,
   stoicAvatarUri: '',
-  userName: 'Ciudadano Prokopton',
+  userName: '',
   userEmail: '',
   hasCompletedOnboarding: false,
   coachArchetype: 'stoic_mentor',
-  legendaryPath: 'spartan',
+  legendaryPath: undefined,
   monthlyCycle: DEFAULT_MONTHLY_CYCLE,
   smartDevice: {
     connected: false,

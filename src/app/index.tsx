@@ -74,19 +74,25 @@ export default function HoyScreen() {
     log.userMetrics?.weightKg ?? 70,
   );
 
+  // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián
+  const currentKey = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key'))
+    : null;
+
   const isArchonMaster = Boolean(
-    SafeStorage.getItem('ataraxia_is_archon_master') === 'true' ||
-    SafeStorage.getItem('ataraxia_archon_auth_v1') === 'true' ||
-    (log.userName && log.userName.toUpperCase().includes('MAURO'))
+    (currentKey && (currentKey === '742091' || currentKey === 'MAURO-ARCHON')) ||
+    (!currentKey && SafeStorage.getItem('ataraxia_is_archon_master') === 'true')
   );
 
   const isRegisteredUser = Boolean(
     isArchonMaster ||
-    log.hasCompletedOnboarding ||
-    log.legendaryPath ||
-    SafeStorage.getItem('ataraxia_pact_accepted_v2') === 'true' ||
-    SafeStorage.getItem('ataraxia_path_chosen_v2') === 'true' ||
-    SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true'
+    (
+      log.hasCompletedOnboarding === true &&
+      Boolean(log.userName) &&
+      log.userName.trim() !== '' &&
+      log.userName !== 'Ciudadano Prokopton' &&
+      SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true'
+    )
   );
 
   const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key'>('pact');
@@ -212,9 +218,11 @@ export default function HoyScreen() {
             {/* Insignia con el nombre del usuario */}
             <View style={styles.brandSubtitleBadge}>
               <ThemedText style={styles.brandSubtitle}>
-                {log.userName && log.userName !== 'Ciudadano Prokopton'
-                  ? `⚔️ ${log.userName.toUpperCase()}`
-                  : '⚔️ MAURO'}
+                {isArchonMaster
+                  ? '👑 ARCONTE MAURO'
+                  : log.userName && log.userName !== 'Ciudadano Prokopton' && log.userName.trim() !== ''
+                    ? `⚔️ ${log.userName.toUpperCase()}`
+                    : '⚔️ GUARDIÁN DEL TEMPLO'}
               </ThemedText>
             </View>
 
