@@ -46,23 +46,41 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
 
     // 2. En Web: Verificar almacenamiento o llave en URL
     if (typeof window !== 'undefined') {
-      if (SafeStorage.getItem(STORAGE_KEY) === 'true') {
-        return true;
-      }
       try {
         const params = new URLSearchParams(window.location.search);
         const urlKey = params.get('key')?.trim().toUpperCase();
         if (urlKey && AUTHORIZED_KEYS.includes(urlKey)) {
           SafeStorage.setItem(STORAGE_KEY, 'true');
+          SafeStorage.setItem('ataraxia_current_logged_key', urlKey);
+
           if (ARCHON_MASTER_KEYS.includes(urlKey)) {
+            // ACCESO MAESTRO DEL ARCONTE (MAURO)
             SafeStorage.setItem('ataraxia_is_archon_master', 'true');
             SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
             SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
             SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+          } else {
+            // ACCESO DE GUARDIÁN INVITADO (ZEUS777, ATARAXIA, ATARAXIA-ROYAL)
+            // Purgar inmediatamente cualquier residuo de Arconte en este navegador
+            SafeStorage.removeItem('ataraxia_is_archon_master');
+            SafeStorage.removeItem('ataraxia_archon_auth_v1');
+
+            const isGuardianRegistered = SafeStorage.getItem(`ataraxia_guardian_registered_${urlKey}`);
+            if (isGuardianRegistered !== 'true') {
+              // Si no se ha registrado, forzar inicio limpio para el guardián
+              SafeStorage.removeItem('ataraxia_onboarding_completed_v2');
+              SafeStorage.removeItem('ataraxia_pact_accepted_v2');
+              SafeStorage.removeItem('ataraxia_path_chosen_v2');
+              SafeStorage.removeItem('ataraxia_user_profile_v5');
+            }
           }
           return true;
         }
       } catch {}
+
+      if (SafeStorage.getItem(STORAGE_KEY) === 'true') {
+        return true;
+      }
     }
     return false;
   });
@@ -92,11 +110,25 @@ export function TempleAccessGate({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       if (AUTHORIZED_KEYS.includes(cleanCode)) {
         SafeStorage.setItem(STORAGE_KEY, 'true');
+        SafeStorage.setItem('ataraxia_current_logged_key', cleanCode);
+
         if (ARCHON_MASTER_KEYS.includes(cleanCode)) {
           SafeStorage.setItem('ataraxia_is_archon_master', 'true');
           SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
           SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
           SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+        } else {
+          // Purgar credenciales de Arconte para guardianes
+          SafeStorage.removeItem('ataraxia_is_archon_master');
+          SafeStorage.removeItem('ataraxia_archon_auth_v1');
+
+          const isGuardianRegistered = SafeStorage.getItem(`ataraxia_guardian_registered_${cleanCode}`);
+          if (isGuardianRegistered !== 'true') {
+            SafeStorage.removeItem('ataraxia_onboarding_completed_v2');
+            SafeStorage.removeItem('ataraxia_pact_accepted_v2');
+            SafeStorage.removeItem('ataraxia_path_chosen_v2');
+            SafeStorage.removeItem('ataraxia_user_profile_v5');
+          }
         }
         setIsUnlocked(true);
       } else {

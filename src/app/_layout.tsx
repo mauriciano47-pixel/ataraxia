@@ -14,22 +14,24 @@ import {
   InfoTabIcon,
 } from '@/components/TabSvgIcons';
 
-class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorText: string }> {
+class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorText: string; recoverAttempted: boolean }> {
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false, errorText: '' };
+    this.state = { hasError: false, errorText: '', recoverAttempted: false };
   }
+
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, errorText: error?.message || 'Ajuste de renderizado detectado' };
   }
+
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Centinela capturó error:', error, errorInfo);
+    console.warn('Centinela gestionó ajuste de render:', error?.message, errorInfo);
   }
 
   handleCleanRecover = () => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        // Purgar únicamente claves temporales conservando acceso de Arconte y credenciales maestras
+        // Purgar entradas temporales preservando llaves de Arconte y credenciales maestras
         const preservedKeys = [
           'ataraxia_temple_access_granted_v2',
           'ataraxia_is_archon_master',
@@ -37,8 +39,9 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
           'ataraxia_pact_accepted_v2',
           'ataraxia_onboarding_completed_v2',
           'ataraxia_path_chosen_v2',
+          'ataraxia_user_profile_v5',
           'ataraxia_user_profile_v2',
-          'ataraxia_user_profile_core_v1',
+          'ataraxia_monthly_cycle_v2',
         ];
         const backup: Record<string, string> = {};
         preservedKeys.forEach((k) => {
@@ -46,23 +49,24 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
           if (val) backup[k] = val;
         });
 
-        // Limpiar logs temporales
+        // Limpiar únicamente caches temporales
         Object.keys(window.localStorage).forEach((k) => {
-          if (k.startsWith('ataraxia_log_') || k.startsWith('ataraxia_pedometer_')) {
+          if (k.startsWith('ataraxia_pedometer_temp_') || k.startsWith('ataraxia_cache_')) {
             window.localStorage.removeItem(k);
           }
         });
 
-        // Restaurar credenciales maestras intactas
+        // Restaurar credenciales maestras
         Object.entries(backup).forEach(([k, v]) => {
           window.localStorage.setItem(k, v);
         });
 
+        this.setState({ hasError: false, errorText: '', recoverAttempted: true });
         window.location.reload();
         return;
       }
     } catch {}
-    this.setState({ hasError: false, errorText: '' });
+    this.setState({ hasError: false, errorText: '', recoverAttempted: true });
   };
 
   render() {
