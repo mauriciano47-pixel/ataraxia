@@ -20,25 +20,110 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
     this.state = { hasError: false, errorText: '' };
   }
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, errorText: error.message || 'Error de renderizado' };
+    return { hasError: true, errorText: error?.message || 'Ajuste de renderizado detectado' };
   }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error capturado:', error, errorInfo);
+    console.error('Centinela capturó error:', error, errorInfo);
   }
+
+  handleCleanRecover = () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Purgar únicamente claves temporales conservando acceso de Arconte y credenciales maestras
+        const preservedKeys = [
+          'ataraxia_temple_access_granted_v2',
+          'ataraxia_is_archon_master',
+          'ataraxia_archon_auth_v1',
+          'ataraxia_pact_accepted_v2',
+          'ataraxia_onboarding_completed_v2',
+          'ataraxia_path_chosen_v2',
+          'ataraxia_user_profile_v2',
+          'ataraxia_user_profile_core_v1',
+        ];
+        const backup: Record<string, string> = {};
+        preservedKeys.forEach((k) => {
+          const val = window.localStorage.getItem(k);
+          if (val) backup[k] = val;
+        });
+
+        // Limpiar logs temporales
+        Object.keys(window.localStorage).forEach((k) => {
+          if (k.startsWith('ataraxia_log_') || k.startsWith('ataraxia_pedometer_')) {
+            window.localStorage.removeItem(k);
+          }
+        });
+
+        // Restaurar credenciales maestras intactas
+        Object.entries(backup).forEach(([k, v]) => {
+          window.localStorage.setItem(k, v);
+        });
+
+        window.location.reload();
+        return;
+      }
+    } catch {}
+    this.setState({ hasError: false, errorText: '' });
+  };
+
   render() {
     if (this.state.hasError) {
       return (
-        <View style={{ flex: 1, backgroundColor: '#05070D', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#D4AF37', marginBottom: 10 }}>🏛️ TEMPLO DE ATARAXIA</Text>
-          <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', marginBottom: 20 }}>
-            Centinela-1 recuperó la sesión tras un ajuste de renderizado.
+        <View style={{ flex: 1, backgroundColor: '#040406', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 26, fontWeight: '900', color: '#D4AF37', marginBottom: 12, letterSpacing: 1.5, fontFamily: 'serif' }}>
+            🏛️ TEMPLO DE ATARAXIA
           </Text>
-          <TouchableOpacity
-            style={{ backgroundColor: '#D4AF37', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12 }}
-            onPress={() => { if (typeof window !== 'undefined') window.location.reload(); }}
-          >
-            <Text style={{ color: '#05070D', fontWeight: 'bold', fontSize: 12 }}>⚡ REINICIAR TEMPLO</Text>
-          </TouchableOpacity>
+          <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            Centinela ha protegido el Templo ante un ajuste de renderizado del dispositivo.
+          </Text>
+
+          <View style={{ width: '100%', maxWidth: 320, gap: 12 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#D4AF37',
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                borderRadius: 12,
+                alignItems: 'center',
+                shadowColor: '#FFE259',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+              }}
+              onPress={() => {
+                this.setState({ hasError: false, errorText: '' });
+                if (typeof window !== 'undefined') window.location.reload();
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#05070D', fontWeight: '900', fontSize: 13, letterSpacing: 0.8, fontFamily: 'monospace' }}>
+                ⚡ REINICIAR TEMPLO
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                borderWidth: 1,
+                borderColor: 'rgba(212, 175, 55, 0.4)',
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                alignItems: 'center',
+              }}
+              onPress={this.handleCleanRecover}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#E2E8F0', fontWeight: 'bold', fontSize: 11, fontFamily: 'monospace' }}>
+                🛡️ PURGAR CACHÉ Y RESTAURAR
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {this.state.errorText ? (
+            <Text style={{ fontSize: 9.5, color: '#64748B', marginTop: 24, textAlign: 'center', fontFamily: 'monospace' }}>
+              Código de Diagnóstico: {this.state.errorText}
+            </Text>
+          ) : null}
         </View>
       );
     }

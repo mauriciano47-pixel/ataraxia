@@ -141,8 +141,16 @@ export default function HoyScreen() {
   }[currentPath] || { title: '⚔️ SENDA ESPARTANA', focus: 'Fuerza & Sobrecarga', target: '4-5 Series • RIR 2' };
 
   const todayGrade = calculateTodayGrade();
-  const pillars = todayGrade.pillars;
-  const completedPillarsCount = Object.values(pillars).filter(Boolean).length;
+  const pillars = todayGrade?.pillars || {
+    training: Boolean(log.trainingCompleted),
+    steps: Boolean((log.steps || 0) >= (log.stepGoal || 10000) * 0.85),
+    nutrition: Boolean((log.mealsLogged || 0) > 0 || (log.totalCalories || 0) > 0),
+    sleep: Boolean(log.readinessScore?.sleep || log.sleepQuality),
+    stoicChallenge: false,
+    heartRate: Boolean(log.smartDevice?.heartRateBpm && log.smartDevice.heartRateBpm > 0),
+    coachCheckIn: Boolean(log.checkInDone || log.readinessScore),
+  };
+  const completedPillarsCount = Object.values(pillars || {}).filter(Boolean).length;
   const readinessScore = Math.min(100, Math.round(65 + (waterRatio * 15) + (log.trainingCompleted ? 10 : 0) + (log.checkInDone ? 10 : 0)));
 
   return (

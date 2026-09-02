@@ -360,153 +360,165 @@ function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
 }
 
 function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
-  const cycle = currentLog.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-  const todayStr = getLocalTodayDateString();
-  const startStr = cycle.startDate ? cycle.startDate.split('T')[0] : '2026-09-01';
+  try {
+    if (!currentLog) return currentLog;
+    const cycle = currentLog.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+    const todayStr = getLocalTodayDateString();
+    const startStr = cycle?.startDate ? cycle.startDate.split('T')[0] : '2026-09-01';
 
-  const startDateObj = new Date(`${startStr}T00:00:00`);
-  const todayDateObj = new Date(`${todayStr}T00:00:00`);
+    const [sY, sM, sD] = (startStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
+    const [tY, tM, tD] = (todayStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
 
-  // Calcular diferencia en días exactos desde el 1 de Septiembre
-  const diffTime = todayDateObj.getTime() - startDateObj.getTime();
-  const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-  const currentDayNum = Math.min(30, Math.max(1, diffDays + 1));
+    const startDateObj = new Date(sY || 2026, (sM > 0 ? sM - 1 : 8), sD || 1);
+    const todayDateObj = new Date(tY || 2026, (tM > 0 ? tM - 1 : 8), tD || 1);
 
-  const existingGradesMap = new Map<string, DailyGrade>();
-  (cycle.dailyGrades || []).forEach((g) => {
-    existingGradesMap.set(g.date, g);
-  });
+    // Calcular diferencia en días exactos desde el inicio
+    const diffTime = todayDateObj.getTime() - startDateObj.getTime();
+    const rawDiffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.max(0, isNaN(rawDiffDays) ? 0 : rawDiffDays);
+    const currentDayNum = Math.min(30, Math.max(1, diffDays + 1));
 
-  let passedCount = 0;
-  let failedCount = 0;
-  let totalScoreSum = 0;
-  const consolidatedGrades: DailyGrade[] = [];
+    const existingGradesMap = new Map<string, DailyGrade>();
+    (cycle?.dailyGrades || []).forEach((g) => {
+      if (g && g.date) {
+        existingGradesMap.set(g.date, g);
+      }
+    });
 
-  // Recorrer todos los días concluidos (estrictamente anteriores a hoy)
-  for (let d = 0; d < diffDays && d < 30; d++) {
-    const dayDate = new Date(startDateObj.getTime() + d * (1000 * 60 * 60 * 24));
-    const year = dayDate.getFullYear();
-    const month = String(dayDate.getMonth() + 1).padStart(2, '0');
-    const day = String(dayDate.getDate()).padStart(2, '0');
-    const dateKey = `${year}-${month}-${day}`;
-    const dayNumber = d + 1;
+    let passedCount = 0;
+    let failedCount = 0;
+    let totalScoreSum = 0;
+    const consolidatedGrades: DailyGrade[] = [];
 
-    let grade = existingGradesMap.get(dateKey);
-    if (!grade) {
-      const rawPast = SafeStorage.getItem(`ataraxia_log_${dateKey}`);
-      if (rawPast) {
-        try {
-          const parsed = JSON.parse(rawPast);
-          const trainingDone = Boolean(parsed.trainingCompleted);
-          const trainingPts = trainingDone ? 20 : 0;
-          const stepGoal = currentLog.stepGoal || 10000;
-          const stepsRatio = Math.min(1, (parsed.steps || 0) / stepGoal);
-          const stepsPassed = (parsed.steps || 0) >= (stepGoal * 0.85);
-          const stepsPts = Math.round(stepsRatio * 20);
-          const nutritionPassed = (parsed.mealsLogged || 0) > 0 || (parsed.totalCalories || 0) > 0;
-          const nutritionPts = nutritionPassed ? 15 : 0;
-          const sleepPassed = (parsed.sleepQuality || 0) >= 6.5;
-          const sleepPts = sleepPassed ? 15 : 0;
-          const stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${dateKey}`)) ||
-                                       Boolean(SafeStorage.getItem(`ataraxia_journal_${dateKey}`));
-          const stoicChallengePts = stoicChallengePassed ? 10 : 0;
-          const heartRatePassed = Boolean(parsed.smartDevice?.heartRateBpm && parsed.smartDevice.heartRateBpm > 0);
-          const heartRatePts = heartRatePassed ? 10 : 0;
-          const coachCheckInPassed = Boolean(parsed.checkInDone) || Boolean(parsed.readinessScore);
-          const coachCheckInPts = coachCheckInPassed ? 10 : 0;
+    // Recorrer todos los días concluidos (estrictamente anteriores a hoy)
+    for (let d = 0; d < diffDays && d < 30; d++) {
+      const dayDate = new Date(startDateObj.getTime() + d * (1000 * 60 * 60 * 24));
+      const year = dayDate.getFullYear();
+      const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+      const day = String(dayDate.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${day}`;
+      const dayNumber = d + 1;
 
-          const totalScore = trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
-          const isPassed = totalScore >= 75;
+      let grade = existingGradesMap.get(dateKey);
+      if (!grade) {
+        const rawPast = SafeStorage.getItem(`ataraxia_log_${dateKey}`);
+        if (rawPast) {
+          try {
+            const parsed = JSON.parse(rawPast);
+            const trainingDone = Boolean(parsed.trainingCompleted);
+            const trainingPts = trainingDone ? 20 : 0;
+            const stepGoal = currentLog.stepGoal || 10000;
+            const stepsRatio = Math.min(1, (parsed.steps || 0) / stepGoal);
+            const stepsPassed = (parsed.steps || 0) >= (stepGoal * 0.85);
+            const stepsPts = Math.round(stepsRatio * 20);
+            const nutritionPassed = (parsed.mealsLogged || 0) > 0 || (parsed.totalCalories || 0) > 0;
+            const nutritionPts = nutritionPassed ? 15 : 0;
+            const sleepPassed = (parsed.sleepQuality || 0) >= 6.5;
+            const sleepPts = sleepPassed ? 15 : 0;
+            const stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${dateKey}`)) ||
+                                         Boolean(SafeStorage.getItem(`ataraxia_journal_${dateKey}`));
+            const stoicChallengePts = stoicChallengePassed ? 10 : 0;
+            const heartRatePassed = Boolean(parsed.smartDevice?.heartRateBpm && parsed.smartDevice.heartRateBpm > 0);
+            const heartRatePts = heartRatePassed ? 10 : 0;
+            const coachCheckInPassed = Boolean(parsed.checkInDone) || Boolean(parsed.readinessScore);
+            const coachCheckInPts = coachCheckInPassed ? 10 : 0;
 
+            const totalScore = trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
+            const isPassed = totalScore >= 75;
+
+            grade = {
+              day: dayNumber,
+              date: dateKey,
+              score: totalScore,
+              status: totalScore >= 90 ? 'divine' : isPassed ? 'worthy' : totalScore >= 50 ? 'mediocre' : 'failed',
+              pillars: {
+                training: trainingDone,
+                steps: stepsPassed,
+                nutrition: nutritionPassed,
+                sleep: sleepPassed,
+                stoicChallenge: stoicChallengePassed,
+                heartRate: heartRatePassed,
+                coachCheckIn: coachCheckInPassed,
+              },
+              trainingDone,
+              steps: parsed.steps || 0,
+              stepGoal,
+              stepsRatio: parseFloat((isNaN(stepsRatio) ? 0 : stepsRatio).toFixed(2)),
+              waterLitres: parsed.waterLitres || 0,
+              waterRatio: parseFloat((Math.min(1, (parsed.waterLitres || 0) / 2.5)).toFixed(2)),
+              caloriesLogged: nutritionPassed,
+              totalCalories: parsed.totalCalories || 0,
+              sleepHours: parsed.sleepQuality || 0,
+              heartRateBpm: parsed.smartDevice?.heartRateBpm || 0,
+              verdict: isPassed ? '⚔️ Hoplita Digno: Día cumplido con disciplina.' : '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
+              recordedAt: new Date().toISOString(),
+            };
+          } catch {}
+        }
+
+        if (!grade) {
           grade = {
             day: dayNumber,
             date: dateKey,
-            score: totalScore,
-            status: totalScore >= 90 ? 'divine' : isPassed ? 'worthy' : totalScore >= 50 ? 'mediocre' : 'failed',
+            score: 0,
+            status: 'failed',
             pillars: {
-              training: trainingDone,
-              steps: stepsPassed,
-              nutrition: nutritionPassed,
-              sleep: sleepPassed,
-              stoicChallenge: stoicChallengePassed,
-              heartRate: heartRatePassed,
-              coachCheckIn: coachCheckInPassed,
+              training: false,
+              steps: false,
+              nutrition: false,
+              sleep: false,
+              stoicChallenge: false,
+              heartRate: false,
+              coachCheckIn: false,
             },
-            trainingDone,
-            steps: parsed.steps || 0,
-            stepGoal,
-            stepsRatio: parseFloat(stepsRatio.toFixed(2)),
-            waterLitres: parsed.waterLitres || 0,
-            waterRatio: parseFloat(Math.min(1, (parsed.waterLitres || 0) / 2.5).toFixed(2)),
-            caloriesLogged: nutritionPassed,
-            totalCalories: parsed.totalCalories || 0,
-            sleepHours: parsed.sleepQuality || 0,
-            heartRateBpm: parsed.smartDevice?.heartRateBpm || 0,
-            verdict: isPassed ? '⚔️ Hoplita Digno: Día cumplido con disciplina.' : '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
+            trainingDone: false,
+            steps: 0,
+            stepGoal: currentLog.stepGoal || 10000,
+            stepsRatio: 0,
+            waterLitres: 0,
+            waterRatio: 0,
+            caloriesLogged: false,
+            totalCalories: 0,
+            sleepHours: 0,
+            heartRateBpm: 0,
+            verdict: '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
             recordedAt: new Date().toISOString(),
           };
-        } catch {}
+        }
       }
 
-      if (!grade) {
-        grade = {
-          day: dayNumber,
-          date: dateKey,
-          score: 0,
-          status: 'failed',
-          pillars: {
-            training: false,
-            steps: false,
-            nutrition: false,
-            sleep: false,
-            stoicChallenge: false,
-            heartRate: false,
-            coachCheckIn: false,
-          },
-          trainingDone: false,
-          steps: 0,
-          stepGoal: currentLog.stepGoal || 10000,
-          stepsRatio: 0,
-          waterLitres: 0,
-          waterRatio: 0,
-          caloriesLogged: false,
-          totalCalories: 0,
-          sleepHours: 0,
-          heartRateBpm: 0,
-          verdict: '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
-          recordedAt: new Date().toISOString(),
-        };
+      if (grade.status === 'worthy' || grade.status === 'divine') {
+        passedCount++;
+      } else {
+        failedCount++;
       }
+      totalScoreSum += grade.score || 0;
+      consolidatedGrades.push(grade);
     }
 
-    if (grade.status === 'worthy' || grade.status === 'divine') {
-      passedCount++;
-    } else {
-      failedCount++;
-    }
-    totalScoreSum += grade.score;
-    consolidatedGrades.push(grade);
+    const evaluatedDaysCount = consolidatedGrades.length;
+    const avgScore = evaluatedDaysCount > 0 ? Math.round(totalScoreSum / evaluatedDaysCount) : 100;
+
+    const updatedCycle: MonthlyCycleState = {
+      ...cycle,
+      currentDay: currentDayNum,
+      startDate: cycle?.startDate || `${startStr}T00:00:00.000Z`,
+      dailyGrades: consolidatedGrades,
+      passedDaysCount: passedCount,
+      failedDaysCount: failedCount,
+      averageScore: isNaN(avgScore) ? 100 : avgScore,
+      isJudgmentReady: currentDayNum >= 30 && diffDays >= 30,
+      isPactActive: true,
+    };
+
+    return {
+      ...currentLog,
+      monthlyCycle: updatedCycle,
+    };
+  } catch (err) {
+    console.warn('[DailyLogContext] Error en consolidateCycleHistory:', err);
+    return currentLog;
   }
-
-  const evaluatedDaysCount = consolidatedGrades.length;
-  const avgScore = evaluatedDaysCount > 0 ? Math.round(totalScoreSum / evaluatedDaysCount) : 100;
-
-  const updatedCycle: MonthlyCycleState = {
-    ...cycle,
-    currentDay: currentDayNum,
-    startDate: cycle.startDate || `${startStr}T00:00:00.000Z`,
-    dailyGrades: consolidatedGrades,
-    passedDaysCount: passedCount,
-    failedDaysCount: failedCount,
-    averageScore: avgScore,
-    isJudgmentReady: currentDayNum >= 30 && diffDays >= 30,
-    isPactActive: true,
-  };
-
-  return {
-    ...currentLog,
-    monthlyCycle: updatedCycle,
-  };
 }
 
 export function DailyLogProvider({ children }: { children: React.ReactNode }) {
