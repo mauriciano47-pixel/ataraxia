@@ -1,4 +1,23 @@
-<!DOCTYPE html><html  lang="es"><head><title data-rh="true"></title><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Ataraxia — Templo del Autodominio</title><meta name="theme-color" content="#040406"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="Ataraxia"/><link rel="icon" type="image/png" href="/favicon.png"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="manifest" href="/manifest.json"/><style id="expo-reset">#root,body,html{height:100%}body{overflow:hidden}#root{display:flex}</style><style>
+<!DOCTYPE html><html  lang="es"><head><title data-rh="true"></title><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Ataraxia — Templo del Autodominio</title><meta name="theme-color" content="#040406"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="Ataraxia"/><link rel="icon" type="image/png" href="/favicon.png"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="manifest" href="/manifest.json"/><style id="expo-reset">#root,body,html{height:100%}body{overflow:hidden}#root{display:flex}</style><script>
+            (function() {
+              // 1. Auto-limpieza de Service Workers obsoletos para evitar bloqueos por cache
+              if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  for (var i = 0; i < regs.length; i++) {
+                    regs[i].unregister();
+                  }
+                }).catch(function() {});
+              }
+              // 2. Limpieza de CacheStorage corrupto
+              if (typeof window !== 'undefined' && 'caches' in window) {
+                caches.keys().then(function(keys) {
+                  for (var j = 0; j < keys.length; j++) {
+                    caches.delete(keys[j]);
+                  }
+                }).catch(function() {});
+              }
+            })();
+          </script><style>
             body, html, #root {
               background-color: #040406 !important;
               margin: 0;
@@ -407,5 +426,5 @@ input::-webkit-search-cancel-button,input::-webkit-search-decoration,input::-web
 @keyframes r-imtty0{0%{opacity:0;}100%{opacity:1;}}
 @keyframes r-q67da2{0%{transform:translateX(-100%);}100%{transform:translateX(400%);}}
 @keyframes r-t2lo5v{0%{opacity:1;}100%{opacity:0;}}</style><link rel="icon" href="/favicon.ico"/><script type="module">globalThis.__EXPO_ROUTER_HYDRATE__=true;</script><link rel="preload" href="/_expo/static/css/global-31b80bb63f8319a7d6f52fcd8c5b30c5.css" as="style">
-<link rel="stylesheet" href="/_expo/static/css/global-31b80bb63f8319a7d6f52fcd8c5b30c5.css"></head><body><div id="root"><div class="css-g5y9jx r-13awgt0"></div></div><script src="/_expo/static/js/web/entry-ea8cec652389ecfcfef57640755b3ea1.js" defer></script>
+<link rel="stylesheet" href="/_expo/static/css/global-31b80bb63f8319a7d6f52fcd8c5b30c5.css"></head><body><div id="root"><div class="css-g5y9jx r-13awgt0"></div></div><script src="/_expo/static/js/web/entry-1c89072f90b82bd2daec719b4872cbc0.js" defer></script>
 </body></html>
