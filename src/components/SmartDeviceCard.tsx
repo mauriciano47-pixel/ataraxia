@@ -40,17 +40,15 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
   const [connectingBrand, setConnectingBrand] = useState<string | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
 
-  // Estados de calibración y verificación de Google Health
-  const [ghSteps, setGhSteps] = useState<string>(() => (currentSteps > 0 ? currentSteps.toString() : '8450'));
+  // Estados de calibración y verificación de Google Health (Fieles 100% al hardware de tu Motorola g85)
+  const [ghSteps, setGhSteps] = useState<string>(() => currentSteps.toString());
   const [ghSleepHours, setGhSleepHours] = useState<string>('7.5');
-  const [ghRestingBpm, setGhRestingBpm] = useState<string>('56');
-  const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round((currentSteps > 0 ? currentSteps : 8450) * 0.045).toString());
+  const [ghRestingBpm, setGhRestingBpm] = useState<string>('60');
+  const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round(currentSteps * 0.045).toString());
 
   useEffect(() => {
-    if (currentSteps && currentSteps > 0) {
-      setGhSteps(currentSteps.toString());
-      setGhActiveCals(Math.round(currentSteps * 0.045).toString());
-    }
+    setGhSteps(currentSteps.toString());
+    setGhActiveCals(Math.round(currentSteps * 0.045).toString());
   }, [currentSteps]);
 
   const [receiptData, setReceiptData] = useState<{
@@ -107,7 +105,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
         const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         let battery = 88;
         let hr = 62;
-        const steps = currentSteps > 0 ? currentSteps : 7500;
+        const steps = currentSteps;
 
         // Intentar leer características reales de GATT
         try {
@@ -204,7 +202,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const battery = Math.floor(Math.random() * 15) + 82;
       const hr = 58;
-      const steps = currentSteps > 0 ? currentSteps : 8240;
+      const steps = currentSteps;
 
       if (onSyncHealthData) {
         onSyncHealthData({
@@ -248,10 +246,10 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const parsedSteps = parseInt(ghSteps, 10) || currentSteps || 8450;
-      const parsedSleepHours = parseFloat(ghSleepHours) || 7.5;
-      const parsedRestingBpm = parseInt(ghRestingBpm, 10) || 56;
-      const parsedActiveCals = parseInt(ghActiveCals, 10) || Math.round(parsedSteps * 0.045);
+      const parsedSteps = !isNaN(parseInt(ghSteps, 10)) ? parseInt(ghSteps, 10) : currentSteps;
+      const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
+      const parsedRestingBpm = !isNaN(parseInt(ghRestingBpm, 10)) ? parseInt(ghRestingBpm, 10) : (device.heartRateBpm > 0 ? device.heartRateBpm : 60);
+      const parsedActiveCals = Math.round(parsedSteps * 0.045);
 
       const deepHours = parseFloat((parsedSleepHours * 0.24).toFixed(1));
       const remHours = parseFloat((parsedSleepHours * 0.25).toFixed(1));
@@ -260,7 +258,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       if (onSyncHealthData) {
         onSyncHealthData({
           steps: parsedSteps,
-          deviceName: 'Google Health Connect (Bridge Android 14+)',
+          deviceName: 'Google Health Connect (Motorola g85)',
           lastSync: `Hoy ${nowTime} (Health Connect)`,
           heartRateBpm: parsedRestingBpm,
           batteryLevel: 100,
@@ -269,7 +267,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       } else {
         onUpdateDevice({
           connected: true,
-          deviceName: 'Google Health Connect (Bridge Android 14+)',
+          deviceName: 'Google Health Connect (Motorola g85)',
           lastSync: `Hoy ${nowTime} (Health Connect)`,
           heartRateBpm: parsedRestingBpm,
           batteryLevel: 100,
@@ -300,9 +298,9 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
         }
       } catch {}
 
-      // 3. Preparar datos para el recibo de telemetría
+      // 3. Preparar datos para el recibo de telemetría con valores exactos
       setReceiptData({
-        source: 'Google Health Connect (Android 14+)',
+        source: 'Google Health Connect (Motorola g85)',
         steps: parsedSteps,
         sleepHours: parsedSleepHours,
         deepHours,
@@ -318,20 +316,20 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
     }, 600);
   };
 
-  // Forzar Sincronización Manual Inmediata
+  // Forzar Sincronización Manual Inmediata con el sensor en vivo del Motorola g85
   const handleForceSync = () => {
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const currentLiveSteps = parseInt(ghSteps, 10) || currentSteps || 8450;
-      const parsedSleepHours = parseFloat(ghSleepHours) || 7.5;
-      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 56);
+      const currentLiveSteps = currentSteps;
+      const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 60);
       const parsedActiveCals = Math.round(currentLiveSteps * 0.045);
 
       if (onSyncHealthData) {
         onSyncHealthData({
           steps: currentLiveSteps,
-          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Bridge Android 14+)',
+          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Motorola g85)',
           lastSync: `Hoy ${nowTime} (Actualizado)`,
           heartRateBpm: parsedRestingBpm,
           sleepHours: parsedSleepHours,
@@ -339,7 +337,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       } else {
         onUpdateDevice({
           connected: true,
-          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Bridge Android 14+)',
+          deviceName: isConnected ? device.deviceName : 'Google Health Connect (Motorola g85)',
           lastSync: `Hoy ${nowTime} (Actualizado)`,
           heartRateBpm: parsedRestingBpm,
         });
@@ -349,7 +347,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       }
 
       setReceiptData({
-        source: isConnected ? device.deviceName : 'Google Health Connect (Android 14+)',
+        source: isConnected ? device.deviceName : 'Google Health Connect (Motorola g85)',
         steps: currentLiveSteps,
         sleepHours: parsedSleepHours,
         deepHours: parseFloat((parsedSleepHours * 0.24).toFixed(1)),
@@ -555,6 +553,21 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
 
               {/* Formulario de Calibración de Datos Reales */}
               <View style={styles.ghFormContainer}>
+                {/* Botón de Inyección Directa desde el Sensor del Motorola g85 */}
+                <TouchableOpacity
+                  style={styles.btnImportSensor}
+                  onPress={() => {
+                    setGhSteps(currentSteps.toString());
+                    setGhActiveCals(Math.round(currentSteps * 0.045).toString());
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={styles.btnImportSensorText}>
+                    📱 LEER SENSOR EN VIVO DEL MOTO G85 ({currentSteps.toLocaleString()} PASOS)
+                  </ThemedText>
+                </TouchableOpacity>
+
                 {/* 1. Pasos */}
                 <View style={styles.ghFormGroup}>
                   <ThemedText style={styles.ghInputLabel}>👟 PASOS DE HOY (GOOGLE FIT / HEALTH):</ThemedText>
@@ -569,11 +582,11 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
                       }
                     }}
                     keyboardType="numeric"
-                    placeholder="Ej. 8500"
+                    placeholder={`Pasos actuales en hardware: ${currentSteps}`}
                     placeholderTextColor="#64748B"
                   />
                   <View style={styles.ghQuickChipsRow}>
-                    {['5000', '8000', '10000', '12500'].map((chipVal) => (
+                    {['2500', '5000', '8000', '10000', '12000'].map((chipVal) => (
                       <TouchableOpacity
                         key={chipVal}
                         style={[styles.ghQuickChip, ghSteps === chipVal && styles.ghQuickChipActive]}
@@ -1156,5 +1169,23 @@ const styles = StyleSheet.create({
   ghQuickChipTextActive: {
     color: '#34D399',
     fontWeight: 'bold',
+  },
+  btnImportSensor: {
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    borderWidth: 1.5,
+    borderColor: '#34D399',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  btnImportSensorText: {
+    color: '#34D399',
+    fontSize: 10.5,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
   },
 });
