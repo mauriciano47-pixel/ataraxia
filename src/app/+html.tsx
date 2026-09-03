@@ -21,6 +21,28 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
 
         <ScrollViewStyleReset />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              // 1. Auto-limpieza de Service Workers obsoletos para evitar bloqueos por cache
+              if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  for (var i = 0; i < regs.length; i++) {
+                    regs[i].unregister();
+                  }
+                }).catch(function() {});
+              }
+              // 2. Limpieza de CacheStorage corrupto
+              if (typeof window !== 'undefined' && 'caches' in window) {
+                caches.keys().then(function(keys) {
+                  for (var j = 0; j < keys.length; j++) {
+                    caches.delete(keys[j]);
+                  }
+                }).catch(function() {});
+              }
+            })();
+          `
+        }} />
         <style dangerouslySetInnerHTML={{
           __html: `
             body, html, #root {

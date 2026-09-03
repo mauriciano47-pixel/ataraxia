@@ -28,6 +28,17 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
     console.warn('Centinela gestionó ajuste de render:', error?.message, errorInfo);
   }
 
+  componentDidUpdate(prevProps: any, prevState: any) {
+    if (this.state.hasError && !this.state.recoverAttempted) {
+      // Auto-recuperación silenciosa y automática en 800ms sin requerir intervención del usuario
+      setTimeout(() => {
+        if (this.state.hasError && !this.state.recoverAttempted) {
+          this.handleCleanRecover();
+        }
+      }, 800);
+    }
+  }
+
   handleCleanRecover = () => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
