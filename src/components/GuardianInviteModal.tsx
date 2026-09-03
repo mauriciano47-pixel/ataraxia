@@ -28,7 +28,7 @@ export interface GuardianSlot {
   description: string;
 }
 
-const PRODUCTION_BASE_URL = 'https://ataraxia-dce06.web.app';
+const PRODUCTION_BASE_URL = 'https://ataraxia-stoic.vercel.app';
 
 export const GUARDIAN_SLOTS: GuardianSlot[] = [
   {
