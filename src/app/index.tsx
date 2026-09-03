@@ -88,8 +88,7 @@ export default function HoyScreen() {
     isArchonMaster ||
     (
       log.hasCompletedOnboarding === true &&
-      Boolean(log.userName) &&
-      log.userName.trim() !== '' &&
+      Boolean(log.userName && log.userName.trim() !== '') &&
       log.userName !== 'Ciudadano Prokopton' &&
       SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true'
     )
