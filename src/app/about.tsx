@@ -16,7 +16,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { GreekParchmentPact } from '@/components/GreekParchmentPact';
-import { lockTempleAccess } from '@/components/TempleAccessGate';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 
 type SectionTab = 'faq' | 'privacy' | 'manifesto' | 'terms' | 'contact';
@@ -394,33 +393,7 @@ export default function AboutScreen() {
             </ThemedView>
           )}
 
-          {/* 4. BOTÓN DE SEGURIDAD DEL GUARDIÁN */}
-          <ThemedView style={[styles.sectionCard, { borderColor: 'rgba(212, 175, 55, 0.3)', marginTop: 6 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.securityTitle}>SESIÓN DE SEGURIDAD</ThemedText>
-                <ThemedText style={styles.securitySub}>Bloquea el santuario en este dispositivo si lo deseas.</ThemedText>
-              </View>
 
-              <TouchableOpacity
-                style={styles.lockButtonSmall}
-                onPress={() => {
-                  Alert.alert(
-                    "🔒 Bloquear Templo",
-                    "¿Deseas cerrar el acceso en este dispositivo? Se requerirá la Llave Maestra para volver a entrar.",
-                    [
-                      { text: "Cancelar", style: "cancel" },
-                      { text: "Bloquear", style: "destructive", onPress: lockTempleAccess }
-                    ]
-                  );
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="lock-closed-outline" size={14} color="#FFE259" />
-                <ThemedText style={styles.lockButtonSmallText}>Bloquear</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </ThemedView>
 
           {/* 5. FOOTER DE CIERRE ESTOICO */}
           <View style={styles.footerBlock}>

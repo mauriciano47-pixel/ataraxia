@@ -109,11 +109,6 @@ const ARCHETYPES_DATA = {
 };
 
 export default function ArchonThroneScreen() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [emailInput, setEmailInput] = useState<string>('');
-  const [passwordInput, setPasswordInput] = useState<string>('');
-  const [authError, setAuthError] = useState<string>('');
-
   const [selectedArchetypeKey, setSelectedArchetypeKey] = useState<string>('artemis');
   const [targetAudience, setTargetAudience] = useState<'all' | 'female' | 'male'>('all');
   const [decreeInput, setDecreeInput] = useState<string>('');
@@ -122,27 +117,9 @@ export default function ArchonThroneScreen() {
   );
 
   useEffect(() => {
-    const savedAuth = SafeStorage.getItem('ataraxia_archon_auth_v1');
-    if (savedAuth === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  const handleLoginArchon = () => {
-    if (!emailInput.trim() || !passwordInput.trim()) {
-      setAuthError('Ingresa tu correo y clave del Arconte.');
-      return;
-    }
-    // Validación de llave del Arconte
-    setIsAuthenticated(true);
     SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
-    setAuthError('');
-  };
-
-  const handleLogoutArchon = () => {
-    setIsAuthenticated(false);
-    SafeStorage.removeItem('ataraxia_archon_auth_v1');
-  };
+    SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+  }, []);
 
   const currentArchetype = ARCHETYPES_DATA[selectedArchetypeKey as keyof typeof ARCHETYPES_DATA] || ARCHETYPES_DATA.artemis;
 
@@ -159,72 +136,18 @@ export default function ArchonThroneScreen() {
     alert(`🏛️ DECRETO EMITIDO para ${audienceLabel}: Transmitido con éxito.`);
   };
 
-  // 1. PANTALLA DE ACCESO EXCLUSIVO CON LLAVE DEL ARCONTE (CERO JURAMENTO / CERO DATOS)
-  if (!isAuthenticated) {
-    return (
-      <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.4)">
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loginContainer}>
-            <View style={styles.crownCircle}>
-              <ThemedText style={{ fontSize: 36 }}>👑</ThemedText>
-            </View>
-
-            <ThemedText style={styles.loginGoldBadge}>SANTUARIO SUPREMO</ThemedText>
-            <ThemedText style={styles.loginTitle}>TRONO DEL ARCONTE</ThemedText>
-            <ThemedText style={styles.loginSubtitle}>
-              Ingreso exclusivo de gobernanza y control total. Sin juramentos ni registro de reclutas.
-            </ThemedText>
-
-            <View style={styles.loginCard}>
-              <ThemedText style={styles.inputLabel}>CORREO DEL ARCONTE:</ThemedText>
-              <TextInput
-                style={styles.loginInput}
-                placeholder="arconte@ataraxia.app (o tu correo)"
-                placeholderTextColor="#64748B"
-                value={emailInput}
-                onChangeText={setEmailInput}
-                autoCapitalize="none"
-              />
-
-              <ThemedText style={styles.inputLabel}>LLAVE MAESTRA / CLAVE:</ThemedText>
-              <TextInput
-                style={styles.loginInput}
-                placeholder="Introduce tu clave del Arconte..."
-                placeholderTextColor="#64748B"
-                value={passwordInput}
-                onChangeText={setPasswordInput}
-                secureTextEntry
-              />
-
-              {authError ? <ThemedText style={styles.errorText}>{authError}</ThemedText> : null}
-
-              <Pressable style={styles.loginBtn} onPress={handleLoginArchon}>
-                <LinearGradient colors={['#D4AF37', '#F59E0B', '#B45309']} style={styles.loginGradient}>
-                  <ThemedText style={styles.loginBtnText}>👑 ABRIR EL TRONO SUPREMO</ThemedText>
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </View>
-        </SafeAreaView>
-      </PearlElectricBackground>
-    );
-  }
-
-  // 2. CONSOLA SUPREMA DE CONTROL DEL TRONO (GOBERNANZA PURA)
+  // CONSOLA SUPREMA DE CONTROL DEL TRONO (GOBERNANZA PURA DIRECTA)
   return (
     <PearlElectricBackground glowColor={currentArchetype.themeColor + '40'}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           
-          {/* CABECERA MAESTRA CON BOTÓN DE CERRAR SESIÓN */}
+          {/* CABECERA MAESTRA DEL ARCONTE */}
           <View style={styles.header}>
             <View style={styles.headerTopRow}>
               <View style={styles.badgeRow}>
                 <ThemedText style={styles.goldBadge}>👑 CONSOLA SUPREMA DEL ARCONTE</ThemedText>
               </View>
-              <Pressable style={styles.logoutBtn} onPress={handleLogoutArchon}>
-                <ThemedText style={styles.logoutBtnText}>🚪 Cerrar Sesión</ThemedText>
-              </Pressable>
             </View>
 
             <ThemedText style={styles.title}>TRONO DE GOBERNANZA TOTAL</ThemedText>
