@@ -34,7 +34,7 @@ const STORAGE_KEY = 'ataraxia_temple_access_granted_v2';
 
 export function TempleAccessGate({ children }: { children: React.ReactNode }) {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
-    // 1. En APK Nativo (Android / iOS / BlueStacks): Auto-desbloquear de inmediato como Arconte Supremo
+    // 1. En Entorno Nativo: Auto-desbloquear de inmediato como Arconte Supremo
     if (Platform.OS !== 'web') {
       SafeStorage.setItem(STORAGE_KEY, 'true');
       SafeStorage.setItem('ataraxia_is_archon_master', 'true');
