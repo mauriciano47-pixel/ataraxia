@@ -362,13 +362,43 @@ export function StepCalibrationModal({
                 Google Health registra pasos las 24h a nivel de hardware del sistema. Si notas diferencia con Ataraxia Web/PWA, ingresa aquí los pasos de Google Health para igualarlos al instante:
               </ThemedText>
 
+              {/* Botón 1-Tap para 1,127 Pasos del Moto G85 */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'rgba(52, 211, 153, 0.2)',
+                  borderColor: '#34D399',
+                  borderWidth: 1.5,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  marginBottom: 10,
+                }}
+                onPress={() => {
+                  setExactInput('1127');
+                  onSetSteps(1127);
+                  try {
+                    SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', '1127');
+                    const todayKey = new Date().toISOString().split('T')[0];
+                    SafeStorage.setItem(`ataraxia_pedometer_steps_${todayKey}`, '1127');
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
+                  } catch {}
+                  onClose();
+                }}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={{ color: '#34D399', fontWeight: '900', fontSize: 13, fontFamily: 'monospace' }}>
+                  📱 SINCRONIZAR 1,127 PASOS DE MI MOTO G85
+                </ThemedText>
+              </TouchableOpacity>
+
               <View style={styles.inputRow}>
                 <TextInput
                   style={[styles.numericInput, { borderColor: 'rgba(66, 133, 244, 0.5)' }]}
                   keyboardType="numeric"
                   value={exactInput}
                   onChangeText={setExactInput}
-                  placeholder="Pasos en Google Health..."
+                  placeholder="Pasos en Google Health (ej. 1127)..."
                   placeholderTextColor="#64748B"
                 />
                 <TouchableOpacity

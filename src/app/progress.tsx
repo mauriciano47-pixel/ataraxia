@@ -249,8 +249,8 @@ export default function ProgressScreen() {
   const mandatoryProgram = pathRoutines[activeEquipment] || pathRoutines.gym;
 
   const cycle = log.monthlyCycle || {
-    currentDay: 1,
-    startDate: new Date().toISOString(),
+    currentDay: 4,
+    startDate: '2026-09-01T00:00:00.000Z',
     path: activePathKey,
     tier: 'Novicio de Esparta',
     dailyGrades: [],
@@ -671,9 +671,16 @@ export default function ProgressScreen() {
               Cada estrella dorada es un día digno conquistado. Las calaveras rojas representan días indignos en deuda.
             </ThemedText>
             <View style={styles.starMap}>
-              {fullMap.map((success, index) => {
-                const isToday = index === (cycle.currentDay - 1);
-                const isFuture = index >= cycle.currentDay;
+              {Array.from({ length: 30 }).map((_, index) => {
+                const dayNum = index + 1;
+                const isToday = index === (currentDay - 1);
+                const isPast = dayNum < currentDay;
+                const isFuture = dayNum > currentDay;
+
+                const pastGrade = (cycle.dailyGrades || []).find((g) => g && g.day === dayNum);
+                const isPastWorthy = pastGrade ? (pastGrade.score >= 75) : (fullMap[index] ?? false);
+                const isDayWorthy = isToday ? isTodaySuccess : isPastWorthy;
+
                 return (
                   <View 
                     key={index} 
@@ -684,13 +691,13 @@ export default function ProgressScreen() {
                   >
                     <View style={[
                       styles.star,
-                      success && !isFuture ? {
+                      isDayWorthy && !isFuture ? {
                         backgroundColor: '#FFE259',
                         shadowColor: '#D4AF37',
                         shadowOpacity: 1,
                         shadowRadius: 8,
                         elevation: 5,
-                      } : !isFuture ? {
+                      } : isPast ? {
                         backgroundColor: 'rgba(239, 68, 68, 0.35)',
                         borderColor: '#EF4444',
                         borderWidth: 1,
@@ -702,7 +709,7 @@ export default function ProgressScreen() {
                       isToday && { borderWidth: 2, borderColor: '#38BDF8' }
                     ]} />
                     <ThemedText style={[styles.starDayLabel, isToday && { color: '#38BDF8', fontWeight: 'bold' }]}>
-                      D{index + 1}
+                      D{dayNum}
                     </ThemedText>
                   </View>
                 );

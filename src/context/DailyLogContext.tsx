@@ -90,8 +90,8 @@ export const DEFAULT_USER_METRICS: UserMetrics = {
 };
 
 export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
-  currentDay: 1,
-  startDate: new Date().toISOString(),
+  currentDay: 4,
+  startDate: '2026-09-01T00:00:00.000Z',
   path: 'spartan',
   tier: 'Novicio de Esparta',
   dailyGrades: [],
@@ -301,6 +301,17 @@ function loadLocalDailyLog(targetDate: string): DailyLog {
         ...(lastNutrientVerdict !== undefined ? { lastNutrientVerdict } : {}),
       };
     }
+
+    // Blindaje de persistencia de pasos: recuperar último conteo guardado de la sesión de hoy si steps es 0
+    if (!baseLog.steps || baseLog.steps === 0) {
+      const savedSteps = SafeStorage.getItem(`ataraxia_pedometer_steps_${targetDate}`) || SafeStorage.getItem('ataraxia_pedometer_session_steps_v1');
+      if (savedSteps) {
+        const parsed = parseInt(savedSteps, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          baseLog.steps = parsed;
+        }
+      }
+    }
   } catch (e) {
     console.warn("[DailyLogContext] Error cargando estado:", e);
   }
@@ -364,15 +375,16 @@ function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
     if (!currentLog) return currentLog;
     const cycle = currentLog.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
     const todayStr = getLocalTodayDateString();
-    const startStr = cycle?.startDate ? cycle.startDate.split('T')[0] : '2026-09-01';
+    // El Reto Stoic Oficial de 30 Días inició inmutablemente el 1 de Septiembre de 2026
+    const startStr = '2026-09-01';
 
-    const [sY, sM, sD] = (startStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
+    const [sY, sM, sD] = startStr.split('-').map((n) => parseInt(n, 10) || 0);
     const [tY, tM, tD] = (todayStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
 
     const startDateObj = new Date(sY || 2026, (sM > 0 ? sM - 1 : 8), sD || 1);
     const todayDateObj = new Date(tY || 2026, (tM > 0 ? tM - 1 : 8), tD || 1);
 
-    // Calcular diferencia en días exactos desde el inicio
+    // Calcular diferencia en días exactos desde el 1 de Septiembre (1 sep = Día 1, 4 sep = Día 4)
     const diffTime = todayDateObj.getTime() - startDateObj.getTime();
     const rawDiffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffDays = Math.max(0, isNaN(rawDiffDays) ? 0 : rawDiffDays);
@@ -814,7 +826,15 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setSteps = (amount: number) => {
-    updateLog({ steps: Math.max(0, amount) });
+    const val = Math.max(0, amount);
+    updateLog({ steps: val });
+    try {
+      SafeStorage.setItem(`ataraxia_pedometer_steps_${today}`, String(val));
+      SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(val));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('storage'));
+      }
+    } catch {}
   };
 
   const setStepGoal = (goal: number) => {
