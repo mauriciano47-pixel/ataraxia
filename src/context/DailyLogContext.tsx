@@ -111,11 +111,11 @@ export const DEFAULT_LOG: DailyLog = {
   steps: 0,
   stepGoal: 10000,
   stoicAvatarUri: '',
-  userName: '',
+  userName: 'Mauro',
   userEmail: '',
-  hasCompletedOnboarding: false,
+  hasCompletedOnboarding: true,
   coachArchetype: 'stoic_mentor',
-  legendaryPath: undefined,
+  legendaryPath: 'spartan',
   monthlyCycle: DEFAULT_MONTHLY_CYCLE,
   smartDevice: {
     connected: false,
@@ -255,9 +255,15 @@ function loadLocalDailyLog(targetDate: string): DailyLog {
       };
     }
 
-    const isCompleted = SafeStorage.getItem(ONBOARDING_KEY) === 'true';
-    if (isCompleted || baseLog.hasCompletedOnboarding) {
+    const isCompleted = SafeStorage.getItem(ONBOARDING_KEY) !== 'false';
+    if (isCompleted || baseLog.hasCompletedOnboarding !== false) {
       baseLog.hasCompletedOnboarding = true;
+    }
+    if (!baseLog.userName || baseLog.userName.trim() === '') {
+      baseLog.userName = 'Mauro';
+    }
+    if (!baseLog.legendaryPath) {
+      baseLog.legendaryPath = 'spartan';
     }
 
     const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);

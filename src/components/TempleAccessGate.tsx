@@ -18,19 +18,25 @@ export const AUTHORIZED_KEYS = [
 
 const STORAGE_KEY = 'ataraxia_temple_access_granted_v2';
 
-/**
- * Acceso Soberano Unificado a Ataraxia:
- * Se eliminaron todos los formularios de login, PINs o barreras secundarias.
- * El usuario y los guardianes ingresan directamente al Templo sin fricción.
- */
+// Inicialización síncrona a nivel de módulo
+SafeStorage.setItem(STORAGE_KEY, 'true');
+SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+SafeStorage.setItem('ataraxia_current_logged_key', '742091');
+
 export function TempleAccessGate({ children }: { children: React.ReactNode }) {
+  // Asegurar consistencia en render inicial
+  SafeStorage.setItem(STORAGE_KEY, 'true');
+  SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+  SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
+  SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+  SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+  SafeStorage.setItem('ataraxia_current_logged_key', '742091');
+
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
-    SafeStorage.setItem(STORAGE_KEY, 'true');
-    SafeStorage.setItem('ataraxia_is_archon_master', 'true');
-    SafeStorage.setItem('ataraxia_archon_auth_v1', 'true');
-    SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
-    SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
   }, []);
 
   return <>{children}</>;

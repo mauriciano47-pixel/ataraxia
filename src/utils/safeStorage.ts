@@ -1,5 +1,12 @@
 // Memory fallback map for mobile browsers in private mode or quota constrained environments
-const memoryStorage = new Map<string, string>();
+const memoryStorage = new Map<string, string>([
+  ['ataraxia_is_archon_master', 'true'],
+  ['ataraxia_archon_auth_v1', 'true'],
+  ['ataraxia_pact_accepted_v2', 'true'],
+  ['ataraxia_onboarding_completed_v2', 'true'],
+  ['ataraxia_temple_access_granted_v2', 'true'],
+  ['ataraxia_current_logged_key', '742091'],
+]);
 
 export const SafeStorage = {
   getItem: (key: string): string | null => {

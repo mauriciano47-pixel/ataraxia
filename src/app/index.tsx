@@ -74,26 +74,37 @@ export default function HoyScreen() {
   );
 
   // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián
-  const currentKey = typeof window !== 'undefined'
-    ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key'))
-    : null;
+  const currentKey = typeof window !== 'undefined' && window.location?.search
+    ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key') || '742091')
+    : (SafeStorage.getItem('ataraxia_current_logged_key') || '742091');
 
+  // Mauro es el Arconte Maestro soberano de Ataraxia por defecto absoluto
   const isArchonMaster = Boolean(
-    (currentKey && (currentKey === '742091' || currentKey === 'MAURO-ARCHON')) ||
-    (!currentKey && SafeStorage.getItem('ataraxia_is_archon_master') === 'true')
+    !currentKey ||
+    currentKey === '742091' ||
+    currentKey === 'MAURO-ARCHON' ||
+    SafeStorage.getItem('ataraxia_is_archon_master') !== 'false'
   );
 
   const isRegisteredUser = Boolean(
     isArchonMaster ||
-    (
-      log.hasCompletedOnboarding === true &&
-      Boolean(log.userName && log.userName.trim() !== '') &&
-      log.userName !== 'Ciudadano Prokopton' &&
-      SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true'
-    )
+    log.hasCompletedOnboarding === true ||
+    (Boolean(log.userName && log.userName.trim() !== '') && log.userName !== 'Ciudadano Prokopton') ||
+    SafeStorage.getItem('ataraxia_onboarding_completed_v2') !== 'false' ||
+    SafeStorage.getItem('ataraxia_pact_accepted_v2') !== 'false'
   );
 
-  const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key'>('pact');
+  const hasAcceptedPact = Boolean(
+    isArchonMaster ||
+    SafeStorage.getItem('ataraxia_pact_accepted_v2') !== 'false' ||
+    log.hasCompletedOnboarding ||
+    log.monthlyCycle?.isPactActive
+  );
+
+  const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key' | null>(() => {
+    if (hasAcceptedPact || isArchonMaster) return null;
+    return 'pact';
+  });
   const [chosenPath, setChosenPath] = useState<LegendaryPath>('spartan');
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
   const [showBoxBreathing, setShowBoxBreathing] = useState<boolean>(false);
@@ -557,7 +568,7 @@ export default function HoyScreen() {
 
         </Animated.ScrollView>
 
-        {!isRegisteredUser && (
+        {!isRegisteredUser && Boolean(initiationStep) && (
           <View style={StyleSheet.absoluteFill}>
             {initiationStep === 'pact' && (
               <GreekParchmentPact onAcceptPact={() => setInitiationStep('path')} />
