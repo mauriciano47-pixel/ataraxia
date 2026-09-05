@@ -48,35 +48,6 @@ const MAX_CADENCE_VARIANCE_MS = 180;// Varianza máxima permitida entre zancadas
 const MAX_VIOLENT_ACCEL_MS2 = 14.50;// Límite de aceleración biológica humana
 const MAX_VEHICLE_SPEED_MS = 5.55;  // >20 km/h = Modo Vehículo
 
-// Gestión de sesión de audio en silencio (Background Audio Session) para PWAs móviles
-let silentAudioCtx: any = null;
-let silentOscillator: any = null;
-
-function activateBackgroundKeepAlive() {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-
-    if (!silentAudioCtx) {
-      silentAudioCtx = new AudioCtx();
-    }
-    if (silentAudioCtx.state === 'suspended') {
-      silentAudioCtx.resume().catch(() => {});
-    }
-
-    if (!silentOscillator && silentAudioCtx.state === 'running') {
-      const osc = silentAudioCtx.createOscillator();
-      const gain = silentAudioCtx.createGain();
-      gain.gain.value = 0.00001; // Inaudible pero mantiene el hilo del kernel activo en segundo plano
-      osc.connect(gain);
-      gain.connect(silentAudioCtx.destination);
-      osc.start();
-      silentOscillator = osc;
-    }
-  } catch (e) {}
-}
-
 export function usePedometerSensor(
   onStepDetected?: (stepsAdded: number) => void,
   onSetSteps?: (exactDailySteps: number) => void,
@@ -562,34 +533,8 @@ export function usePedometerSensor(
 
     window.addEventListener('devicemotion', handleMotion, { passive: true });
 
-    const enableFullSensors = () => {
-      activateBackgroundKeepAlive();
-      if (typeof (DeviceMotionEvent as any)?.requestPermission === 'function') {
-        (DeviceMotionEvent as any).requestPermission().then((res: string) => {
-          if (res === 'granted') {
-            window.addEventListener('devicemotion', handleMotion, { passive: true });
-          }
-        }).catch(() => {});
-      }
-    };
-
-    window.addEventListener('touchstart', enableFullSensors, { once: true, passive: true });
-    window.addEventListener('click', enableFullSensors, { once: true, passive: true });
-
-    const handleVis = () => {
-      if (document.visibilityState === 'visible') {
-        if (silentAudioCtx && silentAudioCtx.state === 'suspended') {
-          silentAudioCtx.resume().catch(() => {});
-        }
-      }
-    };
-    document.addEventListener('visibilitychange', handleVis);
-
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
-      window.removeEventListener('touchstart', enableFullSensors);
-      window.removeEventListener('click', enableFullSensors);
-      document.removeEventListener('visibilitychange', handleVis);
     };
   }, []);
 

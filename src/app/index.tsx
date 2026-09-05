@@ -10,7 +10,6 @@ import { useDailyLog } from '@/hooks/useDailyLog';
 import { GlowArcGauge } from '@/components/GlowArcGauge';
 import { FlameIcon } from '@/components/ModuleSvgIcons';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
-import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { StepCounterCard } from '@/components/StepCounterCard';
 import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
@@ -250,9 +249,6 @@ export default function HoyScreen() {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* PWA INSTALL BUTTON IF APPLICABLE */}
-          <PwaInstallButton />
 
           {/* 1. HERO SECTION: 3D LUXURY GOLD & THUNDER DIAL (DAILY POWER BURN) */}
           <View style={styles.heroGaugeSection}>
