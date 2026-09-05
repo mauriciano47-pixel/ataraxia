@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -345,7 +345,12 @@ export default function ProgressScreen() {
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
+        >
           
           {/* HEADER PRINCIPAL */}
           <View style={styles.header}>
@@ -919,7 +924,12 @@ export default function ProgressScreen() {
                 </View>
 
                 {/* Contenido según Pestaña Activa con Scroll */}
-                <ScrollView style={styles.dossierContentScroll} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  style={styles.dossierContentScroll}
+                  showsVerticalScrollIndicator={false}
+                  removeClippedSubviews={Platform.OS === 'android'}
+                  overScrollMode="never"
+                >
                   {activeResolutionTab === 'verdict' && (
                     <View style={styles.dossierTabContent}>
                       {/* Tarjeta de Rango y Estadísticas Maestras */}

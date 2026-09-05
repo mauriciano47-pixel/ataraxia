@@ -16,7 +16,7 @@ interface StoicTwinMetabolicCardsProps {
   waterLitres?: number;
 }
 
-export function StoicTwinMetabolicCards({
+export const StoicTwinMetabolicCards = React.memo(function StoicTwinMetabolicCards({
   totalBurnedCalories,
   consumedCalories,
   legendaryPath = 'spartan',
@@ -183,7 +183,7 @@ export function StoicTwinMetabolicCards({
       </Modal>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   twoColRow: {

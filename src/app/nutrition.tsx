@@ -1,4 +1,4 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, ActivityIndicator, Alert, Image, Modal, TextInput } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, ActivityIndicator, Alert, Image, Modal, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { GoogleGenAI } from '@google/genai';
@@ -292,7 +292,13 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
+        >
 
           <View style={styles.header}>
             <ThemedText style={styles.label}>⚡ COMBUSTIBLE & TEMPLO</ThemedText>

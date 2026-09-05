@@ -325,6 +325,8 @@ export default function JournalScreen() {
           contentContainerStyle={styles.chatContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
         >
           {messages.map((msg, index) => {
             const detectedExercises = msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT ? extractExercisesFromText(msg.text) : [];

@@ -56,7 +56,7 @@ const STOIC_CHALLENGES = [
   },
 ];
 
-export function DailyStoicChallengeCard({ onChallengeToggle }: DailyStoicChallengeCardProps) {
+export const DailyStoicChallengeCard = React.memo(function DailyStoicChallengeCard({ onChallengeToggle }: DailyStoicChallengeCardProps) {
   const todayStr = getLocalTodayDateString();
   const dayOfWeek = new Date().getDay(); // 0-6
   const currentChallenge = STOIC_CHALLENGES[dayOfWeek] || STOIC_CHALLENGES[0];
@@ -121,7 +121,7 @@ export function DailyStoicChallengeCard({ onChallengeToggle }: DailyStoicChallen
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cardContainer: {

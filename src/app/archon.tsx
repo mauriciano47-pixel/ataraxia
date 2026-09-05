@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, TextInput, ScrollView, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
@@ -140,7 +140,13 @@ export default function ArchonThroneScreen() {
   return (
     <PearlElectricBackground glowColor={currentArchetype.themeColor + '40'}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
+        >
           
           {/* CABECERA MAESTRA DEL ARCONTE */}
           <View style={styles.header}>

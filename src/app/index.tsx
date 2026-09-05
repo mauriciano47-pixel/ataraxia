@@ -46,16 +46,15 @@ export default function HoyScreen() {
   } = useDailyLog();
   const router = useRouter();
 
-  // Podómetro Biomecánico & Filtro Anti-Vehículo Always-On 24/7 (Gestionado a nivel raíz por GlobalPedometerRootTracker)
+  // Podómetro Biomecánico & Filtro Anti-Vehículo
   const {
     isLiveTracking,
     isTransitMode,
     isVehicleDetected,
     sensitivity,
     setSensitivity,
-    toggleTransitMode,
     forceSyncSteps,
-    // ─── Métricas Avanzadas (Nivel Google Fit / Fitbit / Samsung Health) ─────
+    toggleTransitMode,
     cadenceSpm,
     activityMode,
     activeMinutes: pedometerActiveMinutes,
@@ -63,11 +62,11 @@ export default function HoyScreen() {
     speedKmh,
     paceMinKm,
     kcalBurned,
-    setManualStrideLength,
     manualStrideLength,
+    setManualStrideLength,
   } = usePedometerSensor(
-    undefined,
-    undefined,
+    addSteps,
+    setSteps,
     log.steps ?? 0,
     log.userMetrics?.heightCm ?? 170,
     log.userMetrics?.weightKg ?? 70,
@@ -178,7 +177,9 @@ export default function HoyScreen() {
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
             { useNativeDriver: true }
           )}
-          scrollEventThrottle={16}
+          scrollEventThrottle={32}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
           showsVerticalScrollIndicator={false}
         >
           {/* HEADER STOIC ROYAL IMPERIAL (EXACT TO USER REFERENCE PHOTO) */}

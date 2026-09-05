@@ -14,7 +14,7 @@ interface CalorieIndexCardProps {
   onUpdateMetrics: (metrics: Partial<UserMetrics>, targetCals?: number) => void;
 }
 
-export function CalorieIndexCard({
+export const CalorieIndexCard = React.memo(function CalorieIndexCard({
   consumedCalories = 0,
   targetCalories = 2200,
   userMetrics = {
@@ -262,7 +262,7 @@ export function CalorieIndexCard({
       </Modal>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cardContainer: {

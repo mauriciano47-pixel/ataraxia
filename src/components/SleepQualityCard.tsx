@@ -40,7 +40,7 @@ export const DEFAULT_SLEEP_RECORD: SleepRecord = {
   updatedAt: 'Hoy',
 };
 
-export function SleepQualityCard({ onUpdateSleepHours }: SleepQualityCardProps) {
+export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateSleepHours }: SleepQualityCardProps) {
   const [sleepRecord, setSleepRecord] = useState<SleepRecord>(() => {
     try {
       const saved = SafeStorage.getItem(SLEEP_STORAGE_KEY);
@@ -286,7 +286,7 @@ export function SleepQualityCard({ onUpdateSleepHours }: SleepQualityCardProps) 
       </Modal>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

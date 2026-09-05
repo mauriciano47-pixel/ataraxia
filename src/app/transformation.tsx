@@ -218,7 +218,12 @@ export default function TransformationScreen() {
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
+        >
           
           {/* HEADER PRINCIPAL */}
           <View style={styles.header}>

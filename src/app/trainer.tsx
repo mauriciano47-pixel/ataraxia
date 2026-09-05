@@ -8,6 +8,7 @@ import {
   Modal,
   ActivityIndicator,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -582,7 +583,13 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS === 'android'}
+          overScrollMode="never"
+        >
         
         {/* Header de la Sesión */}
         <View style={styles.header}>

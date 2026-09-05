@@ -36,7 +36,7 @@ interface StepCounterCardProps {
   kcalBurned?: number;
 }
 
-export function StepCounterCard({
+export const StepCounterCard = React.memo(function StepCounterCard({
   currentSteps,
   goal,
   steps,
@@ -209,7 +209,7 @@ export function StepCounterCard({
       </TouchableOpacity>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

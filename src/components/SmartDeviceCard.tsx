@@ -32,7 +32,7 @@ const SMARTWATCH_BRANDS = [
 
 const SLEEP_STORAGE_KEY = 'ataraxia_sleep_record_v1';
 
-export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice, onSyncHealthData, onSyncSteps }: SmartDeviceCardProps) {
+export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice, onSyncHealthData, onSyncSteps }: SmartDeviceCardProps) {
   const [smartwatchModalVisible, setSmartwatchModalVisible] = useState(false);
   const [googleHealthModalVisible, setGoogleHealthModalVisible] = useState(false);
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
@@ -763,7 +763,7 @@ export function SmartDeviceCard({ deviceState, currentSteps = 0, onUpdateDevice,
       </Modal>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

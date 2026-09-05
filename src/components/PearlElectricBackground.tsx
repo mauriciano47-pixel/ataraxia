@@ -8,7 +8,7 @@ interface PearlElectricBackgroundProps {
   children?: React.ReactNode;
 }
 
-export function PearlElectricBackground({
+export const PearlElectricBackground = React.memo(function PearlElectricBackground({
   glowColor = 'rgba(212, 175, 55, 0.28)',
   children,
 }: PearlElectricBackgroundProps) {
@@ -18,7 +18,12 @@ export function PearlElectricBackground({
       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050507' }]} pointerEvents="none" />
 
       {/* Rayos Eléctricos Dorados de Fondo */}
-      <View style={[styles.lightningLayer, { pointerEvents: 'none' }]} pointerEvents="none">
+      <View
+        style={[styles.lightningLayer, { pointerEvents: 'none' }]}
+        pointerEvents="none"
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+      >
         <Svg width="100%" height="100%" viewBox="0 0 400 800" style={StyleSheet.absoluteFill}>
           <Defs>
             <SvgGradient id="goldBoltGrad" x1="0" y1="0" x2="1" y2="1">
@@ -113,7 +118,7 @@ export function PearlElectricBackground({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

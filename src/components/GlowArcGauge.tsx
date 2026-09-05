@@ -20,7 +20,7 @@ export interface GlowArcGaugeProps {
   streakDays?: number;
 }
 
-export function GlowArcGauge({
+export const GlowArcGauge = React.memo(function GlowArcGauge({
   strengthProgress = 0.82,
   virtueProgress = 0.80,
   size = 320,
@@ -33,45 +33,23 @@ export function GlowArcGauge({
 }: GlowArcGaugeProps) {
   const [activeMetric, setActiveMetric] = useState<'burn' | 'nutrition' | 'power'>('burn');
 
-  // Animaciones Eléctricas de Alta Tensión
-  const electricFlickerAnim = useRef(new Animated.Value(0.6)).current;
+  // Animaciones Eléctricas de Alta Tensión optimizadas por Hardware
   const boltPulseAnim = useRef(new Animated.Value(1)).current;
-  const sparkRotationAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 1. Chisporroteo Eléctrico (Flicker)
-    const flickerLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(electricFlickerAnim, { toValue: 1.0, duration: 120, useNativeDriver: true }),
-        Animated.timing(electricFlickerAnim, { toValue: 0.35, duration: 80, useNativeDriver: true }),
-        Animated.timing(electricFlickerAnim, { toValue: 0.95, duration: 160, useNativeDriver: true }),
-        Animated.timing(electricFlickerAnim, { toValue: 0.50, duration: 100, useNativeDriver: true }),
-        Animated.timing(electricFlickerAnim, { toValue: 1.0, duration: 200, useNativeDriver: true }),
-      ])
-    );
-    flickerLoop.start();
-
-    // 2. Pulso de Plasma del Rayo Central
+    // Pulso suave de Plasma con aceleración nativa
     const pulseLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(boltPulseAnim, { toValue: 1.14, duration: 900, useNativeDriver: true }),
-        Animated.timing(boltPulseAnim, { toValue: 1.0, duration: 900, useNativeDriver: true }),
+        Animated.timing(boltPulseAnim, { toValue: 1.08, duration: 1200, useNativeDriver: true }),
+        Animated.timing(boltPulseAnim, { toValue: 1.0, duration: 1200, useNativeDriver: true }),
       ])
     );
     pulseLoop.start();
 
-    // 3. Rotación de Chispas del Halo
-    const rotateLoop = Animated.loop(
-      Animated.timing(sparkRotationAnim, { toValue: 1, duration: 8000, useNativeDriver: true })
-    );
-    rotateLoop.start();
-
     return () => {
-      flickerLoop.stop();
       pulseLoop.stop();
-      rotateLoop.stop();
     };
-  }, [electricFlickerAnim, boltPulseAnim, sparkRotationAnim]);
+  }, [boltPulseAnim]);
 
   // Cálculos de Porcentajes según la métrica activa
   const burnPct = Math.round((calories / Math.max(1, targetCalories)) * 100);
@@ -405,7 +383,7 @@ export function GlowArcGauge({
       </TouchableOpacity>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

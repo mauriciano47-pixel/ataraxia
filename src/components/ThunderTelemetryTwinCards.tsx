@@ -17,7 +17,7 @@ interface ThunderTelemetryTwinCardsProps {
   onOpenStepDetails?: () => void;
 }
 
-export function ThunderTelemetryTwinCards({
+export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwinCards({
   steps = 0,
   stepGoal = 15000,
   km = 0,
@@ -270,7 +270,7 @@ export function ThunderTelemetryTwinCards({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   twinCardsRow: {
