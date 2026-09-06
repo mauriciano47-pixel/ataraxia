@@ -21,14 +21,39 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: false };
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.warn('[Centinela] Error no crítico interceptado y protegido:', error?.message);
+    console.warn('[Centinela Ataraxia] Interceptado:', error?.message, errorInfo);
   }
 
+  handleReset = () => {
+    this.setState({ hasError: false });
+  };
+
   render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#050507', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{ color: '#D4AF37', fontSize: 32, marginBottom: 12 }}>🏛️</Text>
+          <Text style={{ color: '#FFE259', fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, letterSpacing: 1 }}>
+            ATARAXIA • MODO RECUPERACIÓN
+          </Text>
+          <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', marginBottom: 24, lineHeight: 18, maxWidth: 360 }}>
+            Se interceptó una anomalía no crítica de interfaz. Tus datos biométricos y pacto estoico permanecen 100% seguros.
+          </Text>
+          <TouchableOpacity
+            onPress={this.handleReset}
+            style={{ backgroundColor: '#D4AF37', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 }}
+          >
+            <Text style={{ color: '#050507', fontWeight: 'bold', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Reanudar Templo
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
     return this.props.children;
   }
 }

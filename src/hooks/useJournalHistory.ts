@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -56,13 +56,18 @@ export function useJournalHistory() {
   const [loading, setLoading] = useState(Boolean(auth && db));
   const [disclaimerShown, setDisclaimerShown] = useState(() => messages.length > 0);
 
-  // Cargar conversación del día actual + entradas pasadas
-  useEffect(() => {
-    if (!auth || !db) {
-      return;
-    }
+  const unsubSnapshotRef = useRef<(() => void) | null>(null);
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+  // 2. Sincronización en tiempo real con Firestore cuando haya sesión activa
+  useEffect(() => {
+    if (!auth || !db) return;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (unsubSnapshotRef.current) {
+        unsubSnapshotRef.current();
+        unsubSnapshotRef.current = null;
+      }
+
       if (!user || !db) {
         setLoading(false);
         return;
@@ -70,7 +75,7 @@ export function useJournalHistory() {
 
       try {
         const todayRef = doc(db, `users/${user.uid}/journal_entries/${today}`);
-        const unsubSnapshot = onSnapshot(todayRef, (docSnap) => {
+        unsubSnapshotRef.current = onSnapshot(todayRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as JournalEntry;
             if (data.messages && data.messages.length > 0) {
@@ -104,15 +109,19 @@ export function useJournalHistory() {
         });
         setPastEntries(entries.slice(0, 3));
         SafeStorage.setItem(JOURNAL_DATES_KEY, JSON.stringify(dateList));
-
-        return () => unsubSnapshot();
       } catch (error) {
         console.warn("Error en useJournalHistory, usando caché local:", error);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshotRef.current) {
+        unsubSnapshotRef.current();
+        unsubSnapshotRef.current = null;
+      }
+    };
   }, [today]);
 
   const saveMessages = useCallback(async (updatedMessages: JournalMessage[]) => {

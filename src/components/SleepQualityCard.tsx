@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TextInput, Platform, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
@@ -77,6 +77,8 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
     if (isNaN(hours) || hours <= 0 || hours > 18) {
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.alert('Por favor ingresa un número de horas de sueño válido (ej: 7.5).');
+      } else {
+        Alert.alert('Horas Inválidas', 'Por favor ingresa un número de horas de sueño válido (ej: 7.5).');
       }
       return;
     }

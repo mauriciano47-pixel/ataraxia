@@ -65,7 +65,7 @@ export default function HoyScreen() {
     manualStrideLength,
     setManualStrideLength,
   } = usePedometerSensor(
-    addSteps,
+    undefined, // El listener raíz autoritativo en GlobalPedometerRootTracker ya suma los pasos para evitar doble conteo
     setSteps,
     log.steps ?? 0,
     log.userMetrics?.heightCm ?? 170,

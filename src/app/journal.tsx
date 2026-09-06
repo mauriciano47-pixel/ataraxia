@@ -462,6 +462,7 @@ export default function JournalScreen() {
             style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="paper-plane" size={18} color="#050507" />
           </TouchableOpacity>

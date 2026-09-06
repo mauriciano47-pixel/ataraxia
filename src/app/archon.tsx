@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, ScrollView, Pressable, Platform } from 'react-native';
+import { StyleSheet, View, TextInput, ScrollView, Pressable, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
@@ -125,7 +125,11 @@ export default function ArchonThroneScreen() {
 
   const handlePublishSegmentedDecree = () => {
     if (!decreeInput.trim()) {
-      alert('Arconte: Ingresa el mandato antes de emitir el decreto.');
+      if (Platform.OS === 'web') {
+        window.alert('Arconte: Ingresa el mandato antes de emitir el decreto.');
+      } else {
+        Alert.alert('Arconte', 'Ingresa el mandato antes de emitir el decreto.');
+      }
       return;
     }
     const audienceLabel = targetAudience === 'female' ? '👑 GUERRERAS' : targetAudience === 'male' ? '⚔️ GUERREROS' : '🏛️ TODA LA LEGIÓN';
@@ -133,7 +137,11 @@ export default function ArchonThroneScreen() {
     setActiveDecree(formatted);
     SafeStorage.setItem('ataraxia_active_decree', formatted);
     setDecreeInput('');
-    alert(`🏛️ DECRETO EMITIDO para ${audienceLabel}: Transmitido con éxito.`);
+    if (Platform.OS === 'web') {
+      window.alert(`🏛️ DECRETO EMITIDO para ${audienceLabel}: Transmitido con éxito.`);
+    } else {
+      Alert.alert('🏛️ DECRETO EMITIDO', `Transmitido con éxito para ${audienceLabel}.`);
+    }
   };
 
   // CONSOLA SUPREMA DE CONTROL DEL TRONO (GOBERNANZA PURA DIRECTA)

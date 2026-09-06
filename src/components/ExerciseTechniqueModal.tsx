@@ -189,10 +189,16 @@ Responde en máximo 3 párrafos breves con viñetas:
 2. Cómo sentir el músculo correcto y proteger articulaciones.
 3. Máxima de disciplina estoica para este levantamiento.`;
 
-      const response = await ai.models.generateContent({
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
+      );
+
+      const apiCall = ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
+
+      const response = await Promise.race([apiCall, timeoutPromise]);
 
       setAiResponse(response.text?.trim() || 'Ejecuta con control y paciencia estoica.');
     } catch {
