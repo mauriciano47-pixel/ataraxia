@@ -180,7 +180,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
         };
         try {
           SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload));
-          if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
+          if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
         } catch {}
 
         setReceiptData({
@@ -301,7 +301,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       };
       try {
         SafeStorage.setItem(SLEEP_STORAGE_KEY, JSON.stringify(sleepPayload));
-        if (typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
           window.dispatchEvent(new Event('storage'));
         }
       } catch {}

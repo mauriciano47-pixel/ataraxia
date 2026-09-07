@@ -381,7 +381,7 @@ export function StepCalibrationModal({
                     SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', '1127');
                     const todayKey = new Date().toISOString().split('T')[0];
                     SafeStorage.setItem(`ataraxia_pedometer_steps_${todayKey}`, '1127');
-                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
+                    if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
                   } catch {}
                   onClose();
                 }}

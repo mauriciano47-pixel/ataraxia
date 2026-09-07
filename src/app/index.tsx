@@ -74,7 +74,7 @@ export default function HoyScreen() {
   );
 
   // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián
-  const currentKey = typeof window !== 'undefined' && window.location?.search
+  const currentKey = Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search
     ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key') || '742091')
     : (SafeStorage.getItem('ataraxia_current_logged_key') || '742091');
 

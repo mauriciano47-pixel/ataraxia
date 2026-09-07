@@ -66,7 +66,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       } catch {}
     };
 
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('storage', handleStorageChange);
       return () => window.removeEventListener('storage', handleStorageChange);
     }

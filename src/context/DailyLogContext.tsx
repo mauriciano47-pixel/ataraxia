@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Platform, AppState } from 'react-native';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -566,16 +567,27 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       saveLocalDailyLog(today, logRef.current);
     };
 
-    if (typeof window !== 'undefined') {
+    // Escucha nativa 100% segura para Android / iOS
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'background' || state === 'inactive') {
+        flushSave();
+      }
+    });
+
+    // Escucha web solo si se ejecuta en navegador
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('beforeunload', flushSave);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') flushSave();
-      });
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') flushSave();
+        });
+      }
     }
 
     return () => {
       flushSave();
-      if (typeof window !== 'undefined') {
+      appStateSub.remove();
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.removeEventListener('beforeunload', flushSave);
       }
     };
@@ -869,7 +881,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     try {
       SafeStorage.setItem(`ataraxia_pedometer_steps_${today}`, String(val));
       SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(val));
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));
       }
     } catch {}
@@ -1084,7 +1096,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     try {
       SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(payload.steps));
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));
       }
     } catch {}

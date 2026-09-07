@@ -160,7 +160,7 @@ export default function ProfileScreen() {
       if (resetMonthlyCycle) resetMonthlyCycle();
 
       // 3. Redirigir al inicio del Templo (Papiro Sagrado)
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.location.href = '/';
       } else {
         router.replace('/');
