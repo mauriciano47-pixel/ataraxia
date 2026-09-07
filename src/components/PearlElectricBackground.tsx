@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
@@ -116,6 +116,12 @@ const styles = StyleSheet.create({
   lightningLayer: {
     ...StyleSheet.absoluteFill,
     opacity: 0.65,
+    ...(Platform.OS === 'web'
+      ? ({
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+        } as any)
+      : {}),
   },
   heroArcGlow: {
     position: 'absolute',

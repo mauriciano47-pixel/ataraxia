@@ -554,6 +554,32 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const logRef = useRef<DailyLog>(log);
   const prevTodayRef = useRef(today);
   const firestoreDebounceTimer = useRef<any>(null);
+  const localSaveDebounceTimer = useRef<any>(null);
+
+  // Flush garantizado en cambio de foco o cierre de app
+  useEffect(() => {
+    const flushSave = () => {
+      if (localSaveDebounceTimer.current) {
+        clearTimeout(localSaveDebounceTimer.current);
+        localSaveDebounceTimer.current = null;
+      }
+      saveLocalDailyLog(today, logRef.current);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', flushSave);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushSave();
+      });
+    }
+
+    return () => {
+      flushSave();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', flushSave);
+      }
+    };
+  }, [today]);
 
   // Monitor continuo de medianoche local (00:00:00 exacto)
   useEffect(() => {
@@ -685,7 +711,6 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
           logRef.current = merged;
           setLog(merged);
           saveLocalDailyLog(today, merged);
-          setDoc(docRef, merged, { merge: true }).catch(console.error);
         } else {
           setDoc(docRef, currentLocal, { merge: true }).catch(console.error);
           saveLocalDailyLog(today, currentLocal);
@@ -718,7 +743,14 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     logRef.current = newLog;
     setLog(newLog);
-    saveLocalDailyLog(today, newLog);
+
+    // Guardado en disco debounced para evitar bloqueos síncronos de flash en móviles
+    if (localSaveDebounceTimer.current) {
+      clearTimeout(localSaveDebounceTimer.current);
+    }
+    localSaveDebounceTimer.current = setTimeout(() => {
+      saveLocalDailyLog(today, logRef.current);
+    }, 500);
 
     if (user && db && !isLocalMode) {
       if (firestoreDebounceTimer.current) {

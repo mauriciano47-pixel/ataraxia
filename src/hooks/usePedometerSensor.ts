@@ -146,6 +146,47 @@ export function usePedometerSensor(
   const onSetStepsRef = useRef(onSetSteps);
   onSetStepsRef.current = onSetSteps;
 
+  // Buffer de emisión en lote (Batching) para no saturar el hilo JS ni React en móviles
+  const pendingStepBatchRef = useRef<number>(0);
+  const batchEmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const emitStepsBatched = useCallback((stepsCount: number) => {
+    pendingStepBatchRef.current += stepsCount;
+
+    if (!batchEmitTimerRef.current) {
+      batchEmitTimerRef.current = setTimeout(() => {
+        const toEmit = pendingStepBatchRef.current;
+        pendingStepBatchRef.current = 0;
+        batchEmitTimerRef.current = null;
+        if (toEmit > 0 && onStepDetectedRef.current) {
+          onStepDetectedRef.current(toEmit);
+        }
+      }, 1500); // Agrupar pasos cada 1.5s
+    } else if (pendingStepBatchRef.current >= 6) {
+      // Si se acumulan 6 pasos, emitir inmediatamente
+      clearTimeout(batchEmitTimerRef.current);
+      batchEmitTimerRef.current = null;
+      const toEmit = pendingStepBatchRef.current;
+      pendingStepBatchRef.current = 0;
+      if (toEmit > 0 && onStepDetectedRef.current) {
+        onStepDetectedRef.current(toEmit);
+      }
+    }
+  }, []);
+
+  // Flush de pasos pendientes al desmontar
+  useEffect(() => {
+    return () => {
+      if (batchEmitTimerRef.current) {
+        clearTimeout(batchEmitTimerRef.current);
+        const toEmit = pendingStepBatchRef.current;
+        if (toEmit > 0 && onStepDetectedRef.current) {
+          onStepDetectedRef.current(toEmit);
+        }
+      }
+    };
+  }, []);
+
   // Screen WakeLock para mantener sensor activo en caminatas con PWA Web
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !(navigator as any).wakeLock) return;
@@ -346,9 +387,7 @@ export function usePedometerSensor(
               updateCadenceWindow(nowTs + i * 10); // pequeño offset para múltiples pasos juntos
             }
 
-            if (onStepDetectedRef.current) {
-              onStepDetectedRef.current(delta);
-            }
+            emitStepsBatched(delta);
           }
         }
       });
@@ -362,7 +401,7 @@ export function usePedometerSensor(
         pedometerSubscriptionRef.current = null;
       }
     };
-  }, [isPassiveWatcher, syncNativeHistoricalSteps]);
+  }, [isPassiveWatcher, syncNativeHistoricalSteps, emitStepsBatched]);
 
   // 4. Sensor Web: Motor Biomecánico con Bloqueo de Cadencia Periódica (Cadence Periodicity Lock)
   useEffect(() => {
@@ -372,6 +411,10 @@ export function usePedometerSensor(
       if (transitModeRef.current || isVehicleDetectedRef.current) return;
 
       const now = Date.now();
+      // THROTTLE BIOMECÁNICO A 25Hz (cada 40ms) en web móvil para liberar la CPU:
+      if (lastSampleTimeRef.current && (now - lastSampleTimeRef.current < 40)) {
+        return;
+      }
       const lastTime = lastSampleTimeRef.current || now;
       lastSampleTimeRef.current = now;
 
@@ -501,9 +544,7 @@ export function usePedometerSensor(
                   // Alimentar motor de cadencia SPM con los pasos verificados del buffer
                   times.forEach((t, i) => updateCadenceWindow(nowVerified - (verifiedSteps - 1 - i) * 300));
 
-                  if (onStepDetectedRef.current) {
-                    onStepDetectedRef.current(verifiedSteps);
-                  }
+                  emitStepsBatched(verifiedSteps);
                 } else {
                   candidateStepsBufferRef.current.shift();
                 }
@@ -523,9 +564,7 @@ export function usePedometerSensor(
               // Alimentar motor de cadencia SPM con cada paso confirmado
               updateCadenceWindow(nowStep);
 
-              if (onStepDetectedRef.current) {
-                onStepDetectedRef.current(1);
-              }
+              emitStepsBatched(1);
             }
           }
         }
@@ -537,7 +576,7 @@ export function usePedometerSensor(
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, [isPassiveWatcher]);
+  }, [isPassiveWatcher, emitStepsBatched]);
 
   // Control de cambio de foco y AppState
   useEffect(() => {

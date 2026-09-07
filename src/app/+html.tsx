@@ -45,6 +45,10 @@ export default function Root({ children }: PropsWithChildren) {
         }} />
         <style dangerouslySetInnerHTML={{
           __html: `
+            * {
+              -webkit-tap-highlight-color: transparent !important;
+              touch-action: manipulation;
+            }
             body, html, #root {
               background-color: #040406 !important;
               margin: 0;
@@ -52,6 +56,8 @@ export default function Root({ children }: PropsWithChildren) {
               height: 100%;
               width: 100%;
               overflow-x: hidden;
+              -webkit-overflow-scrolling: touch;
+              overscroll-behavior-y: none;
             }
           `
         }} />

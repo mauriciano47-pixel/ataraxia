@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated, Platform, Image } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, ScrollView, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -113,8 +113,6 @@ export default function HoyScreen() {
   const todayStr = getLocalTodayDateString();
   const currentPrinciple = getDailyStoicPrinciple(todayStr, quoteOffset);
 
-  const scrollY = useState(() => new Animated.Value(0))[0];
-
   // 1. Lectura 100% Real de Fuerza (Physical Power):
   const currentSteps = log.steps ?? 0;
   const currentGoal = log.stepGoal ?? 10000;
@@ -171,14 +169,9 @@ export default function HoyScreen() {
   return (
     <PearlElectricBackground glowColor="rgba(212, 175, 55, 0.28)">
       <SafeAreaView style={styles.safeArea}>
-        <Animated.ScrollView
+        <ScrollView
           style={styles.container}
           contentContainerStyle={styles.content}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
-          )}
-          scrollEventThrottle={32}
           removeClippedSubviews={Platform.OS === 'android'}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
@@ -209,7 +202,6 @@ export default function HoyScreen() {
                       maxWidth: '82vw',
                       objectFit: 'contain',
                       display: 'block',
-                      filter: 'drop-shadow(0 4px 18px rgba(212, 175, 55, 0.45))',
                       userSelect: 'none',
                     }}
                   />
@@ -568,7 +560,7 @@ export default function HoyScreen() {
             />
           </View>
 
-        </Animated.ScrollView>
+        </ScrollView>
 
         {!isRegisteredUser && Boolean(initiationStep) && (
           <View style={StyleSheet.absoluteFill}>
