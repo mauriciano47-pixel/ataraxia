@@ -80,28 +80,12 @@ export const PearlElectricBackground = React.memo(function PearlElectricBackgrou
         </Svg>
       </View>
 
-      {/* Auras con pointerEvents="none" explícito */}
+      {/* Auras ambiente optimizadas con aceleración de GPU */}
       <LinearGradient
-        colors={[glowColor, 'rgba(245, 158, 11, 0.10)', 'transparent']}
+        colors={[glowColor, 'rgba(245, 158, 11, 0.08)', 'transparent']}
         style={styles.heroArcGlow}
-        start={{ x: 0.5, y: 0.05 }}
-        end={{ x: 0.5, y: 0.95 }}
-        pointerEvents="none"
-      />
-
-      <LinearGradient
-        colors={['rgba(212, 175, 55, 0.14)', 'transparent']}
-        style={styles.leftCardGlow}
-        start={{ x: 0, y: 0.4 }}
-        end={{ x: 0.8, y: 0.8 }}
-        pointerEvents="none"
-      />
-
-      <LinearGradient
-        colors={['rgba(245, 158, 11, 0.18)', 'transparent']}
-        style={styles.rightHeaderGlow}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0.2, y: 0.5 }}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
       />
 
@@ -131,36 +115,20 @@ const styles = StyleSheet.create({
   },
   lightningLayer: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.85,
+    opacity: 0.65,
   },
   heroArcGlow: {
     position: 'absolute',
-    top: 30,
-    left: '8%',
-    right: '8%',
-    height: 360,
-    borderRadius: 180,
-  },
-  leftCardGlow: {
-    position: 'absolute',
-    top: 380,
-    left: 0,
-    width: 260,
-    height: 380,
-    borderRadius: 130,
-  },
-  rightHeaderGlow: {
-    position: 'absolute',
     top: 0,
+    left: 0,
     right: 0,
-    width: 220,
-    height: 240,
+    height: 360,
   },
   bottomGlow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 140,
+    height: 120,
   },
 });

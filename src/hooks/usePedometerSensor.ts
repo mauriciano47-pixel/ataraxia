@@ -54,6 +54,7 @@ export function usePedometerSensor(
   currentDailySteps: number = 0,
   userHeightCm: number = 170,
   userWeightKg: number = 70,
+  isPassiveWatcher: boolean = false,
 ) {
   const todayStr = getLocalTodayDateString();
   const dateKey = `ataraxia_pedometer_steps_${todayStr}`;
@@ -278,9 +279,9 @@ export function usePedometerSensor(
     }
   }, []);
 
-  // 2. Velocímetro GPS / Geolocation Speed Gate (Anti-Vehículo)
+  // 2. Velocímetro GPS / Geolocation Speed Gate (Anti-Vehículo) - Solo si el modo tránsito está activo
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    if (isPassiveWatcher || !isTransitMode || typeof navigator === 'undefined' || !navigator.geolocation) return;
 
     let geoWatchId: number | null = null;
     try {
@@ -307,11 +308,11 @@ export function usePedometerSensor(
         navigator.geolocation.clearWatch(geoWatchId);
       }
     };
-  }, []);
+  }, [isPassiveWatcher, isTransitMode]);
 
   // 3. Listener Nativo de Coprocesador de Movimiento en Tiempo Real
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    if (isPassiveWatcher || Platform.OS === 'web') return;
 
     syncNativeHistoricalSteps();
 
@@ -361,11 +362,11 @@ export function usePedometerSensor(
         pedometerSubscriptionRef.current = null;
       }
     };
-  }, [syncNativeHistoricalSteps]);
+  }, [isPassiveWatcher, syncNativeHistoricalSteps]);
 
   // 4. Sensor Web: Motor Biomecánico con Bloqueo de Cadencia Periódica (Cadence Periodicity Lock)
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (isPassiveWatcher || Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (transitModeRef.current || isVehicleDetectedRef.current) return;
@@ -536,7 +537,7 @@ export function usePedometerSensor(
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, []);
+  }, [isPassiveWatcher]);
 
   // Control de cambio de foco y AppState
   useEffect(() => {

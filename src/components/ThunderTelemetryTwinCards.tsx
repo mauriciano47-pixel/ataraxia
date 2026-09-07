@@ -66,16 +66,10 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
     return () => sweepLoop.stop();
   }, [ecgSweepAnim, hasMeasurement]);
 
-  // 3. Variabilidad fisiológica real (±1-2 BPM) — solo cuando hay medición verdadera
+  // 3. Ritmo Cardíaco en reposo estable
   useEffect(() => {
     setLiveFluctuatedBpm(heartRateBpm);
-    if (!hasMeasurement) return;
-    const interval = setInterval(() => {
-      const naturalJitter = Math.round(Math.sin(Date.now() / 2800) * 1.5);
-      setLiveFluctuatedBpm(heartRateBpm + naturalJitter);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [heartRateBpm, hasMeasurement]);
+  }, [heartRateBpm]);
 
   // Semicircle Steps Progress
   const safeGoal = stepGoal > 0 ? stepGoal : 15000;

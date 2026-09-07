@@ -70,6 +70,7 @@ export default function HoyScreen() {
     log.steps ?? 0,
     log.userMetrics?.heightCm ?? 170,
     log.userMetrics?.weightKg ?? 70,
+    true, // isPassiveWatcher: evita duplicar listeners de movimiento y GPS
   );
 
   // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián

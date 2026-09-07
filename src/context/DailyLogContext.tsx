@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -1459,48 +1459,57 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const contextValue = useMemo(() => ({
+    log,
+    loading,
+    user,
+    saveFullProfile,
+    logMealWithMacros,
+    addWater,
+    toggleTraining,
+    addMeal,
+    addCalories,
+    saveCheckIn,
+    addMacros,
+    addSteps,
+    setSteps,
+    setStepGoal,
+    updateUserMetrics,
+    setStoicAvatar,
+    setUserName,
+    setUserEmail,
+    saveGuardianKey,
+    setCoachArchetype,
+    selectLegendaryPath,
+    calculateTodayGrade,
+    executeJudgment,
+    get30DayResolution,
+    resetMonthlyCycle,
+    start30DayPact,
+    updateSmartDevice,
+    saveOnboardingProfile,
+    resetOnboarding,
+    saveReadinessScore,
+    updateEffectiveSets,
+    logMealWithEnrichedMacros,
+    setCustomRoutine,
+    syncExternalHealthData,
+    bodySnapshots,
+    addBodySnapshot,
+    deleteBodySnapshot,
+  }), [
+    log,
+    loading,
+    user,
+    bodySnapshots,
+    addBodySnapshot,
+    deleteBodySnapshot,
+    executeJudgment,
+    resetMonthlyCycle,
+  ]);
+
   return (
-    <DailyLogContext.Provider
-      value={{
-        log,
-        loading,
-        user,
-        saveFullProfile,
-        logMealWithMacros,
-        addWater,
-        toggleTraining,
-        addMeal,
-        addCalories,
-        saveCheckIn,
-        addMacros,
-        addSteps,
-        setSteps,
-        setStepGoal,
-        updateUserMetrics,
-        setStoicAvatar,
-        setUserName,
-        setUserEmail,
-        saveGuardianKey,
-        setCoachArchetype,
-        selectLegendaryPath,
-        calculateTodayGrade,
-        executeJudgment,
-        get30DayResolution,
-        resetMonthlyCycle,
-        start30DayPact,
-        updateSmartDevice,
-        saveOnboardingProfile,
-        resetOnboarding,
-        saveReadinessScore,
-        updateEffectiveSets,
-        logMealWithEnrichedMacros,
-        setCustomRoutine,
-        syncExternalHealthData,
-        bodySnapshots,
-        addBodySnapshot,
-        deleteBodySnapshot,
-      }}
-    >
+    <DailyLogContext.Provider value={contextValue}>
       {children}
     </DailyLogContext.Provider>
   );

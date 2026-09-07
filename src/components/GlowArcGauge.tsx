@@ -33,24 +33,6 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
 }: GlowArcGaugeProps) {
   const [activeMetric, setActiveMetric] = useState<'burn' | 'nutrition' | 'power'>('burn');
 
-  // Animaciones Eléctricas de Alta Tensión optimizadas por Hardware
-  const boltPulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    // Pulso suave de Plasma con aceleración nativa
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(boltPulseAnim, { toValue: 1.08, duration: 1200, useNativeDriver: true }),
-        Animated.timing(boltPulseAnim, { toValue: 1.0, duration: 1200, useNativeDriver: true }),
-      ])
-    );
-    pulseLoop.start();
-
-    return () => {
-      pulseLoop.stop();
-    };
-  }, [boltPulseAnim]);
-
   // Cálculos de Porcentajes según la métrica activa
   const burnPct = Math.round((calories / Math.max(1, targetCalories)) * 100);
   const nutritionPct = Math.round((consumedCalories / Math.max(1, targetConsumedCalories)) * 100);
