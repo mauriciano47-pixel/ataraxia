@@ -33,23 +33,32 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
 }: GlowArcGaugeProps) {
   const [activeMetric, setActiveMetric] = useState<'burn' | 'nutrition' | 'power'>('burn');
 
-  // Cálculos de Porcentajes según la métrica activa
-  const burnPct = Math.round((calories / Math.max(1, targetCalories)) * 100);
-  const nutritionPct = Math.round((consumedCalories / Math.max(1, targetConsumedCalories)) * 100);
-  const overallPowerPct = Math.round(((strengthProgress * 0.6) + (virtueProgress * 0.4)) * 100);
+  // Cálculos de Porcentajes seguros según la métrica activa
+  const safeCalories = Number.isFinite(calories) ? Math.max(0, calories!) : 0;
+  const safeTargetCalories = Number.isFinite(targetCalories) && (targetCalories || 0) > 0 ? targetCalories! : 2200;
+  const safeConsumedCalories = Number.isFinite(consumedCalories) ? Math.max(0, consumedCalories!) : 0;
+  const safeTargetConsumed = Number.isFinite(targetConsumedCalories) && (targetConsumedCalories || 0) > 0 ? targetConsumedCalories! : 2200;
+  const safeStrength = Number.isFinite(strengthProgress) ? Math.min(1, Math.max(0, strengthProgress!)) : 0.8;
+  const safeVirtue = Number.isFinite(virtueProgress) ? Math.min(1, Math.max(0, virtueProgress!)) : 0.8;
 
-  const displayPct = activeMetric === 'burn' ? burnPct : activeMetric === 'nutrition' ? nutritionPct : overallPowerPct;
+  const burnPct = Math.round((safeCalories / safeTargetCalories) * 100);
+  const nutritionPct = Math.round((safeConsumedCalories / safeTargetConsumed) * 100);
+  const overallPowerPct = Math.round(((safeStrength * 0.6) + (safeVirtue * 0.4)) * 100);
+
+  const rawDisplayPct = activeMetric === 'burn' ? burnPct : activeMetric === 'nutrition' ? nutritionPct : overallPowerPct;
+  const displayPct = Number.isFinite(rawDisplayPct) ? rawDisplayPct : 0;
   const currentRatio = Math.min(1, Math.max(0.02, displayPct / 100));
 
-  const cx = size / 2;
-  const cy = size / 2;
+  const safeSize = Number.isFinite(size) && (size || 0) > 50 ? size! : 320;
+  const cx = safeSize / 2;
+  const cy = safeSize / 2;
 
   // Outer 3D Gold Bezel
-  const bezelRadius = (size - 18) / 2;
+  const bezelRadius = Math.max(10, (safeSize - 18) / 2);
   
   // Power Progress Arc
   const arcStrokeWidth = 14;
-  const arcRadius = bezelRadius - 20;
+  const arcRadius = Math.max(10, bezelRadius - 20);
 
   // Angles: 135deg (bottom-left) to 405deg (bottom-right) => 270deg sweep
   const startAngle = 135;
@@ -57,18 +66,25 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
   const totalAngle = endAngle - startAngle;
 
   const polarToCartesian = (centerX: number, centerY: number, r: number, angleInDegrees: number) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    const safeR = Number.isFinite(r) ? r : 100;
+    const safeA = Number.isFinite(angleInDegrees) ? angleInDegrees : 0;
+    const angleInRadians = ((safeA - 90) * Math.PI) / 180.0;
+    const px = centerX + safeR * Math.cos(angleInRadians);
+    const py = centerY + safeR * Math.sin(angleInRadians);
     return {
-      x: centerX + r * Math.cos(angleInRadians),
-      y: centerY + r * Math.sin(angleInRadians),
+      x: Number.isFinite(px) ? px : centerX,
+      y: Number.isFinite(py) ? py : centerY,
     };
   };
 
   const describeArc = (x: number, y: number, r: number, startA: number, endA: number) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r) || !Number.isFinite(startA) || !Number.isFinite(endA)) {
+      return '';
+    }
     const start = polarToCartesian(x, y, r, endA);
     const end = polarToCartesian(x, y, r, startA);
     const largeArcFlag = endA - startA <= 180 ? '0' : '1';
-    return ['M', start.x, start.y, 'A', r, r, 0, largeArcFlag, 0, end.x, end.y].join(' ');
+    return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 ${largeArcFlag} 0 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
   };
 
   const currentAngle = startAngle + totalAngle * currentRatio;
@@ -235,7 +251,7 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
           />
 
           {/* 5. ARCO DE DESCARGA ELÉCTRICA EN TIEMPO REAL (CHISPAS DE ALTA TENSIÓN) */}
-          {currentRatio > 0.15 && (
+          {currentRatio > 0.15 && Number.isFinite(sparkPos1.x) && (
             <>
               {/* Relámpago de Chispa 1 */}
               <Path
@@ -249,7 +265,7 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
             </>
           )}
 
-          {currentRatio > 0.50 && (
+          {currentRatio > 0.50 && Number.isFinite(sparkPos2.x) && (
             <>
               {/* Relámpago de Chispa 2 */}
               <Path
@@ -264,27 +280,31 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
           )}
 
           {/* 6. PUNTA DE DESCARGA ELÉCTRICA MULTI-CAPA */}
-          {/* Halo Exterior Expandido */}
-          <Circle
-            cx={capPos.x}
-            cy={capPos.y}
-            r={arcStrokeWidth / 2 + 12}
-            fill="rgba(245, 158, 11, 0.45)"
-          />
-          {/* Resplandor Eléctrico */}
-          <Circle
-            cx={capPos.x}
-            cy={capPos.y}
-            r={arcStrokeWidth / 2 + 6}
-            fill="rgba(255, 226, 89, 0.90)"
-          />
-          {/* Núcleo Blanco Incandescente */}
-          <Circle
-            cx={capPos.x}
-            cy={capPos.y}
-            r={arcStrokeWidth / 2 + 1}
-            fill="#FFFFFF"
-          />
+          {Number.isFinite(capPos.x) && (
+            <>
+              {/* Halo Exterior Expandido */}
+              <Circle
+                cx={capPos.x}
+                cy={capPos.y}
+                r={arcStrokeWidth / 2 + 12}
+                fill="rgba(245, 158, 11, 0.45)"
+              />
+              {/* Resplandor Eléctrico */}
+              <Circle
+                cx={capPos.x}
+                cy={capPos.y}
+                r={arcStrokeWidth / 2 + 6}
+                fill="rgba(255, 226, 89, 0.90)"
+              />
+              {/* Núcleo Blanco Incandescente */}
+              <Circle
+                cx={capPos.x}
+                cy={capPos.y}
+                r={arcStrokeWidth / 2 + 1}
+                fill="#FFFFFF"
+              />
+            </>
+          )}
 
           {/* 7. RELÁMPAGO MONUMENTAL CENTRAL 3D */}
           <G transform={`translate(${cx - 24}, ${cy - 86})`}>

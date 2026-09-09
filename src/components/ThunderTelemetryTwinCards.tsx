@@ -72,22 +72,24 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
   }, [heartRateBpm]);
 
   // Semicircle Steps Progress
-  const safeGoal = stepGoal > 0 ? stepGoal : 15000;
-  const rawRatio = (steps || 0) / safeGoal;
-  const safeStepRatio = Math.max(0.02, Math.min(1, rawRatio));
+  const safeGoal = Number(stepGoal) > 0 ? Number(stepGoal) : 15000;
+  const rawRatio = (Number(steps) || 0) / safeGoal;
+  const safeStepRatio = Math.max(0.02, Math.min(1, Number.isFinite(rawRatio) ? rawRatio : 0.02));
   const size = 130;
   const cx = size / 2;
   const cy = size - 14;
   const radius = 48;
   const strokeWidth = 8;
 
-  const bgSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+  const bgSemiArc = `M ${(cx - radius).toFixed(2)} ${cy.toFixed(2)} A ${radius.toFixed(2)} ${radius.toFixed(2)} 0 0 1 ${(cx + radius).toFixed(2)} ${cy.toFixed(2)}`;
 
   // Progress semi-arc calculation (0% en la izquierda 180°, 100% en la derecha 0°)
   const angleRad = (1 - safeStepRatio) * Math.PI;
-  const capX = cx + radius * Math.cos(angleRad);
-  const capY = cy - radius * Math.sin(angleRad);
-  const progressSemiArc = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${capX.toFixed(2)} ${capY.toFixed(2)}`;
+  const rawCapX = cx + radius * Math.cos(angleRad);
+  const rawCapY = cy - radius * Math.sin(angleRad);
+  const capX = Number.isFinite(rawCapX) ? rawCapX.toFixed(2) : (cx - radius).toFixed(2);
+  const capY = Number.isFinite(rawCapY) ? rawCapY.toFixed(2) : cy.toFixed(2);
+  const progressSemiArc = `M ${(cx - radius).toFixed(2)} ${cy.toFixed(2)} A ${radius.toFixed(2)} ${radius.toFixed(2)} 0 0 1 ${capX} ${capY}`;
 
   return (
     <View style={styles.twinCardsRow}>

@@ -14,14 +14,21 @@ import {
   InfoTabIcon,
 } from '@/components/TabSvgIcons';
 
-class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+import { SafeStorage } from '@/utils/safeStorage';
+
+interface GlobalErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalErrorBoundaryState> {
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): GlobalErrorBoundaryState {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -29,28 +36,59 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
 
   handleReset = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: null });
+  };
+
+  handlePurgeAndReset = () => {
+    try {
+      SafeStorage.clearAll();
+    } catch {}
+    this.setState({ hasError: false, error: null });
   };
 
   render() {
     if (this.state.hasError) {
       return (
         <View style={{ flex: 1, backgroundColor: '#050507', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Text style={{ color: '#D4AF37', fontSize: 32, marginBottom: 12 }}>🏛️</Text>
+          <Text style={{ color: '#D4AF37', fontSize: 36, marginBottom: 12 }}>🏛️</Text>
           <Text style={{ color: '#FFE259', fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, letterSpacing: 1 }}>
             ATARAXIA • MODO RECUPERACIÓN
           </Text>
-          <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', marginBottom: 24, lineHeight: 18, maxWidth: 360 }}>
+          <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', marginBottom: 16, lineHeight: 18, maxWidth: 360 }}>
             Se interceptó una anomalía no crítica de interfaz. Tus datos biométricos y pacto estoico permanecen 100% seguros.
           </Text>
-          <TouchableOpacity
-            onPress={this.handleReset}
-            style={{ backgroundColor: '#D4AF37', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 }}
-          >
-            <Text style={{ color: '#050507', fontWeight: 'bold', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Reanudar Templo
-            </Text>
-          </TouchableOpacity>
+
+          {/* Caja de diagnóstico técnico */}
+          {this.state.error && (
+            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.35)', borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 20, maxWidth: 360, width: '100%' }}>
+              <Text style={{ color: '#FCA5A5', fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', marginBottom: 4 }}>
+                DIAGNÓSTICO:
+              </Text>
+              <Text style={{ color: '#F87171', fontSize: 12, fontFamily: 'monospace', lineHeight: 16 }} numberOfLines={4}>
+                {this.state.error.name}: {this.state.error.message}
+              </Text>
+            </View>
+          )}
+
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity
+              onPress={this.handleReset}
+              style={{ backgroundColor: '#D4AF37', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 }}
+            >
+              <Text style={{ color: '#050507', fontWeight: 'bold', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Reanudar
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={this.handlePurgeAndReset}
+              style={{ backgroundColor: 'rgba(212, 175, 55, 0.15)', borderColor: '#D4AF37', borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 }}
+            >
+              <Text style={{ color: '#FFE259', fontWeight: 'bold', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Purgar Caché & Entrar
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }

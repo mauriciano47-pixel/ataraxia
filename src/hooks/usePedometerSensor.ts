@@ -298,7 +298,7 @@ export function usePedometerSensor(
       const available = await Pedometer.isAvailableAsync();
       setIsAvailable(available);
 
-      if (available) {
+      if (available && Platform.OS === 'ios') {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
         const now = new Date();
@@ -322,7 +322,7 @@ export function usePedometerSensor(
 
   // 2. Velocímetro GPS / Geolocation Speed Gate (Anti-Vehículo) - Solo si el modo tránsito está activo
   useEffect(() => {
-    if (isPassiveWatcher || !isTransitMode || typeof navigator === 'undefined' || !navigator.geolocation) return;
+    if (isPassiveWatcher || !isTransitMode || Platform.OS !== 'web' || typeof navigator === 'undefined' || !navigator.geolocation) return;
 
     let geoWatchId: number | null = null;
     try {
@@ -571,10 +571,14 @@ export function usePedometerSensor(
       }
     };
 
-    window.addEventListener('devicemotion', handleMotion, { passive: true });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('devicemotion', handleMotion, { passive: true });
+    }
 
     return () => {
-      window.removeEventListener('devicemotion', handleMotion);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('devicemotion', handleMotion);
+      }
     };
   }, [isPassiveWatcher, emitStepsBatched]);
 

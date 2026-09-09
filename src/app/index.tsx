@@ -114,35 +114,38 @@ export default function HoyScreen() {
   const currentPrinciple = getDailyStoicPrinciple(todayStr, quoteOffset);
 
   // 1. Lectura 100% Real de Fuerza (Physical Power):
-  const currentSteps = log.steps ?? 0;
-  const currentGoal = log.stepGoal ?? 10000;
+  const currentSteps = Number(log.steps) || 0;
+  const currentGoal = Number(log.stepGoal) > 0 ? Number(log.stepGoal) : 10000;
   const stepRatio = currentGoal > 0 ? Math.min(1, currentSteps / currentGoal) : 0;
   const trainingRatio = log.trainingCompleted ? 1 : 0;
-  const nutritionRatio = Math.min(1, (log.mealsLogged ?? 0) / 3);
+  const nutritionRatio = Math.min(1, (Number(log.mealsLogged) || 0) / 3);
   const strengthProgress = (trainingRatio * 0.40) + (stepRatio * 0.40) + (nutritionRatio * 0.20);
 
   // 2. Lectura 100% Real de Virtud (Stoic Discipline):
-  const waterLitres = log.waterLitres ?? 0;
+  const waterLitres = Number(log.waterLitres) || 0;
   const waterRatio = Math.min(1, waterLitres / 3.0);
   const meditationRatio = log.checkInDone ? 1 : 0.5;
   const checkInRatio = log.checkInDone ? 1 : 0;
   const virtueProgress = (waterRatio * 0.40) + (meditationRatio * 0.30) + (checkInRatio * 0.30);
 
   const currentKm = Number((currentSteps * 0.00075).toFixed(1));
-  const currentCalories = log.totalCalories ?? 0;
-  const targetCalories = log.targetCalories ?? 2200;
+  const currentCalories = Number(log.totalCalories) || 0;
+  const targetCalories = Number(log.targetCalories) > 0 ? Number(log.targetCalories) : 2200;
   const activeStreak = log.trainingCompleted || log.checkInDone ? 15 : 14;
 
   // 3. Fisiología Dinámica del Gasto Calórico Activo (Daily Power Burn):
   const metrics = log.userMetrics || { weightKg: 78, heightCm: 176, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
-  const bmr = (10 * metrics.weightKg) + (6.25 * metrics.heightCm) - (5 * metrics.age) + 5;
+  const safeWeight = Number(metrics.weightKg) || 75;
+  const safeHeight = Number(metrics.heightCm) || 175;
+  const safeAge = Number(metrics.age) || 28;
+  const bmr = (10 * safeWeight) + (6.25 * safeHeight) - (5 * safeAge) + 5;
   const now = new Date();
   const dayFraction = Math.max(0.25, (now.getHours() * 60 + now.getMinutes()) / 1440);
-  const basalBurn = Math.round(bmr * dayFraction);
+  const basalBurn = Math.round((Number.isFinite(bmr) ? bmr : 1600) * dayFraction);
   const stepsBurn = Math.round(currentSteps * 0.045);
-  const workoutBurn = log.trainingCompleted ? 480 : (log.effectiveSets ? log.effectiveSets * 25 : 0);
-  const totalBurnedCalories = basalBurn + stepsBurn + workoutBurn;
-  const targetBurnCalories = Math.max(2200, Math.round(bmr * 1.45));
+  const workoutBurn = log.trainingCompleted ? 480 : (log.effectiveSets ? (Number(log.effectiveSets) || 0) * 25 : 0);
+  const totalBurnedCalories = Math.max(0, Math.round((basalBurn || 0) + (stepsBurn || 0) + (workoutBurn || 0)));
+  const targetBurnCalories = Math.max(2200, Math.round((Number.isFinite(bmr) ? bmr : 1600) * 1.45));
 
   // 4. Variables de la Senda Activa & Pilares del Pacto de 30 Días
   const currentPath = log.legendaryPath || 'spartan';
