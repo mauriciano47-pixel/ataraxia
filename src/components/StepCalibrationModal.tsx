@@ -56,17 +56,17 @@ export function StepCalibrationModal({
   manualStrideLength,
   onSetManualStrideLength,
 }: StepCalibrationModalProps) {
-  const [exactInput, setExactInput] = useState<string>(currentSteps.toString());
-  const [goalInput, setGoalInput] = useState<string>(stepGoal.toString());
+  const [exactInput, setExactInput] = useState<string>((currentSteps ?? 0).toString());
+  const [goalInput, setGoalInput] = useState<string>((stepGoal ?? 10000).toString());
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false);
   const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
 
   const defaultStrideCm = Math.round(getPersonalStrideLength(userHeightCm, 'walking') * 100);
   const currentStrideCm = manualStrideLength ? Math.round(manualStrideLength * 100) : defaultStrideCm;
-  const [strideInput, setStrideInput] = useState<string>(currentStrideCm.toString());
+  const [strideInput, setStrideInput] = useState<string>((currentStrideCm ?? 75).toString());
 
-  const km = calculateDistanceKm(currentSteps, userHeightCm, 'walking', manualStrideLength);
-  const caloriesBurned = calculateStepCalories(currentSteps, userWeightKg, userHeightCm);
+  const km = calculateDistanceKm(currentSteps ?? 0, userHeightCm, 'walking', manualStrideLength);
+  const caloriesBurned = calculateStepCalories(currentSteps ?? 0, userWeightKg, userHeightCm);
   const toggleLiveTracking = onToggleLiveTracking ?? (() => {});
 
   const showFeedback = (msg: string) => {

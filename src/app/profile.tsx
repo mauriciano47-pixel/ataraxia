@@ -42,11 +42,11 @@ export default function ProfileScreen() {
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
   const [emailInput, setEmailInput] = useState(log.userEmail || '');
-  const [ageInput, setAgeInput] = useState(metrics.age.toString());
-  const [weightInput, setWeightInput] = useState(metrics.weightKg.toString());
-  const [heightInput, setHeightInput] = useState(metrics.heightCm.toString());
-  const [targetCalInput, setTargetCalInput] = useState((log.targetCalories || 2200).toString());
-  const [targetStepInput, setTargetStepInput] = useState((log.stepGoal || 10000).toString());
+  const [ageInput, setAgeInput] = useState((metrics?.age ?? 28).toString());
+  const [weightInput, setWeightInput] = useState((metrics?.weightKg ?? 75).toString());
+  const [heightInput, setHeightInput] = useState((metrics?.heightCm ?? 175).toString());
+  const [targetCalInput, setTargetCalInput] = useState((log?.targetCalories || 2200).toString());
+  const [targetStepInput, setTargetStepInput] = useState((log?.stepGoal || 10000).toString());
 
   const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
   const pathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
@@ -69,11 +69,11 @@ export default function ProfileScreen() {
     const currentMetrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
     setNameInput(log.userName || 'Ciudadano Prokopton');
     setEmailInput(log.userEmail || '');
-    setAgeInput(currentMetrics.age.toString());
-    setWeightInput(currentMetrics.weightKg.toString());
-    setHeightInput(currentMetrics.heightCm.toString());
-    setTargetCalInput((log.targetCalories || 2200).toString());
-    setTargetStepInput((log.stepGoal || 10000).toString());
+    setAgeInput((currentMetrics?.age ?? 28).toString());
+    setWeightInput((currentMetrics?.weightKg ?? 75).toString());
+    setHeightInput((currentMetrics?.heightCm ?? 175).toString());
+    setTargetCalInput((log?.targetCalories || 2200).toString());
+    setTargetStepInput((log?.stepGoal || 10000).toString());
     setShowEditModal(true);
   };
 
@@ -196,7 +196,7 @@ export default function ProfileScreen() {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
         >
           

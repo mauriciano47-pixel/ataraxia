@@ -587,7 +587,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           style={styles.container}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
         >
         

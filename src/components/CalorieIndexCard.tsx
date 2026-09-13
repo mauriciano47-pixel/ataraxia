@@ -31,12 +31,12 @@ export const CalorieIndexCard = React.memo(function CalorieIndexCard({
   const [modalVisible, setModalVisible] = useState(false);
 
   // Form states for calculator
-  const [weight, setWeight] = useState(userMetrics.weightKg.toString());
-  const [height, setHeight] = useState(userMetrics.heightCm.toString());
-  const [age, setAge] = useState(userMetrics.age.toString());
-  const [gender, setGender] = useState<UserMetrics['gender']>(userMetrics.gender || 'male');
-  const [activity, setActivity] = useState<UserMetrics['activityLevel']>(userMetrics.activityLevel || 'moderate');
-  const [goal, setGoal] = useState<UserMetrics['goal']>(userMetrics.goal || 'maintenance');
+  const [weight, setWeight] = useState((userMetrics?.weightKg ?? 75).toString());
+  const [height, setHeight] = useState((userMetrics?.heightCm ?? 175).toString());
+  const [age, setAge] = useState((userMetrics?.age ?? 28).toString());
+  const [gender, setGender] = useState<UserMetrics['gender']>(userMetrics?.gender || 'male');
+  const [activity, setActivity] = useState<UserMetrics['activityLevel']>(userMetrics?.activityLevel || 'moderate');
+  const [goal, setGoal] = useState<UserMetrics['goal']>(userMetrics?.goal || 'maintenance');
 
   const fitnessCalc = calculateFitnessIndex({
     weightKg: parseFloat(weight) || 75,

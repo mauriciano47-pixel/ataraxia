@@ -44,16 +44,22 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
   const [sleepRecord, setSleepRecord] = useState<SleepRecord>(() => {
     try {
       const saved = SafeStorage.getItem(SLEEP_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : DEFAULT_SLEEP_RECORD;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_SLEEP_RECORD, ...parsed };
+        }
+      }
+      return DEFAULT_SLEEP_RECORD;
     } catch {
       return DEFAULT_SLEEP_RECORD;
     }
   });
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [inputHours, setInputHours] = useState(sleepRecord.totalHours.toString());
-  const [inputBedTime, setInputBedTime] = useState(sleepRecord.bedTime);
-  const [inputWakeTime, setInputWakeTime] = useState(sleepRecord.wakeTime);
+  const [inputHours, setInputHours] = useState(((sleepRecord?.totalHours ?? 7.5)).toString());
+  const [inputBedTime, setInputBedTime] = useState(sleepRecord?.bedTime ?? '23:15');
+  const [inputWakeTime, setInputWakeTime] = useState(sleepRecord?.wakeTime ?? '06:45');
   const [perceivedQuality, setPerceivedQuality] = useState(8);
 
   useEffect(() => {
@@ -61,7 +67,10 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       try {
         const saved = SafeStorage.getItem(SLEEP_STORAGE_KEY);
         if (saved) {
-          setSleepRecord(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            setSleepRecord({ ...DEFAULT_SLEEP_RECORD, ...parsed });
+          }
         }
       } catch {}
     };
@@ -117,7 +126,11 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
     setModalVisible(false);
   };
 
-  const isOptimal = sleepRecord.totalHours >= 7.0 && sleepRecord.totalHours <= 9.0;
+  const safeRecord: SleepRecord = {
+    ...DEFAULT_SLEEP_RECORD,
+    ...(sleepRecord || {}),
+  };
+  const isOptimal = safeRecord.totalHours >= 7.0 && safeRecord.totalHours <= 9.0;
 
   return (
     <View style={styles.card}>
@@ -139,16 +152,16 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       <View style={styles.mainDisplayRow}>
         <View style={styles.durationCol}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-            <ThemedText style={styles.hoursNumber}>{sleepRecord.totalHours.toFixed(1)}</ThemedText>
+            <ThemedText style={styles.hoursNumber}>{(safeRecord.totalHours || 7.5).toFixed(1)}</ThemedText>
             <ThemedText style={styles.hoursUnit}>horas</ThemedText>
           </View>
           <ThemedText style={styles.goalSubtext}>
-            Meta estoica: 8.0h ({sleepRecord.bedTime} → {sleepRecord.wakeTime})
+            Meta estoica: 8.0h ({safeRecord.bedTime || '23:15'} → {safeRecord.wakeTime || '06:45'})
           </ThemedText>
         </View>
 
         <View style={styles.efficiencyBadgeBox}>
-          <ThemedText style={styles.efficiencyVal}>{sleepRecord.efficiencyPct}%</ThemedText>
+          <ThemedText style={styles.efficiencyVal}>{safeRecord.efficiencyPct || 92}%</ThemedText>
           <ThemedText style={styles.efficiencyLabel}>EFICIENCIA</ThemedText>
         </View>
       </View>
@@ -157,25 +170,25 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       <View style={styles.phaseTrackContainer}>
         <View style={styles.phaseBarTrack}>
           {/* Sueño Profundo */}
-          <View style={[styles.phaseSegment, { flex: Math.max(0.1, sleepRecord.deepHours), backgroundColor: '#818CF8' }]} />
+          <View style={[styles.phaseSegment, { flex: Math.max(0.1, safeRecord.deepHours || 1.8), backgroundColor: '#818CF8' }]} />
           {/* Sueño REM */}
-          <View style={[styles.phaseSegment, { flex: Math.max(0.1, sleepRecord.remHours), backgroundColor: '#38BDF8' }]} />
+          <View style={[styles.phaseSegment, { flex: Math.max(0.1, safeRecord.remHours || 1.9), backgroundColor: '#38BDF8' }]} />
           {/* Sueño Ligero */}
-          <View style={[styles.phaseSegment, { flex: Math.max(0.1, sleepRecord.lightHours), backgroundColor: '#64748B' }]} />
+          <View style={[styles.phaseSegment, { flex: Math.max(0.1, safeRecord.lightHours || 3.8), backgroundColor: '#64748B' }]} />
         </View>
 
         <View style={styles.phaseLegendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#818CF8' }]} />
-            <ThemedText style={styles.legendText}>Profundo: {sleepRecord.deepHours}h</ThemedText>
+            <ThemedText style={styles.legendText}>Profundo: {safeRecord.deepHours || 1.8}h</ThemedText>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#38BDF8' }]} />
-            <ThemedText style={styles.legendText}>REM: {sleepRecord.remHours}h</ThemedText>
+            <ThemedText style={styles.legendText}>REM: {safeRecord.remHours || 1.9}h</ThemedText>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#64748B' }]} />
-            <ThemedText style={styles.legendText}>Ligero: {sleepRecord.lightHours}h</ThemedText>
+            <ThemedText style={styles.legendText}>Ligero: {safeRecord.lightHours || 3.8}h</ThemedText>
           </View>
         </View>
       </View>
@@ -184,18 +197,18 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       <View style={styles.metricsGrid}>
         <View style={styles.metricItem}>
           <ThemedText style={styles.metricLabel}>FC MÍNIMA</ThemedText>
-          <ThemedText style={styles.metricValue}>{sleepRecord.restingBpm} bpm</ThemedText>
+          <ThemedText style={styles.metricValue}>{safeRecord.restingBpm || 54} bpm</ThemedText>
         </View>
         <View style={styles.metricDivider} />
         <View style={styles.metricItem}>
           <ThemedText style={styles.metricLabel}>VFC / HRV</ThemedText>
-          <ThemedText style={[styles.metricValue, { color: '#34D399' }]}>{sleepRecord.hrvMs} ms</ThemedText>
+          <ThemedText style={[styles.metricValue, { color: '#34D399' }]}>{safeRecord.hrvMs || 65} ms</ThemedText>
         </View>
         <View style={styles.metricDivider} />
         <View style={styles.metricItem}>
           <ThemedText style={styles.metricLabel}>ORIGEN</ThemedText>
           <ThemedText style={[styles.metricValue, { fontSize: 11 }]}>
-            {sleepRecord.source === 'google_health' ? '💚 Google Health' : sleepRecord.source === 'smartwatch' ? '⌚ Smartwatch' : '✍️ Manual'}
+            {safeRecord.source === 'google_health' ? '💚 Google Health' : safeRecord.source === 'smartwatch' ? '⌚ Smartwatch' : '✍️ Manual'}
           </ThemedText>
         </View>
       </View>

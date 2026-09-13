@@ -152,7 +152,7 @@ export default function ArchonThroneScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
         >
           

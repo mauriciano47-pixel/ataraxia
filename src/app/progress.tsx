@@ -348,7 +348,7 @@ export default function ProgressScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
         >
           
@@ -927,7 +927,7 @@ export default function ProgressScreen() {
                 <ScrollView
                   style={styles.dossierContentScroll}
                   showsVerticalScrollIndicator={false}
-                  removeClippedSubviews={Platform.OS === 'android'}
+                  removeClippedSubviews={false}
                   overScrollMode="never"
                 >
                   {activeResolutionTab === 'verdict' && (

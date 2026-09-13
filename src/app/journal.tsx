@@ -325,7 +325,7 @@ export default function JournalScreen() {
           contentContainerStyle={styles.chatContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
         >
           {messages.map((msg, index) => {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ataraxia - Stoic Fitness",
     "slug": "ataraxia",
-    "version": "1.0.0",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ataraxia",
@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "com.ataraxia.app",
+      "versionCode": 8,
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.BODY_SENSORS",

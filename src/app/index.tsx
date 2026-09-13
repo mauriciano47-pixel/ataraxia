@@ -175,7 +175,7 @@ export default function HoyScreen() {
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.content}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
         >
