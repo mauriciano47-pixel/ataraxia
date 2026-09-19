@@ -43,3 +43,8 @@ example
 # generated native folders
 /ios
 /android
+
+# scratch and temporary scripts
+scratch/
+*.apk
+
