@@ -249,6 +249,42 @@ export default function ProfileScreen() {
             </View>
           </View>
 
+          {/* CÁMARAS DEL TEMPLO & ARCHIVOS (ACCESOS RÁPIDOS) */}
+          <View style={styles.templeChambersCard}>
+            <ThemedText style={styles.templeChambersTitle}>🏛️ CÁMARAS DEL TEMPLO & ARCHIVOS</ThemedText>
+            <View style={styles.chambersGrid}>
+              <TouchableOpacity
+                style={styles.chamberBtn}
+                onPress={() => router.push('/transformation')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={{ fontSize: 22, marginBottom: 3 }}>📸</ThemedText>
+                <ThemedText style={styles.chamberBtnText}>Escultura</ThemedText>
+                <ThemedText style={styles.chamberBtnSub}>Progreso Visual</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.chamberBtn}
+                onPress={() => router.push('/archon')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={{ fontSize: 22, marginBottom: 3 }}>👑</ThemedText>
+                <ThemedText style={styles.chamberBtnText}>Trono Arconte</ThemedText>
+                <ThemedText style={styles.chamberBtnSub}>Decretos & Censo</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.chamberBtn}
+                onPress={() => router.push('/about')}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={{ fontSize: 22, marginBottom: 3 }}>ℹ️</ThemedText>
+                <ThemedText style={styles.chamberBtnText}>Manifiesto</ThemedText>
+                <ThemedText style={styles.chamberBtnSub}>Filosofía Templo</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* MÓDULO DE DISTINCIÓN DE RANGO, DIPLOMA DE HONOR & FASE II COMING SOON */}
           <View style={styles.condecorationCard}>
             <View style={styles.condecorationHeader}>
@@ -1326,4 +1362,49 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     letterSpacing: 0.5,
   },
+  templeChambersCard: {
+    backgroundColor: 'rgba(10, 14, 26, 0.85)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    padding: 14,
+    marginBottom: 16,
+  },
+  templeChambersTitle: {
+    fontSize: 10.5,
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    color: '#FFE259',
+    letterSpacing: 1,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  chambersGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  chamberBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 5, 7, 0.75)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  chamberBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#F8FAFC',
+    marginBottom: 2,
+  },
+  chamberBtnSub: {
+    fontSize: 8.5,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    textAlign: 'center',
+  },
 });
+

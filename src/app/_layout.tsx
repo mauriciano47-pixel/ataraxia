@@ -153,9 +153,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="transformation"
           options={{
+            href: null,
             title: 'Escultura',
-            tabBarLabel: '📸 Escultura',
-            tabBarIcon: ({ color, focused }) => <SculptureCameraIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen
@@ -193,17 +192,15 @@ export default function TabLayout() {
         <Tabs.Screen
           name="archon"
           options={{
+            href: null,
             title: 'Arconte',
-            tabBarLabel: '👑 Trono',
-            tabBarIcon: ({ color, focused }) => <ArchonCrownIcon color={focused ? '#D4AF37' : color} size={24} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="about"
           options={{
+            href: null,
             title: 'Info',
-            tabBarLabel: 'ℹ️ Info',
-            tabBarIcon: ({ color, focused }) => <InfoTabIcon color={focused ? '#D4AF37' : color} size={22} />,
           }}
         />
         <Tabs.Screen

@@ -12,7 +12,9 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID ?? '',
 };
 
-const hasFirebaseConfig = Object.values(firebaseConfig).every((value) => Boolean(value));
+// Excluir measurementId de la validación estricta para permitir que Android nativo conecte sin requerir Analytics web
+const { measurementId: _measurementId, ...requiredFirebaseConfig } = firebaseConfig;
+const hasFirebaseConfig = Object.values(requiredFirebaseConfig).every((value) => Boolean(value));
 
 const app = hasFirebaseConfig
   ? getApps().length > 0
