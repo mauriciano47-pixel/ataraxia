@@ -21,6 +21,8 @@ import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { CustomExercise } from '@/types/onboarding';
 import { ExerciseTechniqueModal, ExerciseGuideData } from '@/components/ExerciseTechniqueModal';
+import { StoicAuditModal } from '@/components/StoicAuditModal';
+import { HeartRateScannerModal } from '@/components/HeartRateScannerModal';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || '';
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -145,10 +147,15 @@ const SUGGESTED_SETS = [
 const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Full Body'];
 
 export default function TrainerScreen() {
-  const { log, toggleTraining, saveReadinessScore, updateEffectiveSets, setCustomRoutine } = useDailyLog();
+  const { log, toggleTraining, saveReadinessScore, updateEffectiveSets, setCustomRoutine, updateSmartDevice } = useDailyLog();
 
   const [amorFatiEjercicios, setAmorFatiEjercicios] = useState<CustomExercise[]>(CALISTENIA_MOCK);
   const [isAmorFati, setIsAmorFati] = useState(false);
+
+  // Auditoría Estoica Algorítmica contra el Autoengaño (RPE 9.5-10 vs PPG)
+  const [auditModalVisible, setAuditModalVisible] = useState(false);
+  const [auditExercise, setAuditExercise] = useState<{ id: string; name: string; rpe: number } | null>(null);
+  const [scannerModalVisible, setScannerModalVisible] = useState(false);
 
   // Derivar la rutina activa directamente de log.customRoutine
   const activeRoutine = (log.customRoutine && log.customRoutine.length > 0) ? log.customRoutine : RUTINA_MOCK;
@@ -229,6 +236,22 @@ export default function TrainerScreen() {
 
   const setRPE = (id: string, value: number) => {
     triggerHaptic();
+    if (value >= 9.5) {
+      // Activar la Auditoría Estoica Algorítmica contra el autoengaño
+      const currentList = isAmorFati ? amorFatiEjercicios : activeRoutine;
+      const ex = currentList.find(e => e.id === id);
+      setAuditExercise({
+        id,
+        name: ex ? ex.n : 'Ejercicio',
+        rpe: value,
+      });
+      setAuditModalVisible(true);
+      return;
+    }
+    applyRpeValue(id, value);
+  };
+
+  const applyRpeValue = (id: string, value: number) => {
     if (isAmorFati) {
       const updated = amorFatiEjercicios.map(e => e.id === id ? { ...e, rpe: value, done: true } : e);
       setAmorFatiEjercicios(updated);
@@ -734,6 +757,13 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
                 <ThemedText style={styles.readinessVerdictText}>
                   {log.readinessScore.total >= 7 ? "🟢 Estado Óptimo para Alta Carga" : log.readinessScore.total >= 5 ? "🟡 Estado Moderado (Ajusta RPE a 7-8)" : "🔴 Alta Fatiga: Sugerido Amor Fati / Calistenia"}
                 </ThemedText>
+                {log.readinessScore.total < 5 && (
+                  <View style={{ marginTop: 6, backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: 6, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+                    <ThemedText style={{ fontSize: 10.5, color: '#FCA5A5', fontStyle: 'italic', lineHeight: 14 }}>
+                      🏛️ Epicteto: «El verdadero autodominio a veces es saber descansar. Forzar una hipertrofia desmedida con el SNC fatigado no es valentía, es necedad.»
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             </View>
           ) : (
@@ -1265,6 +1295,39 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           visible={Boolean(selectedGuideExercise)}
           exercise={selectedGuideExercise}
           onClose={() => setSelectedGuideExercise(null)}
+        />
+
+        {/* MODAL DE AUDITORÍA ESTOICA CONTRA EL AUTOENGAÑO */}
+        <StoicAuditModal
+          visible={auditModalVisible}
+          onClose={() => {
+            setAuditModalVisible(false);
+            setAuditExercise(null);
+          }}
+          exerciseName={auditExercise?.name || 'Ejercicio'}
+          declaredRpe={auditExercise?.rpe || 10}
+          recordedBpm={log.smartDevice?.heartRateBpm || 0}
+          onConfirmRpe={(calibratedRpe) => {
+            if (auditExercise) {
+              applyRpeValue(auditExercise.id, calibratedRpe);
+            }
+          }}
+          onOpenHeartRateScanner={() => {
+            setScannerModalVisible(true);
+          }}
+        />
+
+        {/* MODAL DE ESCÁNER DE RITMO CARDÍACO POR CÁMARA (PPG) */}
+        <HeartRateScannerModal
+          visible={scannerModalVisible}
+          onClose={() => setScannerModalVisible(false)}
+          onSaveHeartRate={(bpm) => {
+            updateSmartDevice({ heartRateBpm: bpm });
+            setScannerModalVisible(false);
+            if (auditExercise) {
+              setAuditModalVisible(true);
+            }
+          }}
         />
 
         </ScrollView>

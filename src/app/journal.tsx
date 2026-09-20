@@ -37,6 +37,8 @@ const DISCLAIMER_TEXT =
   '⚕️ AVISO: Este coach es una herramienta de apoyo basada en IA y mentoría estoica. No reemplaza el consejo de un médico o especialista certificado. Si sientes dolor severo o agudo, consulta a un profesional.';
 
 const QUICK_PROMPTS = [
+  { icon: 'flame-outline', text: '🔥 Tengo pereza: activar Serie Única RPE 10' },
+  { icon: 'shield-checkmark-outline', text: '🏛️ Examen socrático ante el desánimo' },
   { icon: 'moon-outline', text: '😴 No puedo dormir / Mejorar sueño' },
   { icon: 'body-outline', text: '🩺 Me duele el cuello / trapecios' },
   { icon: 'help-circle-outline', text: '⚔️ Dudo si llegaré al Día 30' },
@@ -413,10 +415,10 @@ export default function JournalScreen() {
                 <ThemedText style={{ fontSize: 12 }}>{archetypeInfo.icon}</ThemedText>
                 <ThemedText style={styles.coachLabelText}>
                   {currentArchetype === 'spartan_commander'
-                    ? 'COMANDANTE FORJANDO ESTRATEGIA...'
+                    ? 'ESTOICO DISCIPLINARIO (EPICTETO)...'
                     : currentArchetype === 'sports_scientist'
-                    ? 'CALCULANDO BIOFÍSICA & MÉTRICAS...'
-                    : 'GEMINI CONSULTANDO EL TEMPLO...'}
+                    ? 'ESTOICO ANALÍTICO (CRISIPO)...'
+                    : 'ESTOICO SABIO (MARCO AURELIO)...'}
                 </ThemedText>
               </View>
               <Animated.View style={[styles.typingIndicator, { opacity: typingDots }]}>

@@ -258,19 +258,50 @@ Epicteto nos dejó esta joya:
 • **4. Sesión de Hoy Suave**: Cambiaremos el entreno pesado por 25 minutos de caminata al aire libre y estiramientos. La mente descansará y el cuerpo se mantendrá en movimiento virtuoso.`;
   }
 
-  // C. DESMOTIVACIÓN / FALTA DE INTERÉS / PEREZA
+  // C. DESMOTIVACIÓN / FALTA DE INTERÉS / PEREZA (REENCUADRE COGNITIVO RADICAL)
   if (p.includes('desmotivad') || p.includes('sin ganas') || p.includes('desinteres') || p.includes('perez') || p.includes('desanimo') || p.includes('desanimad') || p.includes('flojera')) {
-    return `🏛️ **Motivación vs Disciplina: El Secreto del Hombre Libre**
+    if (archetype === 'spartan_commander') {
+      return `⚔️ **Estoico Disciplinario: La Serie Única al Fallo (RPE 10)**
+      
+Hermano, la mente comodona busca negociar excusas para postergar el esfuerzo, ${userName}. Pero en el rigor de Epicteto no castigamos el cuerpo con culpas ni penitencias vacías; transmutamos el obstáculo en el camino.
 
-La motivación es una emoción pasajera y caprichosa, ${userName}; viene cuando quiere y desaparece en cuanto hace frío o estamos cansados. Si dependiéramos de la motivación, construiríamos templos de arena.
+🔥 **Protocolo de Reducción a Serie Única**:
+Si hoy no tienes la disposición para completar 5 ejercicios o 20 series, **no haremos una sesión mediocre a desgana**.
+1. Selecciona el **ejercicio rey de tu Senda** (Sentadilla, Press de Banca o Dominadas).
+2. Haz un calentamiento articular breve de 3 minutos.
+3. Ejecuta **UNA SOLA SERIE llevada al fallo técnico absoluto (RPE 10)**, con cadencia controlada (3s bajada, 1s pausa isométrica).
 
-La **disciplina estoica**, en cambio, es una decisión de la voluntad:
-> *"Cuando te despiertes con desgano por la mañana, reflexiona: me levanto para cumplir con mi deber de ser humano."* — Marco Aurelio.
+> *«No eres un niño que necesita aplausos ni entretenimiento; eres un atleta de honor. Tres minutos de esfuerzo impecable superan a una hora de volumen disperso.»*
 
-⚡ **La Estrategia de los 5 Minutos**:
-Ponte la ropa deportiva y comprométete a hacer **solo 5 minutos** de movimiento suave. Sin presión de hacer una sesión heroica. Si pasados esos 5 minutos tu cuerpo pide parar, habrás ganado la victoria de haberte presentado. En el 95% de los casos, la inercia del movimiento enciende tu fuego interior.
+¿Aceptas el pacto de la Serie Única hoy?`;
+    }
 
-Hoy no entrenamos porque tengamos ganas; entrenamos porque somos hombres y mujeres de palabra. ¡Acepta el desafío con Amor Fati!`;
+    if (archetype === 'sports_scientist') {
+      return `🔬 **Estoico Analítico: Auditoría de Resistencia & Telemetría**
+      
+La pereza percibida suele ser una señal neurobiológica, ${userName}. Desde la lógica de Crisipo, los datos son objetivos: debemos separar la fatiga central del Sistema Nervioso (SNC) de la resistencia psicológica del córtex prefrontal.
+
+🧬 **Plan de Acción Objetivo**:
+1. **Audita tus Números**: ¿Tu sueño profundo de anoche fue menor a 1.2h? ¿Tu variabilidad cardíaca (VFC) está deprimida? Si es así, no es pereza moral; es fatiga fisiológica real.
+2. **La Regla de los 5 Minutos de Calentamiento Sinovial**: Pon el cuerpo en movimiento en bicicleta o zancadas dinámicas. Si tras 5 minutos la frecuencia cardíaca sube con fluidez, la dopamina se activará por inercia biomecánica.
+3. **Calibración RIR**: Ajusta el esfuerzo a RPE 7 (RIR 3) en lugar de forzar intensidades máximas.
+
+*“Examina el fenómeno sin agregarle juicio de valor. La acción correcta surge del entendimiento claro.”*`;
+    }
+
+    // Default: stoic_mentor
+    return `🏛️ **Estoico Sabio: Examen Socrático & Dicotomía del Control**
+
+La motivación es una emoción caprichosa y efímera, ${userName}; viene cuando quiere y desaparece con el frío. Si dependiéramos de la motivación, construiríamos templos de arena.
+
+Marco Aurelio se recordaba al amanecer:
+> *«Cuando te despiertes con desgano, reflexiona: me levanto para cumplir con mi deber de ser humano; ¿para qué quejarme si voy a realizar aquello para lo que fui creado?»*
+
+🧘‍♂️ **Micro-Examen de Conciencia en 2 Preguntas**:
+1. *«¿Qué juicio o pensamiento exacto me está generando pereza?»* (¿Miedo a cansarte? ¿Aversión a la incomodidad? Desarma esa narrativa).
+2. *«¿Qué está bajo mi control en este instante?»* Tu único deber no es completar un mes de entrenamiento, sino calzarte las zapatillas y dar el primer paso presente.
+
+Hoy no entrenamos porque tengamos ganas; entrenamos porque somos personas virtuosas de palabra. ¡Acepta el presente con Amor Fati!`;
   }
 
   // D. DESCONCENTRACIÓN / FALTA DE FOCO / ANSIEDAD
