@@ -2,12 +2,7 @@ import { Platform } from 'react-native';
 
 // Memory fallback map for mobile browsers in private mode or quota constrained environments
 const memoryStorage = new Map<string, string>([
-  ['ataraxia_is_archon_master', 'true'],
-  ['ataraxia_archon_auth_v1', 'true'],
-  ['ataraxia_pact_accepted_v2', 'true'],
-  ['ataraxia_onboarding_completed_v2', 'true'],
   ['ataraxia_temple_access_granted_v2', 'true'],
-  ['ataraxia_current_logged_key', '742091'],
 ]);
 
 let nativeSaveDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -126,22 +121,12 @@ export const SafeStorage = {
 
   clearAll: (): void => {
     memoryStorage.clear();
-    memoryStorage.set('ataraxia_is_archon_master', 'true');
-    memoryStorage.set('ataraxia_archon_auth_v1', 'true');
-    memoryStorage.set('ataraxia_pact_accepted_v2', 'true');
-    memoryStorage.set('ataraxia_onboarding_completed_v2', 'true');
     memoryStorage.set('ataraxia_temple_access_granted_v2', 'true');
-    memoryStorage.set('ataraxia_current_logged_key', '742091');
 
     try {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.clear();
-        window.localStorage.setItem('ataraxia_is_archon_master', 'true');
-        window.localStorage.setItem('ataraxia_archon_auth_v1', 'true');
-        window.localStorage.setItem('ataraxia_pact_accepted_v2', 'true');
-        window.localStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
         window.localStorage.setItem('ataraxia_temple_access_granted_v2', 'true');
-        window.localStorage.setItem('ataraxia_current_logged_key', '742091');
       } else {
         scheduleNativeFlush();
       }

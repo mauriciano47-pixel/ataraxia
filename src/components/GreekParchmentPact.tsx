@@ -14,9 +14,11 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Props {
   onAcceptPact: () => void;
+  onClose?: () => void;
+  isReviewMode?: boolean;
 }
 
-export function GreekParchmentPact({ onAcceptPact }: Props) {
+export function GreekParchmentPact({ onAcceptPact, onClose, isReviewMode }: Props) {
   return (
     <View style={styles.container}>
       {/* FONDO AURORA HELÉNICA OSCURA */}
@@ -36,6 +38,17 @@ export function GreekParchmentPact({ onAcceptPact }: Props) {
 
       {/* TARJETA PAPIRO GRIEGO IMPERIAL */}
       <View style={styles.parchmentCard}>
+        {/* BOTÓN DE CIERRE EN MODO LECTURA */}
+        {onClose && (
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onClose}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <ThemedText style={styles.closeBtnText}>✕</ThemedText>
+          </TouchableOpacity>
+        )}
+
         {/* GRECAS Y ADORNOS DE ESQUINAS */}
         <View style={styles.cornerTL}>
           <ThemedText style={styles.greekCornerSymbol}>╔═</ThemedText>
@@ -112,17 +125,19 @@ export function GreekParchmentPact({ onAcceptPact }: Props) {
           <View style={styles.actionWrapper}>
             <TouchableOpacity
               style={styles.acceptButton}
-              onPress={onAcceptPact}
+              onPress={isReviewMode && onClose ? onClose : onAcceptPact}
               activeOpacity={0.85}
             >
               <View style={styles.btnGlowInner}>
                 <ThemedText style={styles.btnSparkle}>⚔️</ThemedText>
-                <ThemedText style={styles.btnText}>ACEPTO EL DESAFÍO Y JURO CONSTANCIA</ThemedText>
+                <ThemedText style={styles.btnText}>
+                  {isReviewMode ? 'REAFIRMAR CONSTANCIA ESTOICA' : 'ACEPTO EL DESAFÍO Y JURO CONSTANCIA'}
+                </ThemedText>
                 <ThemedText style={styles.btnSparkle}>⚔️</ThemedText>
               </View>
             </TouchableOpacity>
             <ThemedText style={styles.oathFooterHint}>
-              Toca para sellar el pacto y despertar el rayo de tu jornada
+              {isReviewMode ? 'Pacto sagrado sellado y activo en el Templo' : 'Toca para sellar el pacto y despertar el rayo de tu jornada'}
             </ThemedText>
           </View>
         </ScrollView>
@@ -392,5 +407,24 @@ const styles = StyleSheet.create({
     color: 'rgba(212, 175, 55, 0.65)',
     letterSpacing: 0.8,
     textAlign: 'center',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 30,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.40)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeBtnText: {
+    color: '#FFE259',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

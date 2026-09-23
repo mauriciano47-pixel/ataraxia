@@ -43,6 +43,7 @@ export default function HoyScreen() {
     syncExternalHealthData,
     calculateTodayGrade,
     saveGuardianKey,
+    selectLegendaryPath,
   } = useDailyLog();
   const router = useRouter();
 
@@ -78,32 +79,32 @@ export default function HoyScreen() {
     ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key') || '742091')
     : (SafeStorage.getItem('ataraxia_current_logged_key') || '742091');
 
-  // Mauro es el Arconte Maestro soberano de Ataraxia por defecto absoluto
+  // Mauro es el Arconte Maestro soberano de Ataraxia si su clave maestra está presente
   const isArchonMaster = Boolean(
-    !currentKey ||
     currentKey === '742091' ||
     currentKey === 'MAURO-ARCHON' ||
-    SafeStorage.getItem('ataraxia_is_archon_master') !== 'false'
-  );
-
-  const isRegisteredUser = Boolean(
-    isArchonMaster ||
-    log.hasCompletedOnboarding === true ||
-    (Boolean(log.userName && log.userName.trim() !== '') && log.userName !== 'Ciudadano Prokopton') ||
-    SafeStorage.getItem('ataraxia_onboarding_completed_v2') !== 'false' ||
-    SafeStorage.getItem('ataraxia_pact_accepted_v2') !== 'false'
+    SafeStorage.getItem('ataraxia_is_archon_master') === 'true'
   );
 
   const hasAcceptedPact = Boolean(
     isArchonMaster ||
-    SafeStorage.getItem('ataraxia_pact_accepted_v2') !== 'false' ||
+    SafeStorage.getItem('ataraxia_pact_accepted_v2') === 'true' ||
     log.hasCompletedOnboarding ||
     log.monthlyCycle?.isPactActive
   );
 
+  const isRegisteredUser = Boolean(
+    isArchonMaster ||
+    (hasAcceptedPact &&
+      (log.hasCompletedOnboarding === true ||
+       SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true' ||
+       (Boolean(log.userName && log.userName.trim() !== '') && log.userName !== 'Ciudadano Prokopton')))
+  );
+
   const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key' | null>(() => {
-    if (hasAcceptedPact || isArchonMaster) return null;
-    return 'pact';
+    if (isRegisteredUser) return null;
+    if (!hasAcceptedPact) return 'pact';
+    return 'path';
   });
   const [chosenPath, setChosenPath] = useState<LegendaryPath>('spartan');
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
@@ -568,12 +569,18 @@ export default function HoyScreen() {
         {!isRegisteredUser && Boolean(initiationStep) && (
           <View style={StyleSheet.absoluteFill}>
             {initiationStep === 'pact' && (
-              <GreekParchmentPact onAcceptPact={() => setInitiationStep('path')} />
+              <GreekParchmentPact
+                onAcceptPact={() => {
+                  SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+                  setInitiationStep('path');
+                }}
+              />
             )}
             {initiationStep === 'path' && (
               <LegendaryPathSelector
                 onSelectPath={(path) => {
                   setChosenPath(path);
+                  selectLegendaryPath(path);
                   setInitiationStep('key');
                 }}
               />
@@ -586,6 +593,9 @@ export default function HoyScreen() {
                     ...data,
                     path: chosenPath,
                   });
+                  SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
+                  SafeStorage.setItem('ataraxia_onboarding_completed_v2', 'true');
+                  setInitiationStep(null);
                 }}
               />
             )}

@@ -433,6 +433,26 @@ export default function ProfileScreen() {
                 ⚡ CALIBRAR FICHA DEL PROKOPTON (ESCÁNER IA)
               </ThemedText>
             </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.calibrateButton, { flex: 1, backgroundColor: 'rgba(212, 175, 55, 0.15)', borderWidth: 1, borderColor: '#D4AF37' }]}
+                onPress={() => setShowParchmentModal(true)}
+              >
+                <ThemedText style={{ color: '#FFE259', fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5, textAlign: 'center' }}>
+                  📜 RELEER EL PACTO
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.calibrateButton, { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.06)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.18)' }]}
+                onPress={() => setShowPathModal(true)}
+              >
+                <ThemedText style={{ color: '#F1F5F9', fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5, textAlign: 'center' }}>
+                  🏛️ CAMBIAR SENDA
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           </ThemedView>
 
           {/* Sección Arquetipo del Coach I.A. */}
@@ -740,7 +760,11 @@ export default function ProfileScreen() {
       {/* Modal para Releer el Papiro Griego del Juramento */}
       {showParchmentModal && (
         <View style={StyleSheet.absoluteFill}>
-          <GreekParchmentPact onAcceptPact={() => setShowParchmentModal(false)} />
+          <GreekParchmentPact
+            isReviewMode={true}
+            onClose={() => setShowParchmentModal(false)}
+            onAcceptPact={() => setShowParchmentModal(false)}
+          />
         </View>
       )}
 
