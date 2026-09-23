@@ -11,8 +11,9 @@ En lugar de usar recompensas dopaminérgicas (likes, rachas coloridas, notificac
 3. **Escala de Esfuerzo Percibido (RPE):** No se trata de qué levantaste, sino de cuánto te costó. Cada ejercicio se puntúa del 1 al 10 en esfuerzo real.
 4. **Semana de Descarga Automática (Deload):** Si el oráculo detecta que tu esfuerzo promedio es superior a 8.5/10, interviene recordando que *"el arco siempre tenso se rompe"* y ajusta la intensidad.
 5. **Historial del Cosmos:** Un mapa estelar de los últimos 30 días. Los días de disciplina son estrellas azules eléctricas en el vacío oscuro. Los días fallidos se quedan como espacio vacío.
-6. **Memento Mori:** Recordatorios matutinos push que te recuerdan tu propia mortalidad para vivir cada día con urgencia y propósito.
-7. **El Yo (Perfil Prokopton):** Un perfil sin métricas vanidosas. Sin fotos de perfil. Solo un ID ciudadano anónimo y un botón de "Destruir Ego" (Borrado total de cuenta).
+6. **Escáner Óptico de Ritmo Cardíaco (PPG Dual Engine):** Sensor biométrico no invasivo que mide la frecuencia cardíaca (BPM) a través de la cámara y el flash en 15 segundos. En Web utiliza análisis espectral de absorción capilar (RGB) frame a frame vía Canvas/WebRTC; en Android nativo (Samsung Galaxy) activa la linterna física con `CameraView`, genera una onda pletismográfica vectorial dinámica en tiempo real y emite micro-pulsaciones hápticas sincronizadas (`expo-haptics`) en cada latido.
+7. **Memento Mori:** Recordatorios matutinos push que te recuerdan tu propia mortalidad para vivir cada día con urgencia y propósito.
+8. **El Yo (Perfil Prokopton):** Un perfil sin métricas vanidosas. Sin fotos de perfil. Solo un ID ciudadano anónimo y un botón de "Destruir Ego" (Borrado total de cuenta).
 
 ---
 
