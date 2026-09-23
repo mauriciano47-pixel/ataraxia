@@ -49,7 +49,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
     return currentSteps > 0 ? currentSteps.toString() : '1127';
   });
   const [ghSleepHours, setGhSleepHours] = useState<string>('7.5');
-  const [ghRestingBpm, setGhRestingBpm] = useState<string>('60');
+  const [ghRestingBpm, setGhRestingBpm] = useState<string>(() => (deviceState?.heartRateBpm && deviceState.heartRateBpm > 0) ? deviceState.heartRateBpm.toString() : '70');
   const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round((currentSteps > 0 ? currentSteps : 1127) * 0.045).toString());
 
   useEffect(() => {
@@ -256,7 +256,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const parsedSteps = !isNaN(parseInt(ghSteps, 10)) ? parseInt(ghSteps, 10) : currentSteps;
       const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
-      const parsedRestingBpm = !isNaN(parseInt(ghRestingBpm, 10)) ? parseInt(ghRestingBpm, 10) : (device.heartRateBpm > 0 ? device.heartRateBpm : 60);
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (!isNaN(parseInt(ghRestingBpm, 10)) ? parseInt(ghRestingBpm, 10) : 70);
       const parsedActiveCals = Math.round(parsedSteps * 0.045);
 
       const deepHours = parseFloat((parsedSleepHours * 0.24).toFixed(1));
@@ -331,7 +331,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const currentLiveSteps = currentSteps;
       const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
-      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 60);
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 70);
       const parsedActiveCals = Math.round(currentLiveSteps * 0.045);
 
       if (onSyncHealthData) {

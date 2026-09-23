@@ -623,7 +623,7 @@ export default function ProgressScreen() {
                 <ThemedText style={styles.pillarRowIcon}>{pillars.heartRate ? '✅' : '🫀'}</ThemedText>
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.pillarRowName}>6. Telemetría de Frecuencia Cardíaca</ThemedText>
-                  <ThemedText style={styles.pillarRowDesc}>{pillars.heartRate ? `${log.smartDevice?.heartRateBpm || 60} BPM registrado` : 'Falta escaneo PPG o Smartwatch'}</ThemedText>
+                  <ThemedText style={styles.pillarRowDesc}>{pillars.heartRate ? `${log.smartDevice?.heartRateBpm} BPM registrado` : 'Falta escaneo PPG o Smartwatch'}</ThemedText>
                 </View>
                 <ThemedText style={[styles.pillarRowPts, pillars.heartRate && styles.pillarRowPtsActive]}>
                   {pillars.heartRate ? '+10' : '0'}/10
