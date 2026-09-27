@@ -11,7 +11,6 @@ import {
   Animated,
   ActivityIndicator,
   Modal,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -51,7 +50,7 @@ const QUICK_PROMPTS = [
 export default function JournalScreen() {
   const router = useRouter();
   const { today, patterns, contextSummary, loading: loadingContext } = useCoachContext();
-  const { setCustomRoutine, addWater, setCoachArchetype } = useDailyLog();
+  const { setCustomRoutine, setCoachArchetype } = useDailyLog();
   const {
     messages,
     setMessages,
@@ -231,7 +230,7 @@ export default function JournalScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [contextSummary, generateFallbackResponse, getPastContext, isLoading, messages, saveMessages, setMessages, currentArchetype]);
+  }, [contextSummary, generateFallbackResponse, getPastContext, isLoading, messages, saveMessages, setMessages, currentArchetype, currentPath]);
 
   const sendMessage = () => {
     handleSendQuery(inputText);
@@ -333,8 +332,6 @@ export default function JournalScreen() {
           {messages.map((msg, index) => {
             const detectedExercises = msg.sender === 'bot' && msg.text !== DISCLAIMER_TEXT ? extractExercisesFromText(msg.text) : [];
             const isWorkoutMsg = detectedExercises.length >= 2;
-            const isWaterMsg = msg.sender === 'bot' && (msg.text.toLowerCase().includes('agua') || msg.text.toLowerCase().includes('hidrat') || msg.text.includes('💧'));
-            const isMealMsg = msg.sender === 'bot' && (msg.text.toLowerCase().includes('comida') || msg.text.toLowerCase().includes('receta') || msg.text.toLowerCase().includes('macros'));
 
             return (
               <View

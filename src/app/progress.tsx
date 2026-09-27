@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal, Platform } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -12,7 +12,7 @@ import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { LegendaryPath, LEGENDARY_PATHS, EquipmentType } from '@/types/onboarding';
 import { SafeStorage } from '@/utils/safeStorage';
-import { MonthlyResolution, DayAudit } from '@/lib/monthlyResolutionEngine';
+import { MonthlyResolution } from '@/lib/monthlyResolutionEngine';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 import { ExerciseTechniqueModal, ExerciseGuideData } from '@/components/ExerciseTechniqueModal';
 

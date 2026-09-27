@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
-import { Spacing } from '@/constants/theme';
 import {
   calculateDistanceKm,
   calculateStepCalories,

@@ -14,12 +14,10 @@ import {
   MonthlyCycleState,
   DailyGrade,
   DailyGradeStatus,
-  CycleTier,
   EquipmentType,
   SessionDurationMinutes,
   ExperienceLevel,
   InjuryCare,
-  BodyZone,
   BodySnapshot,
 } from '@/types/onboarding';
 import { generate30DayResolution, MonthlyResolution } from '@/lib/monthlyResolutionEngine';
@@ -136,7 +134,6 @@ export const DEFAULT_LOG: DailyLog = {
 const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v5';
 const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri_v2';
 const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v2';
-const MONTHLY_CYCLE_KEY = 'ataraxia_monthly_cycle_v2';
 const BODY_SNAPSHOTS_STORAGE_KEY = 'ataraxia_body_snapshots_v2';
 
 function loadLocalBodySnapshots(): BodySnapshot[] {
@@ -737,7 +734,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribeSnapshot();
   }, [user, today, isLocalMode]);
 
-  const updateLog = (updates: Partial<DailyLog>) => {
+  const updateLog = useCallback((updates: Partial<DailyLog>) => {
     const current = logRef.current;
     const newLog: DailyLog = {
       ...current,
@@ -778,7 +775,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         }
       }, 1000);
     }
-  };
+  }, [today, user, isLocalMode]);
 
   const saveProfileToFirestore = useCallback(async (profileData: Partial<UserProfile>) => {
     if (!user || !db || isLocalMode) return;
@@ -790,8 +787,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLocalMode]);
 
-  const saveFullProfile = (data: {
+  const saveFullProfile = useCallback((data: {
     userName: string;
+    userEmail?: string;
     age: number;
     weightKg: number;
     heightCm: number;
@@ -799,6 +797,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     stepGoal: number;
     stoicAvatarUri?: string;
     coachArchetype?: CoachArchetype;
+    legendaryPath?: LegendaryPath;
   }) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const newMetrics: UserMetrics = {
@@ -809,23 +808,27 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     };
     updateLog({
       userName: data.userName.trim() || 'Ciudadano Prokopton',
+      ...(data.userEmail !== undefined ? { userEmail: data.userEmail } : {}),
       userMetrics: newMetrics,
       targetCalories: data.targetCalories,
       stepGoal: data.stepGoal,
       ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
       ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
+      ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
     });
     saveProfileToFirestore({
       userName: data.userName.trim() || 'Ciudadano Prokopton',
+      ...(data.userEmail !== undefined ? { userEmail: data.userEmail } : {}),
       userMetrics: newMetrics,
       targetCalories: data.targetCalories,
       stepGoal: data.stepGoal,
       ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
       ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
+      ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
     });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const logMealWithMacros = (cals: number, protein: number = 0, carbs: number = 0, fats: number = 0) => {
+  const logMealWithMacros = useCallback((cals: number, protein: number = 0, carbs: number = 0, fats: number = 0) => {
     const current = logRef.current;
     const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
@@ -837,30 +840,30 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         fats: Math.max(0, currentMacros.fats + fats),
       },
     });
-  };
+  }, [updateLog]);
 
-  const addWater = (amount: number = 0.25) => {
+  const addWater = useCallback((amount: number = 0.25) => {
     const newLitres = Math.max(0, parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2)));
     updateLog({ waterLitres: newLitres });
-  };
+  }, [updateLog]);
 
-  const toggleTraining = () => {
+  const toggleTraining = useCallback(() => {
     updateLog({ trainingCompleted: !logRef.current.trainingCompleted });
-  };
+  }, [updateLog]);
 
-  const addMeal = () => {
+  const addMeal = useCallback(() => {
     updateLog({ mealsLogged: (logRef.current.mealsLogged || 0) + 1 });
-  };
+  }, [updateLog]);
 
-  const addCalories = (amount: number) => {
+  const addCalories = useCallback((amount: number) => {
     updateLog({ totalCalories: Math.max(0, (logRef.current.totalCalories || 0) + amount) });
-  };
+  }, [updateLog]);
 
-  const saveCheckIn = (energy: number, sleep: number) => {
+  const saveCheckIn = useCallback((energy: number, sleep: number) => {
     updateLog({ energyLevel: energy, sleepQuality: sleep, checkInDone: true });
-  };
+  }, [updateLog]);
 
-  const addMacros = (p: number, c: number, f: number) => {
+  const addMacros = useCallback((p: number, c: number, f: number) => {
     const currentMacros = logRef.current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
       macros: {
@@ -869,13 +872,13 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         fats: Math.max(0, currentMacros.fats + f),
       },
     });
-  };
+  }, [updateLog]);
 
-  const addSteps = (amount: number) => {
+  const addSteps = useCallback((amount: number) => {
     updateLog({ steps: Math.max(0, (logRef.current.steps || 0) + amount) });
-  };
+  }, [updateLog]);
 
-  const setSteps = (amount: number) => {
+  const setSteps = useCallback((amount: number) => {
     const val = Math.max(0, amount);
     updateLog({ steps: val });
     try {
@@ -885,13 +888,13 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new Event('storage'));
       }
     } catch {}
-  };
+  }, [updateLog, today]);
 
-  const setStepGoal = (goal: number) => {
+  const setStepGoal = useCallback((goal: number) => {
     updateLog({ stepGoal: Math.max(1000, goal) });
-  };
+  }, [updateLog]);
 
-  const updateUserMetrics = (metrics: Partial<UserMetrics>, targetCals?: number) => {
+  const updateUserMetrics = useCallback((metrics: Partial<UserMetrics>, targetCals?: number) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const newMetrics: UserMetrics = { ...currentMetrics, ...metrics };
     const updates: Partial<DailyLog> = { userMetrics: newMetrics };
@@ -899,24 +902,24 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       updates.targetCalories = targetCals;
     }
     updateLog(updates);
-  };
+  }, [updateLog]);
 
-  const setStoicAvatar = (uri: string) => {
+  const setStoicAvatar = useCallback((uri: string) => {
     updateLog({ stoicAvatarUri: uri });
     saveProfileToFirestore({ stoicAvatarUri: uri });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const setUserName = (name: string) => {
+  const setUserName = useCallback((name: string) => {
     updateLog({ userName: name });
     saveProfileToFirestore({ userName: name });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const setUserEmail = (email: string) => {
+  const setUserEmail = useCallback((email: string) => {
     updateLog({ userEmail: email });
     saveProfileToFirestore({ userEmail: email });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const saveGuardianKey = ({
+  const saveGuardianKey = useCallback(({
     email,
     userName,
     weightKg,
@@ -1047,21 +1050,21 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       prokoptonProfile: profileData,
       hasCompletedOnboarding: true,
     });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const setCoachArchetype = (archetype: CoachArchetype) => {
+  const setCoachArchetype = useCallback((archetype: CoachArchetype) => {
     updateLog({ coachArchetype: archetype });
     saveProfileToFirestore({ coachArchetype: archetype });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const updateSmartDevice = (deviceUpdates: Partial<SmartDeviceState>) => {
+  const updateSmartDevice = useCallback((deviceUpdates: Partial<SmartDeviceState>) => {
     const currentDevice = logRef.current.smartDevice || DEFAULT_LOG.smartDevice!;
     const newDevice = { ...currentDevice, ...deviceUpdates };
     updateLog({ smartDevice: newDevice });
     saveProfileToFirestore({ smartDevice: newDevice });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const syncExternalHealthData = (payload: {
+  const syncExternalHealthData = useCallback((payload: {
     steps: number;
     deviceName: string;
     lastSync: string;
@@ -1100,9 +1103,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new Event('storage'));
       }
     } catch {}
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const saveOnboardingProfile = (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => {
+  const saveOnboardingProfile = useCallback((profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => {
     const updatedMetrics: UserMetrics = {
       weightKg: profile.weightKg,
       heightCm: profile.heightCm,
@@ -1129,9 +1132,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       prokoptonProfile: profile,
       customRoutine: routine,
     });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const resetOnboarding = () => {
+  const resetOnboarding = useCallback(() => {
     SafeStorage.removeItem(ONBOARDING_KEY);
     updateLog({
       hasCompletedOnboarding: false,
@@ -1143,22 +1146,21 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       prokoptonProfile: undefined,
       customRoutine: undefined,
     });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
-  const saveReadinessScore = (sleep: number, stress: number, soreness: number) => {
-    // Escala del 1 al 10 calculada ponderando sueño (40%), bajo estrés (30%), baja agobio físico (30%)
+  const saveReadinessScore = useCallback((sleep: number, stress: number, soreness: number) => {
     const total = Math.round((sleep * 0.4) + ((10 - stress) * 0.3) + ((10 - soreness) * 0.3));
     updateLog({
       readinessScore: { sleep, stress, soreness, total },
       checkInDone: true
     });
-  };
+  }, [updateLog]);
 
-  const updateEffectiveSets = (count: number) => {
+  const updateEffectiveSets = useCallback((count: number) => {
     updateLog({ effectiveSets: Math.max(0, count) });
-  };
+  }, [updateLog]);
 
-  const logMealWithEnrichedMacros = (cals: number, p: number = 0, c: number = 0, f: number = 0, densityScore?: number, verdict?: string) => {
+  const logMealWithEnrichedMacros = useCallback((cals: number, p: number = 0, c: number = 0, f: number = 0, densityScore?: number, verdict?: string) => {
     const current = logRef.current;
     const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
@@ -1172,12 +1174,12 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       ...(densityScore !== undefined ? { lastNutrientDensityScore: densityScore } : {}),
       ...(verdict ? { lastNutrientVerdict: verdict } : {})
     });
-  };
+  }, [updateLog]);
 
   const calculateTodayGrade = useCallback((): DailyGrade => {
     const current = logRef.current;
     const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const today = getLocalTodayDateString();
+    const todayStr = getLocalTodayDateString();
 
     // 1. Entreno (20 pts): Sesión sellada
     const trainingDone = Boolean(current.trainingCompleted);
@@ -1208,8 +1210,8 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     // 5. Lectura / Reto estoico (10 pts): Reto diario o diario completado
     let stoicChallengePassed = false;
     try {
-      stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${today}`)) ||
-                             Boolean(SafeStorage.getItem(`ataraxia_journal_${today}`));
+      stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${todayStr}`)) ||
+                             Boolean(SafeStorage.getItem(`ataraxia_journal_${todayStr}`));
     } catch {}
     const stoicChallengePts = stoicChallengePassed ? 10 : 0;
 
@@ -1260,7 +1262,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     const todayGradeResult: DailyGrade = {
       day: preciseDay,
-      date: today,
+      date: todayStr,
       score: totalScore,
       status,
       pillars,
@@ -1320,7 +1322,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       monthlyCycle: newCycle,
       legendaryPath: activePath,
     });
-  }, []);
+  }, [updateLog, saveProfileToFirestore]);
 
   const selectLegendaryPath = useCallback((path: LegendaryPath) => {
     const pathInfo = LEGENDARY_PATHS[path];
@@ -1395,7 +1397,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       customRoutine: routine,
       monthlyCycle: newCycle,
     });
-  }, []);
+  }, [updateLog, saveProfileToFirestore]);
 
   const executeJudgment = useCallback(() => {
     const current = logRef.current;
@@ -1431,7 +1433,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveProfileToFirestore({ monthlyCycle: updatedCycle });
 
     return { promoted: isPromoted, title, message, resolution };
-  }, []);
+  }, [updateLog, saveProfileToFirestore]);
 
   const resetMonthlyCycle = useCallback(() => {
     const current = logRef.current;
@@ -1450,12 +1452,12 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     };
     updateLog({ monthlyCycle: newCycle });
     saveProfileToFirestore({ monthlyCycle: newCycle });
-  }, []);
+  }, [updateLog, saveProfileToFirestore]);
 
-  const setCustomRoutine = (routine: CustomExercise[]) => {
+  const setCustomRoutine = useCallback((routine: CustomExercise[]) => {
     updateLog({ customRoutine: routine });
     saveProfileToFirestore({ customRoutine: routine });
-  };
+  }, [updateLog, saveProfileToFirestore]);
 
   const addBodySnapshot = useCallback(async (snapshotData: Omit<BodySnapshot, 'id' | 'createdAt'>): Promise<BodySnapshot> => {
     const newSnapshot: BodySnapshot = {
@@ -1491,7 +1493,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       const updated = prev.filter((s) => s.id !== id);
       try {
         SafeStorage.setItem(BODY_SNAPSHOTS_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {}
+      } catch {}
       return updated;
     });
 
@@ -1499,7 +1501,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       try {
         const snapDoc = doc(db, `users/${user.uid}/bodySnapshots/${id}`);
         await setDoc(snapDoc, { deleted: true, deletedAt: Date.now() }, { merge: true });
-      } catch (e) {}
+      } catch {}
     }
   }, [user]);
 
@@ -1545,11 +1547,40 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     log,
     loading,
     user,
+    saveFullProfile,
+    logMealWithMacros,
+    addWater,
+    toggleTraining,
+    addMeal,
+    addCalories,
+    saveCheckIn,
+    addMacros,
+    addSteps,
+    setSteps,
+    setStepGoal,
+    updateUserMetrics,
+    setStoicAvatar,
+    setUserName,
+    setUserEmail,
+    saveGuardianKey,
+    setCoachArchetype,
+    selectLegendaryPath,
+    calculateTodayGrade,
+    executeJudgment,
+    get30DayResolution,
+    resetMonthlyCycle,
+    start30DayPact,
+    updateSmartDevice,
+    saveOnboardingProfile,
+    resetOnboarding,
+    saveReadinessScore,
+    updateEffectiveSets,
+    logMealWithEnrichedMacros,
+    setCustomRoutine,
+    syncExternalHealthData,
     bodySnapshots,
     addBodySnapshot,
     deleteBodySnapshot,
-    executeJudgment,
-    resetMonthlyCycle,
   ]);
 
   return (

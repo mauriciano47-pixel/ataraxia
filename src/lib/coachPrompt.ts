@@ -1,5 +1,4 @@
 import { CoachPatterns } from '@/hooks/useCoachContext';
-import { JournalMessage } from '@/hooks/useJournalHistory';
 import { CoachArchetype, CustomExercise, LegendaryPath } from '@/types/onboarding';
 
 /**

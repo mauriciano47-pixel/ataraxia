@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
 import { LegendaryPath, LEGENDARY_PATHS, CycleTier, CoachArchetype, COACH_ARCHETYPES } from '@/types/onboarding';
 
 interface HonorDiplomaModalProps {

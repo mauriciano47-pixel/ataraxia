@@ -4,13 +4,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Platform,
 } from 'react-native';
 import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { ThemedText } from './themed-text';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Props {
   onAcceptPact: () => void;

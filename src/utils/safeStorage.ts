@@ -13,6 +13,7 @@ const getNativeFileSystem = () => {
   if (Platform.OS === 'web') return null;
   if (!nativeFileSystem) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       nativeFileSystem = require('expo-file-system/legacy');
       if (nativeFileSystem?.documentDirectory) {
         nativeStoragePath = `${nativeFileSystem.documentDirectory}ataraxia_storage_v1.json`;

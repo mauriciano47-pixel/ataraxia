@@ -15,7 +15,7 @@ import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { GreekParchmentPact } from '@/components/GreekParchmentPact';
 import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
-import { COACH_ARCHETYPES, CoachArchetype, LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import { COACH_ARCHETYPES, CoachArchetype } from '@/types/onboarding';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 import { GuardianInviteModal } from '@/components/GuardianInviteModal';
 
@@ -48,8 +48,6 @@ export default function ProfileScreen() {
   const [targetCalInput, setTargetCalInput] = useState((log?.targetCalories || 2200).toString());
   const [targetStepInput, setTargetStepInput] = useState((log?.stepGoal || 10000).toString());
 
-  const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
-  const pathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
   const cycle = log.monthlyCycle;
   const currentDay = cycle?.currentDay || 1;
   const isDay30Reached = currentDay >= 30 || Boolean(cycle?.isJudgmentReady);
@@ -57,7 +55,6 @@ export default function ProfileScreen() {
   const adherencePct = Math.round((passedDays / 30) * 100);
   const isAboveThreshold = adherencePct >= 80;
   const isDiplomaUnlocked = isDay30Reached && isAboveThreshold;
-  const isWorthyHonor = isDiplomaUnlocked;
 
   const uid = auth?.currentUser?.uid || null;
   const shortUid = uid ? uid.substring(0, 8) : '????????';
@@ -854,7 +851,7 @@ export default function ProfileScreen() {
         visible={showDiplomaModal}
         onClose={() => setShowDiplomaModal(false)}
         userName={log.userName || 'Ciudadano Prokopton'}
-        path={activePathKey}
+        path={log.legendaryPath || 'spartan'}
         scoreAverage={cycle?.averageScore ?? 100}
         adherencePct={adherencePct}
         tier={cycle?.tier || 'Novicio de Esparta'}

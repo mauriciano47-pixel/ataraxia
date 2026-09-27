@@ -36,7 +36,6 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
   const [smartwatchModalVisible, setSmartwatchModalVisible] = useState(false);
   const [googleHealthModalVisible, setGoogleHealthModalVisible] = useState(false);
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
-  const [isScanningBle, setIsScanningBle] = useState(false);
   const [connectingBrand, setConnectingBrand] = useState<string | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
 
@@ -50,12 +49,10 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
   });
   const [ghSleepHours, setGhSleepHours] = useState<string>('7.5');
   const [ghRestingBpm, setGhRestingBpm] = useState<string>(() => (deviceState?.heartRateBpm && deviceState.heartRateBpm > 0) ? deviceState.heartRateBpm.toString() : '70');
-  const [ghActiveCals, setGhActiveCals] = useState<string>(() => Math.round((currentSteps > 0 ? currentSteps : 1127) * 0.045).toString());
 
   useEffect(() => {
     if (currentSteps > 0) {
       setGhSteps(currentSteps.toString());
-      setGhActiveCals(Math.round(currentSteps * 0.045).toString());
     }
   }, [currentSteps]);
 
@@ -100,7 +97,6 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
     // Si el navegador soporta Web Bluetooth API nativo
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && (navigator as any).bluetooth) {
       try {
-        setIsScanningBle(true);
         const bleDevice = await (navigator as any).bluetooth.requestDevice({
           filters: [
             { services: ['heart_rate'] },
@@ -194,14 +190,11 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
         });
 
         setConnectingBrand(null);
-        setIsScanningBle(false);
         setSmartwatchModalVisible(false);
         setReceiptModalVisible(true);
         return;
       } catch (bleError: any) {
         console.warn('[SmartDeviceCard] Web Bluetooth cancelado o no emparejado, usando bridge seguro:', bleError);
-      } finally {
-        setIsScanningBle(false);
       }
     }
 
@@ -568,7 +561,6 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                   onPress={() => {
                     const targetVal = currentSteps > 0 ? currentSteps.toString() : '1127';
                     setGhSteps(targetVal);
-                    setGhActiveCals(Math.round(parseInt(targetVal, 10) * 0.045).toString());
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
                   }}
                   activeOpacity={0.8}
@@ -586,10 +578,6 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                     value={ghSteps}
                     onChangeText={(val) => {
                       setGhSteps(val);
-                      const p = parseInt(val, 10);
-                      if (!isNaN(p)) {
-                        setGhActiveCals(Math.round(p * 0.045).toString());
-                      }
                     }}
                     keyboardType="numeric"
                     placeholder={`Pasos actuales en hardware: ${currentSteps > 0 ? currentSteps : 1127}`}
@@ -606,7 +594,6 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                         ]}
                         onPress={() => {
                           setGhSteps(chipVal);
-                          setGhActiveCals(Math.round(parseInt(chipVal, 10) * 0.045).toString());
                         }}
                       >
                         <ThemedText style={[

@@ -42,7 +42,6 @@ const SENSITIVITY_PROFILES = {
   },
 };
 
-const MIN_HUMAN_CADENCE_MS = 340;   // Máxima frecuencia humana real: 176 pasos/min (340ms)
 const MAX_HUMAN_CADENCE_MS = 1800;  // Mínima frecuencia humana: 33 pasos/min (1800ms)
 const MAX_CADENCE_VARIANCE_MS = 180;// Varianza máxima permitida entre zancadas periódicas (180ms)
 const MAX_VIOLENT_ACCEL_MS2 = 14.50;// Límite de aceleración biológica humana
@@ -95,7 +94,6 @@ export function usePedometerSensor(
 
   // Buffer de timestamps para cálculo de cadencia en ventana rodante de 30s (estándar Google Fit)
   const cadenceWindowRef = useRef<number[]>([]);
-  const activeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastActiveTs = useRef<number>(0);
 
   // Longitud de zancada manual persistida (calibración del usuario)
@@ -401,7 +399,7 @@ export function usePedometerSensor(
         pedometerSubscriptionRef.current = null;
       }
     };
-  }, [isPassiveWatcher, syncNativeHistoricalSteps, emitStepsBatched]);
+  }, [isPassiveWatcher, syncNativeHistoricalSteps, emitStepsBatched, updateCadenceWindow]);
 
   // 4. Sensor Web: Motor Biomecánico con Bloqueo de Cadencia Periódica (Cadence Periodicity Lock)
   useEffect(() => {
@@ -580,7 +578,7 @@ export function usePedometerSensor(
         window.removeEventListener('devicemotion', handleMotion);
       }
     };
-  }, [isPassiveWatcher, emitStepsBatched]);
+  }, [isPassiveWatcher, emitStepsBatched, updateCadenceWindow]);
 
   // Control de cambio de foco y AppState
   useEffect(() => {

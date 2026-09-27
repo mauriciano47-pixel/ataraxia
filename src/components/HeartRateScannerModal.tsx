@@ -12,11 +12,6 @@ interface HeartRateScannerModalProps {
   onSaveHeartRate: (bpm: number) => void;
 }
 
-interface SignalSample {
-  time: number;
-  val: number;
-}
-
 function generatePpgWavePath(t: number): string {
   let path = '';
   const points = 30;

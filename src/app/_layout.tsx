@@ -9,12 +9,12 @@ import {
   ProgressIcon,
   NutritionIcon,
   ProfileIcon,
-  ArchonCrownIcon,
-  SculptureCameraIcon,
-  InfoTabIcon,
 } from '@/components/TabSvgIcons';
 
 import { SafeStorage } from '@/utils/safeStorage';
+import { DailyLogProvider } from '@/context/DailyLogContext';
+import { TempleAccessGate } from '@/components/TempleAccessGate';
+import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
 
 interface GlobalErrorBoundaryState {
   hasError: boolean;
@@ -95,10 +95,6 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalError
     return this.props.children;
   }
 }
-
-import { DailyLogProvider } from '@/context/DailyLogContext';
-import { TempleAccessGate } from '@/components/TempleAccessGate';
-import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
 
 export default function TabLayout() {
   useEffect(() => {

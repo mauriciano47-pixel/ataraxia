@@ -14,7 +14,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GoogleGenAI } from '@google/genai';
 
 import { ThemedText } from './themed-text';
-import { Spacing } from '@/constants/theme';
 import { useDailyLog } from '@/context/DailyLogContext';
 
 export interface ExerciseGuideData {

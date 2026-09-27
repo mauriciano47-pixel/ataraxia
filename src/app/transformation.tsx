@@ -17,7 +17,6 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
@@ -100,8 +99,8 @@ export default function TransformationScreen() {
 
   // Estados para el comparador Día 1 vs Día 30
   const [comparatorZone, setComparatorZone] = useState<BodyZone | 'all'>('all');
-  const [beforeSnapshotId, setBeforeSnapshotId] = useState<string | null>(null);
-  const [afterSnapshotId, setAfterSnapshotId] = useState<string | null>(null);
+  const [beforeSnapshotId] = useState<string | null>(null);
+  const [afterSnapshotId] = useState<string | null>(null);
 
   const fileInputRef = useRef<any>(null);
 

@@ -8,12 +8,9 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { GlowArcGauge } from '@/components/GlowArcGauge';
-import { FlameIcon } from '@/components/ModuleSvgIcons';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
 import { StepCounterCard } from '@/components/StepCounterCard';
-import { CalorieIndexCard } from '@/components/CalorieIndexCard';
 import { SmartDeviceCard } from '@/components/SmartDeviceCard';
-import { StoicOnboardingModal } from '@/components/StoicOnboardingModal';
 import { ThunderTelemetryTwinCards } from '@/components/ThunderTelemetryTwinCards';
 import { StepCalibrationModal } from '@/components/StepCalibrationModal';
 import { BoxBreathingModal } from '@/components/BoxBreathingModal';
@@ -32,12 +29,9 @@ import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 export default function HoyScreen() {
   const {
     log,
-    toggleTraining,
     addSteps,
     setSteps,
-    addWater,
     setStepGoal,
-    updateUserMetrics,
     updateSmartDevice,
     saveReadinessScore,
     syncExternalHealthData,

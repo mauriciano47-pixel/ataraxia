@@ -8,25 +8,18 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Dimensions,
-  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import {
   ProkoptonProfile,
-  StoicFocus,
   EquipmentType,
   DaysPerWeek,
   SessionDurationMinutes,
-  DietPreference,
   CustomExercise,
   LegendaryPath,
   LEGENDARY_PATHS,
 } from '@/types/onboarding';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { Spacing } from '@/constants/theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface Props {
   visible: boolean;

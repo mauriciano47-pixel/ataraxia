@@ -1,4 +1,3 @@
-import React from "react";
 import { useDailyLog } from "@/context/DailyLogContext";
 import { usePedometerSensor } from "@/hooks/usePedometerSensor";
 

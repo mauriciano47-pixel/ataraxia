@@ -1,4 +1,4 @@
-import { LegendaryPath, LEGENDARY_PATHS, CoachArchetype, DailyGrade, DailyPillars } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS, CoachArchetype, COACH_ARCHETYPES, DailyGrade, DailyPillars } from '@/types/onboarding';
 
 export interface DayAudit {
   day: number;
@@ -53,6 +53,7 @@ export function generate30DayResolution(params: {
 }): MonthlyResolution {
   const { dailyGrades, path, userName, startDate, archetype = 'stoic_mentor' } = params;
   const pathInfo = LEGENDARY_PATHS[path] || LEGENDARY_PATHS.spartan;
+  const coachInfo = COACH_ARCHETYPES[archetype] || COACH_ARCHETYPES.stoic_mentor;
   const totalDays = 30;
 
   // 1. Mapeo y Normalización de los 30 Días (Auditoría Integral Día por Día)
@@ -271,11 +272,11 @@ ${scoldings.map((s) => `- ${s}`).join('\n')}
 
 ---
 
-### 🔮 DIRECTIVA DEL MENTOR PARA EL PRÓXIMO CICLO
+### 🔮 DIRECTIVA DEL ${coachInfo.name.toUpperCase()} PARA EL PRÓXIMO CICLO
 ${nextCycleDirectives.map((d) => `${d}`).join('\n\n')}
 
 ---
-*«No expliques tu filosofía; encárnala en tus actos cada uno de los 30 días venideros.»* — **Epicteto**
+*«${coachInfo.tagline} — No expliques tu filosofía; encárnala en tus actos cada uno de los 30 días venideros.»* — **${coachInfo.name}**
 `.trim();
 
   return {

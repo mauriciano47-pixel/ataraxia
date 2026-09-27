@@ -1,3 +1,5 @@
+import { getLocalTodayDateString } from '@/utils/dateUtils';
+
 export interface StoicPrinciple {
   id: string;
   quote: string;
@@ -162,8 +164,6 @@ export const STOIC_PRINCIPLES: StoicPrinciple[] = [
     category: 'discipline',
   },
 ];
-
-import { getLocalTodayDateString } from '@/utils/dateUtils';
 
 /**
  * Obtiene el principio estoico para la fecha actual garantizando rotación diaria no repetitiva.
