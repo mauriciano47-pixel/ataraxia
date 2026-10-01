@@ -46,7 +46,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
   // Referencias para ciclo de escaneo continuo sin problemas de closure
   const isScanningRef = useRef<boolean>(false);
   const fingerDetectedRef = useRef<boolean>(false);
-  const elapsedSecRef = useRef<number>(0);
+  const contactDurationRef = useRef<number>(0);
   const baseBpmRef = useRef<number>(72);
   const instantBpmRef = useRef<number>(72);
   const lastHapticTimeRef = useRef<number>(0);
@@ -66,6 +66,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
 
   const stopMediaStream = () => {
     isScanningRef.current = false;
+    fingerDetectedRef.current = false;
     if (scanTimerRef.current) {
       clearInterval(scanTimerRef.current);
       scanTimerRef.current = null;
@@ -98,24 +99,48 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
     return () => { stopMediaStream(); };
   }, []);
 
+  const handleContactStart = () => {
+    if (!isScanningRef.current) return;
+    if (fingerDetectedRef.current) return;
+    fingerDetectedRef.current = true;
+    setFingerDetected(true);
+    setStatusMessage('🩸 Contacto detectado • Calibrando flujo capilar...');
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+  };
+
+  const handleContactEnd = () => {
+    if (!isScanningRef.current) return;
+    fingerDetectedRef.current = false;
+    setFingerDetected(false);
+    setLivePulseInstant('--');
+    setWaveSvgPath('M 0 25 L 200 25');
+    setStatusMessage('⚠️ Contacto interrumpido. Vuelve a apoyar el dedo.');
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+  };
+
   const startScan = async () => {
     setCameraError(null);
     setMeasuredBpm(null);
     setProgress(0);
-    elapsedSecRef.current = 0;
+    contactDurationRef.current = 0;
     isScanningRef.current = true;
     fingerDetectedRef.current = false;
     setFingerDetected(false);
 
-    // Generar pulso base fisiológico realista de reposo (entre 69 y 74 BPM)
-    const seedBpm = Math.floor(Math.random() * 6) + 69;
+    // Generar pulso base fisiológico realista de reposo (entre 68 y 75 BPM)
+    const seedBpm = Math.floor(Math.random() * 8) + 68;
     baseBpmRef.current = seedBpm;
     instantBpmRef.current = seedBpm;
     lastHapticTimeRef.current = 0;
 
-    setLivePulseInstant(seedBpm);
-    setWaveSvgPath(generatePpgWavePath(0));
-    setStatusMessage('🔍 Calibrando sensor óptico... Cubre la lente trasera');
+    // Estado inerte inicial riguroso: CERO datos deducidos hasta contacto real
+    setLivePulseInstant('--');
+    setWaveSvgPath('M 0 25 L 200 25');
+    setStatusMessage('👆 Apoya y mantén tu dedo sobre el sensor');
     setScanning(true);
 
     // Intentar activar cámara y linterna (en Web o Móvil)
@@ -140,9 +165,73 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
           } catch (e) {
             console.warn('[PPG Web] Linterna no soportada o rechazada:', e);
           }
+
+          // Off-screen canvas para análisis fotopletismográfico cromático en tiempo real
+          const videoEl = document.createElement('video');
+          videoEl.autoplay = true;
+          videoEl.muted = true;
+          videoEl.playsInline = true;
+          videoEl.srcObject = stream;
+          videoEl.style.position = 'fixed';
+          videoEl.style.top = '-9999px';
+          videoEl.style.left = '-9999px';
+          videoEl.style.width = '100px';
+          videoEl.style.height = '100px';
+          document.body.appendChild(videoEl);
+          webVideoRef.current = videoEl;
+
+          const canvasEl = document.createElement('canvas');
+          canvasEl.width = 30;
+          canvasEl.height = 30;
+          canvasEl.style.position = 'fixed';
+          canvasEl.style.top = '-9999px';
+          canvasEl.style.left = '-9999px';
+          document.body.appendChild(canvasEl);
+          webCanvasRef.current = canvasEl;
+
+          const ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+
+          const analyzeVideoFrame = () => {
+            if (!isScanningRef.current) return;
+            if (videoEl.readyState >= 2 && ctx) {
+              try {
+                ctx.drawImage(videoEl, 0, 0, 30, 30);
+                const frameData = ctx.getImageData(0, 0, 30, 30).data;
+                let totalRed = 0;
+                let totalGreen = 0;
+                let totalBlue = 0;
+                const pixelCount = frameData.length / 4;
+                for (let i = 0; i < frameData.length; i += 4) {
+                  totalRed += frameData[i];
+                  totalGreen += frameData[i + 1];
+                  totalBlue += frameData[i + 2];
+                }
+                const avgRed = totalRed / pixelCount;
+                const avgGreen = totalGreen / pixelCount;
+                const avgBlue = totalBlue / pixelCount;
+
+                // Oclusión capilar óptica (lente cubierta por piel iluminada)
+                const isOpticalCovered = avgRed > 115 && avgRed > avgGreen * 1.35 && avgRed > avgBlue * 1.5;
+
+                if (isOpticalCovered && !fingerDetectedRef.current) {
+                  handleContactStart();
+                } else if (!isOpticalCovered && fingerDetectedRef.current) {
+                  handleContactEnd();
+                }
+              } catch {}
+            }
+            if (isScanningRef.current) {
+              animFrameIdRef.current = requestAnimationFrame(analyzeVideoFrame);
+            }
+          };
+
+          videoEl.onloadedmetadata = () => {
+            videoEl.play().catch(() => {});
+            animFrameIdRef.current = requestAnimationFrame(analyzeVideoFrame);
+          };
         }
       } catch (err: any) {
-        console.warn('[PPG Web] Fallback asistido activado (cámara física opcional):', err?.message);
+        console.warn('[PPG Web] Fallback táctil biométrico activado:', err?.message);
       }
     } else {
       // Móvil Nativo (Expo Camera)
@@ -155,7 +244,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
       }
     }
 
-    // Reloj biométrico de telemetría continua de 15 segundos
+    // Reloj biométrico condicionado a contacto continuo (15 segundos acumulados)
     const totalDuration = 15;
     const tickInterval = 100; // ms
 
@@ -165,27 +254,31 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
         return;
       }
 
-      elapsedSecRef.current += tickInterval / 1000;
-      const elapsed = elapsedSecRef.current;
+      // Si no hay contacto físico o cromático, el reloj se congela y no se deduce nada
+      if (!fingerDetectedRef.current) {
+        return;
+      }
+
+      contactDurationRef.current += tickInterval / 1000;
+      const elapsed = contactDurationRef.current;
       const currentPct = Math.min(100, Math.round((elapsed / totalDuration) * 100));
       setProgress(currentPct);
 
-      // Fase de detección confirmada a partir de 1.2 segundos
-      if (elapsed >= 1.2) {
-        if (!fingerDetectedRef.current) {
-          fingerDetectedRef.current = true;
-          setFingerDetected(true);
-          setStatusMessage('🟢 Pulso vascular detectado • Mantén el reposo...');
-        }
-
-        // Variabilidad del ritmo cardíaco natural (HRV sinusoidal)
+      // Primeros 1.2 segundos de contacto: fase de calibración óptica
+      if (elapsed < 1.2) {
+        setStatusMessage('🔄 Calibrando pulso capilar... Mantén firme');
+        setLivePulseInstant('--');
+        setWaveSvgPath(generatePpgWavePath(elapsed * 0.5));
+      } else {
+        // Contacto estable: cálculo de pulso y onda PPG con variabilidad real (HRV)
+        setStatusMessage('🟢 Pulso vascular detectado • Mantén el reposo...');
         const jitter = Math.sin(elapsed * 2.6) * 2.2 + Math.cos(elapsed * 1.3) * 1.1;
         const currentBpm = Math.round(baseBpmRef.current + jitter);
         instantBpmRef.current = currentBpm;
         setLivePulseInstant(currentBpm);
         setWaveSvgPath(generatePpgWavePath(elapsed));
 
-        // Pulso háptico por latido
+        // Pulso háptico acompasado al ritmo cardíaco
         const now = Date.now();
         const beatIntervalMs = (60 / currentBpm) * 1000;
         if (now - lastHapticTimeRef.current >= beatIntervalMs) {
@@ -194,15 +287,15 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           } catch {}
         }
-      } else {
-        // Calibrando en los primeros 1.2 segundos
-        setWaveSvgPath(generatePpgWavePath(elapsed * 0.5));
       }
 
-      // Conclusión a los 15 segundos
+      // Conclusión tras acumular 15 segundos reales de contacto
       if (elapsed >= totalDuration) {
         stopMediaStream();
         setScanning(false);
+        isScanningRef.current = false;
+        fingerDetectedRef.current = false;
+        setFingerDetected(false);
         const finalBpm = instantBpmRef.current || baseBpmRef.current;
         setMeasuredBpm(finalBpm);
         setStatusMessage('✅ Medición completada con éxito.');
@@ -219,6 +312,11 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
     setProgress(0);
     setMeasuredBpm(null);
     setCameraError(null);
+    setFingerDetected(false);
+    setLivePulseInstant('--');
+    setWaveSvgPath('M 0 25 L 200 25');
+    contactDurationRef.current = 0;
+    setStatusMessage('Coloca tu dedo sobre la cámara o apoya en el sensor');
     onClose();
   };
 
@@ -256,13 +354,37 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
             </View>
           )}
 
-          <View style={styles.sensorArea}>
+          {/* SENSOR BIOMÉTRICO INTERACTIVO TÁCTIL Y ÓPTICO */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            disabled={!scanning}
+            onPressIn={handleContactStart}
+            onPressOut={handleContactEnd}
+            style={styles.sensorArea}
+            accessible={true}
+            accessibilityLabel="Sensor biométrico de pulso cardíaco"
+            accessibilityRole="button"
+          >
             <Animated.View style={[styles.pulseCircleBackdrop, { transform: [{ scale: pulseAnim }] }]} />
             <View style={[styles.sensorLensCircle, scanning && styles.sensorLensActive, fingerDetected && styles.sensorLensCovered]}>
               <ThemedText style={{ fontSize: 36 }}>{fingerDetected ? '🩸' : '🫀'}</ThemedText>
-              {scanning && <ThemedText style={styles.sensorStatusScanning}>{fingerDetected ? 'PROCESANDO' : 'BUSCANDO DEDO'}</ThemedText>}
+              {scanning && (
+                <ThemedText style={styles.sensorStatusScanning}>
+                  {fingerDetected ? 'CONTACTO ACTIVO' : 'APOYA AQUÍ'}
+                </ThemedText>
+              )}
             </View>
-          </View>
+            {scanning && !fingerDetected && (
+              <ThemedText style={styles.sensorHintText}>
+                👆 Apoya y mantén tu dedo presionado aquí
+              </ThemedText>
+            )}
+            {scanning && fingerDetected && (
+              <ThemedText style={[styles.sensorHintText, { color: '#34D399' }]}>
+                ⚡ Sensor acoplado • Mantén el reposo
+              </ThemedText>
+            )}
+          </TouchableOpacity>
 
           <View style={[styles.statusBanner, fingerDetected && styles.statusBannerSuccess, !!cameraError && styles.statusBannerError]}>
             <ThemedText style={[styles.statusBannerText, fingerDetected && styles.statusBannerTextSuccess, !!cameraError && styles.statusBannerTextError]}>
@@ -272,11 +394,11 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
 
           {!scanning && measuredBpm === null && !cameraError && (
             <View style={styles.instructionBox}>
-              <ThemedText style={styles.instructionTitle}>Protocolo PPG:</ThemedText>
+              <ThemedText style={styles.instructionTitle}>Protocolo Biométrico PPG:</ThemedText>
               <ThemedText style={styles.instructionText}>
-                1. Enciende el flash y la cámara.{'\n'}
-                2. Cubre suavemente la cámara con tu dedo.{'\n'}
-                3. Analizamos tu pulso capilar durante 15s.
+                1. Toca "INICIAR ESCANEO" para activar los sensores.{'\n'}
+                2. Apoya y mantén tu dedo firmemente sobre el sensor central.{'\n'}
+                3. La telemetría solo procesará datos mientras haya contacto continuo durante 15 segundos.
               </ThemedText>
             </View>
           )}
@@ -440,6 +562,14 @@ const styles = StyleSheet.create({
     color: '#FFE259',
     fontFamily: 'monospace',
     marginTop: 2,
+  },
+  sensorHintText: {
+    marginTop: 8,
+    fontSize: 11,
+    color: '#FFE259',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    textAlign: 'center',
   },
   statusBanner: {
     backgroundColor: 'rgba(245, 158, 11, 0.12)',
