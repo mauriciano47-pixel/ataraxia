@@ -1,4 +1,4 @@
-import { StyleSheet, View, Switch, TouchableOpacity, Image, Modal, TextInput, ScrollView, Alert, Platform, Clipboard } from 'react-native';
+import { StyleSheet, View, Switch, TouchableOpacity, Image, Modal, TextInput, ScrollView, Alert, Platform, Clipboard, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -642,6 +642,52 @@ export default function ProfileScreen() {
           </ThemedView>
 
 
+
+          {/* Sección Centro de Actualizaciones & Vitrina Oficial */}
+          <ThemedView style={[styles.section, { borderColor: 'rgba(212, 175, 55, 0.40)', backgroundColor: 'rgba(10, 14, 26, 0.90)' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <ThemedText style={styles.sectionTitle}>ACTUALIZACIONES & APK OFICIAL</ThemedText>
+              <View style={styles.guardianCuposBadge}>
+                <ThemedText style={styles.guardianCuposText}>v4.4.0 OFICIAL</ThemedText>
+              </View>
+            </View>
+            <ThemedText style={styles.hint}>
+              Obtén la última versión optimizada del APK para Android directamente desde el portal de descarga canónico o la Vitrina de Aplicaciones.
+            </ThemedText>
+
+            <View style={{ gap: 8, marginTop: 10 }}>
+              <TouchableOpacity
+                style={styles.guardianInviteBtn}
+                onPress={() => Linking.openURL('https://ataraxia-stoic.vercel.app/download.html')}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#D4AF37', '#FFE259', '#B45309']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.guardianInviteBtnGradient}
+                >
+                  <Ionicons name="cloud-download-outline" size={16} color="#050507" />
+                  <ThemedText style={styles.guardianInviteBtnText}>
+                    📥 DESCARGAR / ACTUALIZAR APK OFICIAL
+                  </ThemedText>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.guardianInviteBtn, { marginTop: 4 }]}
+                onPress={() => Linking.openURL('https://mauriciano47-pixel.github.io/vitrina/')}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.guardianInviteBtnGradient, { backgroundColor: 'rgba(212, 175, 55, 0.12)', borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.35)' }]}>
+                  <Ionicons name="globe-outline" size={16} color="#FFE259" />
+                  <ThemedText style={[styles.guardianInviteBtnText, { color: '#FFE259' }]}>
+                    🏛️ VER ATARAXIA EN LA VITRINA DE APPS
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </ThemedView>
 
           {/* Sección de Peligro */}
           <ThemedView style={[styles.section, { borderColor: 'rgba(239, 68, 68, 0.35)', marginTop: Spacing.two }]}>
