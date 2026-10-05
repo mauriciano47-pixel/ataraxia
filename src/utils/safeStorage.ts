@@ -1,3 +1,4 @@
+import { logger } from './logger';
 import { Platform } from 'react-native';
 
 // Memory fallback map for mobile browsers in private mode or quota constrained environments
@@ -19,7 +20,7 @@ const getNativeFileSystem = () => {
         nativeStoragePath = `${nativeFileSystem.documentDirectory}ataraxia_storage_v1.json`;
       }
     } catch (e) {
-      console.warn('[SafeStorage] Could not load native expo-file-system/legacy:', e);
+      logger.warn('[SafeStorage] Could not load native expo-file-system/legacy:', e);
     }
   }
   return nativeFileSystem;
@@ -47,7 +48,7 @@ export const hydrateNativeStorageAsync = async (): Promise<void> => {
       }
     }
   } catch (e) {
-    console.warn('[SafeStorage] Failed hydrating native storage from flash:', e);
+    logger.warn('[SafeStorage] Failed hydrating native storage from flash:', e);
   }
 };
 
@@ -71,7 +72,7 @@ const scheduleNativeFlush = () => {
         await fs.writeAsStringAsync(nativeStoragePath, JSON.stringify(obj));
       }
     } catch (e) {
-      console.warn('[SafeStorage] Failed writing native storage to flash:', e);
+      logger.warn('[SafeStorage] Failed writing native storage to flash:', e);
     }
   }, 350);
 };
@@ -84,7 +85,7 @@ export const SafeStorage = {
         if (val !== null) return val;
       }
     } catch (e) {
-      console.warn(`[SafeStorage] Failed reading key '${key}' from localStorage:`, e);
+      logger.warn(`[SafeStorage] Failed reading key '${key}' from localStorage:`, e);
     }
     return memoryStorage.get(key) || null;
   },
@@ -102,7 +103,7 @@ export const SafeStorage = {
         return true;
       }
     } catch (e) {
-      console.warn(`[SafeStorage] QuotaExceeded or StorageBlocked writing '${key}':`, e);
+      logger.warn(`[SafeStorage] QuotaExceeded or StorageBlocked writing '${key}':`, e);
     }
     return false;
   },
@@ -116,7 +117,7 @@ export const SafeStorage = {
         scheduleNativeFlush();
       }
     } catch (e) {
-      console.warn(`[SafeStorage] Failed removing key '${key}':`, e);
+      logger.warn(`[SafeStorage] Failed removing key '${key}':`, e);
     }
   },
 
@@ -132,7 +133,7 @@ export const SafeStorage = {
         scheduleNativeFlush();
       }
     } catch (e) {
-      console.warn(`[SafeStorage] Failed clearing all storage:`, e);
+      logger.warn(`[SafeStorage] Failed clearing all storage:`, e);
     }
   }
 };

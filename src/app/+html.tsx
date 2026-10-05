@@ -21,8 +21,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
 
         <ScrollViewStyleReset />
-        <script dangerouslySetInnerHTML={{
-          __html: `
+        <script id="sw-cleanup">{`
             (function() {
               // 1. Auto-limpieza de Service Workers obsoletos para evitar bloqueos por cache
               if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -41,10 +40,8 @@ export default function Root({ children }: PropsWithChildren) {
                 }).catch(function() {});
               }
             })();
-          `
-        }} />
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        `}</script>
+        <style id="global-theme-styles">{`
             * {
               -webkit-tap-highlight-color: transparent !important;
               touch-action: manipulation;
@@ -59,8 +56,7 @@ export default function Root({ children }: PropsWithChildren) {
               -webkit-overflow-scrolling: touch;
               overscroll-behavior-y: none;
             }
-          `
-        }} />
+        `}</style>
       </head>
       <body>{children}</body>
     </html>

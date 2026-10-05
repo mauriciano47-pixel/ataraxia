@@ -2,6 +2,8 @@
   "name": "ataraxia",
   "main": "expo-router/entry",
   "version": "1.2.2",
+  "author": "Mauricio Uribe Maldonado",
+  "license": "PROPRIETARY",
   "dependencies": {
     "@expo/ui": "~57.0.4",
     "@expo/vector-icons": "^15.1.1",

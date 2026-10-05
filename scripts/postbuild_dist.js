@@ -17,7 +17,6 @@ if (fs.existsSync(publicDir)) {
     const dest = path.join(distDir, file);
     if (fs.statSync(src).isFile()) {
       fs.copyFileSync(src, dest);
-      console.log(`[postbuild] Copied ${file} to dist/`);
     }
   }
 }
@@ -27,5 +26,4 @@ const indexPath = path.join(distDir, 'index.html');
 if (fs.existsSync(indexPath)) {
   fs.copyFileSync(indexPath, path.join(distDir, '200.html'));
   fs.copyFileSync(indexPath, path.join(distDir, '404.html'));
-  console.log('[postbuild] Created 200.html & 404.html in dist/');
 }

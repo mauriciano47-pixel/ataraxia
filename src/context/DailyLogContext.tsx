@@ -5,6 +5,7 @@ import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
+import { logger } from '@/utils/logger';
 import {
   ProkoptonProfile,
   CustomExercise,
@@ -13,7 +14,6 @@ import {
   LEGENDARY_PATHS,
   MonthlyCycleState,
   DailyGrade,
-  DailyGradeStatus,
   EquipmentType,
   SessionDurationMinutes,
   ExperienceLevel,
@@ -21,521 +21,36 @@ import {
   BodySnapshot,
 } from '@/types/onboarding';
 import { generate30DayResolution, MonthlyResolution } from '@/lib/monthlyResolutionEngine';
+import {
+  DailyLog,
+  DailyLogContextType,
+  UserMetrics,
+  SmartDeviceState,
+  UserProfile,
+  DEFAULT_LOG,
+  DEFAULT_USER_METRICS,
+  DEFAULT_MONTHLY_CYCLE,
+} from '@/types/dailyLog';
+import {
+  loadLocalBodySnapshots,
+  loadLocalDailyLog,
+  saveLocalDailyLog,
+  consolidateCycleHistory,
+  ONBOARDING_KEY,
+  BODY_SNAPSHOTS_STORAGE_KEY,
+} from '@/lib/dailyLogStorage';
+import {
+  calculateTodayGrade as evaluateTodayGrade,
+  getLegendaryPathRoutine,
+} from '@/lib/cycleGrading';
+import { buildGuardianKeyPayload } from '@/lib/guardianProfileHelper';
+import { executeCycleJudgment } from '@/lib/pactResolutionHelper';
 
-export interface UserMetrics {
-  weightKg: number;
-  heightCm: number;
-  age: number;
-  gender: 'male' | 'female';
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'athlete';
-  goal: 'deficit' | 'maintenance' | 'surplus';
-}
-
-export interface SmartDeviceState {
-  connected: boolean;
-  deviceName: string;
-  heartRateBpm: number;
-  lastSync: string;
-  batteryLevel?: number;
-}
-
-export interface DailyLog {
-  waterLitres: number;
-  trainingCompleted: boolean;
-  mealsLogged: number;
-  totalCalories: number;
-  targetCalories?: number;
-  steps?: number;
-  stepGoal?: number;
-  userMetrics?: UserMetrics;
-  energyLevel?: number;
-  sleepQuality?: number;
-  checkInDone?: boolean;
-  stoicAvatarUri?: string;
-  userName?: string;
-  userEmail?: string;
-  smartDevice?: SmartDeviceState;
-  prokoptonProfile?: ProkoptonProfile;
-  customRoutine?: CustomExercise[];
-  hasCompletedOnboarding?: boolean;
-  coachArchetype?: CoachArchetype;
-  legendaryPath?: LegendaryPath;
-  monthlyCycle?: MonthlyCycleState;
-  macros: {
-    protein: number;
-    carbs: number;
-    fats: number;
-  };
-  readinessScore?: {
-    sleep: number;
-    stress: number;
-    soreness: number;
-    total: number;
-  };
-  effectiveSets?: number;
-  targetCaloriesMin?: number;
-  targetCaloriesMax?: number;
-  lastNutrientDensityScore?: number;
-  lastNutrientVerdict?: string;
-}
-
-export const DEFAULT_USER_METRICS: UserMetrics = {
-  weightKg: 75,
-  heightCm: 175,
-  age: 28,
-  gender: 'male',
-  activityLevel: 'moderate',
-  goal: 'maintenance',
-};
-
-export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
-  currentDay: 4,
-  startDate: '2026-09-01T00:00:00.000Z',
-  path: 'spartan',
-  tier: 'Novicio de Esparta',
-  dailyGrades: [],
-  passedDaysCount: 0,
-  failedDaysCount: 0,
-  averageScore: 100,
-  isJudgmentReady: false,
-  isPactActive: true,
-};
-
-export const DEFAULT_LOG: DailyLog = {
-  waterLitres: 0,
-  trainingCompleted: false,
-  mealsLogged: 0,
-  totalCalories: 0,
-  targetCalories: 2200,
-  steps: 0,
-  stepGoal: 10000,
-  stoicAvatarUri: '',
-  userName: 'Mauro',
-  userEmail: '',
-  hasCompletedOnboarding: true,
-  coachArchetype: 'stoic_mentor',
-  legendaryPath: 'spartan',
-  monthlyCycle: DEFAULT_MONTHLY_CYCLE,
-  smartDevice: {
-    connected: false,
-    deviceName: 'Ninguno (Desconectado)',
-    heartRateBpm: 0,
-    lastSync: 'Nunca',
-    batteryLevel: 0,
-  },
-  userMetrics: DEFAULT_USER_METRICS,
-  checkInDone: false,
-  macros: { protein: 0, carbs: 0, fats: 0 },
-  targetCaloriesMin: 2100,
-  targetCaloriesMax: 2300,
-  effectiveSets: 0,
-};
-
-const PROFILE_STORAGE_KEY = 'ataraxia_user_profile_v5';
-const AVATAR_STORAGE_KEY = 'ataraxia_user_avatar_uri_v2';
-const ONBOARDING_KEY = 'ataraxia_onboarding_completed_v2';
-const BODY_SNAPSHOTS_STORAGE_KEY = 'ataraxia_body_snapshots_v2';
-
-function loadLocalBodySnapshots(): BodySnapshot[] {
-  try {
-    const raw = SafeStorage.getItem(BODY_SNAPSHOTS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) {
-    console.warn('[DailyLogContext] Error cargando fotos de evolución:', e);
-  }
-  return [];
-}
-
-type UserProfile = {
-  userName: string;
-  userEmail?: string;
-  userMetrics: UserMetrics;
-  targetCalories: number;
-  stepGoal: number;
-  stoicAvatarUri: string;
-  smartDevice?: SmartDeviceState;
-  hasCompletedOnboarding?: boolean;
-  prokoptonProfile?: ProkoptonProfile;
-  customRoutine?: CustomExercise[];
-  coachArchetype?: CoachArchetype;
-  legendaryPath?: LegendaryPath;
-  monthlyCycle?: MonthlyCycleState;
-};
-
-interface DailyLogContextType {
-  log: DailyLog;
-  loading: boolean;
-  user: User | null;
-  saveFullProfile: (data: {
-    userName: string;
-    userEmail?: string;
-    age: number;
-    weightKg: number;
-    heightCm: number;
-    targetCalories: number;
-    stepGoal: number;
-    stoicAvatarUri?: string;
-    coachArchetype?: CoachArchetype;
-    legendaryPath?: LegendaryPath;
-  }) => void;
-  logMealWithMacros: (cals: number, protein?: number, carbs?: number, fats?: number) => void;
-  addWater: (amount?: number) => void;
-  toggleTraining: () => void;
-  addMeal: () => void;
-  addCalories: (amount: number) => void;
-  saveCheckIn: (energy: number, sleep: number) => void;
-  addMacros: (p: number, c: number, f: number) => void;
-  addSteps: (amount: number) => void;
-  setSteps: (amount: number) => void;
-  setStepGoal: (goal: number) => void;
-  updateUserMetrics: (metrics: Partial<UserMetrics>, targetCals?: number) => void;
-  setStoicAvatar: (uri: string) => void;
-  setUserName: (name: string) => void;
-  setUserEmail: (email: string) => void;
-  saveGuardianKey: (data: {
-    email: string;
-    userName: string;
-    weightKg: number;
-    heightCm: number;
-    age: number;
-    path: LegendaryPath;
-    equipment?: EquipmentType;
-    sessionDurationMinutes?: SessionDurationMinutes;
-    experienceLevel?: ExperienceLevel;
-    injuryCare?: InjuryCare;
-  }) => void;
-  setCoachArchetype: (archetype: CoachArchetype) => void;
-  selectLegendaryPath: (path: LegendaryPath) => void;
-  calculateTodayGrade: () => DailyGrade;
-  executeJudgment: () => { promoted: boolean; title: string; message: string; resolution?: MonthlyResolution };
-  get30DayResolution: () => MonthlyResolution;
-  resetMonthlyCycle: () => void;
-  start30DayPact: (path?: LegendaryPath) => void;
-  updateSmartDevice: (deviceUpdates: Partial<SmartDeviceState>) => void;
-  saveOnboardingProfile: (profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => void;
-  resetOnboarding: () => void;
-  saveReadinessScore: (sleep: number, stress: number, soreness: number) => void;
-  updateEffectiveSets: (count: number) => void;
-  logMealWithEnrichedMacros: (cals: number, p: number, c: number, f: number, densityScore?: number, verdict?: string) => void;
-  setCustomRoutine: (routine: CustomExercise[]) => void;
-  syncExternalHealthData: (payload: {
-    steps: number;
-    deviceName: string;
-    lastSync: string;
-    heartRateBpm?: number;
-    batteryLevel?: number;
-    sleepHours?: number;
-  }) => void;
-  bodySnapshots: BodySnapshot[];
-  addBodySnapshot: (snapshot: Omit<BodySnapshot, 'id' | 'createdAt'>) => Promise<BodySnapshot>;
-  deleteBodySnapshot: (id: string) => Promise<void>;
-}
+// Re-export types for backward compatibility
+export type { UserMetrics, SmartDeviceState, DailyLog, DailyLogContextType, UserProfile };
+export { DEFAULT_USER_METRICS, DEFAULT_MONTHLY_CYCLE, DEFAULT_LOG };
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
-
-function loadLocalDailyLog(targetDate: string): DailyLog {
-  let baseLog: DailyLog = { ...DEFAULT_LOG };
-
-  try {
-    const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
-    if (savedProfile) {
-      const profileData = JSON.parse(savedProfile);
-      baseLog = {
-        ...baseLog,
-        ...profileData,
-        userMetrics: {
-          ...DEFAULT_USER_METRICS,
-          ...(profileData.userMetrics || {}),
-        },
-      };
-    }
-
-    const isCompleted = SafeStorage.getItem(ONBOARDING_KEY) !== 'false';
-    if (isCompleted || baseLog.hasCompletedOnboarding !== false) {
-      baseLog.hasCompletedOnboarding = true;
-    }
-    if (!baseLog.userName || baseLog.userName.trim() === '') {
-      baseLog.userName = 'Mauro';
-    }
-    if (!baseLog.legendaryPath) {
-      baseLog.legendaryPath = 'spartan';
-    }
-
-    const savedAvatar = SafeStorage.getItem(AVATAR_STORAGE_KEY);
-    if (savedAvatar) {
-      baseLog.stoicAvatarUri = savedAvatar;
-    }
-
-    const savedToday = SafeStorage.getItem(`ataraxia_log_${targetDate}`);
-    if (savedToday) {
-      const todayData = JSON.parse(savedToday);
-      const {
-        waterLitres,
-        trainingCompleted,
-        mealsLogged,
-        totalCalories,
-        steps,
-        energyLevel,
-        sleepQuality,
-        checkInDone,
-        macros,
-        readinessScore,
-        effectiveSets,
-        lastNutrientDensityScore,
-        lastNutrientVerdict,
-      } = todayData;
-
-      baseLog = {
-        ...baseLog,
-        ...(waterLitres !== undefined ? { waterLitres } : {}),
-        ...(trainingCompleted !== undefined ? { trainingCompleted } : {}),
-        ...(mealsLogged !== undefined ? { mealsLogged } : {}),
-        ...(totalCalories !== undefined ? { totalCalories } : {}),
-        ...(steps !== undefined ? { steps } : {}),
-        ...(energyLevel !== undefined ? { energyLevel } : {}),
-        ...(sleepQuality !== undefined ? { sleepQuality } : {}),
-        ...(checkInDone !== undefined ? { checkInDone } : {}),
-        ...(macros !== undefined ? { macros } : {}),
-        ...(readinessScore !== undefined ? { readinessScore } : {}),
-        ...(effectiveSets !== undefined ? { effectiveSets } : {}),
-        ...(lastNutrientDensityScore !== undefined ? { lastNutrientDensityScore } : {}),
-        ...(lastNutrientVerdict !== undefined ? { lastNutrientVerdict } : {}),
-      };
-    }
-
-    // Blindaje de persistencia de pasos: recuperar último conteo guardado de la sesión de hoy si steps es 0
-    if (!baseLog.steps || baseLog.steps === 0) {
-      const savedSteps = SafeStorage.getItem(`ataraxia_pedometer_steps_${targetDate}`) || SafeStorage.getItem('ataraxia_pedometer_session_steps_v1');
-      if (savedSteps) {
-        const parsed = parseInt(savedSteps, 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          baseLog.steps = parsed;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("[DailyLogContext] Error cargando estado:", e);
-  }
-
-  return baseLog;
-}
-
-function saveLocalDailyLog(targetDate: string, currentLog: DailyLog) {
-  try {
-    const profileCore = {
-      userName: currentLog.userName,
-      userMetrics: currentLog.userMetrics,
-      targetCalories: currentLog.targetCalories,
-      stepGoal: currentLog.stepGoal,
-      smartDevice: currentLog.smartDevice,
-      hasCompletedOnboarding: currentLog.hasCompletedOnboarding,
-      prokoptonProfile: currentLog.prokoptonProfile,
-      customRoutine: currentLog.customRoutine,
-      coachArchetype: currentLog.coachArchetype || 'stoic_mentor',
-      legendaryPath: currentLog.legendaryPath,
-      monthlyCycle: currentLog.monthlyCycle,
-    };
-    SafeStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileCore));
-
-    if (currentLog.legendaryPath) {
-      SafeStorage.setItem('ataraxia_path_chosen_v2', 'true');
-      SafeStorage.setItem('ataraxia_pact_accepted_v2', 'true');
-    }
-
-    if (currentLog.hasCompletedOnboarding) {
-      SafeStorage.setItem(ONBOARDING_KEY, 'true');
-    }
-
-    const dailyMetrics = {
-      waterLitres: currentLog.waterLitres,
-      trainingCompleted: currentLog.trainingCompleted,
-      mealsLogged: currentLog.mealsLogged,
-      totalCalories: currentLog.totalCalories,
-      steps: currentLog.steps,
-      energyLevel: currentLog.energyLevel,
-      sleepQuality: currentLog.sleepQuality,
-      checkInDone: currentLog.checkInDone,
-      macros: currentLog.macros,
-      readinessScore: currentLog.readinessScore,
-      effectiveSets: currentLog.effectiveSets,
-      lastNutrientDensityScore: currentLog.lastNutrientDensityScore,
-      lastNutrientVerdict: currentLog.lastNutrientVerdict,
-    };
-    SafeStorage.setItem(`ataraxia_log_${targetDate}`, JSON.stringify(dailyMetrics));
-
-    if (currentLog.stoicAvatarUri) {
-      SafeStorage.setItem(AVATAR_STORAGE_KEY, currentLog.stoicAvatarUri);
-    }
-  } catch (e) {
-    console.warn("[DailyLogContext] Error guardando estado:", e);
-  }
-}
-
-function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
-  try {
-    if (!currentLog) return currentLog;
-    const cycle = currentLog.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const todayStr = getLocalTodayDateString();
-    // El Reto Stoic Oficial de 30 Días inició inmutablemente el 1 de Septiembre de 2026
-    const startStr = '2026-09-01';
-
-    const [sY, sM, sD] = startStr.split('-').map((n) => parseInt(n, 10) || 0);
-    const [tY, tM, tD] = (todayStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
-
-    const startDateObj = new Date(sY || 2026, (sM > 0 ? sM - 1 : 8), sD || 1);
-    const todayDateObj = new Date(tY || 2026, (tM > 0 ? tM - 1 : 8), tD || 1);
-
-    // Calcular diferencia en días exactos desde el 1 de Septiembre (1 sep = Día 1, 4 sep = Día 4)
-    const diffTime = todayDateObj.getTime() - startDateObj.getTime();
-    const rawDiffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffDays = Math.max(0, isNaN(rawDiffDays) ? 0 : rawDiffDays);
-    const currentDayNum = Math.min(30, Math.max(1, diffDays + 1));
-
-    const existingGradesMap = new Map<string, DailyGrade>();
-    (cycle?.dailyGrades || []).forEach((g) => {
-      if (g && g.date) {
-        existingGradesMap.set(g.date, g);
-      }
-    });
-
-    let passedCount = 0;
-    let failedCount = 0;
-    let totalScoreSum = 0;
-    const consolidatedGrades: DailyGrade[] = [];
-
-    // Recorrer todos los días concluidos (estrictamente anteriores a hoy)
-    for (let d = 0; d < diffDays && d < 30; d++) {
-      const dayDate = new Date(startDateObj.getTime() + d * (1000 * 60 * 60 * 24));
-      const year = dayDate.getFullYear();
-      const month = String(dayDate.getMonth() + 1).padStart(2, '0');
-      const day = String(dayDate.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${day}`;
-      const dayNumber = d + 1;
-
-      let grade = existingGradesMap.get(dateKey);
-      if (!grade) {
-        const rawPast = SafeStorage.getItem(`ataraxia_log_${dateKey}`);
-        if (rawPast) {
-          try {
-            const parsed = JSON.parse(rawPast);
-            const trainingDone = Boolean(parsed.trainingCompleted);
-            const trainingPts = trainingDone ? 20 : 0;
-            const stepGoal = currentLog.stepGoal || 10000;
-            const stepsRatio = Math.min(1, (parsed.steps || 0) / stepGoal);
-            const stepsPassed = (parsed.steps || 0) >= (stepGoal * 0.85);
-            const stepsPts = Math.round(stepsRatio * 20);
-            const nutritionPassed = (parsed.mealsLogged || 0) > 0 || (parsed.totalCalories || 0) > 0;
-            const nutritionPts = nutritionPassed ? 15 : 0;
-            const sleepPassed = (parsed.sleepQuality || 0) >= 6.5;
-            const sleepPts = sleepPassed ? 15 : 0;
-            const stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${dateKey}`)) ||
-                                         Boolean(SafeStorage.getItem(`ataraxia_journal_${dateKey}`));
-            const stoicChallengePts = stoicChallengePassed ? 10 : 0;
-            const heartRatePassed = Boolean(parsed.smartDevice?.heartRateBpm && parsed.smartDevice.heartRateBpm > 0);
-            const heartRatePts = heartRatePassed ? 10 : 0;
-            const coachCheckInPassed = Boolean(parsed.checkInDone) || Boolean(parsed.readinessScore);
-            const coachCheckInPts = coachCheckInPassed ? 10 : 0;
-
-            const totalScore = trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
-            const isPassed = totalScore >= 75;
-
-            grade = {
-              day: dayNumber,
-              date: dateKey,
-              score: totalScore,
-              status: totalScore >= 90 ? 'divine' : isPassed ? 'worthy' : totalScore >= 50 ? 'mediocre' : 'failed',
-              pillars: {
-                training: trainingDone,
-                steps: stepsPassed,
-                nutrition: nutritionPassed,
-                sleep: sleepPassed,
-                stoicChallenge: stoicChallengePassed,
-                heartRate: heartRatePassed,
-                coachCheckIn: coachCheckInPassed,
-              },
-              trainingDone,
-              steps: parsed.steps || 0,
-              stepGoal,
-              stepsRatio: parseFloat((isNaN(stepsRatio) ? 0 : stepsRatio).toFixed(2)),
-              waterLitres: parsed.waterLitres || 0,
-              waterRatio: parseFloat((Math.min(1, (parsed.waterLitres || 0) / 2.5)).toFixed(2)),
-              caloriesLogged: nutritionPassed,
-              totalCalories: parsed.totalCalories || 0,
-              sleepHours: parsed.sleepQuality || 0,
-              heartRateBpm: parsed.smartDevice?.heartRateBpm || 0,
-              verdict: isPassed ? '⚔️ Hoplita Digno: Día cumplido con disciplina.' : '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
-              recordedAt: new Date().toISOString(),
-            };
-          } catch {}
-        }
-
-        if (!grade) {
-          grade = {
-            day: dayNumber,
-            date: dateKey,
-            score: 0,
-            status: 'failed',
-            pillars: {
-              training: false,
-              steps: false,
-              nutrition: false,
-              sleep: false,
-              stoicChallenge: false,
-              heartRate: false,
-              coachCheckIn: false,
-            },
-            trainingDone: false,
-            steps: 0,
-            stepGoal: currentLog.stepGoal || 10000,
-            stepsRatio: 0,
-            waterLitres: 0,
-            waterRatio: 0,
-            caloriesLogged: false,
-            totalCalories: 0,
-            sleepHours: 0,
-            heartRateBpm: 0,
-            verdict: '💀 Día Indigno: No se completaron los requisitos del Pacto dentro de la ventana de 24 horas.',
-            recordedAt: new Date().toISOString(),
-          };
-        }
-      }
-
-      if (grade.status === 'worthy' || grade.status === 'divine') {
-        passedCount++;
-      } else {
-        failedCount++;
-      }
-      totalScoreSum += grade.score || 0;
-      consolidatedGrades.push(grade);
-    }
-
-    const evaluatedDaysCount = consolidatedGrades.length;
-    const avgScore = evaluatedDaysCount > 0 ? Math.round(totalScoreSum / evaluatedDaysCount) : 100;
-
-    const updatedCycle: MonthlyCycleState = {
-      ...cycle,
-      currentDay: currentDayNum,
-      startDate: cycle?.startDate || `${startStr}T00:00:00.000Z`,
-      dailyGrades: consolidatedGrades,
-      passedDaysCount: passedCount,
-      failedDaysCount: failedCount,
-      averageScore: isNaN(avgScore) ? 100 : avgScore,
-      isJudgmentReady: currentDayNum >= 30 && diffDays >= 30,
-      isPactActive: true,
-    };
-
-    return {
-      ...currentLog,
-      monthlyCycle: updatedCycle,
-    };
-  } catch (err) {
-    console.warn('[DailyLogContext] Error en consolidateCycleHistory:', err);
-    return currentLog;
-  }
-}
 
 export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const [currentDateString, setCurrentDateString] = useState<string>(() => getLocalTodayDateString());
@@ -564,14 +79,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       saveLocalDailyLog(today, logRef.current);
     };
 
-    // Escucha nativa 100% segura para Android / iOS
     const appStateSub = AppState.addEventListener('change', (state) => {
-      if (state === 'background' || state === 'inactive') {
-        flushSave();
-      }
+      if (state === 'background' || state === 'inactive') flushSave();
     });
 
-    // Escucha web solo si se ejecuta en navegador
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('beforeunload', flushSave);
       if (typeof document !== 'undefined') {
@@ -595,11 +106,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     const midnightInterval = setInterval(() => {
       const liveToday = getLocalTodayDateString();
       if (liveToday !== prevTodayRef.current) {
-        console.log(`[DailyLogContext] 🕛 Medianoche local alcanzada: cambio de fecha de ${prevTodayRef.current} a ${liveToday}.`);
+        logger.info(`[DailyLogContext] 🕛 Medianoche local: ${prevTodayRef.current} -> ${liveToday}.`);
         prevTodayRef.current = liveToday;
         setCurrentDateString(liveToday);
-        const initial = loadLocalDailyLog(liveToday);
-        const consolidated = consolidateCycleHistory(initial);
+        const consolidated = consolidateCycleHistory(loadLocalDailyLog(liveToday));
         logRef.current = consolidated;
         setLog(consolidated);
       }
@@ -609,18 +119,14 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!auth) {
-      return;
-    }
+    if (!auth) return;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-
         if (db) {
           try {
-            const profileDocRef = doc(db, `users/${currentUser.uid}/meta/profile`);
-            const profileSnap = await getDoc(profileDocRef);
+            const profileSnap = await getDoc(doc(db, `users/${currentUser.uid}/meta/profile`));
             if (profileSnap.exists()) {
               const cloudProfile = profileSnap.data() as UserProfile;
               const current = logRef.current;
@@ -633,9 +139,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
                 stoicAvatarUri: cloudProfile.stoicAvatarUri || current.stoicAvatarUri,
                 hasCompletedOnboarding: cloudProfile.hasCompletedOnboarding ?? current.hasCompletedOnboarding ?? false,
                 prokoptonProfile: cloudProfile.prokoptonProfile || current.prokoptonProfile,
-                customRoutine: (cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0)
-                  ? cloudProfile.customRoutine
-                  : current.customRoutine,
+                customRoutine:
+                  cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0
+                    ? cloudProfile.customRoutine
+                    : current.customRoutine,
                 coachArchetype: cloudProfile.coachArchetype || current.coachArchetype || 'stoic_mentor',
                 smartDevice: cloudProfile.smartDevice
                   ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
@@ -646,14 +153,14 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
               saveLocalDailyLog(today, merged);
             }
           } catch (e) {
-            console.warn('[DailyLogContext] No se pudo cargar el perfil de Firestore:', e);
+            logger.warn('[DailyLogContext] No se pudo cargar el perfil de Firestore:', e);
           }
         }
       } else {
         try {
           if (auth) await signInAnonymously(auth);
         } catch (error) {
-          console.warn('Firebase Auth fallback local:', error);
+          logger.warn('Firebase Auth fallback local:', error);
           setIsLocalMode(true);
         }
       }
@@ -662,57 +169,48 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribeAuth();
   }, [today]);
 
-  const smartMerge = (local: DailyLog, remote: DailyLog): DailyLog => {
-    return {
-      ...DEFAULT_LOG,
-      ...remote,
-      ...local,
-      waterLitres: Math.max(local.waterLitres || 0, remote.waterLitres || 0),
-      totalCalories: Math.max(local.totalCalories || 0, remote.totalCalories || 0),
-      mealsLogged: Math.max(local.mealsLogged || 0, remote.mealsLogged || 0),
-      steps: Math.max(local.steps || 0, remote.steps || 0),
-      stepGoal: local.stepGoal || remote.stepGoal || 10000,
-      targetCalories: local.targetCalories || remote.targetCalories || 2200,
-      trainingCompleted: Boolean(local.trainingCompleted || remote.trainingCompleted),
-      checkInDone: Boolean(local.checkInDone || remote.checkInDone),
-      effectiveSets: Math.max(local.effectiveSets || 0, remote.effectiveSets || 0),
-      userName: (local.userName && local.userName !== DEFAULT_LOG.userName)
+  const smartMerge = (local: DailyLog, remote: DailyLog): DailyLog => ({
+    ...DEFAULT_LOG,
+    ...remote,
+    ...local,
+    waterLitres: Math.max(local.waterLitres || 0, remote.waterLitres || 0),
+    totalCalories: Math.max(local.totalCalories || 0, remote.totalCalories || 0),
+    mealsLogged: Math.max(local.mealsLogged || 0, remote.mealsLogged || 0),
+    steps: Math.max(local.steps || 0, remote.steps || 0),
+    stepGoal: local.stepGoal || remote.stepGoal || 10000,
+    targetCalories: local.targetCalories || remote.targetCalories || 2200,
+    trainingCompleted: Boolean(local.trainingCompleted || remote.trainingCompleted),
+    checkInDone: Boolean(local.checkInDone || remote.checkInDone),
+    effectiveSets: Math.max(local.effectiveSets || 0, remote.effectiveSets || 0),
+    userName:
+      local.userName && local.userName !== DEFAULT_LOG.userName
         ? local.userName
-        : (remote.userName || DEFAULT_LOG.userName),
-      stoicAvatarUri: local.stoicAvatarUri || remote.stoicAvatarUri || '',
-      hasCompletedOnboarding: Boolean(local.hasCompletedOnboarding || remote.hasCompletedOnboarding),
-      prokoptonProfile: local.prokoptonProfile || remote.prokoptonProfile,
-      customRoutine: (local.customRoutine && local.customRoutine.length > 0)
+        : remote.userName || DEFAULT_LOG.userName,
+    stoicAvatarUri: local.stoicAvatarUri || remote.stoicAvatarUri || '',
+    hasCompletedOnboarding: Boolean(local.hasCompletedOnboarding || remote.hasCompletedOnboarding),
+    prokoptonProfile: local.prokoptonProfile || remote.prokoptonProfile,
+    customRoutine:
+      local.customRoutine && local.customRoutine.length > 0
         ? local.customRoutine
-        : (remote.customRoutine || undefined),
-      coachArchetype: local.coachArchetype || remote.coachArchetype || 'stoic_mentor',
-      userMetrics: {
-        ...DEFAULT_USER_METRICS,
-        ...(remote.userMetrics || {}),
-        ...(local.userMetrics || {}),
-      },
-      macros: {
-        protein: Math.max(local.macros?.protein || 0, remote.macros?.protein || 0),
-        carbs: Math.max(local.macros?.carbs || 0, remote.macros?.carbs || 0),
-        fats: Math.max(local.macros?.fats || 0, remote.macros?.fats || 0),
-      },
-      smartDevice: {
-        ...(remote.smartDevice || DEFAULT_LOG.smartDevice!),
-        ...(local.smartDevice || {}),
-      },
-    };
-  };
+        : remote.customRoutine || undefined,
+    coachArchetype: local.coachArchetype || remote.coachArchetype || 'stoic_mentor',
+    userMetrics: { ...DEFAULT_USER_METRICS, ...(remote.userMetrics || {}), ...(local.userMetrics || {}) },
+    macros: {
+      protein: Math.max(local.macros?.protein || 0, remote.macros?.protein || 0),
+      carbs: Math.max(local.macros?.carbs || 0, remote.macros?.carbs || 0),
+      fats: Math.max(local.macros?.fats || 0, remote.macros?.fats || 0),
+    },
+    smartDevice: { ...(remote.smartDevice || DEFAULT_LOG.smartDevice!), ...(local.smartDevice || {}) },
+  });
 
   useEffect(() => {
     if (!user || isLocalMode || !db) return;
-
     const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
 
     const unsubscribeSnapshot = onSnapshot(
       docRef,
       (docSnap) => {
         if (docSnap.metadata?.hasPendingWrites) return;
-
         const currentLocal = logRef.current;
         if (docSnap.exists()) {
           const remoteData = docSnap.data() as DailyLog;
@@ -726,7 +224,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         }
       },
       (error) => {
-        console.warn("Firestore listener fallback local:", error);
+        logger.warn('Firestore listener fallback local:', error);
         setIsLocalMode(true);
       }
     );
@@ -753,25 +251,19 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     logRef.current = newLog;
     setLog(newLog);
 
-    // Guardado en disco debounced para evitar bloqueos síncronos de flash en móviles
-    if (localSaveDebounceTimer.current) {
-      clearTimeout(localSaveDebounceTimer.current);
-    }
+    if (localSaveDebounceTimer.current) clearTimeout(localSaveDebounceTimer.current);
     localSaveDebounceTimer.current = setTimeout(() => {
       saveLocalDailyLog(today, logRef.current);
     }, 500);
 
     if (user && db && !isLocalMode) {
-      if (firestoreDebounceTimer.current) {
-        clearTimeout(firestoreDebounceTimer.current);
-      }
+      if (firestoreDebounceTimer.current) clearTimeout(firestoreDebounceTimer.current);
       firestoreDebounceTimer.current = setTimeout(async () => {
         try {
           if (!db) return;
-          const docRef = doc(db, `users/${user.uid}/daily_logs/${today}`);
-          await setDoc(docRef, updates, { merge: true });
+          await setDoc(doc(db, `users/${user.uid}/daily_logs/${today}`), updates, { merge: true });
         } catch (error) {
-          console.warn("Error en setDoc Firestore:", error);
+          logger.warn('Error en setDoc Firestore:', error);
         }
       }, 1000);
     }
@@ -780,10 +272,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const saveProfileToFirestore = useCallback(async (profileData: Partial<UserProfile>) => {
     if (!user || !db || isLocalMode) return;
     try {
-      const profileDocRef = doc(db, `users/${user.uid}/meta/profile`);
-      await setDoc(profileDocRef, profileData, { merge: true });
+      await setDoc(doc(db, `users/${user.uid}/meta/profile`), profileData, { merge: true });
     } catch (e) {
-      console.warn('[DailyLogContext] Error guardando perfil en Firestore:', e);
+      logger.warn('[DailyLogContext] Error guardando perfil en Firestore:', e);
     }
   }, [user, isLocalMode]);
 
@@ -800,35 +291,22 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     legendaryPath?: LegendaryPath;
   }) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
-    const newMetrics: UserMetrics = {
-      ...currentMetrics,
-      age: data.age,
-      weightKg: data.weightKg,
-      heightCm: data.heightCm,
+    const newMetrics: UserMetrics = { ...currentMetrics, age: data.age, weightKg: data.weightKg, heightCm: data.heightCm };
+    const updates = {
+      userName: data.userName.trim() || 'Ciudadano Prokopton',
+      ...(data.userEmail !== undefined ? { userEmail: data.userEmail } : {}),
+      userMetrics: newMetrics,
+      targetCalories: data.targetCalories,
+      stepGoal: data.stepGoal,
+      ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
+      ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
+      ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
     };
-    updateLog({
-      userName: data.userName.trim() || 'Ciudadano Prokopton',
-      ...(data.userEmail !== undefined ? { userEmail: data.userEmail } : {}),
-      userMetrics: newMetrics,
-      targetCalories: data.targetCalories,
-      stepGoal: data.stepGoal,
-      ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
-      ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
-      ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
-    });
-    saveProfileToFirestore({
-      userName: data.userName.trim() || 'Ciudadano Prokopton',
-      ...(data.userEmail !== undefined ? { userEmail: data.userEmail } : {}),
-      userMetrics: newMetrics,
-      targetCalories: data.targetCalories,
-      stepGoal: data.stepGoal,
-      ...(data.stoicAvatarUri ? { stoicAvatarUri: data.stoicAvatarUri } : {}),
-      ...(data.coachArchetype ? { coachArchetype: data.coachArchetype } : {}),
-      ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
-    });
+    updateLog(updates);
+    saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
-  const logMealWithMacros = useCallback((cals: number, protein: number = 0, carbs: number = 0, fats: number = 0) => {
+  const logMealWithMacros = useCallback((cals: number, protein = 0, carbs = 0, fats = 0) => {
     const current = logRef.current;
     const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
@@ -842,9 +320,8 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     });
   }, [updateLog]);
 
-  const addWater = useCallback((amount: number = 0.25) => {
-    const newLitres = Math.max(0, parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2)));
-    updateLog({ waterLitres: newLitres });
+  const addWater = useCallback((amount = 0.25) => {
+    updateLog({ waterLitres: Math.max(0, parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2))) });
   }, [updateLog]);
 
   const toggleTraining = useCallback(() => {
@@ -884,9 +361,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     try {
       SafeStorage.setItem(`ataraxia_pedometer_steps_${today}`, String(val));
       SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(val));
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage'));
-      }
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
     } catch {}
   }, [updateLog, today]);
 
@@ -897,11 +372,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const updateUserMetrics = useCallback((metrics: Partial<UserMetrics>, targetCals?: number) => {
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const newMetrics: UserMetrics = { ...currentMetrics, ...metrics };
-    const updates: Partial<DailyLog> = { userMetrics: newMetrics };
-    if (targetCals) {
-      updates.targetCalories = targetCals;
-    }
-    updateLog(updates);
+    updateLog({ userMetrics: newMetrics, ...(targetCals ? { targetCalories: targetCals } : {}) });
   }, [updateLog]);
 
   const setStoicAvatar = useCallback((uri: string) => {
@@ -919,18 +390,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     saveProfileToFirestore({ userEmail: email });
   }, [updateLog, saveProfileToFirestore]);
 
-  const saveGuardianKey = useCallback(({
-    email,
-    userName,
-    weightKg,
-    heightCm,
-    age,
-    path,
-    equipment,
-    sessionDurationMinutes,
-    experienceLevel,
-    injuryCare,
-  }: {
+  const saveGuardianKey = useCallback((data: {
     email: string;
     userName: string;
     weightKg: number;
@@ -942,114 +402,9 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     experienceLevel?: ExperienceLevel;
     injuryCare?: InjuryCare;
   }) => {
-    const pathInfo = LEGENDARY_PATHS[path];
-    const userEquip: EquipmentType = equipment || pathInfo.equipment || 'gym';
-    const userDuration: SessionDurationMinutes = sessionDurationMinutes || 45;
-    const bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
-    const baseCals = Math.round(bmr * 1.4);
-    const targetCals = Math.max(1400, baseCals + pathInfo.recommendedCalsDelta);
-
-    const updatedMetrics: UserMetrics = {
-      weightKg,
-      heightCm,
-      age,
-      gender: 'male',
-      activityLevel: 'moderate',
-      goal: pathInfo.dietPreference === 'deficit' ? 'deficit' : pathInfo.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
-    };
-
-    let routine: CustomExercise[] = [];
-    if (path === 'spartan') {
-      routine = [
-        { id: 'sp1', n: 'Sentadilla Trasera Pesada', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-        { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
-        { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-      ];
-    } else if (path === 'hoplite') {
-      routine = [
-        { id: 'hop1', n: 'Circuito de Resistencia Hoplita', s: '4 rondas x 45 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Full Body' },
-        { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 minutos continuos', targetRpe: 7.0, done: false, rpe: null, muscleGroup: 'Cardiovascular' },
-        { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-        { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Core' },
-      ];
-    } else if (path === 'apollo') {
-      routine = [
-        { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-        { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Hombros' },
-        { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro', s: '4 series x 10 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'ap5', n: 'Elevación de Piernas Colgado', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Abdomen' },
-      ];
-    } else {
-      routine = [
-        { id: 'ph1', n: 'Dominadas Estrictas en Barra (Autodominio)', s: '4 series x 10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-        { id: 'ph3', n: 'Pistol Squats (Sentadilla a una pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Tríceps' },
-        { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Core' },
-      ];
-    }
-
-    const newCycle: MonthlyCycleState = {
-      currentDay: 1,
-      startDate: new Date().toISOString(),
-      path,
-      tier: 'Novicio de Esparta',
-      dailyGrades: [],
-      passedDaysCount: 0,
-      failedDaysCount: 0,
-      averageScore: 100,
-      isJudgmentReady: false,
-      isPactActive: true,
-    };
-
-    const profileData: ProkoptonProfile = {
-      userName,
-      focus: pathInfo.focus,
-      equipment: userEquip,
-      daysPerWeek: 4,
-      sessionDurationMinutes: userDuration,
-      dietPreference: pathInfo.dietPreference,
-      experienceLevel: experienceLevel || 'intermediate',
-      injuryCare: injuryCare || 'none',
-      age,
-      weightKg,
-      targetWeightKg: weightKg,
-      heightCm,
-      completedAt: new Date().toISOString(),
-      legendaryPath: path,
-    };
-
-    updateLog({
-      userEmail: email,
-      userName,
-      userMetrics: updatedMetrics,
-      targetCalories: targetCals,
-      targetCaloriesMin: targetCals - 100,
-      targetCaloriesMax: targetCals + 100,
-      legendaryPath: path,
-      coachArchetype: pathInfo.archetype,
-      customRoutine: routine,
-      monthlyCycle: newCycle,
-      prokoptonProfile: profileData,
-      hasCompletedOnboarding: true,
-    });
-
-    saveProfileToFirestore({
-      userEmail: email,
-      userName,
-      userMetrics: updatedMetrics,
-      targetCalories: targetCals,
-      legendaryPath: path,
-      coachArchetype: pathInfo.archetype,
-      customRoutine: routine,
-      monthlyCycle: newCycle,
-      prokoptonProfile: profileData,
-      hasCompletedOnboarding: true,
-    });
+    const { logUpdates, profileUpdates } = buildGuardianKeyPayload(data);
+    updateLog(logUpdates);
+    saveProfileToFirestore(profileUpdates);
   }, [updateLog, saveProfileToFirestore]);
 
   const setCoachArchetype = useCallback((archetype: CoachArchetype) => {
@@ -1090,18 +445,16 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
           sleep: payload.sleepHours,
           stress: logRef.current.readinessScore?.stress || 2,
           soreness: logRef.current.readinessScore?.soreness || 2,
-          total: Math.round((payload.sleepHours * 0.4) + ((10 - 2) * 0.3) + ((10 - 2) * 0.3)),
-        }
-      } : {})
+          total: Math.round(payload.sleepHours * 0.4 + (10 - 2) * 0.3 + (10 - 2) * 0.3),
+        },
+      } : {}),
     });
 
     saveProfileToFirestore({ smartDevice: newDevice });
 
     try {
       SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(payload.steps));
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage'));
-      }
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('storage'));
     } catch {}
   }, [updateLog, saveProfileToFirestore]);
 
@@ -1114,185 +467,48 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       activityLevel: profile.daysPerWeek >= 5 ? 'active' : profile.daysPerWeek >= 4 ? 'moderate' : 'light',
       goal: profile.dietPreference === 'deficit' ? 'deficit' : profile.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
     };
-
-    updateLog({
-      userName: profile.userName,
-      userMetrics: updatedMetrics,
-      targetCalories: targetCals,
-      prokoptonProfile: profile,
-      customRoutine: routine,
-      hasCompletedOnboarding: true,
-    });
-
-    saveProfileToFirestore({
-      userName: profile.userName,
-      userMetrics: updatedMetrics,
-      targetCalories: targetCals,
-      hasCompletedOnboarding: true,
-      prokoptonProfile: profile,
-      customRoutine: routine,
-    });
+    const updates = { userName: profile.userName, userMetrics: updatedMetrics, targetCalories: targetCals, prokoptonProfile: profile, customRoutine: routine, hasCompletedOnboarding: true };
+    updateLog(updates);
+    saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const resetOnboarding = useCallback(() => {
     SafeStorage.removeItem(ONBOARDING_KEY);
-    updateLog({
-      hasCompletedOnboarding: false,
-      prokoptonProfile: undefined,
-      customRoutine: undefined,
-    });
-    saveProfileToFirestore({
-      hasCompletedOnboarding: false,
-      prokoptonProfile: undefined,
-      customRoutine: undefined,
-    });
+    const updates = { hasCompletedOnboarding: false, prokoptonProfile: undefined, customRoutine: undefined };
+    updateLog(updates);
+    saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const saveReadinessScore = useCallback((sleep: number, stress: number, soreness: number) => {
-    const total = Math.round((sleep * 0.4) + ((10 - stress) * 0.3) + ((10 - soreness) * 0.3));
-    updateLog({
-      readinessScore: { sleep, stress, soreness, total },
-      checkInDone: true
-    });
+    const total = Math.round(sleep * 0.4 + (10 - stress) * 0.3 + (10 - soreness) * 0.3);
+    updateLog({ readinessScore: { sleep, stress, soreness, total }, checkInDone: true });
   }, [updateLog]);
 
   const updateEffectiveSets = useCallback((count: number) => {
     updateLog({ effectiveSets: Math.max(0, count) });
   }, [updateLog]);
 
-  const logMealWithEnrichedMacros = useCallback((cals: number, p: number = 0, c: number = 0, f: number = 0, densityScore?: number, verdict?: string) => {
+  const logMealWithEnrichedMacros = useCallback((cals: number, p = 0, c = 0, f = 0, densityScore?: number, verdict?: string) => {
     const current = logRef.current;
     const currentMacros = current.macros || { protein: 0, carbs: 0, fats: 0 };
     updateLog({
       totalCalories: Math.max(0, (current.totalCalories || 0) + cals),
       mealsLogged: (current.mealsLogged || 0) + 1,
-      macros: {
-        protein: Math.max(0, currentMacros.protein + p),
-        carbs: Math.max(0, currentMacros.carbs + c),
-        fats: Math.max(0, currentMacros.fats + f),
-      },
+      macros: { protein: Math.max(0, currentMacros.protein + p), carbs: Math.max(0, currentMacros.carbs + c), fats: Math.max(0, currentMacros.fats + f) },
       ...(densityScore !== undefined ? { lastNutrientDensityScore: densityScore } : {}),
-      ...(verdict ? { lastNutrientVerdict: verdict } : {})
+      ...(verdict ? { lastNutrientVerdict: verdict } : {}),
     });
   }, [updateLog]);
 
-  const calculateTodayGrade = useCallback((): DailyGrade => {
-    const current = logRef.current;
-    const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const todayStr = getLocalTodayDateString();
-
-    // 1. Entreno (20 pts): Sesión sellada
-    const trainingDone = Boolean(current.trainingCompleted);
-    const trainingPts = trainingDone ? 20 : 0;
-
-    // 2. Pasos (20 pts vs meta): >= 85% de la meta o meta cumplida
-    const stepsGoal = current.stepGoal || 10000;
-    const stepsRatio = Math.min(1, (current.steps || 0) / stepsGoal);
-    const stepsPassed = (current.steps || 0) >= (stepsGoal * 0.85);
-    const stepsPts = Math.round(stepsRatio * 20);
-
-    // 3. Ingesta de alimentos (15 pts): Comidas registradas
-    const nutritionPassed = (current.mealsLogged || 0) > 0 || (current.totalCalories || 0) > 0;
-    const nutritionPts = nutritionPassed ? 15 : 0;
-
-    // 4. Calidad de sueño (15 pts): Sueño registrado >= 6.5h
-    let sleepHours = current.readinessScore?.sleep || (current.sleepQuality ? current.sleepQuality * 1.0 : 0);
-    try {
-      const savedSleep = SafeStorage.getItem('ataraxia_sleep_record_v1');
-      if (savedSleep) {
-        const parsed = JSON.parse(savedSleep);
-        if (parsed.totalHours) sleepHours = parsed.totalHours;
-      }
-    } catch {}
-    const sleepPassed = sleepHours >= 6.5;
-    const sleepPts = sleepPassed ? 15 : 0;
-
-    // 5. Lectura / Reto estoico (10 pts): Reto diario o diario completado
-    let stoicChallengePassed = false;
-    try {
-      stoicChallengePassed = Boolean(SafeStorage.getItem(`ataraxia_stoic_challenge_completed_${todayStr}`)) ||
-                             Boolean(SafeStorage.getItem(`ataraxia_journal_${todayStr}`));
-    } catch {}
-    const stoicChallengePts = stoicChallengePassed ? 10 : 0;
-
-    // 6. Medición de latidos / telemetría (10 pts)
-    const heartRatePassed = (current.smartDevice?.heartRateBpm && current.smartDevice.heartRateBpm > 0) ||
-                            (current.smartDevice?.connected === true);
-    const heartRatePts = heartRatePassed ? 10 : 0;
-
-    // 7. Info dada al Coach / Check-in SNC (10 pts)
-    const coachCheckInPassed = Boolean(current.checkInDone) || Boolean(current.readinessScore);
-    const coachCheckInPts = coachCheckInPassed ? 10 : 0;
-
-    const totalScore = trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
-
-    const pillars = {
-      training: trainingDone,
-      steps: stepsPassed,
-      nutrition: nutritionPassed,
-      sleep: sleepPassed,
-      stoicChallenge: stoicChallengePassed,
-      heartRate: heartRatePassed,
-      coachCheckIn: coachCheckInPassed,
-    };
-
-    let status: DailyGradeStatus = 'failed';
-    let verdict = 'Día Indigno: La mediocridad no tiene cabida en este templo. Faltan pilares sagrados de tu Senda.';
-
-    if (totalScore >= 90) {
-      status = 'divine';
-      verdict = 'Corona de Laurel: Día de Semidiós impecable. Los 7 pilares conquistados con excelencia.';
-    } else if (totalScore >= 75) {
-      status = 'worthy';
-      verdict = 'Hoplita Digno: Disciplina firme y honor militar cumplido conforme a tu Senda.';
-    } else if (totalScore >= 50) {
-      status = 'mediocre';
-      verdict = 'Tibio / Al Límite: Estás al borde de la deshonra. Completa los pilares pendientes.';
-    }
-
-    // Calcular día actual preciso basado en la fecha de inicio del pacto
-    let preciseDay = cycle.currentDay;
-    if (cycle.startDate) {
-      const start = new Date(cycle.startDate);
-      const now = new Date();
-      const diffMs = now.getTime() - start.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-      preciseDay = Math.min(30, Math.max(1, diffDays));
-    }
-
-    const todayGradeResult: DailyGrade = {
-      day: preciseDay,
-      date: todayStr,
-      score: totalScore,
-      status,
-      pillars,
-      trainingDone,
-      steps: current.steps || 0,
-      stepGoal: stepsGoal,
-      stepsRatio: parseFloat(stepsRatio.toFixed(2)),
-      waterLitres: current.waterLitres || 0,
-      waterRatio: parseFloat(Math.min(1, (current.waterLitres || 0) / 2.5).toFixed(2)),
-      caloriesLogged: nutritionPassed,
-      totalCalories: current.totalCalories || 0,
-      sleepHours,
-      heartRateBpm: current.smartDevice?.heartRateBpm || 0,
-      verdict,
-      recordedAt: new Date().toISOString(),
-    };
-
-    return todayGradeResult;
-  }, []);
+  const calculateTodayGrade = useCallback((): DailyGrade => evaluateTodayGrade(logRef.current), []);
 
   const get30DayResolution = useCallback((): MonthlyResolution => {
     const current = logRef.current;
     const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const path = current.legendaryPath || 'spartan';
-    const userName = current.userName || 'Ciudadano Prokopton';
-
     return generate30DayResolution({
       dailyGrades: cycle.dailyGrades || [],
-      path,
-      userName,
+      path: current.legendaryPath || 'spartan',
+      userName: current.userName || 'Ciudadano Prokopton',
       startDate: cycle.startDate,
       archetype: current.coachArchetype || 'stoic_mentor',
     });
@@ -1312,61 +528,17 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       isJudgmentReady: false,
       isPactActive: true,
     };
-
-    updateLog({
-      monthlyCycle: newCycle,
-      legendaryPath: activePath,
-    });
-
-    saveProfileToFirestore({
-      monthlyCycle: newCycle,
-      legendaryPath: activePath,
-    });
+    const updates = { monthlyCycle: newCycle, legendaryPath: activePath };
+    updateLog(updates);
+    saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const selectLegendaryPath = useCallback((path: LegendaryPath) => {
     const pathInfo = LEGENDARY_PATHS[path];
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
-
-    const bmr = (10 * currentMetrics.weightKg) + (6.25 * currentMetrics.heightCm) - (5 * currentMetrics.age) + 5;
-    const baseCals = Math.round(bmr * 1.4);
-    const targetCals = Math.max(1400, baseCals + pathInfo.recommendedCalsDelta);
-
-    let routine: CustomExercise[] = [];
-    if (path === 'spartan') {
-      routine = [
-        { id: 'sp1', n: 'Sentadilla Trasera Pesada', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'sp2', n: 'Press de Banca Olímpico', s: '4 series x 6 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-        { id: 'sp3', n: 'Peso Muerto Convencional', s: '3 series x 5 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'sp4', n: 'Press Militar de Pie con Barra', s: '3 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Hombros' },
-        { id: 'sp5', n: 'Remo Pendlay con Barra', s: '4 series x 8 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-      ];
-    } else if (path === 'hoplite') {
-      routine = [
-        { id: 'hop1', n: 'Circuito de Resistencia Hoplita (Burpees + Zancadas)', s: '4 rondas x 45 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Full Body' },
-        { id: 'hop2', n: 'Caminata Rápida / Trote NeAT Zona 2', s: '35 minutos continuos', targetRpe: 7.0, done: false, rpe: null, muscleGroup: 'Cardiovascular' },
-        { id: 'hop3', n: 'Flexiones Tácticas con Pausa', s: '4 series x 15 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-        { id: 'hop4', n: 'Dominadas Pronas Estrictas', s: '4 series x 8-10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'hop5', n: 'Plancha Abdominal de Acero', s: '3 series x 60 seg', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Core' },
-      ];
-    } else if (path === 'apollo') {
-      routine = [
-        { id: 'ap1', n: 'Press Inclinado con Mancuernas (Énfasis Superior)', s: '4 series x 10-12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho' },
-        { id: 'ap2', n: 'Elevaciones Laterales Estrictas (Hombros en V)', s: '4 series x 15 reps', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Hombros' },
-        { id: 'ap3', n: 'Jalón al Pecho con Agarre Neutro (Tempo 3-1-1)', s: '4 series x 10 reps', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'ap4', n: 'Sentadilla Búlgara Esculpida', s: '3 series x 12 reps/pierna', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'ap5', n: 'Elevación de Piernas Colgado (V-Cut Abs)', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Abdomen' },
-      ];
-    } else {
-      routine = [
-        { id: 'ph1', n: 'Dominadas Estrictas en Barra (Autodominio)', s: '4 series x 10 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Espalda' },
-        { id: 'ph2', n: 'Fondos en Paralelas (Dips)', s: '4 series x 12 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Pecho/Tríceps' },
-        { id: 'ph3', n: 'Pistol Squats (Sentadilla a una pierna)', s: '3 series x 8 reps/pierna', targetRpe: 8.0, done: false, rpe: null, muscleGroup: 'Piernas' },
-        { id: 'ph4', n: 'Flexiones Diamante en Suelo', s: '4 series x 15 reps', targetRpe: 8.5, done: false, rpe: null, muscleGroup: 'Tríceps' },
-        { id: 'ph5', n: 'Hanging L-Sit / Hollow Body Stoic', s: '4 series x 30 seg', targetRpe: 9.0, done: false, rpe: null, muscleGroup: 'Core' },
-      ];
-    }
-
+    const bmr = 10 * currentMetrics.weightKg + 6.25 * currentMetrics.heightCm - 5 * currentMetrics.age + 5;
+    const targetCals = Math.max(1400, Math.round(bmr * 1.4) + pathInfo.recommendedCalsDelta);
+    const routine = getLegendaryPathRoutine(path);
     const newCycle: MonthlyCycleState = {
       currentDay: 1,
       startDate: new Date().toISOString(),
@@ -1379,8 +551,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       isJudgmentReady: false,
       isPactActive: true,
     };
-
-    updateLog({
+    const updates = {
       legendaryPath: path,
       coachArchetype: pathInfo.archetype,
       targetCalories: targetCals,
@@ -1388,60 +559,23 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       targetCaloriesMax: targetCals + 100,
       customRoutine: routine,
       monthlyCycle: newCycle,
-    });
-
-    saveProfileToFirestore({
-      legendaryPath: path,
-      coachArchetype: pathInfo.archetype,
-      targetCalories: targetCals,
-      customRoutine: routine,
-      monthlyCycle: newCycle,
-    });
+    };
+    updateLog(updates);
+    saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const executeJudgment = useCallback(() => {
-    const current = logRef.current;
-    const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
-    const path = current.legendaryPath || 'spartan';
-    const userName = current.userName || 'Ciudadano Prokopton';
-
-    // Generar la auditoría y resolución integral de los 30 días
-    const resolution = generate30DayResolution({
-      dailyGrades: cycle.dailyGrades || [],
-      path,
-      userName,
-      startDate: cycle.startDate,
-      archetype: current.coachArchetype || 'stoic_mentor',
-    });
-
-    const isPromoted = resolution.promoted;
-    const title = isPromoted ? '👑 ¡ASCENSO OTORGADO: SEMIDIÓS DEL OLIMPO!' : '💀 JUICIO ADVERSO: REPRENSIÓN POR MEDIOCRIDAD';
-    const message = resolution.masterDecreeMarkdown;
-
-    const updatedCycle: MonthlyCycleState = {
-      ...cycle,
-      isJudgmentReady: true,
-      judgmentVerdict: isPromoted ? 'promoted' : 'scolded',
-      judgmentText: isPromoted
-        ? `Has completado el Ciclo de 30 Días con ${resolution.totalScoreAverage}% de excelencia (${resolution.victoriousDaysCount} días dignos). Tu rango asciende a ${resolution.tierAwarded}.`
-        : `Tu promedio de disciplina fue de apenas ${resolution.totalScoreAverage}%. Tu rango queda en ${resolution.tierAwarded}. Deberás reiniciar con honor.`,
-      resolutionMarkdown: resolution.masterDecreeMarkdown,
-      tier: resolution.tierAwarded as any,
-    };
-
+    const { promoted, title, message, resolution, updatedCycle } = executeCycleJudgment(logRef.current);
     updateLog({ monthlyCycle: updatedCycle });
     saveProfileToFirestore({ monthlyCycle: updatedCycle });
-
-    return { promoted: isPromoted, title, message, resolution };
+    return { promoted, title, message, resolution };
   }, [updateLog, saveProfileToFirestore]);
 
   const resetMonthlyCycle = useCallback(() => {
-    const current = logRef.current;
-    const path = current.legendaryPath || 'spartan';
     const newCycle: MonthlyCycleState = {
       currentDay: 1,
       startDate: new Date().toISOString(),
-      path,
+      path: logRef.current.legendaryPath || 'spartan',
       tier: 'Novicio de Esparta',
       dailyGrades: [],
       passedDaysCount: 0,
@@ -1471,17 +605,16 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       try {
         SafeStorage.setItem(BODY_SNAPSHOTS_STORAGE_KEY, JSON.stringify(updated));
       } catch (e) {
-        console.warn('[DailyLogContext] Error guardando foto local:', e);
+        logger.warn('[DailyLogContext] Error guardando foto local:', e);
       }
       return updated;
     });
 
     if (db && user) {
       try {
-        const snapDoc = doc(db, `users/${user.uid}/bodySnapshots/${newSnapshot.id}`);
-        await setDoc(snapDoc, newSnapshot, { merge: true });
+        await setDoc(doc(db, `users/${user.uid}/bodySnapshots/${newSnapshot.id}`), newSnapshot, { merge: true });
       } catch (e) {
-        console.warn('[DailyLogContext] Error sincronizando foto en Firestore:', e);
+        logger.warn('[DailyLogContext] Error sincronizando foto en Firestore:', e);
       }
     }
 
@@ -1499,101 +632,68 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
     if (db && user) {
       try {
-        const snapDoc = doc(db, `users/${user.uid}/bodySnapshots/${id}`);
-        await setDoc(snapDoc, { deleted: true, deletedAt: Date.now() }, { merge: true });
+        await setDoc(doc(db, `users/${user.uid}/bodySnapshots/${id}`), { deleted: true, deletedAt: Date.now() }, { merge: true });
       } catch {}
     }
   }, [user]);
 
-  const contextValue = useMemo(() => ({
-    log,
-    loading,
-    user,
-    saveFullProfile,
-    logMealWithMacros,
-    addWater,
-    toggleTraining,
-    addMeal,
-    addCalories,
-    saveCheckIn,
-    addMacros,
-    addSteps,
-    setSteps,
-    setStepGoal,
-    updateUserMetrics,
-    setStoicAvatar,
-    setUserName,
-    setUserEmail,
-    saveGuardianKey,
-    setCoachArchetype,
-    selectLegendaryPath,
-    calculateTodayGrade,
-    executeJudgment,
-    get30DayResolution,
-    resetMonthlyCycle,
-    start30DayPact,
-    updateSmartDevice,
-    saveOnboardingProfile,
-    resetOnboarding,
-    saveReadinessScore,
-    updateEffectiveSets,
-    logMealWithEnrichedMacros,
-    setCustomRoutine,
-    syncExternalHealthData,
-    bodySnapshots,
-    addBodySnapshot,
-    deleteBodySnapshot,
-  }), [
-    log,
-    loading,
-    user,
-    saveFullProfile,
-    logMealWithMacros,
-    addWater,
-    toggleTraining,
-    addMeal,
-    addCalories,
-    saveCheckIn,
-    addMacros,
-    addSteps,
-    setSteps,
-    setStepGoal,
-    updateUserMetrics,
-    setStoicAvatar,
-    setUserName,
-    setUserEmail,
-    saveGuardianKey,
-    setCoachArchetype,
-    selectLegendaryPath,
-    calculateTodayGrade,
-    executeJudgment,
-    get30DayResolution,
-    resetMonthlyCycle,
-    start30DayPact,
-    updateSmartDevice,
-    saveOnboardingProfile,
-    resetOnboarding,
-    saveReadinessScore,
-    updateEffectiveSets,
-    logMealWithEnrichedMacros,
-    setCustomRoutine,
-    syncExternalHealthData,
-    bodySnapshots,
-    addBodySnapshot,
-    deleteBodySnapshot,
-  ]);
-
-  return (
-    <DailyLogContext.Provider value={contextValue}>
-      {children}
-    </DailyLogContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      log,
+      loading,
+      user,
+      saveFullProfile,
+      logMealWithMacros,
+      addWater,
+      toggleTraining,
+      addMeal,
+      addCalories,
+      saveCheckIn,
+      addMacros,
+      addSteps,
+      setSteps,
+      setStepGoal,
+      updateUserMetrics,
+      setStoicAvatar,
+      setUserName,
+      setUserEmail,
+      saveGuardianKey,
+      setCoachArchetype,
+      selectLegendaryPath,
+      calculateTodayGrade,
+      executeJudgment,
+      get30DayResolution,
+      resetMonthlyCycle,
+      start30DayPact,
+      updateSmartDevice,
+      saveOnboardingProfile,
+      resetOnboarding,
+      saveReadinessScore,
+      updateEffectiveSets,
+      logMealWithEnrichedMacros,
+      setCustomRoutine,
+      syncExternalHealthData,
+      bodySnapshots,
+      addBodySnapshot,
+      deleteBodySnapshot,
+    }),
+    [
+      log, loading, user, saveFullProfile, logMealWithMacros, addWater, toggleTraining,
+      addMeal, addCalories, saveCheckIn, addMacros, addSteps, setSteps, setStepGoal,
+      updateUserMetrics, setStoicAvatar, setUserName, setUserEmail, saveGuardianKey,
+      setCoachArchetype, selectLegendaryPath, calculateTodayGrade, executeJudgment,
+      get30DayResolution, resetMonthlyCycle, start30DayPact, updateSmartDevice,
+      saveOnboardingProfile, resetOnboarding, saveReadinessScore, updateEffectiveSets,
+      logMealWithEnrichedMacros, setCustomRoutine, syncExternalHealthData, bodySnapshots,
+      addBodySnapshot, deleteBodySnapshot,
+    ]
   );
+
+  return <DailyLogContext.Provider value={contextValue}>{children}</DailyLogContext.Provider>;
 }
 
 export function useDailyLog() {
   const context = useContext(DailyLogContext);
-  if (!context) {
-    throw new Error("useDailyLog must be used within a DailyLogProvider");
-  }
+  if (!context) throw new Error('useDailyLog must be used within a DailyLogProvider');
   return context;
 }

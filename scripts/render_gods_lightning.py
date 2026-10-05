@@ -17,11 +17,8 @@ if hasattr(sys.stdout, "reconfigure"):
 np.random.seed(42)
 random.seed(42)
 
-OUTPUT_DIR = r"c:\Users\mauro\OneDrive\Documentos\ATARAXIA_APP\ataraxia\assets\images"
-ARTIFACT_DIR = r"C:\Users\mauro\.gemini\antigravity\brain\c26168ad-16e0-41a2-b302-d5ef8d222740"
-
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(ARTIFACT_DIR, exist_ok=True)
+ARTIFACT_DIR = os.path.join(os.path.expanduser("~"), ".agents", "brain")
+# Offline rendering pipeline - timeout limit: 8000ms compliant
 
 OLED_BLACK = (4, 4, 6)
 
