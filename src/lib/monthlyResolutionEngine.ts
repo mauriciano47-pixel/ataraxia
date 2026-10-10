@@ -1,4 +1,5 @@
-import { LegendaryPath, LEGENDARY_PATHS, CoachArchetype, COACH_ARCHETYPES, DailyGrade, DailyPillars } from '@/types/onboarding';
+import { LEGENDARY_PATHS, COACH_ARCHETYPES } from '../types/onboarding';
+import type { LegendaryPath, CoachArchetype, DailyGrade, DailyPillars } from '../types/onboarding';
 
 export interface DayAudit {
   day: number;

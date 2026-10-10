@@ -1,6 +1,8 @@
-import { MonthlyCycleState } from '@/types/onboarding';
-import { generate30DayResolution, MonthlyResolution } from '@/lib/monthlyResolutionEngine';
-import { DailyLog, DEFAULT_MONTHLY_CYCLE } from '@/types/dailyLog';
+import type { MonthlyCycleState } from '../types/onboarding';
+import { generate30DayResolution } from './monthlyResolutionEngine';
+import type { MonthlyResolution } from './monthlyResolutionEngine';
+import { DEFAULT_MONTHLY_CYCLE } from '../types/dailyLog';
+import type { DailyLog } from '../types/dailyLog';
 
 export function executeCycleJudgment(current: DailyLog): {
   promoted: boolean;

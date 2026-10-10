@@ -1,12 +1,13 @@
-import { SafeStorage } from '@/utils/safeStorage';
-import { getLocalTodayDateString } from '@/utils/dateUtils';
-import {
+import { SafeStorage } from '../utils/safeStorage.ts';
+import { getLocalTodayDateString } from '../utils/dateUtils.ts';
+import type {
   DailyGrade,
   DailyGradeStatus,
   LegendaryPath,
   CustomExercise,
-} from '@/types/onboarding';
-import { DailyLog, DEFAULT_MONTHLY_CYCLE } from '@/types/dailyLog';
+} from '../types/onboarding.ts';
+import { DEFAULT_MONTHLY_CYCLE } from '../types/dailyLog.ts';
+import type { DailyLog } from '../types/dailyLog.ts';
 
 export function calculateTodayGrade(current: DailyLog): DailyGrade {
   const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;

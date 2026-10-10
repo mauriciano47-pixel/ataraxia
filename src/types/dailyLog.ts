@@ -1,4 +1,4 @@
-import {
+import type {
   CoachArchetype,
   LegendaryPath,
   MonthlyCycleState,
@@ -10,8 +10,8 @@ import {
   InjuryCare,
   BodySnapshot,
   DailyGrade,
-} from '@/types/onboarding';
-import { MonthlyResolution } from '@/lib/monthlyResolutionEngine';
+} from './onboarding';
+import type { MonthlyResolution } from '../lib/monthlyResolutionEngine';
 import type { User } from 'firebase/auth';
 
 export interface UserMetrics {
@@ -81,8 +81,8 @@ export const DEFAULT_USER_METRICS: UserMetrics = {
 };
 
 export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
-  currentDay: 4,
-  startDate: '2026-09-01T00:00:00.000Z',
+  currentDay: 1,
+  startDate: new Date().toISOString(),
   path: 'spartan',
   tier: 'Novicio de Esparta',
   dailyGrades: [],
@@ -90,7 +90,19 @@ export const DEFAULT_MONTHLY_CYCLE: MonthlyCycleState = {
   failedDaysCount: 0,
   averageScore: 100,
   isJudgmentReady: false,
-  isPactActive: true,
+  isPactActive: false,
+};
+
+export const ARCHON_MASTER_LOG: Partial<DailyLog> = {
+  userName: 'Mauro',
+  hasCompletedOnboarding: true,
+  legendaryPath: 'spartan',
+  coachArchetype: 'stoic_mentor',
+  monthlyCycle: {
+    ...DEFAULT_MONTHLY_CYCLE,
+    isPactActive: true,
+    path: 'spartan',
+  },
 };
 
 export const DEFAULT_LOG: DailyLog = {
@@ -102,11 +114,11 @@ export const DEFAULT_LOG: DailyLog = {
   steps: 0,
   stepGoal: 10000,
   stoicAvatarUri: '',
-  userName: 'Mauro',
+  userName: 'Ciudadano Prokopton',
   userEmail: '',
-  hasCompletedOnboarding: true,
+  hasCompletedOnboarding: false,
   coachArchetype: 'stoic_mentor',
-  legendaryPath: 'spartan',
+  legendaryPath: undefined,
   monthlyCycle: DEFAULT_MONTHLY_CYCLE,
   smartDevice: {
     connected: false,

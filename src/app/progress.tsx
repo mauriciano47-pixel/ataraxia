@@ -81,8 +81,8 @@ export default function ProgressScreen() {
   const mandatoryProgram = pathRoutines[activeEquipment] || pathRoutines.gym;
 
   const cycle = log.monthlyCycle || {
-    currentDay: 4,
-    startDate: '2026-09-01T00:00:00.000Z',
+    currentDay: 1,
+    startDate: new Date().toISOString(),
     path: activePathKey,
     tier: 'Novicio de Esparta',
     dailyGrades: [],
@@ -90,7 +90,7 @@ export default function ProgressScreen() {
     failedDaysCount: 0,
     averageScore: 100,
     isJudgmentReady: false,
-    isPactActive: true,
+    isPactActive: Boolean(log.hasCompletedOnboarding),
   };
 
   const todayGrade = calculateTodayGrade();

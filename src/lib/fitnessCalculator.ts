@@ -1,4 +1,4 @@
-import { UserMetrics } from '@/hooks/useDailyLog';
+import type { UserMetrics } from '../types/dailyLog';
 
 export interface FitnessCalculation {
   bmr: number;

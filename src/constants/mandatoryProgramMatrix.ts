@@ -1,4 +1,4 @@
-import { LegendaryPath, EquipmentType } from '@/types/onboarding';
+import type { LegendaryPath, EquipmentType } from '../types/onboarding';
 
 export interface ProgramExercise {
   id: string;

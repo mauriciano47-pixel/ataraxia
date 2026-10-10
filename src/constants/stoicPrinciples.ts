@@ -1,4 +1,4 @@
-import { getLocalTodayDateString } from '@/utils/dateUtils';
+import { getLocalTodayDateString } from '../utils/dateUtils';
 
 export interface StoicPrinciple {
   id: string;

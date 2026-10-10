@@ -1,4 +1,4 @@
-import { CustomExercise } from '@/types/onboarding';
+import type { CustomExercise } from '../types/onboarding';
 
 export function buildFallbackAIRoutine(time: number, focus: string, equip: string) {
   let title = `Rutina ${focus} (${time} min)`;

@@ -32,6 +32,10 @@ export function loadLocalDailyLog(targetDate: string): DailyLog {
 
   try {
     const savedProfile = SafeStorage.getItem(PROFILE_STORAGE_KEY);
+    const isArchonMaster = SafeStorage.getItem('ataraxia_is_archon_master') === 'true' ||
+      SafeStorage.getItem('ataraxia_current_logged_key') === '742091' ||
+      SafeStorage.getItem('ataraxia_current_logged_key') === 'MAURO-ARCHON';
+
     if (savedProfile) {
       const profileData = JSON.parse(savedProfile);
       baseLog = {
@@ -42,16 +46,30 @@ export function loadLocalDailyLog(targetDate: string): DailyLog {
           ...(profileData.userMetrics || {}),
         },
       };
+    } else if (isArchonMaster) {
+      baseLog = {
+        ...baseLog,
+        userName: 'Mauro',
+        hasCompletedOnboarding: true,
+        legendaryPath: 'spartan',
+      };
     }
 
-    const isCompleted = SafeStorage.getItem(ONBOARDING_KEY) !== 'false';
-    if (isCompleted || baseLog.hasCompletedOnboarding !== false) {
+    const onboardingCompletedRaw = SafeStorage.getItem(ONBOARDING_KEY);
+    if (onboardingCompletedRaw === 'true' || isArchonMaster) {
       baseLog.hasCompletedOnboarding = true;
+    } else if (onboardingCompletedRaw === 'false' || !savedProfile) {
+      baseLog.hasCompletedOnboarding = false;
     }
-    if (!baseLog.userName || baseLog.userName.trim() === '') {
+
+    if (isArchonMaster && (!baseLog.userName || baseLog.userName === 'Ciudadano Prokopton')) {
       baseLog.userName = 'Mauro';
+      baseLog.legendaryPath = baseLog.legendaryPath || 'spartan';
+    } else if (!baseLog.userName || baseLog.userName.trim() === '') {
+      baseLog.userName = 'Ciudadano Prokopton';
     }
-    if (!baseLog.legendaryPath) {
+
+    if (!baseLog.legendaryPath && isArchonMaster) {
       baseLog.legendaryPath = 'spartan';
     }
 

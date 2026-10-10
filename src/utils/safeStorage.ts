@@ -1,5 +1,15 @@
-import { logger } from './logger';
-import { Platform } from 'react-native';
+import { logger } from './logger.ts';
+let PlatformOS = 'web';
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const RN = require('react-native');
+  if (RN && RN.Platform) {
+    PlatformOS = RN.Platform.OS;
+  }
+} catch {
+  PlatformOS = typeof window !== 'undefined' ? 'web' : 'node';
+}
+const Platform = { OS: PlatformOS };
 
 // Memory fallback map for mobile browsers in private mode or quota constrained environments
 const memoryStorage = new Map<string, string>([

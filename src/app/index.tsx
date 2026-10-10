@@ -70,11 +70,20 @@ export default function HoyScreen() {
   );
 
   // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián
-  const currentKey = Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search
-    ? (new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase() || SafeStorage.getItem('ataraxia_current_logged_key') || '742091')
-    : (SafeStorage.getItem('ataraxia_current_logged_key') || '742091');
+  const urlKey = Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search
+    ? new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase()
+    : null;
 
-  // Mauro es el Arconte Maestro soberano de Ataraxia si su clave maestra está presente
+  const storedKey = SafeStorage.getItem('ataraxia_current_logged_key');
+  const currentKey = urlKey || storedKey || null;
+
+  // Si ingresa con la llave del Arconte Maestro por URL, persistirla en sesión local
+  if (urlKey === '742091' || urlKey === 'MAURO-ARCHON') {
+    SafeStorage.setItem('ataraxia_is_archon_master', 'true');
+    SafeStorage.setItem('ataraxia_current_logged_key', urlKey);
+  }
+
+  // Mauro es el Arconte Maestro soberano de Ataraxia si su clave maestra está presente explícitamente
   const isArchonMaster = Boolean(
     currentKey === '742091' ||
     currentKey === 'MAURO-ARCHON' ||
@@ -85,15 +94,15 @@ export default function HoyScreen() {
     isArchonMaster ||
     SafeStorage.getItem('ataraxia_pact_accepted_v2') === 'true' ||
     log.hasCompletedOnboarding ||
-    log.monthlyCycle?.isPactActive
+    (Boolean(log.monthlyCycle?.isPactActive) && log.userName !== 'Ciudadano Prokopton')
   );
 
   const isRegisteredUser = Boolean(
     isArchonMaster ||
     (hasAcceptedPact &&
-      (log.hasCompletedOnboarding === true ||
-       SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true' ||
-       (Boolean(log.userName && log.userName.trim() !== '') && log.userName !== 'Ciudadano Prokopton')))
+      log.hasCompletedOnboarding === true &&
+      SafeStorage.getItem('ataraxia_onboarding_completed_v2') === 'true' &&
+      Boolean(log.userName && log.userName.trim() !== '' && log.userName !== 'Ciudadano Prokopton'))
   );
 
   const [initiationStep, setInitiationStep] = useState<'pact' | 'path' | 'key' | null>(() => {
