@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "axe/forms": "error",
+    "axe/text-alternatives": "error",
+    "axe/aria": "error",
+    "meta-viewport": "default"
+  }
+}
