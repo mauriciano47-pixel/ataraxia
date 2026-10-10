@@ -1,8 +1,8 @@
-import type { MonthlyCycleState } from '../types/onboarding';
-import { generate30DayResolution } from './monthlyResolutionEngine';
-import type { MonthlyResolution } from './monthlyResolutionEngine';
-import { DEFAULT_MONTHLY_CYCLE } from '../types/dailyLog';
-import type { DailyLog } from '../types/dailyLog';
+import type { MonthlyCycleState } from '../types/onboarding.ts';
+import { generate30DayResolution } from './monthlyResolutionEngine.ts';
+import type { MonthlyResolution } from './monthlyResolutionEngine.ts';
+import { DEFAULT_MONTHLY_CYCLE } from '../types/dailyLog.ts';
+import type { DailyLog } from '../types/dailyLog.ts';
 
 export function executeCycleJudgment(current: DailyLog): {
   promoted: boolean;

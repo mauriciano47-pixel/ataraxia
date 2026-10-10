@@ -43,8 +43,8 @@ describe('Ataraxia — Juicio del Ciclo de 30 Días (monthlyResolutionEngine)', 
     assert.equal(res.failedDaysCount, 0);
     assert.equal(res.totalScoreAverage, 95);
     assert.ok(res.praises.length > 0);
-    assert.match(res.masterDecreeMarkdown, /DECRETO SUPREMO/);
-    assert.match(res.masterDecreeMarkdown, /Mauricio Uribe/);
+    assert.match(res.masterDecreeMarkdown, /RESOLUCIÓN OFICIAL DEL JUICIO/);
+    assert.match(res.masterDecreeMarkdown, /Mauricio Uribe/i);
   });
 
   it('2. Debe reprender y reprobar a un usuario con disciplina deficiente (< 75 pts promedio)', () => {

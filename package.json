@@ -48,6 +48,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
     "start": "expo start",
     "build": "expo export",
     "export:web": "expo export",

@@ -1,53 +1,60 @@
-/**
- * Ataraxia — Suite de Pruebas Unitarias de Podómetro Biomecánico & Filtro Anti-Vehículo
- * Titularidad: Mauricio Uribe Maldonado
- */
+import test, { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 
-export interface StepFilterConfig {
-  minCadenceHz: number; // Mínimo paso por segundo (ej. 0.5 Hz)
-  maxCadenceHz: number; // Máximo paso por segundo (ej. 3.5 Hz)
-  maxSpeedKmh: number;  // Velocidad límite caminata/running (ej. 25 km/h)
-}
+import {
+  calculateDistanceKm,
+  calculateStepCalories,
+  calculateSpeedKmh,
+  getActivityModeFromCadence,
+} from '../src/lib/fitnessCalculator.ts';
 
-export function isValidPedestrianStep(cadenceHz: number, speedKmh: number, config: StepFilterConfig): boolean {
-  if (speedKmh > config.maxSpeedKmh) {
-    // Filtro anti-vehículo activado: automóvil o transporte público
-    return false;
+// Parámetros biomecánicos de filtrado calibrados (AOSP StepDetector & Ataraxia Pedometer)
+export const PEDOMETER_THRESHOLDS = {
+  MIN_HUMAN_CADENCE_SPM: 33,    // 1800ms período
+  MAX_HUMAN_CADENCE_SPM: 240,   // 250ms período (sprint olímpico)
+  MAX_PEDESTRIAN_SPEED_KMH: 20.0, // 5.55 m/s límite caminata/trote; por encima es vehículo
+  MAX_VIOLENT_ACCEL_MS2: 14.50, // Límite de aceleración biológica
+};
+
+export function isBiomechanicalStep(cadenceSpm: number, speedKmh: number): boolean {
+  if (speedKmh > PEDOMETER_THRESHOLDS.MAX_PEDESTRIAN_SPEED_KMH) {
+    return false; // Filtro anti-vehículo: automóvil / metro / autobús
   }
-  if (cadenceHz < config.minCadenceHz || cadenceHz > config.maxCadenceHz) {
-    // Ruido vibratorio o movimiento fuera de rango biomecánico
-    return false;
+  if (
+    cadenceSpm < PEDOMETER_THRESHOLDS.MIN_HUMAN_CADENCE_SPM ||
+    cadenceSpm > PEDOMETER_THRESHOLDS.MAX_HUMAN_CADENCE_SPM
+  ) {
+    return false; // Vibración estática o micro-movimiento fuera de rango biológico
   }
   return true;
 }
 
-export function estimateNeatCalories(steps: number, weightKg: number): number {
-  // Gasto calórico aproximado: ~0.04 a 0.05 kcal por paso por cada 70kg
-  const calorieFactor = 0.04 * (weightKg / 70);
-  return Math.round(steps * calorieFactor);
-}
-
-describe('Ataraxia Biomechanical Pedometer & NEAT Engine', () => {
-  const config: StepFilterConfig = {
-    minCadenceHz: 0.5,
-    maxCadenceHz: 3.5,
-    maxSpeedKmh: 22.0,
-  };
-
-  test('Debe aceptar cadencia de caminata normal (1.8 Hz a 5 km/h)', () => {
-    expect(isValidPedestrianStep(1.8, 5.0, config)).toBe(true);
+describe('Ataraxia — Podómetro Biomecánico & Filtro Anti-Vehículo (pedometer)', () => {
+  it('1. Debe validar pasos dentro del rango biomecánico humano (100 SPM a 5 km/h)', () => {
+    assert.equal(isBiomechanicalStep(100, 5.0), true);
+    assert.equal(isBiomechanicalStep(140, 9.5), true); // Carrera moderada
   });
 
-  test('Debe rechazar movimiento en vehículo (60 km/h)', () => {
-    expect(isValidPedestrianStep(2.0, 60.0, config)).toBe(false);
+  it('2. Debe activar el filtro anti-vehículo y rechazar pasos a velocidades automovilísticas (> 20 km/h)', () => {
+    assert.equal(isBiomechanicalStep(110, 45.0), false); // En autobús o taxi
+    assert.equal(isBiomechanicalStep(100, 80.0), false); // En carretera
+    assert.equal(isBiomechanicalStep(90, 21.0), false);  // Justo sobre el umbral
   });
 
-  test('Debe filtrar vibración estática o micro-movimiento (< 0.5 Hz)', () => {
-    expect(isValidPedestrianStep(0.2, 0.0, config)).toBe(false);
+  it('3. Debe rechazar vibraciones estáticas o frecuencias no humanas (< 33 SPM o > 240 SPM)', () => {
+    assert.equal(isBiomechanicalStep(12, 1.0), false);  // Micro-vibración en escritorio
+    assert.equal(isBiomechanicalStep(300, 10.0), false); // Artefacto de motor o vibrador
   });
 
-  test('Debe calcular gasto calórico NEAT acorde al peso corporal', () => {
-    const calories = estimateNeatCalories(10000, 70);
-    expect(calories).toBe(400); // 10000 * 0.04 = 400 kcal
+  it('4. Debe correlacionar cadencia con modo de actividad y distancia precisa', () => {
+    const walkingCadence = 95; // SPM
+    const mode = getActivityModeFromCadence(walkingCadence);
+    assert.equal(mode, 'walking');
+
+    const distKm = calculateDistanceKm(10000, 175, mode);
+    assert.ok(distKm > 7.0 && distKm < 7.5, `10.000 pasos a 175cm deben ser ~7.2km: ${distKm}`);
+
+    const cals = calculateStepCalories(10000, 75, 175, walkingCadence);
+    assert.ok(cals >= 300 && cals <= 500, `Gasto NEAT esperado ~350-450 kcal: ${cals}`);
   });
 });
