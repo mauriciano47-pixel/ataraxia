@@ -15,6 +15,7 @@ import { SafeStorage } from '@/utils/safeStorage';
 import { DailyLogProvider } from '@/context/DailyLogContext';
 import { TempleAccessGate } from '@/components/TempleAccessGate';
 import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
+import { logger } from '@/lib/logger';
 
 interface GlobalErrorBoundaryState {
   hasError: boolean;
@@ -32,7 +33,7 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalError
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.warn('[Centinela Ataraxia] Interceptado:', error?.message, errorInfo);
+    logger.warn('[Centinela Ataraxia] Interceptado:', error?.message, errorInfo);
   }
 
   handleReset = () => {

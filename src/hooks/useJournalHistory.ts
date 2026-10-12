@@ -4,6 +4,7 @@ import { doc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } f
 import { auth, db } from '@/lib/firebase';
 import { SafeStorage } from '@/utils/safeStorage';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
+import { logger } from '@/lib/logger';
 
 export interface JournalMessage {
   text: string;
@@ -86,7 +87,7 @@ export function useJournalHistory() {
           }
           setLoading(false);
         }, (error) => {
-          console.warn("Firestore snapshot journal fallback local:", error);
+          logger.warn("Firestore snapshot journal fallback local:", error);
           setLoading(false);
         });
 
@@ -110,7 +111,7 @@ export function useJournalHistory() {
         setPastEntries(entries.slice(0, 3));
         SafeStorage.setItem(JOURNAL_DATES_KEY, JSON.stringify(dateList));
       } catch (error) {
-        console.warn("Error en useJournalHistory, usando caché local:", error);
+        logger.warn("Error en useJournalHistory, usando caché local:", error);
         setLoading(false);
       }
     });
@@ -146,7 +147,7 @@ export function useJournalHistory() {
         messages: updatedMessages,
       }, { merge: true });
     } catch (error) {
-      console.warn("Error guardando mensaje de journal en Firestore:", error);
+      logger.warn("Error guardando mensaje de journal en Firestore:", error);
     }
   }, [today]);
 

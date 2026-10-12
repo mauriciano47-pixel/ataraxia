@@ -96,7 +96,7 @@ export function getPersonalStrideLength(heightCm: number, mode: ActivityMode = '
     case 'running': return heightM * 0.497;   // ACSM fórmula carrera
     case 'jogging': return heightM * 0.460;   // Interpolado trote
     case 'walking':
-    default:        return heightM * 0.413;   // ACSM fórmula caminata
+    default: return heightM * 0.413;   // ACSM fórmula caminata
   }
 }
 
@@ -106,7 +106,7 @@ export function getPersonalStrideLength(heightCm: number, mode: ActivityMode = '
  */
 export function getActivityModeFromCadence(cadenceSpm: number): ActivityMode {
   if (cadenceSpm <= 0) return 'idle';
-  if (cadenceSpm < 60)  return 'idle';
+  if (cadenceSpm < 60) return 'idle';
   if (cadenceSpm < 100) return 'walking';
   if (cadenceSpm < 130) return 'jogging';
   return 'running';
@@ -117,15 +117,15 @@ export function getActivityModeFromCadence(cadenceSpm: number): ActivityMode {
  * Basado en tablas ACSM/Compendium of Physical Activities.
  */
 export function getMETFromCadence(cadenceSpm: number): number {
-  if (cadenceSpm <= 0)   return 1.0;  // Reposo/sedentario
-  if (cadenceSpm < 60)   return 1.5;  // Muy lento
-  if (cadenceSpm < 80)   return 2.5;  // Caminata lenta (~3 km/h)
-  if (cadenceSpm < 100)  return 3.5;  // Caminata normal (~4.8 km/h) — ESTÁNDAR FITBIT
-  if (cadenceSpm < 110)  return 4.5;  // Caminata rápida (~6 km/h)
-  if (cadenceSpm < 120)  return 5.5;  // Marcha atlética
-  if (cadenceSpm < 130)  return 7.0;  // Trote suave (~8 km/h)
-  if (cadenceSpm < 150)  return 9.5;  // Carrera moderada (~10 km/h)
-  if (cadenceSpm < 170)  return 11.5; // Carrera (~12 km/h)
+  if (cadenceSpm <= 0) return 1.0;  // Reposo/sedentario
+  if (cadenceSpm < 60) return 1.5;  // Muy lento
+  if (cadenceSpm < 80) return 2.5;  // Caminata lenta (~3 km/h)
+  if (cadenceSpm < 100) return 3.5;  // Caminata normal (~4.8 km/h) — ESTÁNDAR FITBIT
+  if (cadenceSpm < 110) return 4.5;  // Caminata rápida (~6 km/h)
+  if (cadenceSpm < 120) return 5.5;  // Marcha atlética
+  if (cadenceSpm < 130) return 7.0;  // Trote suave (~8 km/h)
+  if (cadenceSpm < 150) return 9.5;  // Carrera moderada (~10 km/h)
+  if (cadenceSpm < 170) return 11.5; // Carrera (~12 km/h)
   return 14.0;                        // Carrera rápida (>13 km/h)
 }
 

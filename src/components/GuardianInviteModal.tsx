@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
+import { logger } from '@/lib/logger';
 
 export interface GuardianSlot {
   id: string;
@@ -110,7 +111,7 @@ export function GuardianInviteModal({ visible, onClose }: Props) {
           url: slot.url,
         });
       } catch (err) {
-        console.warn('Error sharing invitation:', err);
+        logger.warn('Error sharing invitation:', err);
       }
     }
   };

@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { logger } from '@/lib/logger';
 
 interface HeartRateScannerModalProps {
   visible: boolean;
@@ -163,7 +164,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
               await (track as any).applyConstraints({ advanced: [{ torch: true }] });
             }
           } catch (e) {
-            console.warn('[PPG Web] Linterna no soportada o rechazada:', e);
+            logger.warn('[PPG Web] Linterna no soportada o rechazada:', e);
           }
 
           // Off-screen canvas para análisis fotopletismográfico cromático en tiempo real
@@ -231,7 +232,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
           };
         }
       } catch (err: any) {
-        console.warn('[PPG Web] Fallback táctil biométrico activado:', err?.message);
+        logger.warn('[PPG Web] Fallback táctil biométrico activado:', err?.message);
       }
     } else {
       // Móvil Nativo (Expo Camera)
@@ -240,7 +241,7 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
           await requestPermission();
         }
       } catch (nativeErr) {
-        console.warn('[PPG Native] Permiso cámara:', nativeErr);
+        logger.warn('[PPG Native] Permiso cámara:', nativeErr);
       }
     }
 

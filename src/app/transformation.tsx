@@ -525,6 +525,8 @@ export default function TransformationScreen() {
                   {/* INPUT HTML OCULTO PARA WEB */}
                   {Platform.OS === 'web' && (
                     <input
+                      id="transformation-file-upload"
+                      aria-label="Cargar fotografía de transformación corporal"
                       type="file"
                       accept="image/*"
                       ref={fileInputRef}

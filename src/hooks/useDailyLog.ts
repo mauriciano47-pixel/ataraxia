@@ -4,6 +4,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { DailyLog } from '@/context/DailyLogContext';
 import { SafeStorage } from '@/utils/safeStorage';
+import { logger } from '@/lib/logger';
 
 export { useDailyLog, DailyLogProvider, DailyLog, UserMetrics, SmartDeviceState, DEFAULT_LOG, DEFAULT_USER_METRICS } from '@/context/DailyLogContext';
 
@@ -44,7 +45,7 @@ export function useWeekHistory(days: number = 7) {
         setWeekLogs(logs);
         SafeStorage.setItem(WEEK_LOGS_STORAGE_KEY, JSON.stringify(logs));
       } catch (error) {
-        console.warn("Error obteniendo historial semanal de Firestore, usando caché local:", error);
+        logger.warn("Error obteniendo historial semanal de Firestore, usando caché local:", error);
       } finally {
         setLoadingWeek(false);
       }
@@ -105,7 +106,7 @@ export function useHistoryLog() {
         setHistoryMap(map);
         SafeStorage.setItem(HISTORY_MAP_STORAGE_KEY, JSON.stringify(map));
       } catch (error) {
-        console.warn("Error fetching history from Firestore, keeping local history:", error);
+        logger.warn("Error fetching history from Firestore, keeping local history:", error);
       } finally {
         setLoadingHistory(false);
       }

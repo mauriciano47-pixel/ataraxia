@@ -3,6 +3,7 @@ import { Platform, AppState, AppStateStatus } from 'react-native';
 import { Pedometer } from 'expo-sensors';
 import { SafeStorage } from '@/utils/safeStorage';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
+import { logger } from '@/lib/logger';
 import {
   getActivityModeFromCadence,
   calculateDistanceKm,
@@ -314,7 +315,7 @@ export function usePedometerSensor(
         }
       }
     } catch (e) {
-      console.warn('[usePedometerSensor] Error sincronizando podómetro nativo:', e);
+      logger.warn('[usePedometerSensor] Error sincronizando podómetro nativo:', e);
     }
   }, []);
 
@@ -339,7 +340,7 @@ export function usePedometerSensor(
         { enableHighAccuracy: false, maximumAge: 5000, timeout: 10000 }
       );
     } catch (e) {
-      console.warn('[usePedometerSensor] Geolocation no disponible:', e);
+      logger.warn('[usePedometerSensor] Geolocation no disponible:', e);
     }
 
     return () => {
@@ -390,7 +391,7 @@ export function usePedometerSensor(
         }
       });
     } catch (err) {
-      console.warn('[usePedometerSensor] Error iniciando watcher nativo:', err);
+      logger.warn('[usePedometerSensor] Error iniciando watcher nativo:', err);
     }
 
     return () => {
