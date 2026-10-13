@@ -21,6 +21,9 @@ import { LegendaryPathSelector } from '@/components/LegendaryPathSelector';
 import { COACH_ARCHETYPES, CoachArchetype } from '@/types/onboarding';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
 import { GuardianInviteModal } from '@/components/GuardianInviteModal';
+import { MembershipModal } from '@/components/MembershipModal';
+import { CondecorationRankCard } from '@/components/CondecorationRankCard';
+import { getSubscriptionStatus, SubscriptionStatus } from '@/utils/stripeService';
 
 const STOIC_PRESET_AVATARS = [
   { id: 'marcus', name: 'Marco Aurelio', uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Marcus_Aurelius_Louvre_MR561_n02.jpg/330px-Marcus_Aurelius_Louvre_MR561_n02.jpg' },
@@ -41,6 +44,8 @@ export default function ProfileScreen() {
   const [showDiplomaModal, setShowDiplomaModal] = useState(false);
   const [showLockedDiplomaModal, setShowLockedDiplomaModal] = useState(false);
   const [showGuardianInviteModal, setShowGuardianInviteModal] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus>(() => getSubscriptionStatus());
 
   const metrics = log.userMetrics || { weightKg: 75, heightCm: 175, age: 28, gender: 'male', activityLevel: 'moderate', goal: 'maintenance' };
   const [nameInput, setNameInput] = useState(log.userName || 'Ciudadano Prokopton');
@@ -286,82 +291,15 @@ export default function ProfileScreen() {
           </View>
 
           {/* MÓDULO DE DISTINCIÓN DE RANGO, DIPLOMA DE HONOR & FASE II COMING SOON */}
-          <View style={styles.condecorationCard}>
-            <View style={styles.condecorationHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                <ThemedText style={{ fontSize: 26 }}>{isDiplomaUnlocked ? '👑' : '🔒'}</ThemedText>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.condecorationTag}>
-                    {isDiplomaUnlocked ? 'DISTINCIÓN OFICIAL DEL OLIMPO' : 'EVALUACIÓN DE 30 DÍAS EN CURSO'}
-                  </ThemedText>
-                  <ThemedText style={styles.condecorationRankTitle}>
-                    {isDiplomaUnlocked ? (cycle?.tier || 'Novicio de Esparta') : 'Diploma en Evaluación'}
-                  </ThemedText>
-                </View>
-              </View>
-              <View style={[styles.condecorationBadge, isDiplomaUnlocked ? { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: '#10B981' } : { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B' }]}>
-                <ThemedText style={[styles.condecorationBadgeText, isDiplomaUnlocked ? { color: '#34D399' } : { color: '#F59E0B' }]}>
-                  {isDiplomaUnlocked ? 'OTORGADO (80%+)' : `DÍA ${currentDay}/30 • ${adherencePct}%`}
-                </ThemedText>
-              </View>
-            </View>
-
-            <ThemedText style={styles.condecorationDesc}>
-              {isDiplomaUnlocked
-                ? '🎖️ Has completado los 30 Días con más del 80% de días gobernados. Tu Diploma de Honor Estoico y la Evaluación del Coach han sido desbloqueados.'
-                : `⚔️ El Diploma se otorgará en el Día 30 si alcanzas al menos el 80% de días gobernados (${passedDays}/24 días dignos actuales - ${adherencePct}%).`}
-            </ThemedText>
-
-            {isDiplomaUnlocked ? (
-              <TouchableOpacity
-                style={styles.openDiplomaBtn}
-                onPress={() => setShowDiplomaModal(true)}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#D4AF37', '#FFE259', '#B45309']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.openDiplomaBtnGradient}
-                >
-                  <Ionicons name="ribbon" size={18} color="#050507" />
-                  <ThemedText style={styles.openDiplomaBtnText}>
-                    📜 VER DIPLOMA & EVALUACIÓN DEL COACH
-                  </ThemedText>
-                </LinearGradient>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.openDiplomaBtn, { borderColor: 'rgba(245, 158, 11, 0.4)' }]}
-                onPress={() => setShowLockedDiplomaModal(true)}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.openDiplomaBtnGradient, { backgroundColor: 'rgba(15, 23, 42, 0.9)' }]}>
-                  <Ionicons name="lock-closed" size={18} color="#F59E0B" />
-                  <ThemedText style={[styles.openDiplomaBtnText, { color: '#F59E0B' }]}>
-                    🔒 DIPLOMA BLOQUEADO (DÍA {currentDay}/30 • {adherencePct}%/80%)
-                  </ThemedText>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {/* Módulo Próximo Nivel: Fase II - La Forja de los Titanes */}
-            <View style={styles.nextLevelCard}>
-              <View style={styles.nextLevelHeaderRow}>
-                <ThemedText style={styles.nextLevelIcon}>⚡</ThemedText>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.nextLevelSubtitle}>PREPARADO PARA EL SIGUIENTE NIVEL</ThemedText>
-                  <ThemedText style={styles.nextLevelTitleText}>FASE II: LA FORJA DE LOS TITANES</ThemedText>
-                </View>
-                <View style={styles.comingSoonBadge}>
-                  <ThemedText style={styles.comingSoonText}>COMING SOON</ThemedText>
-                </View>
-              </View>
-              <ThemedText style={styles.nextLevelBodyText}>
-                Has sido registrado en la lista de honor del Templo Superior. Nuevas rutinas de sobrecarga avanzada, protocolos de hipertrofia y pruebas estoicas supremas estarán disponibles en la próxima fase.
-              </ThemedText>
-            </View>
-          </View>
+          <CondecorationRankCard
+            isDiplomaUnlocked={isDiplomaUnlocked}
+            tier={cycle?.tier || 'Novicio de Esparta'}
+            currentDay={currentDay}
+            adherencePct={adherencePct}
+            passedDays={passedDays}
+            onOpenDiploma={() => setShowDiplomaModal(true)}
+            onOpenLockedDiploma={() => setShowLockedDiplomaModal(true)}
+          />
 
           <ThemedText style={styles.description}>
             &quot;Ningún hombre es libre si no es dueño de sí mismo.&quot; — Epicteto
@@ -644,7 +582,40 @@ export default function ProfileScreen() {
             </View>
           </ThemedView>
 
+          {/* Sección Membresía & Senda Imperial (Stripe Turnkey Monetization) */}
+          <ThemedView style={[styles.section, { borderColor: 'rgba(212, 175, 55, 0.40)' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <ThemedText style={styles.sectionTitle}>MEMBRESÍA & SENDA IMPERIAL</ThemedText>
+              <View style={styles.guardianCuposBadge}>
+                <ThemedText style={styles.guardianCuposText}>
+                  {subStatus.active ? (subStatus.tier === 'imperial_gold' ? '🏛️ IMPERIAL GOLD' : '⚡ LEGIONARIO PRO') : 'PROKOPTON (GRATIS)'}
+                </ThemedText>
+              </View>
+            </View>
+            <ThemedText style={styles.hint}>
+              {subStatus.active
+                ? `Membresía activa con facturación Stripe. Vence: ${subStatus.renewsAt || '2027-10-12'}.`
+                : 'Desbloquea Coach IA ilimitado, PPG vascular HD y respaldo en la nube con Stripe.'}
+            </ThemedText>
 
+            <TouchableOpacity
+              style={[styles.guardianInviteBtn, { marginTop: 10 }]}
+              onPress={() => setShowMembershipModal(true)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#FFE259', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.guardianInviteBtnGradient}
+              >
+                <Ionicons name="card-outline" size={16} color="#050507" />
+                <ThemedText style={styles.guardianInviteBtnText}>
+                  {subStatus.active ? '🏛️ GESTIONAR MEMBRESÍA STRIPE' : '⚡ ACTIVAR MEMBRESÍA IMPERIAL (STRIPE)'}
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          </ThemedView>
 
           {/* Sección Centro de Actualizaciones & Vitrina Oficial */}
           <ThemedView style={[styles.section, { borderColor: 'rgba(212, 175, 55, 0.40)', backgroundColor: 'rgba(10, 14, 26, 0.90)' }]}>
@@ -758,7 +729,6 @@ export default function ProfileScreen() {
       )}
 
       {/* Modal Informativo de Diploma Bloqueado */}
-      {/* Modal Informativo de Diploma Bloqueado */}
       <LockedDiplomaModal
         visible={showLockedDiplomaModal}
         onClose={() => setShowLockedDiplomaModal(false)}
@@ -787,8 +757,14 @@ export default function ProfileScreen() {
         visible={showGuardianInviteModal}
         onClose={() => setShowGuardianInviteModal(false)}
       />
+
+      {/* Modal de Membresía Stripe */}
+      <MembershipModal
+        visible={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+        onSubscriptionChanged={(newStatus) => setSubStatus(newStatus)}
+      />
       </SafeAreaView>
     </PearlElectricBackground>
   );
 }
-
