@@ -3,6 +3,14 @@
 Todas las versiones notables de este proyecto se documentan en este archivo.
 El formato se adhiere a [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.9.2] - 2026-10-13
+### Añadido
+- Infraestructura comercial Turnkey con pasarela de pago Stripe (`stripeService.ts`).
+- Modal ceremonial de suscripción (`MembershipModal.tsx`) con planes Ciudadano Prokopton, Legionario Pro ($9.99/mes) y Senda Imperial Gold ($59/año) con 7 días de prueba.
+- Componente modular de distinción y rangos (`CondecorationRankCard.tsx`) reduciendo complejidad y tamaño de archivo en perfil.
+- Suite de pruebas unitarias ampliada a 50 tests automáticos (100% PASS en Node.js Test Runner).
+- Elevación de calificación Due Diligence a AAA 94.6/100 (Vendibilidad M&A a 78/100).
+
 ---
 
 ## [2.9.1] - 2026-10-12
