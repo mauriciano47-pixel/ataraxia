@@ -1,0 +1,53 @@
+name: Ataraxia Continuous Integration (CI & Quality Gates)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Institutional Quality Gate & Automated Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup Node.js 24 (LTS Strip-Types Native Support)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🛡️ TypeScript Strict Typecheck (Zero-Errors Standard)
+        run: npx tsc --noEmit
+
+      - name: 🧪 Unit Tests & Code Coverage (>80% Gate)
+        run: npm run test:coverage
+
+      - name: 🏗️ Production Export (Expo Web Static Bundle)
+        env:
+          EXPO_PUBLIC_GEMINI_API_KEY: ${{ secrets.EXPO_PUBLIC_GEMINI_API_KEY }}
+        run: |
+          npx expo export
+          node ./scripts/post-export.mjs
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 🌐 Run Playwright E2E Test Suite
+        env:
+          CI: true
+        run: npm run test:e2e

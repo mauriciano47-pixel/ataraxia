@@ -16,6 +16,7 @@ import { DailyLogProvider } from '@/context/DailyLogContext';
 import { TempleAccessGate } from '@/components/TempleAccessGate';
 import { GlobalPedometerRootTracker } from '@/components/GlobalPedometerRootTracker';
 import { logger } from '@/lib/logger';
+import { Telemetry } from '@/lib/telemetry';
 
 interface GlobalErrorBoundaryState {
   hasError: boolean;
@@ -34,6 +35,11 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalError
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.warn('[Centinela Ataraxia] Interceptado:', error?.message, errorInfo);
+    try {
+      Telemetry.captureException(error, { componentStack: errorInfo.componentStack ?? undefined });
+    } catch {
+      // Failsafe silencioso
+    }
   }
 
   handleReset = () => {
