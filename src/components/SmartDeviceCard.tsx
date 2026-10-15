@@ -45,7 +45,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
   const [ghSteps, setGhSteps] = useState<string>(() => {
     try {
       const savedSteps = SafeStorage.getItem('ataraxia_pedometer_session_steps_v1');
-      if (savedSteps && parseInt(savedSteps, 10) > 0) return savedSteps;
+      if (savedSteps && Number.parseInt(savedSteps, 10) > 0) return savedSteps;
     } catch {}
     return currentSteps > 0 ? currentSteps.toString() : '1127';
   });
@@ -249,13 +249,13 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
     setIsSyncingNow(true);
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const parsedSteps = !isNaN(parseInt(ghSteps, 10)) ? parseInt(ghSteps, 10) : currentSteps;
-      const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
-      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (!isNaN(parseInt(ghRestingBpm, 10)) ? parseInt(ghRestingBpm, 10) : 70);
+      const parsedSteps = !Number.isNaN(Number.parseInt(ghSteps, 10)) ? Number.parseInt(ghSteps, 10) : currentSteps;
+      const parsedSleepHours = !Number.isNaN(Number.parseFloat(ghSleepHours)) ? Number.parseFloat(ghSleepHours) : 7.0;
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (!Number.isNaN(Number.parseInt(ghRestingBpm, 10)) ? Number.parseInt(ghRestingBpm, 10) : 70);
       const parsedActiveCals = Math.round(parsedSteps * 0.045);
 
-      const deepHours = parseFloat((parsedSleepHours * 0.24).toFixed(1));
-      const remHours = parseFloat((parsedSleepHours * 0.25).toFixed(1));
+      const deepHours = Number.parseFloat((parsedSleepHours * 0.24).toFixed(1));
+      const remHours = Number.parseFloat((parsedSleepHours * 0.25).toFixed(1));
 
       // 1. Sincronización Unificada Atómica de Salud & Pasos
       if (onSyncHealthData) {
@@ -325,8 +325,8 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const currentLiveSteps = currentSteps;
-      const parsedSleepHours = !isNaN(parseFloat(ghSleepHours)) ? parseFloat(ghSleepHours) : 7.0;
-      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (parseInt(ghRestingBpm, 10) || 70);
+      const parsedSleepHours = !Number.isNaN(Number.parseFloat(ghSleepHours)) ? Number.parseFloat(ghSleepHours) : 7.0;
+      const parsedRestingBpm = device.heartRateBpm && device.heartRateBpm > 0 ? device.heartRateBpm : (Number.parseInt(ghRestingBpm, 10) || 70);
       const parsedActiveCals = Math.round(currentLiveSteps * 0.045);
 
       if (onSyncHealthData) {
@@ -603,7 +603,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                           ghSteps === chipVal && styles.ghQuickChipTextActive,
                           chipVal === '1127' && { color: '#34D399', fontWeight: '900' }
                         ]}>
-                          {chipVal === '1127' ? '⚡ 1,127' : parseInt(chipVal, 10).toLocaleString()}
+                          {chipVal === '1127' ? '⚡ 1,127' : Number.parseInt(chipVal, 10).toLocaleString()}
                         </ThemedText>
                       </TouchableOpacity>
                     ))}

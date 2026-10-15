@@ -132,8 +132,14 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
     fingerDetectedRef.current = false;
     setFingerDetected(false);
 
-    // Generar pulso base fisiológico realista de reposo (entre 68 y 75 BPM)
-    const seedBpm = Math.floor(Math.random() * 8) + 68;
+    // Generar pulso base fisiológico realista de reposo (entre 68 y 75 BPM) de forma segura (S2245)
+    const randomArray = new Uint32Array(1);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(randomArray);
+    } else {
+      randomArray[0] = Date.now();
+    }
+    const seedBpm = (randomArray[0] % 8) + 68;
     baseBpmRef.current = seedBpm;
     instantBpmRef.current = seedBpm;
     lastHapticTimeRef.current = 0;

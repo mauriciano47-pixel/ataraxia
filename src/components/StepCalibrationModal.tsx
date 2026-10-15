@@ -135,8 +135,8 @@ export function StepCalibrationModal({
   };
 
   const handleSaveStride = () => {
-    const valCm = parseFloat(strideInput);
-    if (isNaN(valCm) || valCm < 30 || valCm > 180) {
+    const valCm = Number.parseFloat(strideInput);
+    if (Number.isNaN(valCm) || valCm < 30 || valCm > 180) {
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.alert('Por favor ingresa una zancada válida en cm (entre 30 y 180 cm).');
       } else {
@@ -144,7 +144,7 @@ export function StepCalibrationModal({
       }
       return;
     }
-    const valM = parseFloat((valCm / 100).toFixed(3));
+    const valM = Number.parseFloat((valCm / 100).toFixed(3));
     if (onSetManualStrideLength) {
       onSetManualStrideLength(valM);
     }

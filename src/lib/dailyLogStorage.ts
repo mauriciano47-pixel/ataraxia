@@ -121,8 +121,8 @@ export function loadLocalDailyLog(targetDate: string): DailyLog {
         SafeStorage.getItem(`ataraxia_pedometer_steps_${targetDate}`) ||
         SafeStorage.getItem('ataraxia_pedometer_session_steps_v1');
       if (savedSteps) {
-        const parsed = parseInt(savedSteps, 10);
-        if (!isNaN(parsed) && parsed > 0) {
+        const parsed = Number.parseInt(savedSteps, 10);
+        if (!Number.isNaN(parsed) && parsed > 0) {
           baseLog.steps = parsed;
         }
       }
@@ -193,8 +193,8 @@ export function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
     // El Reto Stoic Oficial de 30 Días inició inmutablemente el 1 de Septiembre de 2026
     const startStr = '2026-09-01';
 
-    const [sY, sM, sD] = startStr.split('-').map((n) => parseInt(n, 10) || 0);
-    const [tY, tM, tD] = (todayStr || '2026-09-01').split('-').map((n) => parseInt(n, 10) || 0);
+    const [sY, sM, sD] = startStr.split('-').map((n) => Number.parseInt(n, 10) || 0);
+    const [tY, tM, tD] = (todayStr || '2026-09-01').split('-').map((n) => Number.parseInt(n, 10) || 0);
 
     const startDateObj = new Date(sY || 2026, sM > 0 ? sM - 1 : 8, sD || 1);
     const todayDateObj = new Date(tY || 2026, tM > 0 ? tM - 1 : 8, tD || 1);
@@ -202,7 +202,7 @@ export function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
     // Calcular diferencia en días exactos desde el 1 de Septiembre (1 sep = Día 1, 4 sep = Día 4)
     const diffTime = todayDateObj.getTime() - startDateObj.getTime();
     const rawDiffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffDays = Math.max(0, isNaN(rawDiffDays) ? 0 : rawDiffDays);
+    const diffDays = Math.max(0, Number.isNaN(rawDiffDays) ? 0 : rawDiffDays);
     const currentDayNum = Math.min(30, Math.max(1, diffDays + 1));
 
     const existingGradesMap = new Map<string, DailyGrade>();
@@ -272,9 +272,9 @@ export function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
               trainingDone,
               steps: parsed.steps || 0,
               stepGoal,
-              stepsRatio: parseFloat((isNaN(stepsRatio) ? 0 : stepsRatio).toFixed(2)),
+              stepsRatio: Number.parseFloat((Number.isNaN(stepsRatio) ? 0 : stepsRatio).toFixed(2)),
               waterLitres: parsed.waterLitres || 0,
-              waterRatio: parseFloat(Math.min(1, (parsed.waterLitres || 0) / 2.5).toFixed(2)),
+              waterRatio: Number.parseFloat(Math.min(1, (parsed.waterLitres || 0) / 2.5).toFixed(2)),
               caloriesLogged: nutritionPassed,
               totalCalories: parsed.totalCalories || 0,
               sleepHours: parsed.sleepQuality || 0,
@@ -337,7 +337,7 @@ export function consolidateCycleHistory(currentLog: DailyLog): DailyLog {
       dailyGrades: consolidatedGrades,
       passedDaysCount: passedCount,
       failedDaysCount: failedCount,
-      averageScore: isNaN(avgScore) ? 100 : avgScore,
+      averageScore: Number.isNaN(avgScore) ? 100 : avgScore,
       isJudgmentReady: currentDayNum >= 30 && diffDays >= 30,
       isPactActive: true,
     };

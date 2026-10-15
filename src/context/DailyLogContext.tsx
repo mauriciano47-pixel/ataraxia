@@ -321,7 +321,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, [updateLog]);
 
   const addWater = useCallback((amount = 0.25) => {
-    updateLog({ waterLitres: Math.max(0, parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2))) });
+    updateLog({ waterLitres: Math.max(0, Number.parseFloat(((logRef.current.waterLitres || 0) + amount).toFixed(2))) });
   }, [updateLog]);
 
   const toggleTraining = useCallback(() => {

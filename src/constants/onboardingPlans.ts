@@ -28,9 +28,9 @@ export interface CalculatedPlanOutput {
 
 export function generateCalculatedPlan(input: PlanGenerationInput): CalculatedPlanOutput {
   const { age, weightKg, heightCm, selectedPath, equipment, daysPerWeek } = input;
-  const ageNum = parseInt(age, 10) || 28;
-  const weightNum = parseFloat(weightKg) || 78;
-  const heightNum = parseFloat(heightCm) || 176;
+  const ageNum = Number.parseInt(age, 10) || 28;
+  const weightNum = Number.parseFloat(weightKg) || 78;
+  const heightNum = Number.parseFloat(heightCm) || 176;
   const pathInfo = LEGENDARY_PATHS[selectedPath];
 
   // BMR Fórmula Mifflin-St Jeor

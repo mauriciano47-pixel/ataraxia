@@ -18,20 +18,32 @@ const MIME_TYPES = {
 
 const server = http.createServer((req, res) => {
   let cleanUrl = req.url ? req.url.split('?')[0] : '/';
-  let safePath = path.normalize(decodeURIComponent(cleanUrl));
-  if (safePath === '/' || safePath === '\\') safePath = '/index.html';
-  let filePath = path.join(DIST, safePath);
+  let safePath = path.normalize(decodeURIComponent(cleanUrl)).replace(/^(\.\.[/\\])+/, '');
+  if (safePath === '/' || safePath === '\\' || safePath === '') safePath = '/index.html';
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    filePath = path.join(DIST, 'index.html');
+  let resolvedPath = path.resolve(DIST, '.' + safePath);
+  if (!resolvedPath.startsWith(DIST)) {
+    resolvedPath = path.resolve(DIST, 'index.html');
   }
 
-  const ext = path.extname(filePath).toLowerCase();
+  try {
+    const stat = fs.statSync(resolvedPath);
+    if (stat.isDirectory()) {
+      resolvedPath = path.resolve(DIST, 'index.html');
+    }
+  } catch {
+    resolvedPath = path.resolve(DIST, 'index.html');
+  }
+
+  const ext = path.extname(resolvedPath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
   try {
-    const data = fs.readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': contentType, 'Access-Control-Allow-Origin': '*' });
+    const data = fs.readFileSync(resolvedPath);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'X-Content-Type-Options': 'nosniff'
+    });
     res.end(data);
   } catch {
     res.writeHead(404);
