@@ -82,7 +82,7 @@ export function usePedometerSensor(
   const [liveSessionSteps, setLiveSessionSteps] = useState<number>(() => {
     try {
       const saved = SafeStorage.getItem(dateKey);
-      return saved ? parseInt(saved, 10) : currentDailySteps;
+      return saved ? Number.parseInt(saved, 10) : currentDailySteps;
     } catch {
       return currentDailySteps;
     }
@@ -103,7 +103,7 @@ export function usePedometerSensor(
     try {
       const saved = SafeStorage.getItem(STRIDE_LENGTH_STORAGE_KEY);
       if (saved) {
-        manualStrideLengthRef.current = parseFloat(saved);
+        manualStrideLengthRef.current = Number.parseFloat(saved);
       }
     } catch {}
   }, []);
@@ -199,11 +199,11 @@ export function usePedometerSensor(
       } catch {}
     };
 
-    acquireLock();
+    void acquireLock();
 
     const handleVisChange = () => {
       if (document.visibilityState === 'visible') {
-        acquireLock();
+        void acquireLock();
       }
     };
 
@@ -270,7 +270,7 @@ export function usePedometerSensor(
       if (lastActiveTs.current > 0) {
         const elapsed = (nowTs - lastActiveTs.current) / 60000; // en minutos
         if (elapsed < 2) { // evitar saltos enormes al reanudar
-          setActiveMinutes(prev => parseFloat((prev + elapsed).toFixed(2)));
+          setActiveMinutes(prev => Number.parseFloat((prev + elapsed).toFixed(2)));
         }
       }
       lastActiveTs.current = nowTs;

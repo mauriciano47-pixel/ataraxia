@@ -160,7 +160,7 @@ export function calculateDistanceKm(
   manualStrideLengthM?: number
 ): number {
   const strideLengthM = manualStrideLengthM ?? getPersonalStrideLength(heightCm, mode);
-  return parseFloat(((steps * strideLengthM) / 1000).toFixed(2));
+  return Number.parseFloat(((steps * strideLengthM) / 1000).toFixed(2));
 }
 
 /**
@@ -175,7 +175,7 @@ export function calculateSpeedKmh(
 ): number {
   if (cadenceSpm <= 0) return 0;
   const strideLengthM = manualStrideLengthM ?? getPersonalStrideLength(heightCm, mode);
-  return parseFloat(((cadenceSpm * strideLengthM * 60) / 1000).toFixed(1));
+  return Number.parseFloat(((cadenceSpm * strideLengthM * 60) / 1000).toFixed(1));
 }
 
 /**

@@ -156,11 +156,11 @@ export default function ProgressScreen() {
   const handleCopyDecree = () => {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        navigator.clipboard.writeText(judgmentResult?.resolution?.masterDecreeMarkdown || judgmentResult?.message || '');
+        navigator.clipboard.writeText(judgmentResult?.resolution?.masterDecreeMarkdown || judgmentResult?.message || '').catch(() => {});
         setCopiedDecree(true);
         setTimeout(() => setCopiedDecree(false), 3000);
       }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {}
   };
 

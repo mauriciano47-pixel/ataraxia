@@ -93,7 +93,7 @@ export default function NutritionScreen() {
       if (!result.canceled && result.assets && result.assets[0]) {
         setScannedImageUri(result.assets[0].uri);
         if (result.assets[0].base64) {
-          analyzeImage(result.assets[0].base64);
+          void analyzeImage(result.assets[0].base64);
         }
       }
     } catch (error) {
@@ -119,7 +119,7 @@ export default function NutritionScreen() {
       if (!result.canceled && result.assets && result.assets[0]) {
         setScannedImageUri(result.assets[0].uri);
         if (result.assets[0].base64) {
-          analyzeImage(result.assets[0].base64);
+          void analyzeImage(result.assets[0].base64);
         }
       }
     } catch (error) {
@@ -237,27 +237,27 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
     } catch {}
 
     if (field === 'cals') {
-      setEditCalories(prev => String(Math.max(0, (parseInt(prev, 10) || 0) + delta)));
+      setEditCalories(prev => String(Math.max(0, (Number.parseInt(prev, 10) || 0) + delta)));
     } else if (field === 'p') {
-      setEditProtein(prev => String(Math.max(0, (parseInt(prev, 10) || 0) + delta)));
+      setEditProtein(prev => String(Math.max(0, (Number.parseInt(prev, 10) || 0) + delta)));
     } else if (field === 'c') {
-      setEditCarbs(prev => String(Math.max(0, (parseInt(prev, 10) || 0) + delta)));
+      setEditCarbs(prev => String(Math.max(0, (Number.parseInt(prev, 10) || 0) + delta)));
     } else if (field === 'f') {
-      setEditFats(prev => String(Math.max(0, (parseInt(prev, 10) || 0) + delta)));
+      setEditFats(prev => String(Math.max(0, (Number.parseInt(prev, 10) || 0) + delta)));
     }
   };
 
   const handleConfirmAnalysis = () => {
     if (!lastAnalysis) return;
-    const parsedCals = parseInt(editCalories, 10);
-    const parsedProtein = parseInt(editProtein, 10);
-    const parsedCarbs = parseInt(editCarbs, 10);
-    const parsedFats = parseInt(editFats, 10);
+    const parsedCals = Number.parseInt(editCalories, 10);
+    const parsedProtein = Number.parseInt(editProtein, 10);
+    const parsedCarbs = Number.parseInt(editCarbs, 10);
+    const parsedFats = Number.parseInt(editFats, 10);
 
-    const finalCals = !isNaN(parsedCals) ? Math.max(0, parsedCals) : lastAnalysis.calories;
-    const finalProtein = !isNaN(parsedProtein) ? Math.max(0, parsedProtein) : lastAnalysis.protein;
-    const finalCarbs = !isNaN(parsedCarbs) ? Math.max(0, parsedCarbs) : lastAnalysis.carbs;
-    const finalFats = !isNaN(parsedFats) ? Math.max(0, parsedFats) : lastAnalysis.fats;
+    const finalCals = !Number.isNaN(parsedCals) ? Math.max(0, parsedCals) : lastAnalysis.calories;
+    const finalProtein = !Number.isNaN(parsedProtein) ? Math.max(0, parsedProtein) : lastAnalysis.protein;
+    const finalCarbs = !Number.isNaN(parsedCarbs) ? Math.max(0, parsedCarbs) : lastAnalysis.carbs;
+    const finalFats = !Number.isNaN(parsedFats) ? Math.max(0, parsedFats) : lastAnalysis.fats;
     const finalDishName = editDishName.trim() || lastAnalysis.dishName;
 
     logMealWithEnrichedMacros(

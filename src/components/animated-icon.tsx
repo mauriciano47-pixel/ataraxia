@@ -28,15 +28,15 @@ export function AnimatedSplashOverlay() {
     // (ya se llamó a preventAutoHideAsync en _layout.tsx)
     const start = async () => {
       // Retraso antes de ocultar el splash nativo de Expo
-      setTimeout(async () => {
-        await SplashScreen.hideAsync();
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {});
       }, SPLASH_NATIVE_DELAY);
       // Iniciamos la barra de progreso con duración exacta de 3 s
       progress.value = withTiming(100, { duration: DURATION, easing: Easing.linear });
       // Después de DURATION ms, removemos el overlay
       setTimeout(() => setVisible(false), DURATION);
     };
-    start();
+    void start();
   }, [progress]);
 
   if (!visible) return null;

@@ -52,7 +52,7 @@ export function useWeekHistory(days: number = 7) {
     };
 
     const unsubscribe = onAuthStateChanged(currentAuth, (user) => {
-      if (user) fetchWeek(user);
+      if (user) void fetchWeek(user);
       else setLoadingWeek(false);
     });
     return () => unsubscribe();
@@ -113,7 +113,7 @@ export function useHistoryLog() {
     };
 
     const unsubscribe = onAuthStateChanged(currentAuth, (user) => {
-      if (user) fetchHistory(user);
+      if (user) void fetchHistory(user);
       else setLoadingHistory(false);
     });
     return () => unsubscribe();

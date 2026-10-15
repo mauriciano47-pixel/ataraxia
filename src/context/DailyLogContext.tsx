@@ -594,9 +594,12 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, [updateLog, saveProfileToFirestore]);
 
   const addBodySnapshot = useCallback(async (snapshotData: Omit<BodySnapshot, 'id' | 'createdAt'>): Promise<BodySnapshot> => {
+    const randSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8)
+      : Date.now().toString(36);
     const newSnapshot: BodySnapshot = {
       ...snapshotData,
-      id: `snap_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: `snap_${Date.now()}_${randSuffix}`,
       createdAt: Date.now(),
     };
 

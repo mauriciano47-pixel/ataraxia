@@ -126,7 +126,13 @@ export function generateWelcomeMessage(
     '🏛️ *"La dificultad es lo que le da fuerza a la mente, igual que el trabajo se la da al cuerpo."* — Séneca.',
     '🏛️ *"No expliques tu filosofía; encárnala en tus actos de hoy."* — Epicteto.',
   ];
-  const randomQuote = stoicQuotes[Math.floor(Math.random() * stoicQuotes.length)];
+  const randArr = new Uint32Array(1);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(randArr);
+  } else {
+    randArr[0] = Date.now();
+  }
+  const randomQuote = stoicQuotes[randArr[0] % stoicQuotes.length];
 
   if (patterns.showsFatigue) {
     return `🛡️ Noto fatiga en tu jornada, amigo. El verdadero sabio sabe cuándo empujar y cuándo escuchar al cuerpo con templanza. ¿Cómo te sientes física y mentalmente en este momento?`;

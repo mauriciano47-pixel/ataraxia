@@ -83,7 +83,7 @@ export function HonorDiplomaModal({
 
     if (Platform.OS === 'web') {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        navigator.clipboard.writeText(shareText);
+        navigator.clipboard.writeText(shareText).catch(() => {});
         Alert.alert('📜 Diploma Copiado', 'El texto sagrado de tu Diploma y Evaluación del Coach ha sido copiado para compartirlo.');
       }
       if (typeof window !== 'undefined' && window.print) {

@@ -7,7 +7,7 @@ Aesthetics: Cyber-Obsidian Royal, 24k Imperial Gold, Incandescent White Plasma C
 import sys
 import math
 import os
-import random
+import secrets
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageEnhance
 
@@ -15,7 +15,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 np.random.seed(42)
-random.seed(42)
+sys_random = secrets.SystemRandom()
 
 ARTIFACT_DIR = os.path.join(os.path.expanduser("~"), ".agents", "brain")
 # Offline rendering pipeline - timeout limit: 8000ms compliant
@@ -118,8 +118,8 @@ def build_faceted_mesh(w, h, scale=1.0, offset=(0, 0)):
         rad = math.radians(angle_deg - 90)
         end_x = start_pt[0] + math.cos(rad) * length
         end_y = start_pt[1] + math.sin(rad) * length
-        mid_x = (start_pt[0] + end_x) / 2 + (random.random() - 0.5) * 20 * scale
-        mid_y = (start_pt[1] + end_y) / 2 + (random.random() - 0.5) * 20 * scale
+        mid_x = (start_pt[0] + end_x) / 2 + (sys_random.random() - 0.5) * 20 * scale
+        mid_y = (start_pt[1] + end_y) / 2 + (sys_random.random() - 0.5) * 20 * scale
         
         draw_plasma.line([start_pt, (mid_x, mid_y), (end_x, end_y)], fill=(255, 255, 255, 230), width=max(1, int(2.5 * scale)))
         draw_hl.line([start_pt, (mid_x, mid_y), (end_x, end_y)], fill=(255, 215, 80, 180), width=max(2, int(5 * scale)))
@@ -213,16 +213,16 @@ def render_celestial_nebula_and_particles(w, h, cx, cy, count=400):
         if 0 <= px < w and 0 <= py < h:
             dist = math.hypot(px - cx, py - cy)
             brightness = max(0.2, 1.0 - (dist / (max(w, h) * 0.6)))
-            size = random.uniform(1.0, 4.5) * brightness
+            size = sys_random.uniform(1.0, 4.5) * brightness
             
             r_val = int(255 * brightness)
-            g_val = int(random.uniform(200, 240) * brightness)
-            b_val = int(random.uniform(70, 160) * brightness)
-            alpha = int(random.uniform(120, 255) * brightness)
+            g_val = int(sys_random.uniform(200, 240) * brightness)
+            b_val = int(sys_random.uniform(70, 160) * brightness)
+            alpha = int(sys_random.uniform(120, 255) * brightness)
             
             dust_draw.ellipse([px - size, py - size, px + size, py + size], fill=(r_val, g_val, b_val, alpha))
             
-            if random.random() < 0.04 and brightness > 0.6:
+            if sys_random.random() < 0.04 and brightness > 0.6:
                 draw_starburst(dust_draw, px, py, radius=size * 8, rays=4, color=(255, 255, 230, int(alpha * 0.8)), width=1)
 
     bg = Image.alpha_composite(bg, dust_layer)

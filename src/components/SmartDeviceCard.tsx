@@ -203,7 +203,13 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
     // Vinculación por Bridge Seguro (Garmin / Apple / Galaxy / WearOS)
     setTimeout(() => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const battery = Math.floor(Math.random() * 15) + 82;
+      const randArr = new Uint32Array(1);
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        crypto.getRandomValues(randArr);
+      } else {
+        randArr[0] = Date.now();
+      }
+      const battery = (randArr[0] % 15) + 82;
       const hr = 58;
       const steps = currentSteps;
 

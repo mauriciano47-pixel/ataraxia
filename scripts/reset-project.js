@@ -88,7 +88,9 @@ rl.question(
   (answer) => {
     const userInput = answer.trim().toLowerCase() || "y";
     if (userInput === "y" || userInput === "n") {
-      moveDirectories(userInput).finally(() => rl.close());
+      moveDirectories(userInput)
+        .catch((err) => console.error(err))
+        .finally(() => rl.close());
     } else {
       rl.close();
     }
