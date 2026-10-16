@@ -1,0 +1,288 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-16T19:49:24.426807+00:00",
+    "tools": [
+      {
+        "vendor": "V-GUARD Sentinel",
+        "name": "Institutional Due Diligence Suite",
+        "version": "2.2.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "ataraxia",
+      "lockfileSha256": "4e3e15fdc6ddc7ced157f966a0f63c082b753f83a36635587b3e4465f46860ed"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "@expo/ui",
+      "version": "57.0.4",
+      "purl": "pkg:npm/@expo/ui@57.0.4",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@expo/vector-icons",
+      "version": "15.1.1",
+      "purl": "pkg:npm/@expo/vector-icons@15.1.1",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@google/genai",
+      "version": "2.11.0",
+      "purl": "pkg:npm/@google/genai@2.11.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo",
+      "version": "57.0.4",
+      "purl": "pkg:npm/expo@57.0.4",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-camera",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-camera@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-constants",
+      "version": "57.0.3",
+      "purl": "pkg:npm/expo-constants@57.0.3",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-device",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-device@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-font",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-font@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-glass-effect",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-glass-effect@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-haptics",
+      "version": "57.0.1",
+      "purl": "pkg:npm/expo-haptics@57.0.1",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-image",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-image@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-image-picker",
+      "version": "57.0.2",
+      "purl": "pkg:npm/expo-image-picker@57.0.2",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-linear-gradient",
+      "version": "57.0.1",
+      "purl": "pkg:npm/expo-linear-gradient@57.0.1",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-linking",
+      "version": "57.0.2",
+      "purl": "pkg:npm/expo-linking@57.0.2",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-notifications",
+      "version": "57.0.3",
+      "purl": "pkg:npm/expo-notifications@57.0.3",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-router",
+      "version": "57.0.4",
+      "purl": "pkg:npm/expo-router@57.0.4",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-sensors",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-sensors@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-splash-screen",
+      "version": "57.0.2",
+      "purl": "pkg:npm/expo-splash-screen@57.0.2",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-status-bar",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-status-bar@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-symbols",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-symbols@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-system-ui",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-system-ui@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "expo-web-browser",
+      "version": "57.0.0",
+      "purl": "pkg:npm/expo-web-browser@57.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "firebase",
+      "version": "12.16.0",
+      "purl": "pkg:npm/firebase@12.16.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react",
+      "version": "19.2.3",
+      "purl": "pkg:npm/react@19.2.3",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-dom",
+      "version": "19.2.3",
+      "purl": "pkg:npm/react-dom@19.2.3",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native",
+      "version": "0.86.0",
+      "purl": "pkg:npm/react-native@0.86.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-gesture-handler",
+      "version": "2.32.0",
+      "purl": "pkg:npm/react-native-gesture-handler@2.32.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-reanimated",
+      "version": "4.5.0",
+      "purl": "pkg:npm/react-native-reanimated@4.5.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-safe-area-context",
+      "version": "5.7.0",
+      "purl": "pkg:npm/react-native-safe-area-context@5.7.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-screens",
+      "version": "4.25.2",
+      "purl": "pkg:npm/react-native-screens@4.25.2",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-svg",
+      "version": "15.15.4",
+      "purl": "pkg:npm/react-native-svg@15.15.4",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-web",
+      "version": "0.21.0",
+      "purl": "pkg:npm/react-native-web@0.21.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "react-native-worklets",
+      "version": "0.10.0",
+      "purl": "pkg:npm/react-native-worklets@0.10.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@playwright/test",
+      "version": "1.64.0",
+      "purl": "pkg:npm/@playwright/test@1.64.0",
+      "scope": "optional"
+    },
+    {
+      "type": "library",
+      "name": "@types/react",
+      "version": "19.2.2",
+      "purl": "pkg:npm/@types/react@19.2.2",
+      "scope": "optional"
+    },
+    {
+      "type": "library",
+      "name": "eslint",
+      "version": "9.0.0",
+      "purl": "pkg:npm/eslint@9.0.0",
+      "scope": "optional"
+    },
+    {
+      "type": "library",
+      "name": "eslint-config-expo",
+      "version": "57.0.0",
+      "purl": "pkg:npm/eslint-config-expo@57.0.0",
+      "scope": "optional"
+    },
+    {
+      "type": "library",
+      "name": "typescript",
+      "version": "6.0.3",
+      "purl": "pkg:npm/typescript@6.0.3",
+      "scope": "optional"
+    }
+  ]
+}
