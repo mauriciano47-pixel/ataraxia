@@ -1,5 +1,10 @@
 # Ataraxia - El Oráculo Estoico 🏛️
 
+[![Codacy Security & Quality](https://img.shields.io/badge/Codacy_SAST-Audited_Grade_A-10b981?style=for-the-badge&logo=codacy&logoColor=white)](https://app.codacy.com/gh/mauriciano47-pixel/ataraxia/dashboard)
+[![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict_Zero_Warning-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://github.com/mauriciano47-pixel/ataraxia)
+[![Android APK](https://img.shields.io/badge/Android_APK-60_FPS_Hermes-D4AF37?style=for-the-badge&logo=android&logoColor=black)](https://ataraxia-stoic.vercel.app/download.html)
+[![Live Web App](https://img.shields.io/badge/Web_App-Vercel_Production-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://ataraxia-stoic.vercel.app)
+
 Ataraxia no es otra simple aplicación de seguimiento de hábitos. Es un "Coach" estoico en tu bolsillo diseñado para desarrollar la disciplina mental y física basándose en los principios de la filosofía estoica (Marco Aurelio, Séneca, Epicteto).
 
 En lugar de usar recompensas dopaminérgicas (likes, rachas coloridas, notificaciones invasivas), Ataraxia promueve el control sobre lo único que puedes controlar: tu esfuerzo, tu percepción y tus acciones en el presente.

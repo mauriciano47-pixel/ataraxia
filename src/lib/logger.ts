@@ -20,6 +20,7 @@ const safeDispatch = (method: 'warn' | 'info' | 'error', ...args: unknown[]): vo
 };
 
 export const logger = {
+  log: (...args: unknown[]): void => safeDispatch('info', ...args),
   warn: (...args: unknown[]): void => safeDispatch('warn', ...args),
   info: (...args: unknown[]): void => safeDispatch('info', ...args),
   error: (...args: unknown[]): void => safeDispatch('error', ...args),
