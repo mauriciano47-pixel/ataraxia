@@ -9,31 +9,47 @@ import type {
 import { DEFAULT_MONTHLY_CYCLE } from '../types/dailyLog.ts';
 import type { DailyLog } from '../types/dailyLog.ts';
 
+function toSafeNonNeg(val: unknown, fallback: number = 0): number {
+  const n = typeof val === 'number' ? val : Number(val);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return n;
+}
+
 export function calculateTodayGrade(current: DailyLog): DailyGrade {
-  const cycle = current.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
+  const safeCurrent = current || ({} as DailyLog);
+  const cycle = safeCurrent.monthlyCycle || DEFAULT_MONTHLY_CYCLE;
   const todayStr = getLocalTodayDateString();
 
   // 1. Entreno (20 pts): Sesión sellada
-  const trainingDone = Boolean(current.trainingCompleted);
+  const trainingDone = Boolean(safeCurrent.trainingCompleted);
   const trainingPts = trainingDone ? 20 : 0;
 
   // 2. Pasos (20 pts vs meta): >= 85% de la meta o meta cumplida
-  const stepsGoal = current.stepGoal || 10000;
-  const stepsRatio = Math.min(1, (current.steps || 0) / stepsGoal);
-  const stepsPassed = (current.steps || 0) >= stepsGoal * 0.85;
+  const rawGoal = toSafeNonNeg(safeCurrent.stepGoal, 10000);
+  const stepsGoal = rawGoal > 0 ? rawGoal : 10000;
+  const safeSteps = toSafeNonNeg(safeCurrent.steps, 0);
+  const stepsRatio = Math.min(1, Math.max(0, safeSteps / stepsGoal));
+  const stepsPassed = safeSteps >= stepsGoal * 0.85;
   const stepsPts = Math.round(stepsRatio * 20);
 
   // 3. Ingesta de alimentos (15 pts): Comidas registradas
-  const nutritionPassed = (current.mealsLogged || 0) > 0 || (current.totalCalories || 0) > 0;
+  const safeMeals = toSafeNonNeg(safeCurrent.mealsLogged, 0);
+  const safeCalories = toSafeNonNeg(safeCurrent.totalCalories, 0);
+  const nutritionPassed = safeMeals > 0 || safeCalories > 0;
   const nutritionPts = nutritionPassed ? 15 : 0;
 
   // 4. Calidad de sueño (15 pts): Sueño registrado >= 6.5h
-  let sleepHours = current.readinessScore?.sleep || (current.sleepQuality ? current.sleepQuality * 1.0 : 0);
+  let sleepHours = toSafeNonNeg(
+    safeCurrent.readinessScore?.sleep ?? (safeCurrent.sleepQuality ? safeCurrent.sleepQuality * 1.0 : 0),
+    0
+  );
   try {
     const savedSleep = SafeStorage.getItem('ataraxia_sleep_record_v1');
     if (savedSleep) {
       const parsed = JSON.parse(savedSleep);
-      if (parsed.totalHours) sleepHours = parsed.totalHours;
+      if (parsed && typeof parsed === 'object' && Number.isFinite(Number(parsed.totalHours))) {
+        sleepHours = Math.max(0, Number(parsed.totalHours));
+      }
     }
   } catch {}
   const sleepPassed = sleepHours >= 6.5;
@@ -49,17 +65,21 @@ export function calculateTodayGrade(current: DailyLog): DailyGrade {
   const stoicChallengePts = stoicChallengePassed ? 10 : 0;
 
   // 6. Medición de latidos / telemetría (10 pts)
-  const heartRatePassed =
-    (current.smartDevice?.heartRateBpm && current.smartDevice.heartRateBpm > 0) ||
-    current.smartDevice?.connected === true;
+  const safeBpm = toSafeNonNeg(safeCurrent.smartDevice?.heartRateBpm, 0);
+  const heartRatePassed = safeBpm > 0 || safeCurrent.smartDevice?.connected === true;
   const heartRatePts = heartRatePassed ? 10 : 0;
 
   // 7. Info dada al Coach / Check-in SNC (10 pts)
-  const coachCheckInPassed = Boolean(current.checkInDone) || Boolean(current.readinessScore);
+  const coachCheckInPassed = Boolean(safeCurrent.checkInDone) || Boolean(safeCurrent.readinessScore);
   const coachCheckInPts = coachCheckInPassed ? 10 : 0;
 
-  const totalScore =
-    trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts;
+  const totalScore = Math.min(
+    100,
+    Math.max(
+      0,
+      trainingPts + stepsPts + nutritionPts + sleepPts + stoicChallengePts + heartRatePts + coachCheckInPts
+    )
+  );
 
   const pillars = {
     training: trainingDone,
@@ -86,14 +106,22 @@ export function calculateTodayGrade(current: DailyLog): DailyGrade {
   }
 
   // Calcular día actual preciso basado en la fecha de inicio del pacto
-  let preciseDay = cycle.currentDay;
-  if (cycle.startDate) {
+  const baseDay = Number.isFinite(Number(cycle.currentDay)) ? Math.min(30, Math.max(1, Math.floor(Number(cycle.currentDay)))) : 1;
+  let preciseDay = baseDay;
+  if (cycle.startDate && typeof cycle.startDate === 'string') {
     const start = new Date(cycle.startDate);
-    const now = new Date();
-    const diffMs = now.getTime() - start.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    preciseDay = Math.min(30, Math.max(1, diffDays));
+    const startMs = start.getTime();
+    if (Number.isFinite(startMs)) {
+      const now = new Date();
+      const diffMs = now.getTime() - startMs;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      if (Number.isFinite(diffDays)) {
+        preciseDay = Math.min(30, Math.max(1, diffDays));
+      }
+    }
   }
+
+  const safeWater = toSafeNonNeg(safeCurrent.waterLitres, 0);
 
   return {
     day: preciseDay,
@@ -102,15 +130,15 @@ export function calculateTodayGrade(current: DailyLog): DailyGrade {
     status,
     pillars,
     trainingDone,
-    steps: current.steps || 0,
+    steps: safeSteps,
     stepGoal: stepsGoal,
     stepsRatio: Number.parseFloat(stepsRatio.toFixed(2)),
-    waterLitres: current.waterLitres || 0,
-    waterRatio: Number.parseFloat(Math.min(1, (current.waterLitres || 0) / 2.5).toFixed(2)),
+    waterLitres: safeWater,
+    waterRatio: Number.parseFloat(Math.min(1, safeWater / 2.5).toFixed(2)),
     caloriesLogged: nutritionPassed,
-    totalCalories: current.totalCalories || 0,
+    totalCalories: safeCalories,
     sleepHours,
-    heartRateBpm: current.smartDevice?.heartRateBpm || 0,
+    heartRateBpm: safeBpm,
     verdict,
     recordedAt: new Date().toISOString(),
   };

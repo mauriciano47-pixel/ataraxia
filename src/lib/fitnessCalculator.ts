@@ -15,15 +15,26 @@ export interface FitnessCalculation {
   };
 }
 
+function clampFinite(val: unknown, fallback: number, min: number, max: number): number {
+  const n = typeof val === 'number' ? val : Number(val);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
 export function calculateBMR(weightKg: number, heightCm: number, age: number, gender: 'male' | 'female'): number {
-  if (gender === 'male') {
-    return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + 5);
-  } else {
-    return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age - 161);
-  }
+  const w = clampFinite(weightKg, 70, 20, 350);
+  const h = clampFinite(heightCm, 170, 80, 260);
+  const a = clampFinite(age, 30, 10, 120);
+
+  const raw = gender === 'male'
+    ? Math.round(10 * w + 6.25 * h - 5 * a + 5)
+    : Math.round(10 * w + 6.25 * h - 5 * a - 161);
+
+  return Math.max(500, raw);
 }
 
 export function calculateTDEE(bmr: number, activityLevel: UserMetrics['activityLevel']): number {
+  const safeBmr = clampFinite(bmr, 1600, 500, 10000);
   const multipliers: Record<UserMetrics['activityLevel'], number> = {
     sedentary: 1.2,
     light: 1.375,
@@ -31,17 +42,18 @@ export function calculateTDEE(bmr: number, activityLevel: UserMetrics['activityL
     active: 1.725,
     athlete: 1.9
   };
-  return Math.round(bmr * (multipliers[activityLevel] || 1.55));
+  return Math.round(safeBmr * (multipliers[activityLevel] || 1.55));
 }
 
 export function calculateFitnessIndex(metrics: UserMetrics): FitnessCalculation {
-  const bmr = calculateBMR(metrics.weightKg, metrics.heightCm, metrics.age, metrics.gender);
-  const tdee = calculateTDEE(bmr, metrics.activityLevel);
+  const safeMetrics = metrics || ({} as UserMetrics);
+  const bmr = calculateBMR(safeMetrics.weightKg, safeMetrics.heightCm, safeMetrics.age, safeMetrics.gender === 'female' ? 'female' : 'male');
+  const tdee = calculateTDEE(bmr, safeMetrics.activityLevel);
 
   let targetCalories = tdee;
-  if (metrics.goal === 'deficit') {
+  if (safeMetrics.goal === 'deficit') {
     targetCalories = Math.round(tdee * 0.82);
-  } else if (metrics.goal === 'surplus') {
+  } else if (safeMetrics.goal === 'surplus') {
     targetCalories = Math.round(tdee * 1.12);
   }
 
@@ -49,19 +61,19 @@ export function calculateFitnessIndex(metrics: UserMetrics): FitnessCalculation 
   let carbsPct = 40;
   let fatsPct = 30;
 
-  if (metrics.goal === 'deficit') {
+  if (safeMetrics.goal === 'deficit') {
     proteinPct = 40;
     carbsPct = 35;
     fatsPct = 25;
-  } else if (metrics.goal === 'surplus') {
+  } else if (safeMetrics.goal === 'surplus') {
     proteinPct = 25;
     carbsPct = 50;
     fatsPct = 25;
   }
 
-  const proteinGrams = Math.round((targetCalories * (proteinPct / 100)) / 4);
-  const carbsGrams = Math.round((targetCalories * (carbsPct / 100)) / 4);
-  const fatsGrams = Math.round((targetCalories * (fatsPct / 100)) / 9);
+  const proteinGrams = Math.max(0, Math.round((targetCalories * (proteinPct / 100)) / 4));
+  const carbsGrams = Math.max(0, Math.round((targetCalories * (carbsPct / 100)) / 4));
+  const fatsGrams = Math.max(0, Math.round((targetCalories * (fatsPct / 100)) / 9));
 
   return {
     bmr,
@@ -86,17 +98,15 @@ export type ActivityMode = 'idle' | 'walking' | 'jogging' | 'running';
 /**
  * Calcula la longitud de zancada personal usando la fórmula ACSM.
  * Referencia: American College of Sports Medicine Exercise Guidelines.
- * @param heightCm altura en cm
- * @param mode modo de actividad
- * @returns longitud de zancada en metros
  */
 export function getPersonalStrideLength(heightCm: number, mode: ActivityMode = 'walking'): number {
-  const heightM = (heightCm > 0 ? heightCm : 170) / 100;
+  const safeH = Number.isFinite(heightCm) && heightCm > 0 ? Math.min(260, Math.max(80, heightCm)) : 170;
+  const heightM = safeH / 100;
   switch (mode) {
     case 'running': return heightM * 0.497;   // ACSM fórmula carrera
     case 'jogging': return heightM * 0.460;   // Interpolado trote
     case 'walking':
-    default: return heightM * 0.413;   // ACSM fórmula caminata
+    default: return heightM * 0.413;          // ACSM fórmula caminata
   }
 }
 
@@ -105,7 +115,7 @@ export function getPersonalStrideLength(heightCm: number, mode: ActivityMode = '
  * Estándar: Fitbit, Garmin, Samsung Health.
  */
 export function getActivityModeFromCadence(cadenceSpm: number): ActivityMode {
-  if (cadenceSpm <= 0) return 'idle';
+  if (!Number.isFinite(cadenceSpm) || cadenceSpm <= 0) return 'idle';
   if (cadenceSpm < 60) return 'idle';
   if (cadenceSpm < 100) return 'walking';
   if (cadenceSpm < 130) return 'jogging';
@@ -117,16 +127,16 @@ export function getActivityModeFromCadence(cadenceSpm: number): ActivityMode {
  * Basado en tablas ACSM/Compendium of Physical Activities.
  */
 export function getMETFromCadence(cadenceSpm: number): number {
-  if (cadenceSpm <= 0) return 1.0;  // Reposo/sedentario
+  if (!Number.isFinite(cadenceSpm) || cadenceSpm <= 0) return 1.0;  // Reposo/sedentario
   if (cadenceSpm < 60) return 1.5;  // Muy lento
   if (cadenceSpm < 80) return 2.5;  // Caminata lenta (~3 km/h)
-  if (cadenceSpm < 100) return 3.5;  // Caminata normal (~4.8 km/h) — ESTÁNDAR FITBIT
-  if (cadenceSpm < 110) return 4.5;  // Caminata rápida (~6 km/h)
-  if (cadenceSpm < 120) return 5.5;  // Marcha atlética
-  if (cadenceSpm < 130) return 7.0;  // Trote suave (~8 km/h)
-  if (cadenceSpm < 150) return 9.5;  // Carrera moderada (~10 km/h)
-  if (cadenceSpm < 170) return 11.5; // Carrera (~12 km/h)
-  return 14.0;                        // Carrera rápida (>13 km/h)
+  if (cadenceSpm < 100) return 3.5; // Caminata normal (~4.8 km/h) — ESTÁNDAR FITBIT
+  if (cadenceSpm < 110) return 4.5; // Caminata rápida (~6 km/h)
+  if (cadenceSpm < 120) return 5.5; // Marcha atlética
+  if (cadenceSpm < 130) return 7.0; // Trote suave (~8 km/h)
+  if (cadenceSpm < 150) return 9.5; // Carrera moderada (~10 km/h)
+  if (cadenceSpm < 170) return 11.5;// Carrera (~12 km/h)
+  return 14.0;                      // Carrera rápida (>13 km/h)
 }
 
 /**
@@ -140,18 +150,19 @@ export function calculateStepCalories(
   cadenceSpm: number = 0,
   activeMinutes: number = 0
 ): number {
-  if (steps <= 0) return 0;
-  const effectiveCadence = cadenceSpm > 0 ? cadenceSpm : 85; // 85 SPM = caminata normal estándar
+  if (!Number.isFinite(steps) || steps <= 0) return 0;
+  const safeSteps = Math.min(200000, steps);
+  const safeWeight = Number.isFinite(weightKg) && weightKg > 0 ? Math.min(350, Math.max(20, weightKg)) : 70;
+  const effectiveCadence = Number.isFinite(cadenceSpm) && cadenceSpm > 0 ? Math.min(250, cadenceSpm) : 85;
   const met = getMETFromCadence(effectiveCadence);
-  const timeH = activeMinutes > 0
-    ? activeMinutes / 60
-    : steps / (effectiveCadence * 60);
-  return Math.max(0, Math.round(met * (weightKg > 0 ? weightKg : 70) * timeH));
+  const timeH = Number.isFinite(activeMinutes) && activeMinutes > 0
+    ? Math.min(1440, activeMinutes) / 60
+    : safeSteps / (effectiveCadence * 60);
+  return Math.max(0, Math.round(met * safeWeight * timeH));
 }
 
 /**
  * Calcula la distancia recorrida en km con la zancada personal del usuario.
- * Más preciso que el valor genérico de 0.00075 km/paso.
  */
 export function calculateDistanceKm(
   steps: number,
@@ -159,13 +170,17 @@ export function calculateDistanceKm(
   mode: ActivityMode = 'walking',
   manualStrideLengthM?: number
 ): number {
-  const strideLengthM = manualStrideLengthM ?? getPersonalStrideLength(heightCm, mode);
-  return Number.parseFloat(((steps * strideLengthM) / 1000).toFixed(2));
+  if (!Number.isFinite(steps) || steps <= 0) return 0;
+  const safeSteps = Math.min(200000, steps);
+  const validManual = typeof manualStrideLengthM === 'number' && Number.isFinite(manualStrideLengthM) && manualStrideLengthM > 0
+    ? Math.min(3.0, Math.max(0.2, manualStrideLengthM))
+    : undefined;
+  const strideLengthM = validManual ?? getPersonalStrideLength(heightCm, mode);
+  return Math.max(0, Number.parseFloat(((safeSteps * strideLengthM) / 1000).toFixed(2)));
 }
 
 /**
  * Calcula la velocidad estimada en km/h.
- * Fórmula: velocidad_kmh = (cadencia_spm × longitud_zancada_m × 60) / 1000
  */
 export function calculateSpeedKmh(
   cadenceSpm: number,
@@ -173,30 +188,39 @@ export function calculateSpeedKmh(
   mode: ActivityMode = 'walking',
   manualStrideLengthM?: number
 ): number {
-  if (cadenceSpm <= 0) return 0;
-  const strideLengthM = manualStrideLengthM ?? getPersonalStrideLength(heightCm, mode);
-  return Number.parseFloat(((cadenceSpm * strideLengthM * 60) / 1000).toFixed(1));
+  if (!Number.isFinite(cadenceSpm) || cadenceSpm <= 0) return 0;
+  const safeCadence = Math.min(260, cadenceSpm);
+  const validManual = typeof manualStrideLengthM === 'number' && Number.isFinite(manualStrideLengthM) && manualStrideLengthM > 0
+    ? Math.min(3.0, Math.max(0.2, manualStrideLengthM))
+    : undefined;
+  const strideLengthM = validManual ?? getPersonalStrideLength(heightCm, mode);
+  return Math.max(0, Number.parseFloat(((safeCadence * strideLengthM * 60) / 1000).toFixed(1)));
 }
 
 /**
  * Calcula el ritmo (min/km).
  */
 export function calculatePaceMinKm(speedKmh: number): string {
-  if (speedKmh <= 0) return '--:--';
+  if (!Number.isFinite(speedKmh) || speedKmh <= 0) return '--:--';
   const totalMin = 60 / speedKmh;
-  const mins = Math.floor(totalMin);
-  const secs = Math.round((totalMin - mins) * 60);
+  if (!Number.isFinite(totalMin) || totalMin <= 0 || totalMin > 999) return '--:--';
+  let mins = Math.floor(totalMin);
+  let secs = Math.round((totalMin - mins) * 60);
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**
  * Función legada mantenida por retrocompatibilidad.
- * @deprecated Usar calculateDistanceKm + calculateStepCalories con la altura y peso del usuario
  */
 export function estimateStepMetrics(steps: number, heightCm?: number, weightKg?: number) {
-  const km = calculateDistanceKm(steps, heightCm ?? 170);
-  const caloriesBurned = weightKg
-    ? calculateStepCalories(steps, weightKg, heightCm ?? 170)
-    : Math.round(steps * 0.04);
+  const safeSteps = Number.isFinite(steps) && steps > 0 ? steps : 0;
+  const km = calculateDistanceKm(safeSteps, heightCm ?? 170);
+  const caloriesBurned = weightKg && Number.isFinite(weightKg) && weightKg > 0
+    ? calculateStepCalories(safeSteps, weightKg, heightCm ?? 170)
+    : Math.max(0, Math.round(safeSteps * 0.04));
   return { km, caloriesBurned };
 }
