@@ -65,5 +65,15 @@
     "lint": "expo lint",
     "security:audit": "node ./scripts/security-audit.mjs"
   },
+  "overrides": {
+    "braces": "^3.0.3",
+    "brace-expansion": "^2.0.2",
+    "shell-quote": "^1.12.0",
+    "browserslist": "^4.28.7",
+    "compression": "^1.8.2",
+    "image-size": "^2.0.3",
+    "js-yaml": "^4.3.2",
+    "source-map-js": "^1.2.2"
+  },
   "private": true
 }
