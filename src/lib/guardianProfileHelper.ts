@@ -5,6 +5,7 @@ import {
   InjuryCare,
   LegendaryPath,
   LEGENDARY_PATHS,
+  getLegendaryPathInfo,
   MonthlyCycleState,
   ProkoptonProfile,
   CustomExercise,
@@ -31,7 +32,7 @@ export interface GuardianKeyResult {
 }
 
 export function buildGuardianKeyPayload(data: GuardianKeyInput): GuardianKeyResult {
-  const pathInfo = LEGENDARY_PATHS[data.path];
+  const pathInfo = getLegendaryPathInfo(data.path);
   const userEquip: EquipmentType = data.equipment || pathInfo.equipment || 'gym';
   const userDuration: SessionDurationMinutes = data.sessionDurationMinutes || 45;
   const bmr = 10 * data.weightKg + 6.25 * data.heightCm - 5 * data.age + 5;

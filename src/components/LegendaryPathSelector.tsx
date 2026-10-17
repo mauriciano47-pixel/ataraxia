@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { ThemedText } from './themed-text';
-import { LegendaryPath, LEGENDARY_PATHS } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS_LIST, getLegendaryPathInfo } from '@/types/onboarding';
 
 interface Props {
   onSelectPath: (path: LegendaryPath) => void;
@@ -16,7 +16,6 @@ interface Props {
 
 export function LegendaryPathSelector({ onSelectPath }: Props) {
   const [selectedPath, setSelectedPath] = useState<LegendaryPath>('spartan');
-  const pathsList: LegendaryPath[] = ['spartan', 'hoplite', 'apollo', 'philosopher'];
 
   return (
     <View style={styles.container}>
@@ -55,18 +54,17 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
           contentContainerStyle={styles.pathsScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {pathsList.map((pathKey) => {
-            const pathInfo = LEGENDARY_PATHS[pathKey];
-            const isSelected = selectedPath === pathKey;
+          {LEGENDARY_PATHS_LIST.map((pathInfo) => {
+            const isSelected = selectedPath === pathInfo.id;
 
             return (
               <TouchableOpacity
-                key={pathKey}
+                key={pathInfo.id}
                 style={[
                   styles.pathCard,
                   isSelected && styles.pathCardSelected,
                 ]}
-                onPress={() => setSelectedPath(pathKey)}
+                onPress={() => setSelectedPath(pathInfo.id)}
                 activeOpacity={0.85}
               >
                 {/* Header de la tarjeta */}
@@ -117,7 +115,7 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
               <View style={styles.confirmBtnInner}>
                 <ThemedText style={{ fontSize: 16 }}>⚡</ThemedText>
                 <ThemedText style={styles.confirmBtnText}>
-                  CONSAGRAR {LEGENDARY_PATHS[selectedPath].name.toUpperCase()}
+                  CONSAGRAR {getLegendaryPathInfo(selectedPath).name.toUpperCase()}
                 </ThemedText>
                 <ThemedText style={{ fontSize: 16 }}>⚡</ThemedText>
               </View>

@@ -1,4 +1,4 @@
-import { LEGENDARY_PATHS, COACH_ARCHETYPES } from '../types/onboarding.ts';
+import { LEGENDARY_PATHS, COACH_ARCHETYPES, getLegendaryPathInfo } from '../types/onboarding.ts';
 import type { LegendaryPath, CoachArchetype, DailyGrade, DailyPillars } from '../types/onboarding.ts';
 
 export interface DayAudit {
@@ -53,7 +53,7 @@ export function generate30DayResolution(params: {
   archetype?: CoachArchetype;
 }): MonthlyResolution {
   const { dailyGrades, path, userName, startDate, archetype = 'stoic_mentor' } = params;
-  const pathInfo = LEGENDARY_PATHS[path] || LEGENDARY_PATHS.spartan;
+  const pathInfo = getLegendaryPathInfo(path);
   const coachInfo = COACH_ARCHETYPES[archetype] || COACH_ARCHETYPES.stoic_mentor;
   const totalDays = 30;
 

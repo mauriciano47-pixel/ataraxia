@@ -82,6 +82,28 @@ export const LEGENDARY_PATHS: Record<LegendaryPath, LegendaryPathInfo> = {
   },
 };
 
+export const LEGENDARY_PATHS_LIST: LegendaryPathInfo[] = [
+  LEGENDARY_PATHS.spartan,
+  LEGENDARY_PATHS.hoplite,
+  LEGENDARY_PATHS.apollo,
+  LEGENDARY_PATHS.philosopher,
+];
+
+export function getLegendaryPathInfo(path: LegendaryPath): LegendaryPathInfo {
+  switch (path) {
+    case 'spartan':
+      return LEGENDARY_PATHS.spartan;
+    case 'hoplite':
+      return LEGENDARY_PATHS.hoplite;
+    case 'apollo':
+      return LEGENDARY_PATHS.apollo;
+    case 'philosopher':
+      return LEGENDARY_PATHS.philosopher;
+    default:
+      return LEGENDARY_PATHS.spartan;
+  }
+}
+
 export type CycleTier = 'Novicio de Esparta' | 'Hoplita Probado' | 'Guerrero de Élite' | 'Semidiós del Olimpo';
 
 export type DailyGradeStatus = 'divine' | 'worthy' | 'mediocre' | 'failed';

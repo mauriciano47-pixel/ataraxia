@@ -2,6 +2,7 @@ import {
   CustomExercise,
   LegendaryPath,
   LEGENDARY_PATHS,
+  getLegendaryPathInfo,
   EquipmentType,
   DaysPerWeek,
   SessionDurationMinutes,
@@ -31,7 +32,7 @@ export function generateCalculatedPlan(input: PlanGenerationInput): CalculatedPl
   const ageNum = Number.parseInt(age, 10) || 28;
   const weightNum = Number.parseFloat(weightKg) || 78;
   const heightNum = Number.parseFloat(heightCm) || 176;
-  const pathInfo = LEGENDARY_PATHS[selectedPath];
+  const pathInfo = getLegendaryPathInfo(selectedPath);
 
   // BMR Fórmula Mifflin-St Jeor
   const bmr = 10 * weightNum + 6.25 * heightNum - 5 * ageNum + 5;

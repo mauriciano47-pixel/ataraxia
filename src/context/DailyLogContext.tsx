@@ -12,6 +12,7 @@ import {
   CoachArchetype,
   LegendaryPath,
   LEGENDARY_PATHS,
+  getLegendaryPathInfo,
   MonthlyCycleState,
   DailyGrade,
   EquipmentType,
@@ -534,7 +535,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, [updateLog, saveProfileToFirestore]);
 
   const selectLegendaryPath = useCallback((path: LegendaryPath) => {
-    const pathInfo = LEGENDARY_PATHS[path];
+    const pathInfo = getLegendaryPathInfo(path);
     const currentMetrics = logRef.current.userMetrics || DEFAULT_USER_METRICS;
     const bmr = 10 * currentMetrics.weightKg + 6.25 * currentMetrics.heightCm - 5 * currentMetrics.age + 5;
     const targetCals = Math.max(1400, Math.round(bmr * 1.4) + pathInfo.recommendedCalsDelta);

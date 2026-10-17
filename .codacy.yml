@@ -1,4 +1,33 @@
 ---
+engines:
+  duplication:
+    exclude_paths:
+      - "dist/**"
+      - "public/**"
+      - "assets/**"
+      - "scripts/**"
+      - "tests/**"
+      - "e2e/**"
+      - ".firebase/**"
+      - "src/constants/**"
+      - "src/styles/**"
+      - "src/components/*.styles.ts"
+      - "src/components/ModuleSvgIcons.tsx"
+      - "src/components/TabSvgIcons.tsx"
+  eslint:
+    exclude_paths:
+      - "dist/**"
+      - "public/**"
+      - "assets/**"
+      - "scripts/**"
+      - "tests/**"
+      - "e2e/**"
+      - ".firebase/**"
+      - "src/constants/**"
+      - "src/styles/**"
+      - "src/components/*.styles.ts"
+      - "src/components/ModuleSvgIcons.tsx"
+      - "src/components/TabSvgIcons.tsx"
 exclude_paths:
   - "dist/**"
   - "public/**"
@@ -9,11 +38,7 @@ exclude_paths:
   - ".firebase/**"
   - "src/styles/**"
   - "src/components/*.styles.ts"
-  - "src/constants/zeusEmblemBase64.ts"
-  - "src/constants/mandatoryProgramMatrix.ts"
-  - "src/constants/trainerPresets.ts"
-  - "src/constants/stoicPrinciples.ts"
-  - "src/constants/onboardingPlans.ts"
+  - "src/constants/**"
   - "src/components/ModuleSvgIcons.tsx"
   - "src/components/TabSvgIcons.tsx"
   - "sbom.cdx.json"

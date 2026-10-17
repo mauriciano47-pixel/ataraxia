@@ -13,6 +13,7 @@ import { ThemedText } from './themed-text';
 import {
   LegendaryPath,
   LEGENDARY_PATHS,
+  getLegendaryPathInfo,
   EquipmentType,
   SessionDurationMinutes,
   ExperienceLevel,
@@ -35,7 +36,7 @@ interface Props {
 }
 
 export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
-  const pathInfo = LEGENDARY_PATHS[selectedPath] || LEGENDARY_PATHS.spartan;
+  const pathInfo = getLegendaryPathInfo(selectedPath);
 
   const [email, setEmail] = useState<string>('');
   const [userName, setUserName] = useState<string>('Guerrero');

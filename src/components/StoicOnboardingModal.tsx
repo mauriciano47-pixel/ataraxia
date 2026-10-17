@@ -17,6 +17,8 @@ import {
   CustomExercise,
   LegendaryPath,
   LEGENDARY_PATHS,
+  LEGENDARY_PATHS_LIST,
+  getLegendaryPathInfo,
 } from '@/types/onboarding';
 import { useDailyLog } from '@/hooks/useDailyLog';
 import { Spacing } from '@/constants/theme';
@@ -62,7 +64,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
 
     setTimeout(() => {
       const plan = getPlan();
-      const pathInfo = LEGENDARY_PATHS[selectedPath];
+      const pathInfo = getLegendaryPathInfo(selectedPath);
 
       const profile: ProkoptonProfile = {
         userName: userName.trim() || 'Guerrero',
@@ -88,8 +90,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
     }, 1200);
   };
 
-  const pathsKeys: LegendaryPath[] = ['spartan', 'hoplite', 'apollo', 'philosopher'];
-  const activePathInfo = LEGENDARY_PATHS[selectedPath];
+  const activePathInfo = getLegendaryPathInfo(selectedPath);
   const calculatedPlan = getPlan();
 
   return (
@@ -122,15 +123,14 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                   Tu elección forjará tu rutina mensual, tus calorías y la severidad del Coach. Al Día 30 serás juzgado: <Text style={{ color: '#FFE259', fontWeight: 'bold' }}>ascenso o reprensión</Text>.
                 </Text>
 
-                {pathsKeys.map((key) => {
-                  const p = LEGENDARY_PATHS[key];
-                  const isSelected = selectedPath === key;
+                {LEGENDARY_PATHS_LIST.map((p) => {
+                  const isSelected = selectedPath === p.id;
 
                   return (
                     <TouchableOpacity
-                      key={key}
+                      key={p.id}
                       style={[styles.pathOptionCard, isSelected && styles.pathOptionSelected]}
-                      onPress={() => setSelectedPath(key)}
+                      onPress={() => setSelectedPath(p.id)}
                       activeOpacity={0.85}
                     >
                       <View style={styles.pathHeaderRow}>

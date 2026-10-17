@@ -3,4 +3,4 @@
  * Titularidad: Mauricio Uribe Maldonado
  */
 
-export { logger } from '../lib/logger';
+export { logger } from '../lib/logger.ts';

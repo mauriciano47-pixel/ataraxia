@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '@/components/themed-text';
-import { LegendaryPath, LEGENDARY_PATHS, CycleTier, CoachArchetype, COACH_ARCHETYPES } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS, getLegendaryPathInfo, CycleTier, CoachArchetype, COACH_ARCHETYPES } from '@/types/onboarding';
 
 interface HonorDiplomaModalProps {
   visible: boolean;
@@ -36,7 +36,7 @@ export function HonorDiplomaModal({
   recommendations,
   coachVerdict,
 }: HonorDiplomaModalProps) {
-  const pathInfo = LEGENDARY_PATHS[path] || LEGENDARY_PATHS.spartan;
+  const pathInfo = getLegendaryPathInfo(path);
   const coachInfo = COACH_ARCHETYPES[coachArchetype] || COACH_ARCHETYPES.stoic_mentor;
   const formattedDate = completionDate || new Date().toLocaleDateString('es-ES', {
     day: '2-digit',

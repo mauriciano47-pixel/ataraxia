@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
 import { useDailyLog, useHistoryLog } from '@/hooks/useDailyLog';
 import { PearlElectricBackground } from '@/components/PearlElectricBackground';
-import { LegendaryPath, LEGENDARY_PATHS, EquipmentType } from '@/types/onboarding';
+import { LegendaryPath, LEGENDARY_PATHS, getLegendaryPathInfo, EquipmentType } from '@/types/onboarding';
 import { SafeStorage } from '@/utils/safeStorage';
 import { MonthlyResolution } from '@/lib/monthlyResolutionEngine';
 import { HonorDiplomaModal } from '@/components/HonorDiplomaModal';
@@ -43,7 +43,7 @@ export default function ProgressScreen() {
   const [selectedGuideExercise, setSelectedGuideExercise] = useState<ExerciseGuideData | null>(null);
 
   const activePathKey = (log.legendaryPath as LegendaryPath) || 'spartan';
-  const activePathInfo = LEGENDARY_PATHS[activePathKey] || LEGENDARY_PATHS.spartan;
+  const activePathInfo = getLegendaryPathInfo(activePathKey);
 
   // Equipamiento activo: detectado del perfil, SafeStorage o fallback a 'gym'
   const initialEquip: EquipmentType =
