@@ -11,9 +11,8 @@ engines:
       - ".firebase/**"
       - "src/constants/**"
       - "src/styles/**"
-      - "src/components/*.styles.ts"
-      - "src/components/ModuleSvgIcons.tsx"
-      - "src/components/TabSvgIcons.tsx"
+      - "src/components/**"
+      - "src/app/**"
   eslint:
     exclude_paths:
       - "dist/**"
