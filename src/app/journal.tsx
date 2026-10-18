@@ -88,7 +88,7 @@ export default function JournalScreen() {
         ])
       );
       animation.start();
-      return () => animation.stop();
+      return () => { animation.stop(); };
     }
   }, [isLoading, typingDots]);
 
@@ -97,7 +97,7 @@ export default function JournalScreen() {
     const timer = setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 150);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [messages, isLoading]);
 
   // Inicialización contextual del Coach
@@ -141,7 +141,7 @@ export default function JournalScreen() {
       saveMessages(initialMessages);
     }, 0);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [loadingContext, loadingHistory, messages.length, patterns, today, disclaimerShown, saveMessages, setDisclaimerShown, setMessages, currentArchetype]);
 
   const currentPath: LegendaryPath = today.legendaryPath || 'spartan';
@@ -184,9 +184,9 @@ export default function JournalScreen() {
         const fullPrompt = conversationParts.join('\n\n');
 
         try {
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
-          );
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => { reject(new Error('TIMEOUT_EXCEEDED')); }, 7500);
+          });
 
           const apiCall = ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -309,7 +309,7 @@ export default function JournalScreen() {
             <TouchableOpacity
               style={styles.archetypeSelectorBtn}
               activeOpacity={0.8}
-              onPress={() => setShowArchetypeModal(true)}
+              onPress={() => { setShowArchetypeModal(true); }}
             >
               <ThemedText style={styles.archetypeBtnIcon}>{archetypeInfo.icon}</ThemedText>
               <View style={styles.archetypeBtnTextGroup}>
@@ -326,7 +326,7 @@ export default function JournalScreen() {
           ref={scrollViewRef}
           style={styles.chatArea}
           contentContainerStyle={styles.chatContent}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={() => { scrollViewRef.current?.scrollToEnd({ animated: true }); }}
           keyboardShouldPersistTaps="handled"
           removeClippedSubviews={false}
           overScrollMode="never"
@@ -383,7 +383,7 @@ export default function JournalScreen() {
                         applyingRoutineMsgId === `${msg.timestamp}-${index}` && styles.actionWorkoutBtnSuccess,
                       ]}
                       activeOpacity={0.8}
-                      onPress={() => handleApplyWorkout(detectedExercises, `${msg.timestamp}-${index}`)}
+                      onPress={() => { handleApplyWorkout(detectedExercises, `${msg.timestamp}-${index}`); }}
                       disabled={applyingRoutineMsgId !== null}
                     >
                       <Ionicons
@@ -436,7 +436,7 @@ export default function JournalScreen() {
               <TouchableOpacity
                 key={idx}
                 style={styles.quickPromptChip}
-                onPress={() => handleSendQuery(qp.text)}
+                onPress={() => { handleSendQuery(qp.text); }}
                 disabled={isLoading}
               >
                 <Ionicons name={qp.icon as any} size={12} color="#FFE259" />
@@ -472,7 +472,7 @@ export default function JournalScreen() {
       </KeyboardAvoidingView>
 
       {/* MODAL SELECTOR DE ARQUETIPO DEL COACH */}
-      <Modal visible={showArchetypeModal} transparent animationType="slide" onRequestClose={() => setShowArchetypeModal(false)}>
+      <Modal visible={showArchetypeModal} transparent animationType="slide" onRequestClose={() => { setShowArchetypeModal(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -480,7 +480,7 @@ export default function JournalScreen() {
                 <ThemedText style={styles.modalSub}>PERSONALIZACIÓN DEL COACH I.A.</ThemedText>
                 <ThemedText style={styles.modalTitle}>Elige tu Arquetipo</ThemedText>
               </View>
-              <TouchableOpacity onPress={() => setShowArchetypeModal(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity onPress={() => { setShowArchetypeModal(false); }} style={styles.modalCloseBtn}>
                 <Ionicons name="close" size={20} color="#CBD5E1" />
               </TouchableOpacity>
             </View>
@@ -495,7 +495,7 @@ export default function JournalScreen() {
                     key={item.id}
                     style={[styles.archetypeCard, isSelected && styles.archetypeCardSelected]}
                     activeOpacity={0.8}
-                    onPress={() => handleSelectArchetype(item.id)}
+                    onPress={() => { handleSelectArchetype(item.id); }}
                   >
                     <View style={styles.archetypeHeaderRow}>
                       <View style={styles.archetypeIconRing}>

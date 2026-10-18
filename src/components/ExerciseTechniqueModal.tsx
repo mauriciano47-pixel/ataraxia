@@ -188,9 +188,9 @@ Responde en máximo 3 párrafos breves con viñetas:
 2. Cómo sentir el músculo correcto y proteger articulaciones.
 3. Máxima de disciplina estoica para este levantamiento.`;
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
-      );
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => { reject(new Error('TIMEOUT_EXCEEDED')); }, 7500);
+      });
 
       const apiCall = ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -312,7 +312,7 @@ Responde en máximo 3 párrafos breves con viñetas:
               <TouchableOpacity
                 style={styles.toggleMentorBtn}
                 activeOpacity={0.8}
-                onPress={() => setShowAiBox(!showAiBox)}
+                onPress={() => { setShowAiBox(!showAiBox); }}
               >
                 <Ionicons name="chatbubbles-outline" size={16} color="#FFE259" />
                 <ThemedText style={styles.toggleMentorBtnText}>

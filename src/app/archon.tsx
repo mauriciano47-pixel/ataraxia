@@ -108,6 +108,34 @@ const ARCHETYPES_DATA = {
   },
 };
 
+const FEMALE_ARCHETYPES_LIST = [
+  { key: 'artemis' as const, ...ARCHETYPES_DATA.artemis },
+  { key: 'athena' as const, ...ARCHETYPES_DATA.athena },
+  { key: 'gorgo_sparta' as const, ...ARCHETYPES_DATA.gorgo_sparta },
+  { key: 'aphrodite_urania' as const, ...ARCHETYPES_DATA.aphrodite_urania },
+];
+
+const MALE_ARCHETYPES_LIST = [
+  { key: 'leonidas' as const, ...ARCHETYPES_DATA.leonidas },
+  { key: 'marcus_aurelius' as const, ...ARCHETYPES_DATA.marcus_aurelius },
+  { key: 'achilles' as const, ...ARCHETYPES_DATA.achilles },
+  { key: 'epictetus' as const, ...ARCHETYPES_DATA.epictetus },
+];
+
+function getArchetypeData(key: string) {
+  switch (key) {
+    case 'athena': return ARCHETYPES_DATA.athena;
+    case 'artemis': return ARCHETYPES_DATA.artemis;
+    case 'gorgo_sparta': return ARCHETYPES_DATA.gorgo_sparta;
+    case 'aphrodite_urania': return ARCHETYPES_DATA.aphrodite_urania;
+    case 'leonidas': return ARCHETYPES_DATA.leonidas;
+    case 'marcus_aurelius': return ARCHETYPES_DATA.marcus_aurelius;
+    case 'achilles': return ARCHETYPES_DATA.achilles;
+    case 'epictetus': return ARCHETYPES_DATA.epictetus;
+    default: return ARCHETYPES_DATA.artemis;
+  }
+}
+
 export default function ArchonThroneScreen() {
   const [selectedArchetypeKey, setSelectedArchetypeKey] = useState<string>('artemis');
   const [targetAudience, setTargetAudience] = useState<'all' | 'female' | 'male'>('all');
@@ -121,7 +149,7 @@ export default function ArchonThroneScreen() {
     SafeStorage.setItem('ataraxia_is_archon_master', 'true');
   }, []);
 
-  const currentArchetype = ARCHETYPES_DATA[selectedArchetypeKey as keyof typeof ARCHETYPES_DATA] || ARCHETYPES_DATA.artemis;
+  const currentArchetype = getArchetypeData(selectedArchetypeKey);
 
   const handlePublishSegmentedDecree = () => {
     if (!decreeInput.trim()) {
@@ -176,17 +204,16 @@ export default function ArchonThroneScreen() {
             {/* LEGIÓN FEMENINA */}
             <ThemedText style={styles.sectionHeaderFemale}>👑 LEGIÓN FEMENINA (ATENEA & ARTEMISA):</ThemedText>
             <View style={styles.archetypesRow}>
-              {(['artemis', 'athena', 'gorgo_sparta', 'aphrodite_urania'] as const).map((key) => {
-                const arch = ARCHETYPES_DATA[key];
-                const isSelected = selectedArchetypeKey === key;
+              {FEMALE_ARCHETYPES_LIST.map((arch) => {
+                const isSelected = selectedArchetypeKey === arch.key;
                 return (
                   <Pressable
-                    key={key}
+                    key={arch.key}
                     style={[
                       styles.archBtn,
                       isSelected && { borderColor: arch.themeColor, backgroundColor: arch.themeColor + '30' }
                     ]}
-                    onPress={() => setSelectedArchetypeKey(key)}
+                    onPress={() => { setSelectedArchetypeKey(arch.key); }}
                   >
                     <ThemedText style={[styles.archBtnText, isSelected && { color: '#FFFFFF', fontWeight: '900' }]}>
                       {arch.name}
@@ -199,17 +226,16 @@ export default function ArchonThroneScreen() {
             {/* LEGIÓN MASCULINA */}
             <ThemedText style={styles.sectionHeaderMale}>⚔️ LEGIÓN MASCULINA (ESPARTA & FILÓSOFOS):</ThemedText>
             <View style={styles.archetypesRow}>
-              {(['leonidas', 'marcus_aurelius', 'achilles', 'epictetus'] as const).map((key) => {
-                const arch = ARCHETYPES_DATA[key];
-                const isSelected = selectedArchetypeKey === key;
+              {MALE_ARCHETYPES_LIST.map((arch) => {
+                const isSelected = selectedArchetypeKey === arch.key;
                 return (
                   <Pressable
-                    key={key}
+                    key={arch.key}
                     style={[
                       styles.archBtn,
                       isSelected && { borderColor: arch.themeColor, backgroundColor: arch.themeColor + '30' }
                     ]}
-                    onPress={() => setSelectedArchetypeKey(key)}
+                    onPress={() => { setSelectedArchetypeKey(arch.key); }}
                   >
                     <ThemedText style={[styles.archBtnText, isSelected && { color: '#FFFFFF', fontWeight: '900' }]}>
                       {arch.name}

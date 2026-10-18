@@ -130,7 +130,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                     <TouchableOpacity
                       key={p.id}
                       style={[styles.pathOptionCard, isSelected && styles.pathOptionSelected]}
-                      onPress={() => setSelectedPath(p.id)}
+                      onPress={() => { setSelectedPath(p.id); }}
                       activeOpacity={0.85}
                     >
                       <View style={styles.pathHeaderRow}>
@@ -186,7 +186,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                       style={[styles.choiceBtn, equipment === 'gym' && styles.choiceBtnActive]}
-                      onPress={() => setEquipment('gym')}
+                      onPress={() => { setEquipment('gym'); }}
                     >
                       <Text style={[styles.choiceBtnText, equipment === 'gym' && styles.choiceBtnTextActive]}>
                         🏋️ Gimnasio
@@ -194,7 +194,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.choiceBtn, equipment === 'home_dumbbell' && styles.choiceBtnActive]}
-                      onPress={() => setEquipment('home_dumbbell')}
+                      onPress={() => { setEquipment('home_dumbbell'); }}
                     >
                       <Text style={[styles.choiceBtnText, equipment === 'home_dumbbell' && styles.choiceBtnTextActive]}>
                         🏠 Mancuernas
@@ -202,7 +202,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.choiceBtn, equipment === 'calisthenics' && styles.choiceBtnActive]}
-                      onPress={() => setEquipment('calisthenics')}
+                      onPress={() => { setEquipment('calisthenics'); }}
                     >
                       <Text style={[styles.choiceBtnText, equipment === 'calisthenics' && styles.choiceBtnTextActive]}>
                         🤸 Calistenia
@@ -219,7 +219,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                       <TouchableOpacity
                         key={mins}
                         style={[styles.choiceBtn, sessionDuration === mins && styles.choiceBtnActive]}
-                        onPress={() => setSessionDuration(mins as SessionDurationMinutes)}
+                        onPress={() => { setSessionDuration(mins as SessionDurationMinutes); }}
                       >
                         <Text style={[styles.choiceBtnText, sessionDuration === mins && styles.choiceBtnTextActive]}>
                           ⏱️ {mins} mins
@@ -237,7 +237,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
                       <TouchableOpacity
                         key={days}
                         style={[styles.choiceBtn, daysPerWeek === days && styles.choiceBtnActive]}
-                        onPress={() => setDaysPerWeek(days as DaysPerWeek)}
+                        onPress={() => { setDaysPerWeek(days as DaysPerWeek); }}
                       >
                         <Text style={[styles.choiceBtnText, daysPerWeek === days && styles.choiceBtnTextActive]}>
                           {days} días
@@ -349,7 +349,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
             {step > 1 && (
               <TouchableOpacity
                 style={styles.backBtn}
-                onPress={() => setStep((prev) => prev - 1)}
+                onPress={() => { setStep((prev) => prev - 1); }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.backBtnText}>← Atrás</Text>
@@ -359,7 +359,7 @@ export function StoicOnboardingModal({ visible, onClose, onComplete }: Props) {
             {step < 3 ? (
               <TouchableOpacity
                 style={styles.nextBtn}
-                onPress={() => setStep((prev) => prev + 1)}
+                onPress={() => { setStep((prev) => prev + 1); }}
                 activeOpacity={0.85}
               >
                 <Text style={styles.nextBtnText}>Continuar →</Text>
