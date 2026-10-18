@@ -2,10 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Descargar Ataraxia Stoic Fitness — App Oficial</title>
-  <meta name="description" content="Descarga Ataraxia APK oficial para Android. Podómetro biomecánico 24/7 con soporte para coprocesador de hardware y pantalla apagada.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Instalar Ataraxia — App Oficial Independiente (Sin Terceros)</title>
+  <meta name="description" content="Instala Ataraxia directamente en tu celular Android, iPhone o Computadora en 1 clic, sin depender de BlueStacks, tiendas ni aplicaciones de terceros.">
+  <meta name="theme-color" content="#040406">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ataraxia">
   <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -17,36 +23,36 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 30px 20px;
+      padding: 28px 18px;
       text-align: center;
     }
     .container {
-      max-width: 440px;
+      max-width: 460px;
       width: 100%;
-      background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.12) 0%, rgba(10, 14, 26, 0.95) 75%);
-      border: 1.5px solid rgba(212, 175, 55, 0.35);
+      background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.14) 0%, rgba(10, 14, 26, 0.96) 75%);
+      border: 1.5px solid rgba(212, 175, 55, 0.4);
       border-radius: 28px;
-      padding: 36px 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.15);
+      padding: 34px 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(212, 175, 55, 0.15);
       backdrop-filter: blur(16px);
     }
     .badge {
       display: inline-block;
       font-size: 10px;
       font-weight: 900;
-      letter-spacing: 2px;
+      letter-spacing: 1.8px;
       color: #FFE259;
       background: rgba(212, 175, 55, 0.15);
-      border: 1px solid rgba(255, 226, 89, 0.4);
-      padding: 5px 14px;
+      border: 1px solid rgba(255, 226, 89, 0.45);
+      padding: 6px 14px;
       border-radius: 20px;
       text-transform: uppercase;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     .emblem {
-      width: 130px;
-      height: 130px;
-      margin: 0 auto 16px;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 14px;
       display: block;
       filter: drop-shadow(0 0 25px rgba(255, 226, 89, 0.5));
       animation: pulseGlow 3s ease-in-out infinite alternate;
@@ -68,9 +74,10 @@
       font-size: 13px;
       color: #94A3B8;
       line-height: 1.5;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
-    .btn-download {
+    .btn-install {
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -78,33 +85,60 @@
       background: linear-gradient(135deg, #FFE259 0%, #D4AF37 50%, #F59E0B 100%);
       color: #05070D;
       font-weight: 900;
-      font-size: 15px;
-      letter-spacing: 1.5px;
-      padding: 18px 24px;
+      font-size: 14.5px;
+      letter-spacing: 1.2px;
+      padding: 18px 20px;
       border-radius: 16px;
-      text-decoration: none;
+      border: none;
+      cursor: pointer;
       box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
       transition: all 0.2s ease;
       text-transform: uppercase;
+      margin-bottom: 12px;
     }
-    .btn-download:active {
+    .btn-install:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(245, 158, 11, 0.55);
+    }
+    .btn-install:active {
       transform: scale(0.97);
-      box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+    }
+    .btn-direct {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1.5px solid rgba(255, 226, 89, 0.45);
+      color: #FFE259;
+      font-weight: 800;
+      font-size: 13.5px;
+      letter-spacing: 0.8px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+    .btn-direct:hover {
+      background: rgba(212, 175, 55, 0.22);
     }
     .meta-tag {
       font-size: 11px;
-      color: #64748B;
+      color: #10B981;
+      font-weight: 700;
       font-family: monospace;
-      margin-top: 10px;
-      margin-bottom: 28px;
+      margin-top: 4px;
+      margin-bottom: 22px;
     }
     .steps-card {
-      background: rgba(5, 7, 13, 0.75);
-      border: 1px solid rgba(212, 175, 55, 0.2);
+      background: rgba(5, 7, 13, 0.8);
+      border: 1px solid rgba(212, 175, 55, 0.25);
       border-radius: 18px;
       padding: 18px;
       text-align: left;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .steps-title {
       font-size: 11px;
@@ -124,9 +158,9 @@
     .step-num {
       background: rgba(212, 175, 55, 0.2);
       color: #FFE259;
-      border: 1px solid rgba(255, 226, 89, 0.3);
-      width: 22px;
-      height: 22px;
+      border: 1px solid rgba(255, 226, 89, 0.35);
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -136,71 +170,229 @@
       flex-shrink: 0;
     }
     .step-text {
-      font-size: 12px;
+      font-size: 12.5px;
       color: #CBD5E1;
+      line-height: 1.45;
+    }
+    .step-text strong {
+      color: #FFE259;
+    }
+    .step-tab-nav {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .step-tab {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94A3B8;
+      padding: 8px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .step-tab.active {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #FFE259;
+      color: #FFE259;
+    }
+    .step-content {
+      font-size: 12.5px;
+      color: #CBD5E1;
+      line-height: 1.55;
+    }
+    .step-content ol {
+      padding-left: 18px;
+    }
+    .step-content li {
+      margin-bottom: 7px;
+    }
+    .step-content li strong {
+      color: #FFE259;
+    }
+    .status-toast {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #A7F3D0;
+      font-size: 12px;
+      font-weight: 700;
       line-height: 1.4;
     }
-    .btn-web {
-      display: inline-block;
-      color: #94A3B8;
-      font-size: 12px;
-      text-decoration: none;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 10px;
-      transition: color 0.2s ease;
+    .footer-note {
+      font-size: 11px;
+      color: #64748B;
+      line-height: 1.5;
+      margin-top: 8px;
     }
-    .btn-web:hover { color: #FFE259; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="badge">🏛️ VERSIÓN NATIVA ANDROID 1.2.3 • EAS PRODUCTION READY</div>
+    <div class="badge">🏛️ INSTALACIÓN DIRECTA SOBERANA • CERO EMULADORES NI TERCEROS</div>
     <img src="/zeus_emblem.png" alt="Ataraxia Zeus" class="emblem">
     <h1>ATARAXIA</h1>
-    <p class="subtitle">Podómetro biomecánico con hardware 24/7, Auditoría Estoica Algorítmica con pulsómetro PPG óptico y templo de autodominio.</p>
-    
-    <a class="btn-download" href="https://github.com/mauriciano47-pixel/ataraxia/releases/download/v1.2.3/Ataraxia_v1.2.3.apk">
+    <p class="subtitle">Instala Ataraxia directamente como aplicación independiente en tu celular o computadora. <strong>Sin BlueStacks, sin tiendas externas y sin programas de terceros.</strong></p>
+
+    <div id="install-toast" class="status-toast"></div>
+
+    <button type="button" class="btn-install" id="btn-install-trigger" onclick="instalarApp()">
+      <span>📲</span>
+      <span id="btn-install-text">INSTALAR ATARAXIA AHORA (1 CLIC)</span>
       <span>⚡</span>
-      <span>DESCARGAR APK OFICIAL (v1.2.3 • Code 11)</span>
-      <span>📥</span>
+    </button>
+
+    <a class="btn-direct" href="/">
+      <span>🚀</span>
+      <span>Abrir Ataraxia Directamente</span>
     </a>
-    
-    <div class="meta-tag">Build Oficial • Android 8.0+ • Moto G85 / One UI / MIUI</div>
+
+    <div class="meta-tag">✓ App 100% Independiente • Android, iPhone & PC • Sin BlueStacks</div>
 
     <div class="steps-card">
-      <div class="steps-title">✨ NOVEDADES v1.2.3:</div>
+      <div class="steps-title">📋 INSTALACIÓN DIRECTA SEGÚN TU DISPOSITIVO:</div>
+      <div class="step-tab-nav">
+        <button type="button" class="step-tab active" id="tab-android" onclick="cambiarGuia('android')">🤖 Android</button>
+        <button type="button" class="step-tab" id="tab-ios" onclick="cambiarGuia('ios')">🍎 iPhone / iOS</button>
+        <button type="button" class="step-tab" id="tab-pc" onclick="cambiarGuia('pc')">💻 PC / Windows</button>
+      </div>
+
+      <div class="step-content" id="guia-android">
+        <ol>
+          <li>Toca el botón dorado <strong>"INSTALAR ATARAXIA AHORA"</strong> arriba.</li>
+          <li>Si tu navegador no muestra el aviso automático, toca los <strong>tres puntos (⋮)</strong> arriba a la derecha en Chrome y elige <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla principal"</strong>.</li>
+          <li>¡Listo! Ataraxia se instala en 2 segundos como aplicación propia en tu celular, sin bloqueos ni esperas de 140 MB.</li>
+        </ol>
+      </div>
+
+      <div class="step-content" id="guia-ios" style="display:none;">
+        <ol>
+          <li>Abre esta página en <strong>Safari</strong> desde tu iPhone o iPad.</li>
+          <li>Toca el botón <strong>Compartir</strong> (el cuadrado con la flecha hacia arriba ⬆️ en la barra inferior).</li>
+          <li>Selecciona <strong>"Agregar a Inicio"</strong> (➕) y pulsa <strong>"Agregar"</strong>. Tendrás Ataraxia con su icono dorado en tu pantalla principal.</li>
+        </ol>
+      </div>
+
+      <div class="step-content" id="guia-pc" style="display:none;">
+        <ol>
+          <li>Haz clic en el botón dorado <strong>"INSTALAR ATARAXIA AHORA"</strong> arriba (o en el icono de instalar 📥 en la barra de direcciones de Chrome / Edge).</li>
+          <li>Confirma haciendo clic en <strong>"Instalar"</strong>.</li>
+          <li>Ataraxia se abrirá en su propia ventana independiente de escritorio y creará un acceso directo en tu PC, <strong>sin usar BlueStacks ni ningún emulador</strong>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="steps-card">
+      <div class="steps-title">✨ ARQUITECTURA SOBERANA v1.2.3:</div>
       <div class="step-row">
         <div class="step-num">🏛️</div>
-        <div class="step-text"><strong>Onboarding Ceremonial para Nuevos Usuarios:</strong> Juramento solemne con Papiro Sagrado, selección de las 4 Sendas Legendarias y Llave del Guardián personalizada.</div>
+        <div class="step-text"><strong>Onboarding Ceremonial Independiente:</strong> Cada usuario inicia su propio Papiro Sagrado del Juramento, elige sus 4 Sendas Legendarias y genera su Llave del Guardián única.</div>
       </div>
       <div class="step-row">
         <div class="step-num">💓</div>
-        <div class="step-text"><strong>Escáner Óptico PPG en Vivo:</strong> Detección hemodinámica por cámara, pulso cardíaco en tiempo real y biofeedback háptico.</div>
+        <div class="step-text"><strong>Escáner Óptico PPG & Biometría:</strong> Medición cardíaca en vivo, entrenamiento de fuerza RPE/RIR, cálculo nutricional TDEE/BMR y Coach Estoico con IA.</div>
       </div>
       <div class="step-row">
-        <div class="step-num">⚔️</div>
-        <div class="step-text"><strong>Podómetro Biomecánico 24/7:</strong> Filtro inteligente anti-vehículo, conteo de pasos en segundo plano y auditoría física contra el autoengaño.</div>
+        <div class="step-num">🛡️</div>
+        <div class="step-text"><strong>Cero Dependencia de Terceros:</strong> Instalación directa en el sistema operativo (WebAPK / PWA Standalone) sin emuladores pesados.</div>
       </div>
     </div>
 
-    <div class="steps-card">
-      <div class="steps-title">📋 CÓMO INSTALAR EN 1 MINUTO:</div>
-      <div class="step-row">
-        <div class="step-num">1</div>
-        <div class="step-text">Toca el botón dorado <strong>DESCARGAR APK</strong> arriba.</div>
-      </div>
-      <div class="step-row">
-        <div class="step-num">2</div>
-        <div class="step-text">Abre el archivo descargado y presiona <strong>Instalar</strong>.</div>
-      </div>
-      <div class="step-row">
-        <div class="step-num">3</div>
-        <div class="step-text">Abre Ataraxia y autoriza los sensores de <strong>Actividad Física</strong> y <strong>Cámara</strong> para mediciones biométricas.</div>
-      </div>
-    </div>
-
-    <a class="btn-web" href="/">⚡ O entrar directamente a la versión Web</a>
+    <p class="footer-note">
+      Ataraxia — Templo del Autodominio • Propiedad de Mauricio Uribe Maldonado
+    </p>
   </div>
+
+  <script>
+    let deferredPrompt = null;
+
+    // Registrar Service Worker Soberano para activar el motor nativo de instalación
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const text = document.getElementById('btn-install-text');
+      if (text) {
+        text.textContent = '¡INSTALAR ATARAXIA DIRECTAMENTE AHORA!';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      mostrarMensaje('✅ ¡Ataraxia ha sido instalada directamente en tu dispositivo! Ya puedes abrirla desde tu pantalla de inicio o escritorio.');
+    });
+
+    function mostrarMensaje(msg) {
+      const toast = document.getElementById('install-toast');
+      if (toast) {
+        toast.innerHTML = msg;
+        toast.style.display = 'block';
+      }
+    }
+
+    async function instalarApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          mostrarMensaje('✅ Instalando Ataraxia directamente en tu dispositivo...');
+        }
+        deferredPrompt = null;
+        return;
+      }
+
+      // Si ya está instalada o el navegador requiere el menú nativo:
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isAndroid = /Android/.test(navigator.userAgent);
+
+      if (isIOS) {
+        cambiarGuia('ios');
+        mostrarMensaje('🍎 <strong>En iPhone/iPad:</strong> Toca el icono <strong>Compartir (⬆️)</strong> en la barra de Safari y selecciona <strong>"Agregar a Inicio" (➕)</strong>.');
+      } else if (isAndroid) {
+        cambiarGuia('android');
+        mostrarMensaje('🤖 <strong>Instalación Directa Android:</strong> Toca los <strong>3 puntos (⋮)</strong> arriba a la derecha en tu navegador y selecciona <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla principal"</strong>.');
+      } else {
+        cambiarGuia('pc');
+        mostrarMensaje('💻 <strong>Instalación Directa en PC:</strong> Haz clic en el icono de <strong>Instalar Ataraxia (🖥️⬇️)</strong> a la derecha de la barra de direcciones arriba (o en el menú ⋮ → <em>Guardar y compartir → Instalar Ataraxia</em>).');
+      }
+    }
+
+    function cambiarGuia(tipo) {
+      document.getElementById('tab-android').classList.remove('active');
+      document.getElementById('tab-ios').classList.remove('active');
+      document.getElementById('tab-pc').classList.remove('active');
+
+      document.getElementById('guia-android').style.display = 'none';
+      document.getElementById('guia-ios').style.display = 'none';
+      document.getElementById('guia-pc').style.display = 'none';
+
+      document.getElementById('tab-' + tipo).classList.add('active');
+      document.getElementById('guia-' + tipo).style.display = 'block';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isAndroid = /Android/.test(navigator.userAgent);
+      if (isIOS) {
+        cambiarGuia('ios');
+      } else if (isAndroid) {
+        cambiarGuia('android');
+      } else {
+        cambiarGuia('pc');
+      }
+    });
+  </script>
 </body>
 </html>

@@ -21,21 +21,21 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
 
         <ScrollViewStyleReset />
-        <script id="sw-cleanup">{`
+        <script id="sw-setup">{`
             (function() {
-              // 1. Auto-limpieza de Service Workers obsoletos para evitar bloqueos por cache
+              // 1. Registro de Service Worker Soberano para instalación directa (WebAPK / PWA)
               if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  for (var i = 0; i < regs.length; i++) {
-                    regs[i].unregister();
-                  }
-                }).catch(function() {});
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                });
               }
-              // 2. Limpieza de CacheStorage corrupto
+              // 2. Limpieza de CacheStorage obsoleto
               if (typeof window !== 'undefined' && 'caches' in window) {
                 caches.keys().then(function(keys) {
                   for (var j = 0; j < keys.length; j++) {
-                    caches.delete(keys[j]);
+                    if (keys[j] !== 'ataraxia-sovereign-v1.2.3') {
+                      caches.delete(keys[j]);
+                    }
                   }
                 }).catch(function() {});
               }
