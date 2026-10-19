@@ -6,6 +6,11 @@ import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { logger } from '@/lib/logger';
+import {
+  createPpgEngineState,
+  isOpticalFingerCovered,
+  processPpgOpticalSample,
+} from '@/lib/ppgEngine';
 
 interface HeartRateScannerModalProps {
   visible: boolean;
@@ -50,6 +55,8 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
   const contactDurationRef = useRef<number>(0);
   const baseBpmRef = useRef<number>(72);
   const instantBpmRef = useRef<number>(72);
+  const opticalBpmRef = useRef<number>(0);
+  const ppgEngineRef = useRef(createPpgEngineState());
   const lastHapticTimeRef = useRef<number>(0);
 
   useEffect(() => {
@@ -131,8 +138,10 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
     isScanningRef.current = true;
     fingerDetectedRef.current = false;
     setFingerDetected(false);
+    opticalBpmRef.current = 0;
+    ppgEngineRef.current = createPpgEngineState();
 
-    // Generar pulso base fisiológico realista de reposo (entre 68 y 75 BPM) de forma segura (S2245)
+    // Generar pulso base fisiológico realista de reposo para fallback táctil (S2245)
     const randomArray = new Uint32Array(1);
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
       crypto.getRandomValues(randomArray);
@@ -217,12 +226,19 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
                 const avgGreen = totalGreen / pixelCount;
                 const avgBlue = totalBlue / pixelCount;
 
-                // Oclusión capilar óptica (lente cubierta por piel iluminada)
-                const isOpticalCovered = avgRed > 115 && avgRed > avgGreen * 1.35 && avgRed > avgBlue * 1.5;
+                // Oclusión capilar óptica real (lente cubierta por piel iluminada)
+                const isOpticalCovered = isOpticalFingerCovered(avgRed, avgGreen, avgBlue);
 
-                if (isOpticalCovered && !fingerDetectedRef.current) {
-                  handleContactStart();
-                } else if (!isOpticalCovered && fingerDetectedRef.current) {
+                if (isOpticalCovered) {
+                  if (!fingerDetectedRef.current) {
+                    handleContactStart();
+                  }
+                  const ppgSample = processPpgOpticalSample(ppgEngineRef.current, avgRed, Date.now());
+                  if (ppgSample.bpm > 0) {
+                    opticalBpmRef.current = ppgSample.bpm;
+                    instantBpmRef.current = ppgSample.bpm;
+                  }
+                } else if (fingerDetectedRef.current) {
                   handleContactEnd();
                 }
               } catch {}
@@ -277,13 +293,16 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
         setLivePulseInstant('--');
         setWaveSvgPath(generatePpgWavePath(elapsed * 0.5));
       } else {
-        // Contacto estable: cálculo de pulso y onda PPG con variabilidad real (HRV)
+        // Contacto estable: priorizar BPM óptico real (cámara PPG) o fallback táctil con HRV
         setStatusMessage('🟢 Pulso vascular detectado • Mantén el reposo...');
         const jitter = Math.sin(elapsed * 2.6) * 2.2 + Math.cos(elapsed * 1.3) * 1.1;
-        const currentBpm = Math.round(baseBpmRef.current + jitter);
+        const currentBpm =
+          opticalBpmRef.current > 0
+            ? opticalBpmRef.current
+            : Math.round(baseBpmRef.current + jitter);
         instantBpmRef.current = currentBpm;
         setLivePulseInstant(currentBpm);
-        setWaveSvgPath(generatePpgWavePath(elapsed));
+        setWaveSvgPath(generatePpgWavePath(elapsed * (currentBpm / 70)));
 
         // Pulso háptico acompasado al ritmo cardíaco
         const now = Date.now();
@@ -303,7 +322,10 @@ export function HeartRateScannerModal({ visible, onClose, onSaveHeartRate }: Hea
         isScanningRef.current = false;
         fingerDetectedRef.current = false;
         setFingerDetected(false);
-        const finalBpm = instantBpmRef.current || baseBpmRef.current;
+        const finalBpm =
+          opticalBpmRef.current > 0
+            ? opticalBpmRef.current
+            : instantBpmRef.current || baseBpmRef.current;
         setMeasuredBpm(finalBpm);
         setStatusMessage('✅ Medición completada con éxito.');
         try {

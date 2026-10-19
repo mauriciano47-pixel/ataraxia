@@ -41,13 +41,13 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
   const [connectingBrand, setConnectingBrand] = useState<string | null>(null);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
 
-  // Estados de calibración y verificación de Google Health (Fieles 100% al hardware de tu Motorola g85)
+  // Estados de calibración y verificación de Google Health Connect
   const [ghSteps, setGhSteps] = useState<string>(() => {
     try {
       const savedSteps = SafeStorage.getItem('ataraxia_pedometer_session_steps_v1');
       if (savedSteps && Number.parseInt(savedSteps, 10) > 0) return savedSteps;
     } catch {}
-    return currentSteps > 0 ? currentSteps.toString() : '1127';
+    return currentSteps > 0 ? currentSteps.toString() : '0';
   });
   const [ghSleepHours, setGhSleepHours] = useState<string>('7.5');
   const [ghRestingBpm, setGhRestingBpm] = useState<string>(() => (deviceState?.heartRateBpm && deviceState.heartRateBpm > 0) ? deviceState.heartRateBpm.toString() : '70');
