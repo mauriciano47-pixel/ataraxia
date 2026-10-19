@@ -90,7 +90,7 @@ export function BoxBreathingModal({ visible, onClose }: BoxBreathingModalProps) 
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); };
   }, [phase, isActive, visible, scaleAnim]);
 
   // Pulso de resplandor continuo
@@ -111,7 +111,7 @@ export function BoxBreathingModal({ visible, onClose }: BoxBreathingModalProps) 
       ])
     );
     pulseLoop.start();
-    return () => pulseLoop.stop();
+    return () => { pulseLoop.stop(); };
   }, [visible, pulseAnim]);
 
   const currentConf = PHASE_CONFIG[phase];

@@ -69,7 +69,7 @@ export function JudgmentDossierModal({
           <View style={styles.dossierTabsRow}>
             <TouchableOpacity
               style={[styles.dossierTabBtn, activeResolutionTab === 'verdict' && styles.dossierTabBtnActive]}
-              onPress={() => setActiveResolutionTab('verdict')}
+              onPress={() => { setActiveResolutionTab('verdict'); }}
             >
               <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'verdict' && styles.dossierTabBtnTextActive]}>
                 📜 Veredicto
@@ -78,7 +78,7 @@ export function JudgmentDossierModal({
 
             <TouchableOpacity
               style={[styles.dossierTabBtn, activeResolutionTab === 'feedback' && styles.dossierTabBtnActive]}
-              onPress={() => setActiveResolutionTab('feedback')}
+              onPress={() => { setActiveResolutionTab('feedback'); }}
             >
               <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'feedback' && styles.dossierTabBtnTextActive]}>
                 🎖️ Elogios & Reprensión
@@ -87,7 +87,7 @@ export function JudgmentDossierModal({
 
             <TouchableOpacity
               style={[styles.dossierTabBtn, activeResolutionTab === 'audit' && styles.dossierTabBtnActive]}
-              onPress={() => setActiveResolutionTab('audit')}
+              onPress={() => { setActiveResolutionTab('audit'); }}
             >
               <ThemedText style={[styles.dossierTabBtnText, activeResolutionTab === 'audit' && styles.dossierTabBtnTextActive]}>
                 📊 30 Días (Auditoría)

@@ -376,7 +376,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 }`;
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 7500)
+        setTimeout(() => { reject(new Error('TIMEOUT_EXCEEDED')); }, 7500)
       );
 
       const apiCall = ai.models.generateContent({
@@ -523,7 +523,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
           <TouchableOpacity
             style={styles.actionToolBtnSecondary}
-            onPress={() => setShowPresetsModal(true)}
+            onPress={() => { setShowPresetsModal(true); }}
             activeOpacity={0.8}
           >
             <ThemedText style={styles.actionToolSecondaryText}>📂 PLANTILLAS</ThemedText>
@@ -560,7 +560,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
 
         {/* BOTÓN PRINCIPAL GENERADOR DE RUTINAS IA */}
         <TouchableOpacity
-          onPress={() => setShowGeneratorModal(true)}
+          onPress={() => { setShowGeneratorModal(true); }}
           activeOpacity={0.85}
           style={styles.generatorMainTouch}
         >
@@ -681,7 +681,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           exerciseMuscleInput={exerciseMuscleInput}
           setExerciseMuscleInput={setExerciseMuscleInput}
           handleSaveExercise={handleSaveExercise}
-          onClose={() => setShowExerciseModal(false)}
+          onClose={() => { setShowExerciseModal(false); }}
           triggerHaptic={triggerHaptic}
           styles={styles}
         />
@@ -690,7 +690,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         <PresetsModal
           visible={showPresetsModal}
           onApplyPreset={handleApplyPreset}
-          onClose={() => setShowPresetsModal(false)}
+          onClose={() => { setShowPresetsModal(false); }}
           styles={styles}
         />
 
@@ -707,7 +707,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           isGenerating={isGenerating}
           generatedRoutine={generatedRoutine}
           handleApplyAIRoutine={handleApplyAIRoutine}
-          onClose={() => setShowGeneratorModal(false)}
+          onClose={() => { setShowGeneratorModal(false); }}
           triggerHaptic={triggerHaptic}
           styles={styles}
         />
@@ -716,7 +716,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         <ExerciseTechniqueModal
           visible={Boolean(selectedGuideExercise)}
           exercise={selectedGuideExercise}
-          onClose={() => setSelectedGuideExercise(null)}
+          onClose={() => { setSelectedGuideExercise(null); }}
         />
 
         {/* MODAL DE AUDITORÍA ESTOICA CONTRA EL AUTOENGAÑO */}
@@ -742,7 +742,7 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
         {/* MODAL DE ESCÁNER DE RITMO CARDÍACO POR CÁMARA (PPG) */}
         <HeartRateScannerModal
           visible={scannerModalVisible}
-          onClose={() => setScannerModalVisible(false)}
+          onClose={() => { setScannerModalVisible(false); }}
           onSaveHeartRate={(bpm) => {
             updateSmartDevice({ heartRateBpm: bpm });
             setScannerModalVisible(false);

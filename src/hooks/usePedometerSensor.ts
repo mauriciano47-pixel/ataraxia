@@ -326,7 +326,7 @@ export function usePedometerSensor(
   useEffect(() => {
     if (isPassiveWatcher || Platform.OS === 'web') return;
 
-    syncNativeHistoricalSteps();
+    void syncNativeHistoricalSteps();
 
     try {
       lastWatcherReportedRef.current = null;
@@ -453,7 +453,7 @@ export function usePedometerSensor(
     };
 
     const sub = AppState.addEventListener('change', handleAppStateChange);
-    return () => sub.remove();
+    return () => { sub.remove(); };
   }, [syncNativeHistoricalSteps]);
 
   // Forzar sincronización o alternar Modo Tránsito

@@ -49,7 +49,7 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
       ])
     );
     pulseLoop.start();
-    return () => pulseLoop.stop();
+    return () => { pulseLoop.stop(); };
   }, [heartRateBpm, heartScale, hasMeasurement]);
 
   // 2. Barrido Dinámico de la onda ECG (solo si hay medición)
@@ -63,7 +63,7 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
       })
     );
     sweepLoop.start();
-    return () => sweepLoop.stop();
+    return () => { sweepLoop.stop(); };
   }, [ecgSweepAnim, hasMeasurement]);
 
   // 3. Ritmo Cardíaco en reposo estable
@@ -172,7 +172,7 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
       <TouchableOpacity
         style={styles.card}
         activeOpacity={0.88}
-        onPress={() => setScannerVisible(true)}
+        onPress={() => { setScannerVisible(true); }}
       >
         {/* Card Header */}
         <View style={styles.cardHeader}>
@@ -256,7 +256,7 @@ export const ThunderTelemetryTwinCards = React.memo(function ThunderTelemetryTwi
       {/* Modal de Escáner Óptico PPG */}
       <HeartRateScannerModal
         visible={scannerVisible}
-        onClose={() => setScannerVisible(false)}
+        onClose={() => { setScannerVisible(false); }}
         onSaveHeartRate={(newBpm) => {
           setLiveFluctuatedBpm(newBpm);
           if (onSyncHeartRate) {

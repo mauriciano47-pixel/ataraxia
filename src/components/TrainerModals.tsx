@@ -170,7 +170,7 @@ export function PresetsModal({
                 <TouchableOpacity
                   key={preset.id}
                   style={styles.presetCard}
-                  onPress={() => onApplyPreset(preset)}
+                  onPress={() => { onApplyPreset(preset); }}
                   activeOpacity={0.8}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

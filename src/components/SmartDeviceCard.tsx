@@ -437,7 +437,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
           <>
             <TouchableOpacity
               style={[styles.btn, styles.btnSmartwatch]}
-              onPress={() => setSmartwatchModalVisible(true)}
+              onPress={() => { setSmartwatchModalVisible(true); }}
               activeOpacity={0.85}
             >
               <ThemedText style={styles.btnSmartwatchText}>
@@ -447,7 +447,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
 
             <TouchableOpacity
               style={[styles.btn, styles.btnGoogleHealth]}
-              onPress={() => setGoogleHealthModalVisible(true)}
+              onPress={() => { setGoogleHealthModalVisible(true); }}
               activeOpacity={0.85}
             >
               <ThemedText style={styles.btnGoogleHealthText}>
@@ -486,7 +486,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       </View>
 
       {/* Modal 1: Vincular Smartwatch Físico (BLE & Ecosistemas) */}
-      <Modal visible={smartwatchModalVisible} animationType="slide" transparent onRequestClose={() => setSmartwatchModalVisible(false)}>
+      <Modal visible={smartwatchModalVisible} animationType="slide" transparent onRequestClose={() => { setSmartwatchModalVisible(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -494,7 +494,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                 <ThemedText style={styles.modalBadge}>⚡ HARDWARE EXTERNO</ThemedText>
                 <ThemedText style={styles.modalTitle}>Vincular Smartwatch</ThemedText>
               </View>
-              <TouchableOpacity onPress={() => setSmartwatchModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity onPress={() => { setSmartwatchModalVisible(false); }} style={styles.modalCloseBtn}>
                 <ThemedText style={styles.modalCloseBtnText}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -538,7 +538,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       </Modal>
 
       {/* Modal 2: Sincronizar Google Health Connect */}
-      <Modal visible={googleHealthModalVisible} animationType="slide" transparent onRequestClose={() => setGoogleHealthModalVisible(false)}>
+      <Modal visible={googleHealthModalVisible} animationType="slide" transparent onRequestClose={() => { setGoogleHealthModalVisible(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -546,7 +546,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                 <ThemedText style={[styles.modalBadge, { color: '#34D399' }]}>💚 ANDROID HEALTH HUB</ThemedText>
                 <ThemedText style={styles.modalTitle}>Google Health Connect</ThemedText>
               </View>
-              <TouchableOpacity onPress={() => setGoogleHealthModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity onPress={() => { setGoogleHealthModalVisible(false); }} style={styles.modalCloseBtn}>
                 <ThemedText style={styles.modalCloseBtnText}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -632,7 +632,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                       <TouchableOpacity
                         key={chipVal}
                         style={[styles.ghQuickChip, ghSleepHours === chipVal && styles.ghQuickChipActive]}
-                        onPress={() => setGhSleepHours(chipVal)}
+                        onPress={() => { setGhSleepHours(chipVal); }}
                       >
                         <ThemedText style={[styles.ghQuickChipText, ghSleepHours === chipVal && styles.ghQuickChipTextActive]}>
                           {chipVal}h
@@ -658,7 +658,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                       <TouchableOpacity
                         key={chipVal}
                         style={[styles.ghQuickChip, ghRestingBpm === chipVal && styles.ghQuickChipActive]}
-                        onPress={() => setGhRestingBpm(chipVal)}
+                        onPress={() => { setGhRestingBpm(chipVal); }}
                       >
                         <ThemedText style={[styles.ghQuickChipText, ghRestingBpm === chipVal && styles.ghQuickChipTextActive]}>
                           {chipVal} bpm
@@ -695,7 +695,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
       </Modal>
 
       {/* Modal 3: Recibo de Datos Recibidos / Telemetry Sync Receipt */}
-      <Modal visible={receiptModalVisible} animationType="fade" transparent onRequestClose={() => setReceiptModalVisible(false)}>
+      <Modal visible={receiptModalVisible} animationType="fade" transparent onRequestClose={() => { setReceiptModalVisible(false); }}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { borderColor: '#10B981' }]}>
             <View style={styles.modalHeader}>
@@ -703,7 +703,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
                 <ThemedText style={[styles.modalBadge, { color: '#34D399' }]}>⚡ SINCRONIZACIÓN EXITOSA</ThemedText>
                 <ThemedText style={styles.modalTitle}>Datos Recibidos</ThemedText>
               </View>
-              <TouchableOpacity onPress={() => setReceiptModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity onPress={() => { setReceiptModalVisible(false); }} style={styles.modalCloseBtn}>
                 <ThemedText style={styles.modalCloseBtnText}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -744,7 +744,7 @@ export const SmartDeviceCard = React.memo(function SmartDeviceCard({ deviceState
 
                 <TouchableOpacity
                   style={styles.receiptConfirmBtn}
-                  onPress={() => setReceiptModalVisible(false)}
+                  onPress={() => { setReceiptModalVisible(false); }}
                   activeOpacity={0.85}
                 >
                   <ThemedText style={styles.receiptConfirmBtnText}>

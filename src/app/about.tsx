@@ -145,7 +145,7 @@ export default function AboutScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
               <TouchableOpacity
                 style={[styles.tabChip, activeTab === 'manifesto' && styles.tabChipActive]}
-                onPress={() => setActiveTab('manifesto')}
+                onPress={() => { setActiveTab('manifesto'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="book-outline" size={14} color={activeTab === 'manifesto' ? '#050507' : '#FFE259'} />
@@ -156,7 +156,7 @@ export default function AboutScreen() {
 
               <TouchableOpacity
                 style={[styles.tabChip, activeTab === 'faq' && styles.tabChipActive]}
-                onPress={() => setActiveTab('faq')}
+                onPress={() => { setActiveTab('faq'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="help-circle-outline" size={14} color={activeTab === 'faq' ? '#050507' : '#FFE259'} />
@@ -167,7 +167,7 @@ export default function AboutScreen() {
 
               <TouchableOpacity
                 style={[styles.tabChip, activeTab === 'privacy' && styles.tabChipActive]}
-                onPress={() => setActiveTab('privacy')}
+                onPress={() => { setActiveTab('privacy'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="shield-checkmark-outline" size={14} color={activeTab === 'privacy' ? '#050507' : '#FFE259'} />
@@ -178,7 +178,7 @@ export default function AboutScreen() {
 
               <TouchableOpacity
                 style={[styles.tabChip, activeTab === 'terms' && styles.tabChipActive]}
-                onPress={() => setActiveTab('terms')}
+                onPress={() => { setActiveTab('terms'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="document-text-outline" size={14} color={activeTab === 'terms' ? '#050507' : '#FFE259'} />
@@ -189,7 +189,7 @@ export default function AboutScreen() {
 
               <TouchableOpacity
                 style={[styles.tabChip, activeTab === 'contact' && styles.tabChipActive]}
-                onPress={() => setActiveTab('contact')}
+                onPress={() => { setActiveTab('contact'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="mail-outline" size={14} color={activeTab === 'contact' ? '#050507' : '#FFE259'} />
@@ -241,7 +241,7 @@ export default function AboutScreen() {
 
               <TouchableOpacity
                 style={styles.actionPillButton}
-                onPress={() => setShowParchmentModal(true)}
+                onPress={() => { setShowParchmentModal(true); }}
                 activeOpacity={0.85}
               >
                 <Ionicons name="document-text-outline" size={16} color="#050507" />
@@ -259,7 +259,7 @@ export default function AboutScreen() {
                   <ThemedView key={idx} style={styles.faqCard}>
                     <TouchableOpacity
                       style={styles.faqHeaderRow}
-                      onPress={() => toggleFaq(idx)}
+                      onPress={() => { toggleFaq(idx); }}
                       activeOpacity={0.8}
                     >
                       <View style={{ flex: 1, gap: 4 }}>
@@ -407,7 +407,7 @@ export default function AboutScreen() {
         {/* Modal de Relectura del Papiro del Juramento */}
         {showParchmentModal && (
           <View style={StyleSheet.absoluteFill}>
-            <GreekParchmentPact onAcceptPact={() => setShowParchmentModal(false)} />
+            <GreekParchmentPact onAcceptPact={() => { setShowParchmentModal(false); }} />
           </View>
         )}
       </SafeAreaView>

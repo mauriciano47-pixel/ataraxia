@@ -66,10 +66,10 @@ async function compressImageToWebBase64(file: File): Promise<string> {
         const dataUrl = canvas.toDataURL('image/jpeg', COMPRESSION_QUALITY);
         resolve(dataUrl);
       };
-      img.onerror = () => resolve(event.target?.result as string);
+      img.onerror = () => { resolve(event.target?.result as string); };
       img.src = event.target?.result as string;
     };
-    reader.onerror = (err) => reject(err);
+    reader.onerror = (err) => { reject(err); };
     reader.readAsDataURL(file);
   });
 }
@@ -311,7 +311,7 @@ export default function TransformationScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
               <TouchableOpacity
                 style={[styles.zoneChip, comparatorZone === 'all' && styles.zoneChipActive]}
-                onPress={() => setComparatorZone('all')}
+                onPress={() => { setComparatorZone('all'); }}
               >
                 <ThemedText style={[styles.zoneChipText, comparatorZone === 'all' && styles.zoneChipTextActive]}>
                   🌐 Todas las Zonas
@@ -324,7 +324,7 @@ export default function TransformationScreen() {
                   <TouchableOpacity
                     key={key}
                     style={[styles.zoneChip, isActive && styles.zoneChipActive]}
-                    onPress={() => setComparatorZone(key as BodyZone)}
+                    onPress={() => { setComparatorZone(key as BodyZone); }}
                   >
                     <ThemedText style={[styles.zoneChipText, isActive && styles.zoneChipTextActive]}>
                       {z.icon} {z.shortName}
@@ -346,7 +346,7 @@ export default function TransformationScreen() {
                   </View>
                   <TouchableOpacity
                     activeOpacity={0.9}
-                    onPress={() => setLightboxSnapshot(activeBefore)}
+                    onPress={() => { setLightboxSnapshot(activeBefore); }}
                     style={styles.comparatorImageWrapper}
                   >
                     <Image source={{ uri: activeBefore.photoBase64 }} style={styles.comparatorImage} />
@@ -370,7 +370,7 @@ export default function TransformationScreen() {
                   </View>
                   <TouchableOpacity
                     activeOpacity={0.9}
-                    onPress={() => setLightboxSnapshot(activeAfter)}
+                    onPress={() => { setLightboxSnapshot(activeAfter); }}
                     style={styles.comparatorImageWrapper}
                   >
                     <Image source={{ uri: activeAfter.photoBase64 }} style={styles.comparatorImage} />
@@ -408,7 +408,7 @@ export default function TransformationScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
               <TouchableOpacity
                 style={[styles.zoneChip, galleryFilterZone === 'all' && styles.zoneChipActive]}
-                onPress={() => setGalleryFilterZone('all')}
+                onPress={() => { setGalleryFilterZone('all'); }}
               >
                 <ThemedText style={[styles.zoneChipText, galleryFilterZone === 'all' && styles.zoneChipTextActive]}>
                   Todas ({bodySnapshots.length})
@@ -422,7 +422,7 @@ export default function TransformationScreen() {
                   <TouchableOpacity
                     key={key}
                     style={[styles.zoneChip, isActive && styles.zoneChipActive]}
-                    onPress={() => setGalleryFilterZone(key as BodyZone)}
+                    onPress={() => { setGalleryFilterZone(key as BodyZone); }}
                   >
                     <ThemedText style={[styles.zoneChipText, isActive && styles.zoneChipTextActive]}>
                       {z.icon} {z.shortName} ({count})
@@ -443,7 +443,7 @@ export default function TransformationScreen() {
                       key={snap.id}
                       style={styles.galleryCard}
                       activeOpacity={0.85}
-                      onPress={() => setLightboxSnapshot(snap)}
+                      onPress={() => { setLightboxSnapshot(snap); }}
                     >
                       <Image source={{ uri: snap.photoBase64 }} style={styles.galleryCardImage} />
                       <LinearGradient
@@ -484,13 +484,13 @@ export default function TransformationScreen() {
             visible={isCaptureModalOpen}
             animationType="slide"
             transparent={true}
-            onRequestClose={() => setIsCaptureModalOpen(false)}
+            onRequestClose={() => { setIsCaptureModalOpen(false); }}
           >
             <View style={styles.modalBackdrop}>
               <View style={styles.captureModalCard}>
                 <View style={styles.captureModalHeader}>
                   <ThemedText style={styles.captureModalTitle}>📸 REGISTRO DE ESCULTURA</ThemedText>
-                  <TouchableOpacity onPress={() => setIsCaptureModalOpen(false)} style={styles.closeModalCircle}>
+                  <TouchableOpacity onPress={() => { setIsCaptureModalOpen(false); }} style={styles.closeModalCircle}>
                     <ThemedText style={{ color: '#94A3B8', fontWeight: 'bold' }}>✕</ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -505,7 +505,7 @@ export default function TransformationScreen() {
                         <TouchableOpacity
                           key={key}
                           style={[styles.modalZoneChip, isSelected && styles.modalZoneChipSelected]}
-                          onPress={() => setSelectedZone(key as BodyZone)}
+                          onPress={() => { setSelectedZone(key as BodyZone); }}
                         >
                           <ThemedText style={styles.modalZoneIcon}>{z.icon}</ThemedText>
                           <ThemedText style={[styles.modalZoneName, isSelected && styles.modalZoneNameSelected]}>
@@ -601,7 +601,7 @@ export default function TransformationScreen() {
             visible={Boolean(lightboxSnapshot)}
             animationType="fade"
             transparent={true}
-            onRequestClose={() => setLightboxSnapshot(null)}
+            onRequestClose={() => { setLightboxSnapshot(null); }}
           >
             <View style={styles.lightboxBackdrop}>
               {lightboxSnapshot ? (
@@ -620,7 +620,7 @@ export default function TransformationScreen() {
                         })} • {lightboxSnapshot.weightKg} kg
                       </ThemedText>
                     </View>
-                    <TouchableOpacity onPress={() => setLightboxSnapshot(null)} style={styles.closeModalCircle}>
+                    <TouchableOpacity onPress={() => { setLightboxSnapshot(null); }} style={styles.closeModalCircle}>
                       <ThemedText style={{ color: '#FFFFFF', fontWeight: 'bold' }}>✕</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -651,7 +651,7 @@ export default function TransformationScreen() {
 
                     <TouchableOpacity
                       style={styles.closeLightboxBtn}
-                      onPress={() => setLightboxSnapshot(null)}
+                      onPress={() => { setLightboxSnapshot(null); }}
                     >
                       <ThemedText style={styles.closeLightboxText}>CERRAR VISOR</ThemedText>
                     </TouchableOpacity>

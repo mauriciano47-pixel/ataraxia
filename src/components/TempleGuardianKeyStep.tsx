@@ -226,7 +226,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               <View style={styles.chipsRow}>
                 <TouchableOpacity
                   style={[styles.chipBtn, equipment === 'gym' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setEquipment('gym'))}
+                  onPress={() => { handleSelectOption(() => setEquipment('gym')); }}
                 >
                   <ThemedText style={[styles.chipText, equipment === 'gym' && styles.chipTextActive]}>
                     🏋️ Gimnasio
@@ -235,7 +235,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, equipment === 'home_dumbbell' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setEquipment('home_dumbbell'))}
+                  onPress={() => { handleSelectOption(() => setEquipment('home_dumbbell')); }}
                 >
                   <ThemedText style={[styles.chipText, equipment === 'home_dumbbell' && styles.chipTextActive]}>
                     🏠 Mancuernas
@@ -244,7 +244,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, equipment === 'calisthenics' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setEquipment('calisthenics'))}
+                  onPress={() => { handleSelectOption(() => setEquipment('calisthenics')); }}
                 >
                   <ThemedText style={[styles.chipText, equipment === 'calisthenics' && styles.chipTextActive]}>
                     🤸‍♂️ Peso Corporal
@@ -261,7 +261,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               <View style={styles.chipsRow}>
                 <TouchableOpacity
                   style={[styles.chipBtn, duration === 30 && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setDuration(30))}
+                  onPress={() => { handleSelectOption(() => setDuration(30)); }}
                 >
                   <ThemedText style={[styles.chipText, duration === 30 && styles.chipTextActive]}>
                     ⚡ 30 min (Express)
@@ -270,7 +270,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, duration === 45 && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setDuration(45))}
+                  onPress={() => { handleSelectOption(() => setDuration(45)); }}
                 >
                   <ThemedText style={[styles.chipText, duration === 45 && styles.chipTextActive]}>
                     🏛️ 45 min (Óptimo)
@@ -279,7 +279,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, duration === 60 && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setDuration(60))}
+                  onPress={() => { handleSelectOption(() => setDuration(60)); }}
                 >
                   <ThemedText style={[styles.chipText, duration === 60 && styles.chipTextActive]}>
                     ⚔️ 60 min (Intenso)
@@ -296,7 +296,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               <View style={styles.chipsRow}>
                 <TouchableOpacity
                   style={[styles.chipBtn, experience === 'beginner' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setExperience('beginner'))}
+                  onPress={() => { handleSelectOption(() => setExperience('beginner')); }}
                 >
                   <ThemedText style={[styles.chipText, experience === 'beginner' && styles.chipTextActive]}>
                     🌿 Principiante
@@ -305,7 +305,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, experience === 'intermediate' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setExperience('intermediate'))}
+                  onPress={() => { handleSelectOption(() => setExperience('intermediate')); }}
                 >
                   <ThemedText style={[styles.chipText, experience === 'intermediate' && styles.chipTextActive]}>
                     ⚔️ Intermedio
@@ -314,7 +314,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, experience === 'advanced' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setExperience('advanced'))}
+                  onPress={() => { handleSelectOption(() => setExperience('advanced')); }}
                 >
                   <ThemedText style={[styles.chipText, experience === 'advanced' && styles.chipTextActive]}>
                     👑 Avanzado
@@ -331,7 +331,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
               <View style={styles.chipsRow}>
                 <TouchableOpacity
                   style={[styles.chipBtn, injury === 'none' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setInjury('none'))}
+                  onPress={() => { handleSelectOption(() => setInjury('none')); }}
                 >
                   <ThemedText style={[styles.chipText, injury === 'none' && styles.chipTextActive]}>
                     ✅ 100% Sano
@@ -340,7 +340,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, injury === 'back' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setInjury('back'))}
+                  onPress={() => { handleSelectOption(() => setInjury('back')); }}
                 >
                   <ThemedText style={[styles.chipText, injury === 'back' && styles.chipTextActive]}>
                     ⚠️ Lumbar
@@ -349,7 +349,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, injury === 'knees' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setInjury('knees'))}
+                  onPress={() => { handleSelectOption(() => setInjury('knees')); }}
                 >
                   <ThemedText style={[styles.chipText, injury === 'knees' && styles.chipTextActive]}>
                     ⚠️ Rodillas
@@ -358,7 +358,7 @@ export function TempleGuardianKeyStep({ selectedPath, onCompleteKey }: Props) {
 
                 <TouchableOpacity
                   style={[styles.chipBtn, injury === 'shoulders' && styles.chipBtnActive]}
-                  onPress={() => handleSelectOption(() => setInjury('shoulders'))}
+                  onPress={() => { handleSelectOption(() => setInjury('shoulders')); }}
                 >
                   <ThemedText style={[styles.chipText, injury === 'shoulders' && styles.chipTextActive]}>
                     ⚠️ Hombros

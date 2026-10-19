@@ -64,7 +64,7 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
                   styles.pathCard,
                   isSelected && styles.pathCardSelected,
                 ]}
-                onPress={() => setSelectedPath(pathInfo.id)}
+                onPress={() => { setSelectedPath(pathInfo.id); }}
                 activeOpacity={0.85}
               >
                 {/* Header de la tarjeta */}
@@ -109,7 +109,7 @@ export function LegendaryPathSelector({ onSelectPath }: Props) {
           <View style={styles.buttonWrapper}>
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={() => onSelectPath(selectedPath)}
+              onPress={() => { onSelectPath(selectedPath); }}
               activeOpacity={0.85}
             >
               <View style={styles.confirmBtnInner}>

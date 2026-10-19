@@ -85,7 +85,7 @@ export default function ProfileScreen() {
   const handleCopyUID = useCallback(() => {
     if (!uid) return;
     if (Platform.OS === 'web') {
-      navigator.clipboard?.writeText(uid).catch(() => {});
+      navigator.clipboard.writeText(uid).catch(() => {});
     } else {
       Clipboard.setString(uid);
     }
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
             keysToRemove.push(key);
           }
         }
-        keysToRemove.forEach(k => window.localStorage.removeItem(k));
+        keysToRemove.forEach(k => { window.localStorage.removeItem(k); });
       }
 
       // 2. Resetear Onboarding y Ciclo en Contexto
@@ -297,8 +297,8 @@ export default function ProfileScreen() {
             currentDay={currentDay}
             adherencePct={adherencePct}
             passedDays={passedDays}
-            onOpenDiploma={() => setShowDiplomaModal(true)}
-            onOpenLockedDiploma={() => setShowLockedDiplomaModal(true)}
+            onOpenDiploma={() => { setShowDiplomaModal(true); }}
+            onOpenLockedDiploma={() => { setShowLockedDiplomaModal(true); }}
           />
 
           <ThemedText style={styles.description}>
@@ -365,7 +365,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               style={styles.calibrateButton}
-              onPress={() => setShowOnboardingModal(true)}
+              onPress={() => { setShowOnboardingModal(true); }}
             >
               <ThemedText style={{ color: '#050507', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
                 ⚡ CALIBRAR FICHA DEL PROKOPTON (ESCÁNER IA)
@@ -375,7 +375,7 @@ export default function ProfileScreen() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <TouchableOpacity
                 style={[styles.calibrateButton, { flex: 1, backgroundColor: 'rgba(212, 175, 55, 0.15)', borderWidth: 1, borderColor: '#D4AF37' }]}
-                onPress={() => setShowParchmentModal(true)}
+                onPress={() => { setShowParchmentModal(true); }}
               >
                 <ThemedText style={{ color: '#FFE259', fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5, textAlign: 'center' }}>
                   📜 RELEER EL PACTO
@@ -384,7 +384,7 @@ export default function ProfileScreen() {
 
               <TouchableOpacity
                 style={[styles.calibrateButton, { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.06)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.18)' }]}
-                onPress={() => setShowPathModal(true)}
+                onPress={() => { setShowPathModal(true); }}
               >
                 <ThemedText style={{ color: '#F1F5F9', fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5, textAlign: 'center' }}>
                   🏛️ CAMBIAR SENDA
@@ -529,7 +529,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               style={styles.guardianInviteBtn}
-              onPress={() => setShowGuardianInviteModal(true)}
+              onPress={() => { setShowGuardianInviteModal(true); }}
               activeOpacity={0.85}
             >
               <LinearGradient
@@ -600,7 +600,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               style={[styles.guardianInviteBtn, { marginTop: 10 }]}
-              onPress={() => setShowMembershipModal(true)}
+              onPress={() => { setShowMembershipModal(true); }}
               activeOpacity={0.85}
             >
               <LinearGradient
@@ -677,7 +677,7 @@ export default function ProfileScreen() {
       {/* Modal para Editar Biometría & Datos */}
       <EditProfileModal
         visible={showEditModal}
-        onClose={() => setShowEditModal(false)}
+        onClose={() => { setShowEditModal(false); }}
         emailInput={emailInput}
         setEmailInput={setEmailInput}
         nameInput={nameInput}
@@ -699,7 +699,7 @@ export default function ProfileScreen() {
       {/* Modal de Onboarding / Escáner del Prokopton */}
       <StoicOnboardingModal
         visible={showOnboardingModal}
-        onClose={() => setShowOnboardingModal(false)}
+        onClose={() => { setShowOnboardingModal(false); }}
         onComplete={() => {
           setShowOnboardingModal(false);
           Alert.alert("⚡ Perfil Calibrado", "Tu plan estoico y biométrico ha sido configurado con éxito.");
@@ -711,8 +711,8 @@ export default function ProfileScreen() {
         <View style={StyleSheet.absoluteFill}>
           <GreekParchmentPact
             isReviewMode={true}
-            onClose={() => setShowParchmentModal(false)}
-            onAcceptPact={() => setShowParchmentModal(false)}
+            onClose={() => { setShowParchmentModal(false); }}
+            onAcceptPact={() => { setShowParchmentModal(false); }}
           />
         </View>
       )}
@@ -731,7 +731,7 @@ export default function ProfileScreen() {
       {/* Modal Informativo de Diploma Bloqueado */}
       <LockedDiplomaModal
         visible={showLockedDiplomaModal}
-        onClose={() => setShowLockedDiplomaModal(false)}
+        onClose={() => { setShowLockedDiplomaModal(false); }}
         isDay30Reached={isDay30Reached}
         currentDay={currentDay}
         isAboveThreshold={isAboveThreshold}
@@ -743,7 +743,7 @@ export default function ProfileScreen() {
       {/* Modal del Diploma de Honor */}
       <HonorDiplomaModal
         visible={showDiplomaModal}
-        onClose={() => setShowDiplomaModal(false)}
+        onClose={() => { setShowDiplomaModal(false); }}
         userName={log.userName || 'Ciudadano Prokopton'}
         path={log.legendaryPath || 'spartan'}
         scoreAverage={cycle?.averageScore ?? 100}
@@ -755,14 +755,14 @@ export default function ProfileScreen() {
       {/* Modal de Convocatoria de Guardianes */}
       <GuardianInviteModal
         visible={showGuardianInviteModal}
-        onClose={() => setShowGuardianInviteModal(false)}
+        onClose={() => { setShowGuardianInviteModal(false); }}
       />
 
       {/* Modal de Membresía Stripe */}
       <MembershipModal
         visible={showMembershipModal}
-        onClose={() => setShowMembershipModal(false)}
-        onSubscriptionChanged={(newStatus) => setSubStatus(newStatus)}
+        onClose={() => { setShowMembershipModal(false); }}
+        onSubscriptionChanged={(newStatus) => { setSubStatus(newStatus); }}
       />
       </SafeAreaView>
     </PearlElectricBackground>

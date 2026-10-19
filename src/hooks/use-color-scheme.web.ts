@@ -11,7 +11,7 @@ export function useColorScheme() {
     const timer = setTimeout(() => {
       setHasHydrated(true);
     }, 0);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, []);
 
   const colorScheme = useRNColorScheme();

@@ -77,7 +77,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
 
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('storage', handleStorageChange);
-      return () => window.removeEventListener('storage', handleStorageChange);
+      return () => { window.removeEventListener('storage', handleStorageChange); };
     }
   }, []);
 
@@ -217,7 +217,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={styles.calibrateBtn}
-          onPress={() => setModalVisible(true)}
+          onPress={() => { setModalVisible(true); }}
           activeOpacity={0.8}
         >
           <ThemedText style={styles.calibrateBtnText}>
@@ -227,7 +227,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
       </View>
 
       {/* Modal de Calibración de Sueño */}
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => { setModalVisible(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -235,7 +235,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
                 <ThemedText style={styles.badgeText}>⚡ CALIBRACIÓN BIOMÉTRICA</ThemedText>
                 <ThemedText style={styles.modalTitle}>Registro de Sueño Diario</ThemedText>
               </View>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity onPress={() => { setModalVisible(false); }} style={styles.closeBtn}>
                 <ThemedText style={styles.closeBtnText}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -282,7 +282,7 @@ export const SleepQualityCard = React.memo(function SleepQualityCard({ onUpdateS
                   <TouchableOpacity
                     key={score}
                     style={[styles.qualityChip, perceivedQuality === score && styles.qualityChipActive]}
-                    onPress={() => setPerceivedQuality(score)}
+                    onPress={() => { setPerceivedQuality(score); }}
                     activeOpacity={0.8}
                   >
                     <ThemedText style={[styles.qualityChipText, perceivedQuality === score && styles.qualityChipTextActive]}>

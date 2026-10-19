@@ -106,7 +106,7 @@ export const GlowArcGauge = React.memo(function GlowArcGauge({
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() =>
-          setActiveMetric((prev) => (prev === 'burn' ? 'nutrition' : prev === 'nutrition' ? 'power' : 'burn'))
+          { setActiveMetric((prev) => (prev === 'burn' ? 'nutrition' : prev === 'nutrition' ? 'power' : 'burn')); }
         }
         style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
       >

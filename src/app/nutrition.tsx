@@ -172,7 +172,7 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
 }`;
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 8000)
+        setTimeout(() => { reject(new Error('TIMEOUT_EXCEEDED')); }, 8000)
       );
 
       const apiCall = ai.models.generateContent({
@@ -367,7 +367,7 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
               <ThemedText style={styles.actionBtnSecondaryText}>Elegir Foto de Galería</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.manualBtn} onPress={() => setShowManualModal(true)} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.manualBtn} onPress={() => { setShowManualModal(true); }} activeOpacity={0.8}>
               <ThemedText style={{ fontSize: 12, color: '#D4AF37', textDecorationLine: 'underline', fontFamily: 'monospace' }}>
                 O ingresar macronutrientes manualmente
               </ThemedText>
@@ -478,10 +478,10 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
                     keyboardType="number-pad"
                   />
                   <View style={styles.stepperRow}>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('cals', -50)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('cals', -50); }}>
                       <ThemedText style={styles.stepperText}>-50</ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('cals', 50)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('cals', 50); }}>
                       <ThemedText style={styles.stepperText}>+50</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -497,10 +497,10 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
                     keyboardType="number-pad"
                   />
                   <View style={styles.stepperRow}>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('p', -5)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('p', -5); }}>
                       <ThemedText style={styles.stepperText}>-5</ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('p', 5)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('p', 5); }}>
                       <ThemedText style={styles.stepperText}>+5</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -516,10 +516,10 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
                     keyboardType="number-pad"
                   />
                   <View style={styles.stepperRow}>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('c', -5)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('c', -5); }}>
                       <ThemedText style={styles.stepperText}>-5</ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('c', 5)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('c', 5); }}>
                       <ThemedText style={styles.stepperText}>+5</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -535,10 +535,10 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
                     keyboardType="number-pad"
                   />
                   <View style={styles.stepperRow}>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('f', -2)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('f', -2); }}>
                       <ThemedText style={styles.stepperText}>-2</ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustMacro('f', 2)}>
+                    <TouchableOpacity style={styles.stepperBtn} onPress={() => { adjustMacro('f', 2); }}>
                       <ThemedText style={styles.stepperText}>+2</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -562,7 +562,7 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
               {/* Botón de Explicación Científica */}
               <TouchableOpacity
                 style={styles.scienceToggleBtn}
-                onPress={() => setShowScienceExplainer(!showScienceExplainer)}
+                onPress={() => { setShowScienceExplainer(!showScienceExplainer); }}
                 activeOpacity={0.8}
               >
                 <ThemedText style={styles.scienceToggleText}>
@@ -642,7 +642,7 @@ Responde EXCLUSIVAMENTE con un JSON válido con la siguiente estructura:
                 </View>
 
                 <View style={styles.modalButtonsRow}>
-                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowManualModal(false)}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowManualModal(false); }}>
                     <ThemedText style={{ color: colors.textSecondary }}>Cancelar</ThemedText>
                   </TouchableOpacity>
 

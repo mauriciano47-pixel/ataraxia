@@ -70,7 +70,7 @@ export default function HoyScreen() {
   );
 
   // Identificar si la llave en URL o en sesión es del Arconte Maestro o de un Guardián
-  const urlKey = Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search
+  const urlKey = Platform.OS === 'web' && typeof window !== 'undefined' && window.location.search
     ? new URLSearchParams(window.location.search).get('key')?.trim().toUpperCase()
     : null;
 
@@ -290,7 +290,7 @@ export default function HoyScreen() {
             heartRateBpm={log.smartDevice?.heartRateBpm ?? 0}
             avgBpm={log.smartDevice?.heartRateBpm ? Math.round(log.smartDevice.heartRateBpm * 0.95) : 0}
             peakBpm={log.smartDevice?.heartRateBpm ? Math.round(log.smartDevice.heartRateBpm * 1.3) : 0}
-            onOpenStepDetails={() => setShowStepCalibration(true)}
+            onOpenStepDetails={() => { setShowStepCalibration(true); }}
             onAddSteps={addSteps}
             onSyncHeartRate={(measuredBpm) => {
               const bpm = measuredBpm || 0;
@@ -317,7 +317,7 @@ export default function HoyScreen() {
               steps={log.steps || 0}
               stepGoal={log.stepGoal || 10000}
               deviceName={log.smartDevice?.deviceName}
-              onOpenCalibration={() => setShowStepCalibration(true)}
+              onOpenCalibration={() => { setShowStepCalibration(true); }}
               onAddSteps={addSteps}
               onSetStepGoal={setStepGoal}
               isLiveTracking={isLiveTracking}
@@ -378,7 +378,7 @@ export default function HoyScreen() {
               <TouchableOpacity
                 style={styles.halfCard}
                 activeOpacity={0.8}
-                onPress={() => setQuoteOffset(prev => prev + 1)}
+                onPress={() => { setQuoteOffset(prev => prev + 1); }}
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                   <ThemedText style={styles.cardHeaderGoldText}>🏛️ PRINCIPIO ESTOICO</ThemedText>
@@ -525,7 +525,7 @@ export default function HoyScreen() {
               <TouchableOpacity
                 style={styles.boxBreathingTriggerBtn}
                 activeOpacity={0.8}
-                onPress={() => setShowBoxBreathing(true)}
+                onPress={() => { setShowBoxBreathing(true); }}
               >
                 <ThemedText style={styles.boxBreathingTriggerText}>
                   🌬️ Iniciar Respiración Táctica (Box Breathing 4-4-4-4) ⚡
@@ -609,7 +609,7 @@ export default function HoyScreen() {
         {showStepCalibration && (
           <StepCalibrationModal
             visible={true}
-            onClose={() => setShowStepCalibration(false)}
+            onClose={() => { setShowStepCalibration(false); }}
             currentSteps={currentSteps}
             stepGoal={currentGoal}
             onSetSteps={setSteps}
@@ -629,7 +629,7 @@ export default function HoyScreen() {
         {showBoxBreathing && (
           <BoxBreathingModal
             visible={true}
-            onClose={() => setShowBoxBreathing(false)}
+            onClose={() => { setShowBoxBreathing(false); }}
           />
         )}
       </SafeAreaView>

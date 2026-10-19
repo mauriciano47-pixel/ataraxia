@@ -311,7 +311,7 @@ export default function ArchonThroneScreen() {
             <View style={styles.audienceSelectorRow}>
               <Pressable
                 style={[styles.audienceBtn, targetAudience === 'all' && styles.audienceBtnActiveAll]}
-                onPress={() => setTargetAudience('all')}
+                onPress={() => { setTargetAudience('all'); }}
               >
                 <ThemedText style={[styles.audienceBtnText, targetAudience === 'all' && { color: '#FFFFFF', fontWeight: 'bold' }]}>
                   🏛️ Toda la Legión
@@ -320,7 +320,7 @@ export default function ArchonThroneScreen() {
 
               <Pressable
                 style={[styles.audienceBtn, targetAudience === 'female' && styles.audienceBtnActiveFemale]}
-                onPress={() => setTargetAudience('female')}
+                onPress={() => { setTargetAudience('female'); }}
               >
                 <ThemedText style={[styles.audienceBtnText, targetAudience === 'female' && { color: '#FB7185', fontWeight: 'bold' }]}>
                   👑 Solo Guerreras
@@ -329,7 +329,7 @@ export default function ArchonThroneScreen() {
 
               <Pressable
                 style={[styles.audienceBtn, targetAudience === 'male' && styles.audienceBtnActiveMale]}
-                onPress={() => setTargetAudience('male')}
+                onPress={() => { setTargetAudience('male'); }}
               >
                 <ThemedText style={[styles.audienceBtnText, targetAudience === 'male' && { color: '#FDE68A', fontWeight: 'bold' }]}>
                   ⚔️ Solo Guerreros

@@ -116,7 +116,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       }
     }, 5000);
 
-    return () => clearInterval(midnightInterval);
+    return () => { clearInterval(midnightInterval); };
   }, []);
 
   useEffect(() => {
@@ -304,7 +304,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       ...(data.legendaryPath ? { legendaryPath: data.legendaryPath } : {}),
     };
     updateLog(updates);
-    saveProfileToFirestore(updates);
+    void saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const logMealWithMacros = useCallback((cals: number, protein = 0, carbs = 0, fats = 0) => {
@@ -378,17 +378,17 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
   const setStoicAvatar = useCallback((uri: string) => {
     updateLog({ stoicAvatarUri: uri });
-    saveProfileToFirestore({ stoicAvatarUri: uri });
+    void saveProfileToFirestore({ stoicAvatarUri: uri });
   }, [updateLog, saveProfileToFirestore]);
 
   const setUserName = useCallback((name: string) => {
     updateLog({ userName: name });
-    saveProfileToFirestore({ userName: name });
+    void saveProfileToFirestore({ userName: name });
   }, [updateLog, saveProfileToFirestore]);
 
   const setUserEmail = useCallback((email: string) => {
     updateLog({ userEmail: email });
-    saveProfileToFirestore({ userEmail: email });
+    void saveProfileToFirestore({ userEmail: email });
   }, [updateLog, saveProfileToFirestore]);
 
   const saveGuardianKey = useCallback((data: {
@@ -405,19 +405,19 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }) => {
     const { logUpdates, profileUpdates } = buildGuardianKeyPayload(data);
     updateLog(logUpdates);
-    saveProfileToFirestore(profileUpdates);
+    void saveProfileToFirestore(profileUpdates);
   }, [updateLog, saveProfileToFirestore]);
 
   const setCoachArchetype = useCallback((archetype: CoachArchetype) => {
     updateLog({ coachArchetype: archetype });
-    saveProfileToFirestore({ coachArchetype: archetype });
+    void saveProfileToFirestore({ coachArchetype: archetype });
   }, [updateLog, saveProfileToFirestore]);
 
   const updateSmartDevice = useCallback((deviceUpdates: Partial<SmartDeviceState>) => {
     const currentDevice = logRef.current.smartDevice || DEFAULT_LOG.smartDevice!;
     const newDevice = { ...currentDevice, ...deviceUpdates };
     updateLog({ smartDevice: newDevice });
-    saveProfileToFirestore({ smartDevice: newDevice });
+    void saveProfileToFirestore({ smartDevice: newDevice });
   }, [updateLog, saveProfileToFirestore]);
 
   const syncExternalHealthData = useCallback((payload: {
@@ -568,7 +568,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   const executeJudgment = useCallback(() => {
     const { promoted, title, message, resolution, updatedCycle } = executeCycleJudgment(logRef.current);
     updateLog({ monthlyCycle: updatedCycle });
-    saveProfileToFirestore({ monthlyCycle: updatedCycle });
+    void saveProfileToFirestore({ monthlyCycle: updatedCycle });
     return { promoted, title, message, resolution };
   }, [updateLog, saveProfileToFirestore]);
 
@@ -586,12 +586,12 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       isPactActive: true,
     };
     updateLog({ monthlyCycle: newCycle });
-    saveProfileToFirestore({ monthlyCycle: newCycle });
+    void saveProfileToFirestore({ monthlyCycle: newCycle });
   }, [updateLog, saveProfileToFirestore]);
 
   const setCustomRoutine = useCallback((routine: CustomExercise[]) => {
     updateLog({ customRoutine: routine });
-    saveProfileToFirestore({ customRoutine: routine });
+    void saveProfileToFirestore({ customRoutine: routine });
   }, [updateLog, saveProfileToFirestore]);
 
   const addBodySnapshot = useCallback(async (snapshotData: Omit<BodySnapshot, 'id' | 'createdAt'>): Promise<BodySnapshot> => {

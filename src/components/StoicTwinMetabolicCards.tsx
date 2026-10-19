@@ -173,7 +173,7 @@ export const StoicTwinMetabolicCards = React.memo(function StoicTwinMetabolicCar
 
             <TouchableOpacity
               style={styles.closeBtn}
-              onPress={() => setShowRecoveryModal(false)}
+              onPress={() => { setShowRecoveryModal(false); }}
               activeOpacity={0.8}
             >
               <ThemedText style={styles.closeBtnText}>Entendido • Volver al Santuario</ThemedText>

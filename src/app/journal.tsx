@@ -235,7 +235,7 @@ export default function JournalScreen() {
   }, [contextSummary, generateFallbackResponse, getPastContext, isLoading, messages, saveMessages, setMessages, currentArchetype, currentPath]);
 
   const sendMessage = () => {
-    handleSendQuery(inputText);
+    void handleSendQuery(inputText);
   };
 
   const handleApplyWorkout = (exercises: ReturnType<typeof extractExercisesFromText>, msgKey: string) => {

@@ -46,7 +46,7 @@ export function TrainerExerciseCard({
     <View key={e.id} style={styles.card}>
       <TouchableOpacity 
         style={styles.cardHeaderTouch}
-        onPress={() => onToggleDone(e.id)}
+        onPress={() => { onToggleDone(e.id); }}
         activeOpacity={0.7}
       >
         <View style={[
@@ -92,7 +92,7 @@ export function TrainerExerciseCard({
 
           <TouchableOpacity
             style={styles.iconCtrlBtn}
-            onPress={() => onEdit(e)}
+            onPress={() => { onEdit(e); }}
             activeOpacity={0.7}
           >
             <ThemedText style={styles.iconCtrlText}>✏️</ThemedText>
@@ -100,7 +100,7 @@ export function TrainerExerciseCard({
 
           <TouchableOpacity
             style={styles.iconCtrlBtn}
-            onPress={() => onMove(index, 'up')}
+            onPress={() => { onMove(index, 'up'); }}
             disabled={index === 0}
             activeOpacity={0.7}
           >
@@ -109,7 +109,7 @@ export function TrainerExerciseCard({
 
           <TouchableOpacity
             style={styles.iconCtrlBtn}
-            onPress={() => onMove(index, 'down')}
+            onPress={() => { onMove(index, 'down'); }}
             disabled={index === totalExercises - 1}
             activeOpacity={0.7}
           >
@@ -118,7 +118,7 @@ export function TrainerExerciseCard({
 
           <TouchableOpacity
             style={[styles.iconCtrlBtn, styles.iconCtrlDelete]}
-            onPress={() => onDelete(e.id, e.n)}
+            onPress={() => { onDelete(e.id, e.n); }}
             activeOpacity={0.7}
           >
             <ThemedText style={styles.iconCtrlText}>🗑️</ThemedText>

@@ -35,7 +35,7 @@ export function ReadinessCard({
     <View style={styles.readinessCard}>
       <View style={styles.readinessHeaderRow}>
         <ThemedText style={styles.cardSectionTitle}>⚡ Disposición Fisiológica (Readiness)</ThemedText>
-        <TouchableOpacity onPress={() => setShowReadinessModal(!showReadinessModal)}>
+        <TouchableOpacity onPress={() => { setShowReadinessModal(!showReadinessModal); }}>
           <ThemedText style={styles.readinessToggleBtnText}>
             {showReadinessModal ? "Ocultar" : "Ajustar"}
           </ThemedText>

@@ -78,13 +78,13 @@ export function GuardianInviteModal({ visible, onClose }: Props) {
     } catch {}
 
     if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
-      navigator.clipboard?.writeText(slot.url).catch(() => {});
+      navigator.clipboard.writeText(slot.url).catch(() => {});
     } else {
       Clipboard.setString(slot.url);
     }
 
     setCopiedId(slot.id);
-    setTimeout(() => setCopiedId(null), 2500);
+    setTimeout(() => { setCopiedId(null); }, 2500);
 
     if (Platform.OS !== 'web') {
       Alert.alert('⚡ Enlace Copiado', `El enlace para el Guardián #${slot.guardianNumber} fue copiado al portapapeles.`);
@@ -172,7 +172,7 @@ export function GuardianInviteModal({ visible, onClose }: Props) {
                     <View style={styles.actionRow}>
                       <TouchableOpacity
                         style={[styles.copyBtn, isCopied && styles.copyBtnSuccess]}
-                        onPress={() => copyToClipboard(slot)}
+                        onPress={() => { copyToClipboard(slot); }}
                         activeOpacity={0.8}
                       >
                         <Ionicons

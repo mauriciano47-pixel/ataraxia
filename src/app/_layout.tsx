@@ -34,7 +34,7 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalError
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.warn('[Centinela Ataraxia] Interceptado:', error?.message, errorInfo);
+    logger.warn('[Centinela Ataraxia] Interceptado:', error.message, errorInfo);
     try {
       Telemetry.captureException(error, { componentStack: errorInfo.componentStack ?? undefined });
     } catch {

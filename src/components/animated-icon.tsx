@@ -34,7 +34,7 @@ export function AnimatedSplashOverlay() {
       // Iniciamos la barra de progreso con duración exacta de 3 s
       progress.value = withTiming(100, { duration: DURATION, easing: Easing.linear });
       // Después de DURATION ms, removemos el overlay
-      setTimeout(() => setVisible(false), DURATION);
+      setTimeout(() => { setVisible(false); }, DURATION);
     };
     void start();
   }, [progress]);

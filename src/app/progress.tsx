@@ -158,7 +158,7 @@ export default function ProgressScreen() {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         navigator.clipboard.writeText(judgmentResult?.resolution?.masterDecreeMarkdown || judgmentResult?.message || '').catch(() => {});
         setCopiedDecree(true);
-        setTimeout(() => setCopiedDecree(false), 3000);
+        setTimeout(() => { setCopiedDecree(false); }, 3000);
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {}
@@ -220,7 +220,7 @@ export default function ProgressScreen() {
             <TouchableOpacity
               style={styles.startPactBtn}
               activeOpacity={0.85}
-              onPress={() => setPactModalVisible(true)}
+              onPress={() => { setPactModalVisible(true); }}
             >
               <LinearGradient
                 colors={['#D4AF37', '#F59E0B', '#B45309']}
@@ -250,7 +250,7 @@ export default function ProgressScreen() {
             <View style={styles.equipSelectorRow}>
               <TouchableOpacity
                 style={[styles.equipChip, activeEquipment === 'gym' && styles.equipChipActive]}
-                onPress={() => handleSelectEquipment('gym')}
+                onPress={() => { handleSelectEquipment('gym'); }}
                 activeOpacity={0.8}
               >
                 <ThemedText style={[styles.equipChipText, activeEquipment === 'gym' && styles.equipChipTextActive]}>
@@ -260,7 +260,7 @@ export default function ProgressScreen() {
 
               <TouchableOpacity
                 style={[styles.equipChip, activeEquipment === 'home_dumbbell' && styles.equipChipActive]}
-                onPress={() => handleSelectEquipment('home_dumbbell')}
+                onPress={() => { handleSelectEquipment('home_dumbbell'); }}
                 activeOpacity={0.8}
               >
                 <ThemedText style={[styles.equipChipText, activeEquipment === 'home_dumbbell' && styles.equipChipTextActive]}>
@@ -270,7 +270,7 @@ export default function ProgressScreen() {
 
               <TouchableOpacity
                 style={[styles.equipChip, activeEquipment === 'calisthenics' && styles.equipChipActive]}
-                onPress={() => handleSelectEquipment('calisthenics')}
+                onPress={() => { handleSelectEquipment('calisthenics'); }}
                 activeOpacity={0.8}
               >
                 <ThemedText style={[styles.equipChipText, activeEquipment === 'calisthenics' && styles.equipChipTextActive]}>
@@ -298,7 +298,7 @@ export default function ProgressScreen() {
                     key={ex.id}
                     style={[styles.exerciseItemRow, isChecked && styles.exerciseItemRowChecked]}
                     activeOpacity={0.8}
-                    onPress={() => handleToggleExercise(ex.id)}
+                    onPress={() => { handleToggleExercise(ex.id); }}
                   >
                     <View style={[styles.checkCircle, isChecked && styles.checkCircleChecked]}>
                       <ThemedText style={styles.checkMarkText}>{isChecked ? '✓' : idx + 1}</ThemedText>
@@ -312,7 +312,7 @@ export default function ProgressScreen() {
                         <TouchableOpacity
                           style={styles.techGuideBtn}
                           onPress={(e) => {
-                            e.stopPropagation?.();
+                            e.stopPropagation();
                             setSelectedGuideExercise({
                               id: ex.id,
                               name: ex.n,
@@ -588,7 +588,7 @@ export default function ProgressScreen() {
           ) : (
             <TouchableOpacity
               style={styles.diplomaLockedCard}
-              onPress={() => setLockedDiplomaModalVisible(true)}
+              onPress={() => { setLockedDiplomaModalVisible(true); }}
               activeOpacity={0.85}
             >
               <View style={styles.diplomaLockedHeader}>
@@ -658,7 +658,7 @@ export default function ProgressScreen() {
             visible={pactModalVisible}
             transparent={true}
             animationType="fade"
-            onRequestClose={() => setPactModalVisible(false)}
+            onRequestClose={() => { setPactModalVisible(false); }}
           >
             <View style={styles.modalBackdrop}>
               <View style={[styles.modalCard, styles.modalCardSuccess]}>
@@ -689,7 +689,7 @@ export default function ProgressScreen() {
 
                 <TouchableOpacity
                   style={styles.closeModalBtn}
-                  onPress={() => setPactModalVisible(false)}
+                  onPress={() => { setPactModalVisible(false); }}
                 >
                   <ThemedText style={styles.closeModalBtnText}>CANCELAR</ThemedText>
                 </TouchableOpacity>
@@ -700,7 +700,7 @@ export default function ProgressScreen() {
           {/* MODAL DEL JUICIO DEL DÍA 30 • DOSSIER SAGRADO */}
           <JudgmentDossierModal
             visible={modalVisible}
-            onClose={() => setModalVisible(false)}
+            onClose={() => { setModalVisible(false); }}
             judgmentResult={judgmentResult}
             activeResolutionTab={activeResolutionTab}
             setActiveResolutionTab={setActiveResolutionTab}
@@ -722,7 +722,7 @@ export default function ProgressScreen() {
           {/* MODAL INFORMATIVO DE DIPLOMA BLOQUEADO */}
           <LockedDiplomaModal
             visible={lockedDiplomaModalVisible}
-            onClose={() => setLockedDiplomaModalVisible(false)}
+            onClose={() => { setLockedDiplomaModalVisible(false); }}
             isDay30Reached={isDay30Reached}
             currentDay={currentDay}
             isAboveThreshold={isAboveThreshold}
@@ -734,7 +734,7 @@ export default function ProgressScreen() {
           {/* MODAL DEL DIPLOMA DE HONOR */}
           <HonorDiplomaModal
             visible={diplomaModalVisible}
-            onClose={() => setDiplomaModalVisible(false)}
+            onClose={() => { setDiplomaModalVisible(false); }}
             userName={log.userName || 'Ciudadano Prokopton'}
             path={activePathKey}
             scoreAverage={judgmentResult?.resolution?.totalScoreAverage ?? cycle.averageScore}
@@ -749,7 +749,7 @@ export default function ProgressScreen() {
           <ExerciseTechniqueModal
             visible={Boolean(selectedGuideExercise)}
             exercise={selectedGuideExercise}
-            onClose={() => setSelectedGuideExercise(null)}
+            onClose={() => { setSelectedGuideExercise(null); }}
           />
 
         </ScrollView>

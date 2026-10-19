@@ -86,7 +86,7 @@ export const CalorieIndexCard = React.memo(function CalorieIndexCard({
 
         <TouchableOpacity 
           style={styles.calcButton} 
-          onPress={() => setModalVisible(true)}
+          onPress={() => { setModalVisible(true); }}
           activeOpacity={0.8}
         >
           <SettingsIcon color="#D4AF37" size={14} />
@@ -153,7 +153,7 @@ export const CalorieIndexCard = React.memo(function CalorieIndexCard({
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.modalHeader}>
                 <ThemedText style={styles.modalTitle}>Calculadora de Métricas TDEE</ThemedText>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
                   <ThemedText style={{ color: '#94A3B8', fontSize: 16, fontWeight: 'bold' }}>✕</ThemedText>
                 </TouchableOpacity>
               </View>
@@ -193,13 +193,13 @@ export const CalorieIndexCard = React.memo(function CalorieIndexCard({
               <View style={styles.toggleRow}>
                 <TouchableOpacity
                   style={[styles.toggleChip, gender === 'male' && styles.toggleChipActive]}
-                  onPress={() => setGender('male')}
+                  onPress={() => { setGender('male'); }}
                 >
                   <ThemedText style={[styles.toggleText, gender === 'male' && styles.toggleTextActive]}>Hombre</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toggleChip, gender === 'female' && styles.toggleChipActive]}
-                  onPress={() => setGender('female')}
+                  onPress={() => { setGender('female'); }}
                 >
                   <ThemedText style={[styles.toggleText, gender === 'female' && styles.toggleTextActive]}>Mujer</ThemedText>
                 </TouchableOpacity>
@@ -236,7 +236,7 @@ export const CalorieIndexCard = React.memo(function CalorieIndexCard({
                   <TouchableOpacity
                     key={opt.id}
                     style={[styles.selectOption, goal === opt.id && styles.selectOptionActive]}
-                    onPress={() => setGoal(opt.id as any)}
+                    onPress={() => { setGoal(opt.id as any); }}
                   >
                     <ThemedText style={[styles.selectOptionText, goal === opt.id && styles.selectOptionTextActive]}>
                       {opt.label}

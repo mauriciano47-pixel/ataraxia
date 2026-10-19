@@ -143,7 +143,7 @@ export function StoicAuditModal({
 
               <TouchableOpacity
                 style={[styles.choiceButton, styles.choiceButtonRpe10]}
-                onPress={() => handleSelect(10)}
+                onPress={() => { handleSelect(10); }}
                 activeOpacity={0.85}
               >
                 <ThemedText style={styles.choiceTitle}>
@@ -156,7 +156,7 @@ export function StoicAuditModal({
 
               <TouchableOpacity
                 style={[styles.choiceButton, styles.choiceButtonRpe9]}
-                onPress={() => handleSelect(9)}
+                onPress={() => { handleSelect(9); }}
                 activeOpacity={0.85}
               >
                 <ThemedText style={styles.choiceTitle}>
@@ -169,7 +169,7 @@ export function StoicAuditModal({
 
               <TouchableOpacity
                 style={[styles.choiceButton, styles.choiceButtonRpe8]}
-                onPress={() => handleSelect(8)}
+                onPress={() => { handleSelect(8); }}
                 activeOpacity={0.85}
               >
                 <ThemedText style={styles.choiceTitle}>

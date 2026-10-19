@@ -75,7 +75,7 @@ export const StepCounterCard = React.memo(function StepCounterCard({
       onForceSync();
     }
     setJustSynced(true);
-    setTimeout(() => setJustSynced(false), 1600);
+    setTimeout(() => { setJustSynced(false); }, 1600);
   };
 
   return (

@@ -71,7 +71,7 @@ export function StepCalibrationModal({
 
   const showFeedback = (msg: string) => {
     setFeedbackBanner(msg);
-    setTimeout(() => setFeedbackBanner(null), 3000);
+    setTimeout(() => { setFeedbackBanner(null); }, 3000);
   };
 
   const handleSaveExact = () => {
@@ -419,22 +419,22 @@ export function StepCalibrationModal({
               </View>
               <ThemedText style={styles.sectionDesc}>Suma o resta cantidades realistas de pasos:</ThemedText>
               <View style={styles.chipsGrid}>
-                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(50)} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => { handleAddChunk(50); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+50 pasos</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(250)} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => { handleAddChunk(250); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+250 paseo</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(500)} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => { handleAddChunk(500); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+500 caminata</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.stepChip} onPress={() => handleAddChunk(1000)} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.stepChip} onPress={() => { handleAddChunk(1000); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipText}>+1,000 cardio</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => handleAddChunk(-100)} activeOpacity={0.75}>
+                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => { handleAddChunk(-100); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipTextNegative}>-100 pasos</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => handleAddChunk(-500)} activeOpacity={0.75}>
+                <TouchableOpacity style={[styles.stepChip, styles.stepChipNegative]} onPress={() => { handleAddChunk(-500); }} activeOpacity={0.75}>
                   <ThemedText style={styles.stepChipTextNegative}>-500 pasos</ThemedText>
                 </TouchableOpacity>
               </View>
@@ -457,7 +457,7 @@ export function StepCalibrationModal({
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowGoalEditor(true)} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.secondaryBtn} onPress={() => { setShowGoalEditor(true); }} activeOpacity={0.8}>
                   <Ionicons name="flag-outline" size={16} color="#FFE259" />
                   <ThemedText style={styles.secondaryBtnText}>Cambiar Meta ({stepGoal.toLocaleString()})</ThemedText>
                 </TouchableOpacity>
