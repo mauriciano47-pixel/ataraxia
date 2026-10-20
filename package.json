@@ -62,7 +62,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "security:audit": "node ./scripts/security-audit.mjs"
+    "security:audit": "node ./scripts/security-audit.mjs",
+    "prepush": "node ./scripts/pre-push-gate.mjs"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.9.12",
@@ -82,7 +83,7 @@
     "shell-quote": "^1.12.0",
     "browserslist": "^4.28.7",
     "compression": "^1.8.2",
-    "image-size": "^1.2.1",
+    "image-size": "^2.0.4",
     "js-yaml": "^4.3.2",
     "source-map-js": "^1.2.2",
     "@grpc/grpc-js": "^1.14.6",

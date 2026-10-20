@@ -1,6 +1,7 @@
 import { CoachArchetype, LegendaryPath, CustomExercise } from '@/types/onboarding';
 import { DailyLog, UserMetrics } from '@/context/DailyLogContext';
 import { SafeStorage } from '@/utils/safeStorage';
+import { validateContract, sanitizeAndValidateStoicInput } from '@/lib/runtimeContracts';
 
 export interface StoicAdvice {
   title?: string;
@@ -9,6 +10,33 @@ export interface StoicAdvice {
 }
 
 const DISCIPLINE_STRIKES_KEY = 'ataraxia_discipline_strikes_v1';
+
+const VANITY_KEYWORDS = [
+  'mujeres', 'chicas', 'hombres', 'gustar', 'les gusta', 'miran mas',
+  'miran más', 'atraer', 'impresionar', 'ligar', 'pareja', 'sexy', 'atractiv',
+];
+
+const BANALITY_KEYWORDS = [
+  'llueve', 'llover', 'clima', 'tiempo mañana', 'chisme', 'noticia',
+  'farandula', 'farándula', 'politica', 'política', 'futbol', 'fútbol', 'chiste',
+];
+
+const SLEEP_KEYWORDS = [
+  'dormir', 'sueño', 'sueno', 'insomnio', 'desvelo', 'desvelad',
+  'no puedo dormir', 'conciliar el sueño', 'descanso', 'despertar',
+  'pesadilla', 'calidad de sueño', 'calidad del sueño', 'dormido',
+  'dormir mejor', 'desvelar',
+];
+
+const TELEMETRY_KEYWORDS = [
+  'como voy', 'cómo voy', 'mi estado', 'resumen', 'cuanto me falta',
+  'cuánto me falta', 'mis pasos', 'mi sueño', 'mi recuperacion',
+  'mi recuperación', 'readiness', 'telemetria', 'telemetría',
+];
+
+function containsAnyKeyword(text: string, keywords: readonly string[]): boolean {
+  return keywords.some((kw) => text.includes(kw));
+}
 
 function getDisciplineWarningResponse(userName: string, path: LegendaryPath, reason: 'vanity' | 'banality'): string {
   let strike = 1;
@@ -22,6 +50,9 @@ function getDisciplineWarningResponse(userName: string, path: LegendaryPath, rea
   }
 
   if (strike === 1) {
+    const reasonMsg = reason === 'vanity'
+      ? 'Aquí no se admiten vanidades superficiales, mendicidad de atención femenina/masculina ni búsqueda de aprobación ajena. Quien entrena para ser mirado es un esclavo de ojos extraños.'
+      : 'Aquí no se toleran preguntas ociosas, servicios meteorológicos ni dispersión mental sobre cosas irrelevantes que no puedes controlar.';
     return `⚠️ **PRIMER AVISO: MONITIO (Llamada de Atención)**
 
 *«Semel nefas, bis stultitia, ter poena»*
@@ -29,11 +60,7 @@ function getDisciplineWarningResponse(userName: string, path: LegendaryPath, rea
 
 **Novato**, esta fue una llamada de atención formal. En las legiones romanas, ante la primera falta de guardia (*vigilia*), el centurión descargaba un golpe seco con su vara de vid (*vitis*) sobre la espalda para despertar al recluta frente a toda la cohorte.
 
-Esto es **ATARAXIA**: concentración, determinación y disciplina inquebrantable. ${
-      reason === 'vanity'
-        ? 'Aquí no se admiten vanidades superficiales, mendicidad de atención femenina/masculina ni búsqueda de aprobación ajena. Quien entrena para ser mirado es un esclavo de ojos extraños.'
-        : 'Aquí no se toleran preguntas ociosas, servicios meteorológicos ni dispersión mental sobre cosas irrelevantes que no puedes controlar.'
-    }
+Esto es **ATARAXIA**: concentración, determinación y disciplina inquebrantable. ${reasonMsg}
 
 Consideramos esta primera vez como un error de novicio (*semel nefas*). Si vuelves a caer en insignificancias, vendrá el segundo aviso.
 
@@ -53,14 +80,10 @@ Estás a **un solo aviso del castigo fatal y la descalificación de tu honor est
 **Silencio y acción.** Deja las superficialidades y demuéstrale a los dioses que eres capaz de redimirte con sudor en tu Senda del **${path.toUpperCase()}**. ¿Vas a cumplir hoy sí o no?`;
   }
 
-  // STRIKE 3+ (SUPPLICIUM FATAL: DESTRUCCIÓN DEL EGO & ELIMINACIÓN PERMANENTE DE CUENTA)
   try {
-    // Purgado completo y eliminación definitiva de la cuenta en el sistema
     SafeStorage.clearAll();
     SafeStorage.setItem('ataraxia_account_purged_fatal', 'true');
-  } catch (e) {
-    console.error('Error al ejecutar purgado fatal de cuenta:', e);
-  }
+  } catch {}
 
   return `☠️ **TERCER AVISO: SUPPLICIUM FATAL (FUSTUARIUM & ELIMINACIÓN DE CUENTA)**
 
@@ -82,70 +105,8 @@ Epicteto lo sentenció para siempre:
 Si algún día decides dejar de ser un niño vanidoso y volver a Ataraxia, **tendrá que ser con otra cuenta completamente diferente, desde CERO absoluto y siendo alguien verdaderamente nuevo y disciplinado**. Ahora sal de mi vista.`;
 }
 
-/**
- * MOTOR DE MENTORÍA EXPERTA Y PSICOLOGÍA ESTOICA ATARAXIA
- * Proporciona respuestas humanas, empáticas, científicas y profundamente
- * personalizadas según la Senda del usuario, su estado físico y su salud mental.
- */
-export function generateStoicMentorResponse(
-  userPrompt: string,
-  path: LegendaryPath = 'spartan',
-  archetype: CoachArchetype = 'stoic_mentor',
-  metrics?: UserMetrics,
-  log?: DailyLog
-): string {
-  const p = userPrompt.toLowerCase().trim();
-  const userName = log?.userName && log.userName !== 'Ciudadano Prokopton' ? log.userName : 'Guerrero';
-  const weight = metrics?.weightKg || 75;
-
-  // ─────────────────────────────────────────────────────────────
-  // 0. FILTRO DE DIGNIDAD ESTOICA & ENFOQUE (SISTEMA ROMANO DE 3 AVISOS)
-  // ─────────────────────────────────────────────────────────────
-
-  // A. VANIDAD, BÚSQUEDA DE VALIDACIÓN ROMÁNTICA O EXTERNA
-  if (
-    p.includes('mujeres') ||
-    p.includes('chicas') ||
-    p.includes('hombres') ||
-    p.includes('gustar') ||
-    p.includes('les gusta') ||
-    p.includes('miran mas') ||
-    p.includes('miran más') ||
-    p.includes('atraer') ||
-    p.includes('impresionar') ||
-    p.includes('ligar') ||
-    p.includes('pareja') ||
-    p.includes('sexy') ||
-    p.includes('atractiv')
-  ) {
-    return getDisciplineWarningResponse(userName, path, 'vanity');
-  }
-
-  // B. BANALIDADES, CLIMA Y DISTRACCIONES FUERA DE FOCO
-  if (
-    p.includes('llueve') ||
-    p.includes('llover') ||
-    p.includes('clima') ||
-    p.includes('tiempo mañana') ||
-    p.includes('chisme') ||
-    p.includes('noticia') ||
-    p.includes('farandula') ||
-    p.includes('farándula') ||
-    p.includes('politica') ||
-    p.includes('política') ||
-    p.includes('futbol') ||
-    p.includes('fútbol') ||
-    p.includes('chiste')
-  ) {
-    return getDisciplineWarningResponse(userName, path, 'banality');
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // 1. DOLORES MUSCULARES, MOLESTIAS Y FISIOTERAPIA PREVENTIVA
-  // ─────────────────────────────────────────────────────────────
-
-  // A. DOLOR DE CUELLO / TRAPECIOS / CERVICALES
-  if (p.includes('cuello') || p.includes('cervical') || p.includes('trapecio') || p.includes('torticolis') || p.includes('nuca')) {
+function resolvePainAndInjuryResponse(p: string, userName: string): string | null {
+  if (containsAnyKeyword(p, ['cuello', 'cervical', 'trapecio', 'torticolis', 'nuca'])) {
     return `🏛️ **Alivio y Fisioterapia para Dolor Cervical & Cuello**
 
 Entiendo perfectamente tu molestia, ${userName}. El dolor en la zona del cuello y los trapecios suele ser muy limitante y molesto. En el entrenamiento, ocurre frecuentemente por:
@@ -162,8 +123,7 @@ Entiendo perfectamente tu molestia, ${userName}. El dolor en la zona del cuello 
 *“El cuerpo es el instrumento de la mente; cuídalo con prudencia para que la mente pueda actuar con virtud.” — Séneca.*`;
   }
 
-  // B. DOLOR LUMBAR / ESPALDA BAJA
-  if (p.includes('espalda baja') || p.includes('lumbar') || p.includes('ciatica') || p.includes('lumbago')) {
+  if (containsAnyKeyword(p, ['espalda baja', 'lumbar', 'ciatica', 'lumbago'])) {
     return `🏛️ **Protocolo de Descompresión y Alivio Lumbar**
 
 Escucha a tu cuerpo con atención, ${userName}. La zona lumbar suele sobrecargarse cuando los glúteos o el core no se activan adecuadamente, o por fatiga en bisagras de cadera (peso muerto/sentadilla).
@@ -175,8 +135,7 @@ Escucha a tu cuerpo con atención, ${userName}. La zona lumbar suele sobrecargar
 • **4. Regla de Oro**: Cero flexiones de columna con peso hasta que el dolor ceda por completo.`;
   }
 
-  // C. DOLOR DE HOMBRO / MANGUITO ROTADOR
-  if (p.includes('hombro') || p.includes('manguito') || p.includes('deltoide') || p.includes('clavicula')) {
+  if (containsAnyKeyword(p, ['hombro', 'manguito', 'deltoide', 'clavicula'])) {
     return `🏛️ **Cuidado Articular de Hombro & Manguito Rotador**
 
 El hombro es la articulación más móvil pero también la más vulnerable del cuerpo, ${userName}.
@@ -188,8 +147,7 @@ El hombro es la articulación más móvil pero también la más vulnerable del c
 • **4. Aplicar Hielo si hay inflamación aguda** (primeras 24h) o calor suave si es contractura muscular.`;
   }
 
-  // D. DOLOR DE RODILLA / ARTICULACIONES / TENDONES
-  if (p.includes('rodilla') || p.includes('codo') || p.includes('tendon') || p.includes('tendinitis') || p.includes('articulac')) {
+  if (containsAnyKeyword(p, ['rodilla', 'codo', 'tendon', 'tendinitis', 'articulac'])) {
     return `🏛️ **Regeneración Articular & Cuidado Tendinoso**
 
 El dolor articular o tendinoso no se "empuja a la fuerza"; se gestiona con inteligencia biomecánica, ${userName}.
@@ -201,8 +159,7 @@ El dolor articular o tendinoso no se "empuja a la fuerza"; se gestiona con intel
 • **4. Calentamiento Sinovial**: Dedica siempre 5-7 minutos a rotaciones articulares suaves antes de cualquier carga.`;
   }
 
-  // E. AGUJETAS (DOMS) VS LESIÓN REAL
-  if (p.includes('agujeta') || p.includes('dolor muscular') || p.includes('molido') || p.includes('agujetas') || p.includes('adolorido')) {
+  if (containsAnyKeyword(p, ['agujeta', 'dolor muscular', 'molido', 'agujetas', 'adolorido'])) {
     return `🏛️ **Diferenciación: Agujetas (DOMS) vs Daño Estructural**
 
 Es fundamental entender qué te comunica tu cuerpo, ${userName}:
@@ -216,52 +173,12 @@ Es fundamental entender qué te comunica tu cuerpo, ${userName}:
 3. **Ducha de Contraste**: 2 minutos caliente / 30 segundos fría en la zona para estimular la vasodilatación.`;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 2. PSICOLOGÍA ESTOICA, CANSANCIO MENTAL & DUDAS DEL DÍA 30
-  // ─────────────────────────────────────────────────────────────
+  return null;
+}
 
-  // A. DUDAS SOBRE LLEGAR AL DÍA 30 / MIEDO AL FRACASO
-  if (p.includes('dia 30') || p.includes('día 30') || p.includes('no voy a poder') || p.includes('no lo voy a lograr') || p.includes('no se si pueda') || p.includes('no creo llegar') || p.includes('rendirme') || p.includes('renunciar')) {
-    return `🏛️ **La Forja del Guerrero: Superando la Duda del Día 30**
-
-Hermano de camino, escucha con serenidad. Es completamente natural que en algún punto del sendero aparezca la voz de la duda. La mente primitiva busca la comodidad y teme al compromiso sostenido.
-
-Marco Aurelio, emperador del mayor imperio del mundo, se decía a sí mismo cada mañana:
-> *"No perturbes tu alma pensando en toda tu vida de golpe. No abarques con la imaginación las dificultades futuras. Pregúntate en cada instante presente: ¿Qué tiene este momento que sea insoportable?"*
-
-⚔️ **Tu Reencuadre Estoico para Hoy**:
-1. **No intentes conquistar los 30 días de golpe**: No tienes que entrenar durante 30 días en este minuto; tu único deber sagrado es cumplir **la próxima hora**.
-2. **La Regla del 1%**: Si hoy sientes que solo tienes un 40% de energía disponible, pero entregas ese 40% con honor, has alcanzado el **100% de tu virtud de hoy**.
-3. **El Pacto no busca perfección robótica**: Busca consistencia inquebrantable. Un guerrero no se define por no caer, sino por levantarse inmediatamente después de tropezar.
-
-Respira hondo, bebe un vaso de agua fresca y da el siguiente paso. Estoy contigo en cada día de esta senda. ¿Qué pequeña acción podemos hacer juntos hoy?`;
-  }
-
-  // B. CANSANCIO MENTAL / AGOTAMIENTO / BURNOUT
-  if (p.includes('cansancio mental') || p.includes('fatiga mental') || p.includes('agotad') || p.includes('saturad') || p.includes('burnout') || p.includes('estres') || p.includes('estrés') || p.includes('agobiad')) {
-    return `🏛️ **La Ciudadela Interior: Reseteo Ante la Fatiga Mental**
-
-La mente y el sistema nervioso central se fatigan con mayor facilidad que los músculos, ${userName}. Cuando la sobrecarga cognitiva te agobia, empujar con fuerza bruta solo genera frustración.
-
-Epicteto nos dejó esta joya:
-> *"No son las cosas que nos pasan las que nos perturban, sino los juicios que hacemos sobre ellas."*
-
-🧘‍♂️ **Protocolo de Reseteo del Sistema Nervioso (10 Minutos)**:
-• **1. Desconexión Sensorial (Cero Pantallas)**: Apaga el teléfono y la computadora durante 10 minutos. El cerebro necesita silencio visual para resetear la dopamina.
-• **2. Respiración Táctica 4-4-4-4 (Box Breathing)**:
-  - Inhala en 4 segundos.
-  - Retén el aire en 4 segundos.
-  - Exhala en 4 segundos.
-  - Mantén vacío en 4 segundos.
-  *(Repite 5 ciclos. Baja el cortisol de inmediato).*
-• **3. Dicotomía del Control**: Separa en una hoja mental lo que depende 100% de ti hoy (tu actitud, tu hidratación, tu esfuerzo) de lo que está fuera de tu control.
-• **4. Sesión de Hoy Suave**: Cambiaremos el entreno pesado por 25 minutos de caminata al aire libre y estiramientos. La mente descansará y el cuerpo se mantendrá en movimiento virtuoso.`;
-  }
-
-  // C. DESMOTIVACIÓN / FALTA DE INTERÉS / PEREZA (REENCUADRE COGNITIVO RADICAL)
-  if (p.includes('desmotivad') || p.includes('sin ganas') || p.includes('desinteres') || p.includes('perez') || p.includes('desanimo') || p.includes('desanimad') || p.includes('flojera')) {
-    if (archetype === 'spartan_commander') {
-      return `⚔️ **Estoico Disciplinario: La Serie Única al Fallo (RPE 10)**
+function buildDemotivationResponse(userName: string, archetype: CoachArchetype): string {
+  const responses: Record<CoachArchetype, string> = {
+    spartan_commander: `⚔️ **Estoico Disciplinario: La Serie Única al Fallo (RPE 10)**
       
 Hermano, la mente comodona busca negociar excusas para postergar el esfuerzo, ${userName}. Pero en el rigor de Epicteto no castigamos el cuerpo con culpas ni penitencias vacías; transmutamos el obstáculo en el camino.
 
@@ -273,11 +190,8 @@ Si hoy no tienes la disposición para completar 5 ejercicios o 20 series, **no h
 
 > *«No eres un niño que necesita aplausos ni entretenimiento; eres un atleta de honor. Tres minutos de esfuerzo impecable superan a una hora de volumen disperso.»*
 
-¿Aceptas el pacto de la Serie Única hoy?`;
-    }
-
-    if (archetype === 'sports_scientist') {
-      return `🔬 **Estoico Analítico: Auditoría de Resistencia & Telemetría**
+¿Aceptas el pacto de la Serie Única hoy?`,
+    sports_scientist: `🔬 **Estoico Analítico: Auditoría de Resistencia & Telemetría**
       
 La pereza percibida suele ser una señal neurobiológica, ${userName}. Desde la lógica de Crisipo, los datos son objetivos: debemos separar la fatiga central del Sistema Nervioso (SNC) de la resistencia psicológica del córtex prefrontal.
 
@@ -286,11 +200,8 @@ La pereza percibida suele ser una señal neurobiológica, ${userName}. Desde la 
 2. **La Regla de los 5 Minutos de Calentamiento Sinovial**: Pon el cuerpo en movimiento en bicicleta o zancadas dinámicas. Si tras 5 minutos la frecuencia cardíaca sube con fluidez, la dopamina se activará por inercia biomecánica.
 3. **Calibración RIR**: Ajusta el esfuerzo a RPE 7 (RIR 3) en lugar de forzar intensidades máximas.
 
-*“Examina el fenómeno sin agregarle juicio de valor. La acción correcta surge del entendimiento claro.”*`;
-    }
-
-    // Default: stoic_mentor
-    return `🏛️ **Estoico Sabio: Examen Socrático & Dicotomía del Control**
+*“Examina el fenómeno sin agregarle juicio de valor. La acción correcta surge del entendimiento claro.”*`,
+    stoic_mentor: `🏛️ **Estoico Sabio: Examen Socrático & Dicotomía del Control**
 
 La motivación es una emoción caprichosa y efímera, ${userName}; viene cuando quiere y desaparece con el frío. Si dependiéramos de la motivación, construiríamos templos de arena.
 
@@ -301,46 +212,14 @@ Marco Aurelio se recordaba al amanecer:
 1. *«¿Qué juicio o pensamiento exacto me está generando pereza?»* (¿Miedo a cansarte? ¿Aversión a la incomodidad? Desarma esa narrativa).
 2. *«¿Qué está bajo mi control en este instante?»* Tu único deber no es completar un mes de entrenamiento, sino calzarte las zapatillas y dar el primer paso presente.
 
-Hoy no entrenamos porque tengamos ganas; entrenamos porque somos personas virtuosas de palabra. ¡Acepta el presente con Amor Fati!`;
-  }
+Hoy no entrenamos porque tengamos ganas; entrenamos porque somos personas virtuosas de palabra. ¡Acepta el presente con Amor Fati!`,
+  };
+  return responses[archetype] || responses.stoic_mentor;
+}
 
-  // D. DESCONCENTRACIÓN / FALTA DE FOCO / ANSIEDAD
-  if (p.includes('desconcentrad') || p.includes('foco') || p.includes('concentr') || p.includes('ansiedad') || p.includes('ansios') || p.includes('mente dispersa')) {
-    return `🏛️ **Enfoque Láser: Restaurando la Presencia Mental**
-
-La mente dispersa salta entre el remordimiento del pasado y la ansiedad del futuro. Séneca nos recordaba:
-> *"Sufre más a menudo por la imaginación que por la realidad."*
-
-🎯 **Cómo Recuperar el Foco en 3 Pasos**:
-1. **Regla de la Tarea Única (Monotasking)**: Elige **una sola cosa** para la próxima media hora (ej: 4 series de entrenamiento o comer con atención plena). Prohíbe cualquier distracción durante ese bloque.
-2. **Anclaje Físico**: Siente la planta de tus pies firmes sobre la tierra, siente la temperatura del aire en tu piel. Estás aquí y ahora.
-3. **Vigila tu Diálogo Interno**: No permitas pensamientos catastrofistas. Reemplázalos por acciones tangibles: ¿qué es lo más virtuoso que puedo hacer en los próximos 10 minutos?`;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // 2.5. SUEÑO, INSOMNIO, RECUPERACIÓN NOCTURNA Y DESCANSO
-  // ─────────────────────────────────────────────────────────────
-
-  if (
-    p.includes('dormir') ||
-    p.includes('sueño') ||
-    p.includes('sueno') ||
-    p.includes('insomnio') ||
-    p.includes('desvelo') ||
-    p.includes('desvelad') ||
-    p.includes('no puedo dormir') ||
-    p.includes('conciliar el sueño') ||
-    p.includes('descanso') ||
-    p.includes('despertar') ||
-    p.includes('pesadilla') ||
-    p.includes('calidad de sueño') ||
-    p.includes('calidad del sueño') ||
-    p.includes('dormido') ||
-    p.includes('dormir mejor') ||
-    p.includes('desvelar')
-  ) {
-    if (archetype === 'sports_scientist') {
-      return `🔬 **Protocolo Neurofisiológico de Inducción al Sueño Profundo**
+function buildSleepResponse(userName: string, archetype: CoachArchetype): string {
+  const responses: Record<CoachArchetype, string> = {
+    sports_scientist: `🔬 **Protocolo Neurofisiológico de Inducción al Sueño Profundo**
 
 Comprendo la situación, ${userName}. La dificultad para conciliar el sueño suele responder a una hiperactivación del Sistema Nervioso Simpático (cortisol elevado) y a la inhibición de la melatonina por estímulos fotolumínicos o rumiación cognitiva.
 
@@ -356,11 +235,8 @@ Comprendo la situación, ${userName}. La dificultad para conciliar el sueño sue
 
 💊 **3. Apoyo Nutracéutico Científico (Grado A)**:
 • **Bisglicinato de Magnesio (300-400mg)** 45 min antes de acostarte: Activa receptores GABAérgicos y relaja el tono muscular.
-• **L-Teanina (100-200mg)** o infusión concentrada de Manzanilla/Pasiflora: Induce ondas alfa de calma mental sin generar dependencia.`;
-    }
-
-    if (archetype === 'spartan_commander') {
-      return `⚔️ **El Sagrado Reposo del Guerrero: Reparación de la Armadura**
+• **L-Teanina (100-200mg)** o infusión concentrada de Manzanilla/Pasiflora: Induce ondas alfa de calma mental sin generar dependencia.`,
+    spartan_commander: `⚔️ **El Sagrado Reposo del Guerrero: Reparación de la Armadura**
 
 ¡Soldado, escucha con atención! Un guerrero que no duerme es un guerrero cuya espada pierde el filo y cuyos músculos se devoran a sí mismos. El sueño no es tiempo perdido; es la forja donde tus hormonas anabólicas reconstruyen el templo para la batalla de mañana.
 
@@ -375,11 +251,8 @@ Comprendo la situación, ${userName}. La dificultad para conciliar el sueño sue
 3. **Reencuadre del Espartano**: Si tu mente rumiando problemas no te deja dormir, recuerda: *«El guerrero lucha en el día y descansa en la noche; combatir sombras en la oscuridad solo desgasta tu honor»*. Mañana conquistarás lo que haga falta; esta noche tu único deber es descansar.
 4. **Cámara Oscura y Fresca**: Habitación a oscuras totales y aire fresco para que el cuerpo entre en modo de recuperación profunda.
 
-¡A la cama con disciplina, ${userName}! Mañana nos espera la gloria.`;
-    }
-
-    // Default: stoic_mentor
-    return `🏛️ **Serenidad Nocturna: Restaurando el Sueño y la Paz Interior**
+¡A la cama con disciplina, ${userName}! Mañana nos espera la gloria.`,
+    stoic_mentor: `🏛️ **Serenidad Nocturna: Restaurando el Sueño y la Paz Interior**
 
 Entiendo perfectamente lo frustrante que resulta querer descansar y sentir que la mente sigue despierta, ${userName}. La noche suele magnificar las preocupaciones cuando el mundo exterior se apaga.
 
@@ -406,122 +279,159 @@ Marco Aurelio se recordaba a sí mismo antes de dormir:
   - **Ambiente Fresco**: Una habitación ventilada y fresca (18°C-20°C) facilita que baje la temperatura corporal necesaria para el sueño profundo.
   - **Bisglicinato de Magnesio (300-400mg)** o infusión de manzanilla/melisa: Relaja el tono muscular y aquieta el sistema nervioso.
 
-Suelta el peso del día, ${userName}. Has hecho lo suficiente por hoy. Cierra los ojos y descansa en paz.`;
+Suelta el peso del día, ${userName}. Has hecho lo suficiente por hoy. Cierra los ojos y descansa en paz.`,
+  };
+  return responses[archetype] || responses.stoic_mentor;
+}
+
+function resolveMindsetAndSleepResponse(p: string, userName: string, archetype: CoachArchetype): string | null {
+  if (containsAnyKeyword(p, ['dia 30', 'día 30', 'no voy a poder', 'no lo voy a lograr', 'no se si pueda', 'no creo llegar', 'rendirme', 'renunciar'])) {
+    return `🏛️ **La Forja del Guerrero: Superando la Duda del Día 30**
+
+Hermano de camino, escucha con serenidad. Es completamente natural que en algún punto del sendero aparezca la voz de la duda. La mente primitiva busca la comodidad y teme al compromiso sostenido.
+
+Marco Aurelio, emperador del mayor imperio del mundo, se decía a sí mismo cada mañana:
+> *"No perturbes tu alma pensando en toda tu vida de golpe. No abarques con la imaginación las dificultades futuras. Pregúntate en cada instante presente: ¿Qué tiene este momento que sea insoportable?"*
+
+⚔️ **Tu Reencuadre Estoico para Hoy**:
+1. **No intentes conquistar los 30 días de golpe**: No tienes que entrenar durante 30 días en este minuto; tu único deber sagrado es cumplir **la próxima hora**.
+2. **La Regla del 1%**: Si hoy sientes que solo tienes un 40% de energía disponible, pero entregas ese 40% con honor, has alcanzado el **100% de tu virtud de hoy**.
+3. **El Pacto no busca perfección robótica**: Busca consistencia inquebrantable. Un guerrero no se define por no caer, sino por levantarse inmediatamente después de tropezar.
+
+Respira hondo, bebe un vaso de agua fresca y da el siguiente paso. Estoy contigo en cada día de esta senda. ¿Qué pequeña acción podemos hacer juntos hoy?`;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 2.5. EVALUACIÓN DE ESTADO DEL DÍA, TELEMETRÍA & BALANCE
-  // ─────────────────────────────────────────────────────────────
-  if (
-    p.includes('como voy') ||
-    p.includes('cómo voy') ||
-    p.includes('mi estado') ||
-    p.includes('resumen') ||
-    p.includes('cuanto me falta') ||
-    p.includes('cuánto me falta') ||
-    p.includes('mis pasos') ||
-    p.includes('mi sueño') ||
-    p.includes('mi recuperacion') ||
-    p.includes('mi recuperación') ||
-    p.includes('readiness') ||
-    p.includes('telemetria') ||
-    p.includes('telemetría')
-  ) {
-    const steps = log?.steps || 0;
-    const stepGoal = log?.stepGoal || 10000;
-    const cals = log?.totalCalories || 0;
-    const targetCals = log?.targetCalories || 2200;
-    const water = log?.waterLitres || 0;
-    const trainingDone = log?.trainingCompleted;
-    const readiness = log?.readinessScore?.total || 85;
-    const soreness = log?.readinessScore?.soreness || 2;
-    const targetProtein = Math.round(weight * (path === 'spartan' || path === 'apollo' ? 2.2 : 1.8));
-    const currentProtein = log?.macros?.protein || 0;
+  if (containsAnyKeyword(p, ['cansancio mental', 'fatiga mental', 'agotad', 'saturad', 'burnout', 'estres', 'estrés', 'agobiad'])) {
+    return `🏛️ **La Ciudadela Interior: Reseteo Ante la Fatiga Mental**
 
-    return `🏛️ **Diagnóstico y Balance del Templo Hoy — ${userName}**
+La mente y el sistema nervioso central se fatigan con mayor facilidad que los músculos, ${userName}. Cuando la sobrecarga cognitiva te agobia, empujar con fuerza bruta solo genera frustración.
+
+Epicteto nos dejó esta joya:
+> *"No son las cosas que nos pasan las que nos perturban, sino los juicios que hacemos sobre ellas."*
+
+🧘‍♂️ **Protocolo de Reseteo del Sistema Nervioso (10 Minutos)**:
+• **1. Desconexión Sensorial (Cero Pantallas)**: Apaga el teléfono y la computadora durante 10 minutos. El cerebro necesita silencio visual para resetear la dopamina.
+• **2. Respiración Táctica 4-4-4-4 (Box Breathing)**:
+  - Inhala en 4 segundos.
+  - Retén el aire en 4 segundos.
+  - Exhala en 4 segundos.
+  - Mantén vacío en 4 segundos.
+  *(Repite 5 ciclos. Baja el cortisol de inmediato).*
+• **3. Dicotomía del Control**: Separa en una hoja mental lo que depende 100% de ti hoy (tu actitud, tu hidratación, tu esfuerzo) de lo que está fuera de tu control.
+• **4. Sesión de Hoy Suave**: Cambiaremos el entreno pesado por 25 minutos de caminata al aire libre y estiramientos. La mente descansará y el cuerpo se mantendrá en movimiento virtuoso.`;
+  }
+
+  if (containsAnyKeyword(p, ['desmotivad', 'sin ganas', 'desinteres', 'perez', 'desanimo', 'desanimad', 'flojera'])) {
+    return buildDemotivationResponse(userName, archetype);
+  }
+
+  if (containsAnyKeyword(p, ['desconcentrad', 'foco', 'concentr', 'ansiedad', 'ansios', 'mente dispersa'])) {
+    return `🏛️ **Enfoque Láser: Restaurando la Presencia Mental**
+
+La mente dispersa salta entre el remordimiento del pasado y la ansiedad del futuro. Séneca nos recordaba:
+> *"Sufre más a menudo por la imaginación que por la realidad."*
+
+🎯 **Cómo Recuperar el Foco en 3 Pasos**:
+1. **Regla de la Tarea Única (Monotasking)**: Elige **una sola cosa** para la próxima media hora (ej: 4 series de entrenamiento o comer con atención plena). Prohíbe cualquier distracción durante ese bloque.
+2. **Anclaje Físico**: Siente la planta de tus pies firmes sobre la tierra, siente la temperatura del aire en tu piel. Estás aquí y ahora.
+3. **Vigila tu Diálogo Interno**: No permitas pensamientos catastrofistas. Reemplázalos por acciones tangibles: ¿qué es lo más virtuoso que puedo hacer en los próximos 10 minutos?`;
+  }
+
+  if (containsAnyKeyword(p, SLEEP_KEYWORDS)) {
+    return buildSleepResponse(userName, archetype);
+  }
+
+  return null;
+}
+
+function buildTelemetryResponse(userName: string, path: LegendaryPath, weight: number, log?: DailyLog): string {
+  const steps = log?.steps || 0;
+  const stepGoal = log?.stepGoal || 10000;
+  const cals = log?.totalCalories || 0;
+  const targetCals = log?.targetCalories || 2200;
+  const water = log?.waterLitres || 0;
+  const trainingDone = log?.trainingCompleted;
+  const readiness = log?.readinessScore?.total || 85;
+  const soreness = log?.readinessScore?.soreness || 2;
+  const proteinMultiplier = path === 'spartan' || path === 'apollo' ? 2.2 : 1.8;
+  const targetProtein = Math.round(weight * proteinMultiplier);
+  const currentProtein = log?.macros?.protein || 0;
+
+  const readinessLabel = readiness >= 80 ? '(⚡ Estado óptimo de potencia)' : '(🛡️ Autorregulación recomendada)';
+  const trainingLabel = trainingDone ? '🏆 **Completado con honor**' : '⏳ **Pendiente de ejecutar**';
+  const waterLabel = water >= 2.5 ? '(✅ Óptima)' : '(💧 Recuerda beber otro vaso)';
+  const nextTrainingStep = !trainingDone
+    ? '1. Prepárate para el entrenamiento con un buen calentamiento articular.\n'
+    : '1. Enfócate en la supercompensación y reabastecimiento con alimentos nobles.\n';
+  const nextProteinStep = currentProtein < targetProtein
+    ? `Prioriza tu próxima comida con al menos ${Math.min(40, targetProtein - currentProtein)}g de proteína sólida.`
+    : 'Meta proteica alcanzada con éxito.';
+
+  return `🏛️ **Diagnóstico y Balance del Templo Hoy — ${userName}**
 
 📊 **Telemetría & Biomarcadores en Vivo**:
-• **Disponibilidad del SNC (Readiness)**: **${readiness}%** ${readiness >= 80 ? '(⚡ Estado óptimo de potencia)' : '(🛡️ Autorregulación recomendada)'} | Dolor muscular: ${soreness}/10.
-• **Entrenamiento**: ${trainingDone ? '🏆 **Completado con honor**' : '⏳ **Pendiente de ejecutar**'}.
+• **Disponibilidad del SNC (Readiness)**: **${readiness}%** ${readinessLabel} | Dolor muscular: ${soreness}/10.
+• **Entrenamiento**: ${trainingLabel}.
 • **Pasos Activos**: **${steps.toLocaleString()} / ${stepGoal.toLocaleString()} pasos** (${Math.round((steps / stepGoal) * 100)}% de la meta diaria).
 • **Nutrición & Balance**: **${cals} / ${targetCals} kcal** (Restan ${Math.max(0, targetCals - cals)} kcal).
 • **Proteína Ingerida**: **${currentProtein}g / ${targetProtein}g** (Faltan ${Math.max(0, targetProtein - currentProtein)}g para la síntesis proteica óptima).
-• **Hidratación**: **${water.toFixed(1)}L / 3.0L** ${water >= 2.5 ? '(✅ Óptima)' : '(💧 Recuerda beber otro vaso)'}.
+• **Hidratación**: **${water.toFixed(1)}L / 3.0L** ${waterLabel}.
 
 🎯 **Próxima Acción Asertiva**:
-${!trainingDone ? '1. Prepárate para el entrenamiento con un buen calentamiento articular.\n' : '1. Enfócate en la supercompensación y reabastecimiento con alimentos nobles.\n'}2. ${currentProtein < targetProtein ? `Prioriza tu próxima comida con al menos ${Math.min(40, targetProtein - currentProtein)}g de proteína sólida.` : 'Meta proteica alcanzada con éxito.'}`;
-  }
+${nextTrainingStep}2. ${nextProteinStep}`;
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // 3. NUTRICIÓN PERSONALIZADA SEGÚN LA SENDA
-  // ─────────────────────────────────────────────────────────────
-
-  if (p.includes('comida') || p.includes('nutri') || p.includes('receta') || p.includes('macro') || p.includes('proteina') || p.includes('proteína') || p.includes('que comer') || p.includes('qué comer') || p.includes('cenar') || p.includes('desayunar')) {
-    if (path === 'spartan') {
-      const targetProt = Math.round(weight * 2.2);
-      return `⚔️ **Nutrición de la Senda del Espartano (Fuerza & Superávit Limpio)**
+function buildNutritionResponse(userName: string, path: LegendaryPath, weight: number): string {
+  const templates: Record<LegendaryPath, string> = {
+    spartan: `⚔️ **Nutrición de la Senda del Espartano (Fuerza & Superávit Limpio)**
 
 Tu meta es construir masa muscular densa y potencia sin ganar grasa innecesaria, ${userName}:
-• **Proteína Objetivo**: **${targetProt}g diarios** (2.2g por kg de peso corporal).
+• **Proteína Objetivo**: **${Math.round(weight * 2.2)}g diarios** (2.2g por kg de peso corporal).
 • **Estrategia Calórica**: Superávit ligero (+300 kcal sobre tu mantenimiento).
 • **Menú Espartano Recomendado**:
   - *Comida Principal*: 220g de Pechuga de Pollo o Ternera Magra + 150g de Arroz Jazmín o Avena + Brócoli salteado con Aceite de Oliva Extra Virgen (48g Proteína / 55g Carbos / 14g Grasas).
   - *Post-Entreno*: Batido con 35g de proteína Whey + 1 plátano maduro + 5g de Creatina Monohidrato.
-  - *Snack de Densidad*: 4 Huevos cocidos + 30g de nueces o almendras.`;
-    }
-
-    if (path === 'hoplite') {
-      const targetProt = Math.round(weight * 1.8);
-      return `🛡️ **Nutrición de la Senda del Hoplita (Resistencia, Salud Mitocondrial & Longevidad)**
+  - *Snack de Densidad*: 4 Huevos cocidos + 30g de nueces o almendras.`,
+    hoplite: `🛡️ **Nutrición de la Senda del Hoplita (Resistencia, Salud Mitocondrial & Longevidad)**
 
 Tu meta es energía sostenida, recuperación cardiovascular y balance hormonal óptimo:
-• **Proteína Objetivo**: **${targetProt}g diarios** (1.8g por kg).
+• **Proteína Objetivo**: **${Math.round(weight * 1.8)}g diarios** (1.8g por kg).
 • **Estrategia Calórica**: Normocalórica (mantenimiento exacto para rendir al máximo).
 • **Menú Hoplita Recomendado**:
   - *Comida Principal*: 200g de Salmón o Atún fresco (alto en Omega-3) + Quinoa hervida + Espárragos y Champiñones salteados en Ghee (42g Proteína / 45g Carbos / 16g Grasas).
-  - *Hidratación con Electrólitos*: 1L de agua con 1g de sal rosada del Himalaya y zumo de medio limón para mantener la presión osmótica celular en cardio Zona 2.`;
-    }
-
-    if (path === 'apollo') {
-      const targetProt = Math.round(weight * 2.2);
-      return `⚡ **Nutrición de la Senda de Apolo (Definición Estética & Recomposición)**
+  - *Hidratación con Electrólitos*: 1L de agua con 1g de sal rosada del Himalaya y zumo de medio limón para mantener la presión osmótica celular en cardio Zona 2.`,
+    apollo: `⚡ **Nutrición de la Senda de Apolo (Definición Estética & Recomposición)**
 
 Tu meta es máxima definición muscular manteniendo la plenitud y la dureza:
-• **Proteína Objetivo**: **${targetProt}g diarios** (2.2g por kg para proteger la masa magra).
+• **Proteína Objetivo**: **${Math.round(weight * 2.2)}g diarios** (2.2g por kg para proteger la masa magra).
 • **Estrategia Calórica**: Déficit moderado controlado (-350 kcal) con alta saciedad.
 • **Menú Apolo Recomendado**:
   - *Comida Principal*: 240g de Pechuga de Pavo o Pescado Blanco (Merluza/Bacalao) + Ensalada gigante de hojas verdes, pepino y espinacas + 120g de Camote/Batata al horno (46g Proteína / 30g Carbos / 6g Grasas).
-  - *Control de Apetito*: Gelatina sin azúcar, infusiones de té verde y 3.0L de agua diaria para mantener el metabolismo acelerado.`;
-    }
-
-    // Filósofo Guerrero
-    const targetProt = Math.round(weight * 1.9);
-    return `🧘‍♂️ **Nutrición de la Senda del Filósofo Guerrero (Claridad Mental & Ayuno)**
+  - *Control de Apetito*: Gelatina sin azúcar, infusiones de té verde y 3.0L de agua diaria para mantener el metabolismo acelerado.`,
+    philosopher: `🧘‍♂️ **Nutrición de la Senda del Filósofo Guerrero (Claridad Mental & Ayuno)**
 
 Tu meta es ligereza corporal, dominio gravitacional y agudeza mental:
-• **Proteína Objetivo**: **${targetProt}g diarios** (1.9g por kg).
+• **Proteína Objetivo**: **${Math.round(weight * 1.9)}g diarios** (1.9g por kg).
 • **Estrategia**: Ventana de alimentación 16/8 (ayuno intermitente) con alimentos reales no procesados.
 • **Menú Filosófico Recomendado**:
   - *Ruptura de Ayuno*: Omelette de 4 huevos de campo con espinacas y aguacate + 1 fruta entera (manzana o arándanos).
-  - *Cena de Forja*: Lomo de atún a la plancha + Ensalada de lentejas o garbanzos con semillas de calabaza y aceite de oliva virgen extra.`;
-  }
+  - *Cena de Forja*: Lomo de atún a la plancha + Ensalada de lentejas o garbanzos con semillas de calabaza y aceite de oliva virgen extra.`,
+  };
+  return templates[path] || templates.philosopher;
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // 4. ENTRENAMIENTO PERSONALIZADO SEGÚN LA SENDA
-  // ─────────────────────────────────────────────────────────────
-
-  if (p.includes('rutina') || p.includes('entren') || p.includes('ejercicio') || p.includes('pesas') || p.includes('gym')) {
-    if (log?.trainingCompleted) {
-      return `🏆 **¡Misión de Entrenamiento de Hoy Cumplida!**
+function buildTrainingResponse(userName: string, path: LegendaryPath, trainingCompleted?: boolean): string {
+  if (trainingCompleted) {
+    return `🏆 **¡Misión de Entrenamiento de Hoy Cumplida!**
 
 Has honrado tu pacto diario con el templo, ${userName}. Ahora tu único deber es la supercompensación:
 1. **Nutrición Anabólica**: Consume tu porción de proteína y carbohidratos en las próximas 2 horas.
 2. **Rehidratación**: Bebe al menos 600ml de agua con electrólitos.
 3. **Descanso**: Asegura al menos 7.5 a 8 horas de sueño profundo para permitir que las fibras musculares se reconstruyan más fuertes que antes.`;
-    }
+  }
 
-    if (path === 'spartan') {
-      return `⚔️ **Rutina de Combate — Senda del Espartano (Fuerza Máxima & Tensión Mecánica)**:
+  const routines: Record<LegendaryPath, string> = {
+    spartan: `⚔️ **Rutina de Combate — Senda del Espartano (Fuerza Máxima & Tensión Mecánica)**:
 
 1. **Sentadilla Trasera con Barra o Goblet**: 4 series x 6-8 reps (RIR 2)
 2. **Press de Banca con Barra o Mancuernas**: 4 series x 8 reps
@@ -529,11 +439,8 @@ Has honrado tu pacto diario con el templo, ${userName}. Ahora tu único deber es
 4. **Press Militar de Hombro**: 3 series x 8-10 reps
 5. **Paseo del Granjero (Farmer's Walk)**: 3 rondas x 40 metros
 
-*Carga con intención de victoria. Descansa 2-3 minutos entre series pesadas.*`;
-    }
-
-    if (path === 'hoplite') {
-      return `🛡️ **Rutina de Resistencia — Senda del Hoplita (Capacidad de Trabajo & Motor 24h)**:
+*Carga con intención de victoria. Descansa 2-3 minutos entre series pesadas.*`,
+    hoplite: `🛡️ **Rutina de Resistencia — Senda del Hoplita (Capacidad de Trabajo & Motor 24h)**:
 
 1. **Peso Muerto Rumano**: 4 series x 10-12 reps
 2. **Dominadas o Jalón al Pecho con Agarre Neutro**: 4 series x 10 reps
@@ -541,11 +448,8 @@ Has honrado tu pacto diario con el templo, ${userName}. Ahora tu único deber es
 4. **Zancadas Caminando con Mancuernas**: 3 series x 12 pasos por pierna
 5. **Cardio Zona 2 (Trote/Remo/Bici)**: 20 minutos manteniendo ritmo respiratorio nasal
 
-*Tu escudo es tu resistencia; mantén el ritmo firme y sin pausa.*`;
-    }
-
-    if (path === 'apollo') {
-      return `⚡ **Rutina de Esculpido — Senda de Apolo (Estética, V-Taper & Densidad)**:
+*Tu escudo es tu resistencia; mantén el ritmo firme y sin pausa.*`,
+    apollo: `⚡ **Rutina de Esculpido — Senda de Apolo (Estética, V-Taper & Densidad)**:
 
 1. **Press Inclinado con Mancuernas (Foco Clavicular)**: 4 series x 8-10 reps
 2. **Elevaciones Laterales Estrictas**: 4 series x 12-15 reps (pausa 1s arriba)
@@ -553,11 +457,8 @@ Has honrado tu pacto diario con el templo, ${userName}. Ahora tu único deber es
 4. **Extensiones de Tríceps en Polea o Fondos Banco**: 3 series x 12 reps
 5. **Elevaciones de Piernas Colgado**: 4 series x 15 reps
 
-*Controla la fase excéntrica (3 segundos al bajar) para máxima tensión hipertrófica.*`;
-    }
-
-    // Filósofo Guerrero
-    return `🧘‍♂️ **Rutina de Calistenia & Gravedad — Senda del Filósofo Guerrero**:
+*Controla la fase excéntrica (3 segundos al bajar) para máxima tensión hipertrófica.*`,
+    philosopher: `🧘‍♂️ **Rutina de Calistenia & Gravedad — Senda del Filósofo Guerrero**:
 
 1. **Dominadas Estrictas sin Impulso**: 4 series al 80% de tu máximo
 2. **Flexiones Declinadas o en Anillas**: 4 series x 12-15 reps
@@ -565,29 +466,12 @@ Has honrado tu pacto diario con el templo, ${userName}. Ahora tu único deber es
 4. **L-Sit o Plancha de Oso**: 4 series x 30-45 segundos
 5. **Pino / Handstand contra la pared**: 3 intentos de equilibrio estático
 
-*Domina el templo de tu propio peso corporal antes de dominar el mundo exterior.*`;
-  }
+*Domina el templo de tu propio peso corporal antes de dominar el mundo exterior.*`,
+  };
+  return routines[path] || routines.philosopher;
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // 5. SUPLEMENTACIÓN CON EVIDENCIA CLÍNICA
-  // ─────────────────────────────────────────────────────────────
-
-  if (p.includes('suplement') || p.includes('creatina') || p.includes('whey') || p.includes('vitamina') || p.includes('magnesio') || p.includes('omega')) {
-    return `💊 **Prescripción de Suplementación Científica Grado A**
-
-En Ataraxia no promovemos polvos mágicos; solo suplementos con respaldo clínico demostrado:
-
-1. **Creatina Monohidrato (3-5g diarios)**: El suplemento más respaldado. Aumenta los depósitos de fosfocreatina celular, mejorando la fuerza máxima y la recuperación cognitiva sin retención de agua extracelular.
-2. **Proteína Whey / Aislada**: Herramienta práctica para alcanzar tu requerimiento diario (1.8 - 2.2g/kg) de manera rápida tras el entrenamiento.
-3. **Magnesio Bisglicinato (200-400mg antes de dormir)**: Relaja la musculatura, mejora la calidad del sueño profundo (fase REM/N3) y reduce calambres y espasmos.
-4. **Omega-3 (EPA/DHA 2000mg)**: Modula la inflamación articular y protege la salud cardiovascular.
-5. **Vitamina D3 + K2 (2000-4000 UI)**: Clave para la densidad ósea, la producción de testosterona y la respuesta inmunológica.`;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // 6. RESPUESTA SOCRÁTICA ADAPTATIVA & FILOSÓFICA (CONSULTAS INÉDITAS)
-  // ─────────────────────────────────────────────────────────────
-
+function buildAdaptiveSocraticResponse(userPrompt: string, userName: string, path: LegendaryPath, archetype: CoachArchetype): string {
   const userSnippet = userPrompt.length > 75 ? `${userPrompt.slice(0, 70)}...` : userPrompt;
 
   if (archetype === 'sports_scientist') {
@@ -616,7 +500,6 @@ Marco Aurelio nos legó la máxima de combate:
 Dime con claridad, ${userName}: **¿De qué manera este obstáculo está desafiando tu disciplina hoy, y qué acción concreta necesitas que planifiquemos juntos para vencerlo?**`;
   }
 
-  // Default: stoic_mentor
   return `🏛️ **Reflexión Socrática — Senda del ${path.toUpperCase()}**
 
 Comprendo lo que planteas, ${userName}: *«${userSnippet}»*.
@@ -627,4 +510,63 @@ El sabio estoico no juzga los acontecimientos como buenos o malos en sí mismos,
 2. **Lo que sí depende de ti**: Tu juicio, tu actitud, tu esfuerzo diario y el cuidado de tu templo físico y mental.
 
 Cuéntame con más detalle cómo estás viviendo este momento, ${userName}. ¿Qué aspecto de esta situación te preocupa más y cómo podemos enfocarlo con serenidad y virtud práctica hoy?`;
+}
+
+/**
+ * MOTOR DE MENTORÍA EXPERTA Y PSICOLOGÍA ESTOICA ATARAXIA
+ * Desacoplado con Tablas de Despacho y Contratos Runtime (Complejidad McCabe V(G) <= 10).
+ */
+export function generateStoicMentorResponse(
+  userPrompt: string,
+  path: LegendaryPath = 'spartan',
+  archetype: CoachArchetype = 'stoic_mentor',
+  metrics?: UserMetrics,
+  log?: DailyLog
+): string {
+  const contract = validateContract(
+    { prompt: userPrompt, userName: log?.userName, weightKg: metrics?.weightKg },
+    sanitizeAndValidateStoicInput
+  );
+  const p = contract.data.prompt.toLowerCase();
+  const userName = contract.data.userName;
+  const weight = contract.data.weightKg;
+
+  if (containsAnyKeyword(p, VANITY_KEYWORDS)) {
+    return getDisciplineWarningResponse(userName, path, 'vanity');
+  }
+  if (containsAnyKeyword(p, BANALITY_KEYWORDS)) {
+    return getDisciplineWarningResponse(userName, path, 'banality');
+  }
+
+  const painResponse = resolvePainAndInjuryResponse(p, userName);
+  if (painResponse) return painResponse;
+
+  const mindsetResponse = resolveMindsetAndSleepResponse(p, userName, archetype);
+  if (mindsetResponse) return mindsetResponse;
+
+  if (containsAnyKeyword(p, TELEMETRY_KEYWORDS)) {
+    return buildTelemetryResponse(userName, path, weight, log);
+  }
+
+  if (containsAnyKeyword(p, ['comida', 'nutri', 'receta', 'macro', 'proteina', 'proteína', 'que comer', 'qué comer', 'cenar', 'desayunar'])) {
+    return buildNutritionResponse(userName, path, weight);
+  }
+
+  if (containsAnyKeyword(p, ['rutina', 'entren', 'ejercicio', 'pesas', 'gym'])) {
+    return buildTrainingResponse(userName, path, log?.trainingCompleted);
+  }
+
+  if (containsAnyKeyword(p, ['suplement', 'creatina', 'whey', 'vitamina', 'magnesio', 'omega'])) {
+    return `💊 **Prescripción de Suplementación Científica Grado A**
+
+En Ataraxia no promovemos polvos mágicos; solo suplementos con respaldo clínico demostrado:
+
+1. **Creatina Monohidrato (3-5g diarios)**: El suplemento más respaldado. Aumenta los depósitos de fosfocreatina celular, mejorando la fuerza máxima y la recuperación cognitiva sin retención de agua extracelular.
+2. **Proteína Whey / Aislada**: Herramienta práctica para alcanzar tu requerimiento diario (1.8 - 2.2g/kg) de manera rápida tras el entrenamiento.
+3. **Magnesio Bisglicinato (200-400mg antes de dormir)**: Relaja la musculatura, mejora la calidad del sueño profundo (fase REM/N3) y reduce calambres y espasmos.
+4. **Omega-3 (EPA/DHA 2000mg)**: Modula la inflamación articular y protege la salud cardiovascular.
+5. **Vitamina D3 + K2 (2000-4000 UI)**: Clave para la densidad ósea, la producción de testosterona y la respuesta inmunológica.`;
+  }
+
+  return buildAdaptiveSocraticResponse(userPrompt, userName, path, archetype);
 }

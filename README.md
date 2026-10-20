@@ -79,3 +79,4 @@ ataraxia/
 ---
 
 > *"No pierdas más tiempo discutiendo lo que debe ser un hombre bueno. Sé uno."* – Marco Aurelio
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/998ec3ebda294583b9e24ed2ceef570d)](https://app.codacy.com/gh/mauriciano47-pixel/ataraxia/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)

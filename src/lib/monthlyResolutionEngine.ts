@@ -1,4 +1,4 @@
-import { LEGENDARY_PATHS, COACH_ARCHETYPES, getLegendaryPathInfo } from '../types/onboarding.ts';
+import { COACH_ARCHETYPES, getLegendaryPathInfo } from '../types/onboarding.ts';
 import type { LegendaryPath, CoachArchetype, DailyGrade, DailyPillars } from '../types/onboarding.ts';
 
 export interface DayAudit {
@@ -45,125 +45,71 @@ export interface MonthlyResolution {
   masterDecreeMarkdown: string;
 }
 
-export function generate30DayResolution(params: {
-  dailyGrades: DailyGrade[];
-  path: LegendaryPath;
-  userName: string;
-  startDate: string;
-  archetype?: CoachArchetype;
-}): MonthlyResolution {
-  const { dailyGrades, path, userName, startDate, archetype = 'stoic_mentor' } = params;
-  const pathInfo = getLegendaryPathInfo(path);
-  const coachInfo = COACH_ARCHETYPES[archetype] || COACH_ARCHETYPES.stoic_mentor;
-  const totalDays = 30;
+const EMPTY_PILLARS: DailyPillars = {
+  training: false,
+  steps: false,
+  nutrition: false,
+  sleep: false,
+  stoicChallenge: false,
+  heartRate: false,
+  coachCheckIn: false,
+};
 
-  // 1. Mapeo y Normalización de los 30 Días (Auditoría Integral Día por Día)
-  const dayAudits: DayAudit[] = [];
-  let sumScore = 0;
-  let victoriousDaysCount = 0;
-  let divineDaysCount = 0;
-  let failedDaysCount = 0;
-
-  let countTraining = 0;
-  let countSteps = 0;
-  let countNutrition = 0;
-  let countSleep = 0;
-  let countStoic = 0;
-  let countHeartRate = 0;
-  let countCoach = 0;
-
-  for (let d = 1; d <= totalDays; d++) {
-    const existing = dailyGrades.find((g) => g.day === d) || dailyGrades[d - 1];
-    
-    if (existing) {
-      const p = existing.pillars || {
-        training: existing.trainingDone,
-        steps: existing.stepsRatio >= 0.85,
-        nutrition: existing.caloriesLogged,
-        sleep: (existing.sleepHours || 0) >= 6.5,
-        stoicChallenge: false,
-        heartRate: (existing.heartRateBpm || 0) > 0,
-        coachCheckIn: false,
-      };
-
-      const passedCount = Object.values(p).filter(Boolean).length;
-      if (p.training) countTraining++;
-      if (p.steps) countSteps++;
-      if (p.nutrition) countNutrition++;
-      if (p.sleep) countSleep++;
-      if (p.stoicChallenge) countStoic++;
-      if (p.heartRate) countHeartRate++;
-      if (p.coachCheckIn) countCoach++;
-
-      sumScore += existing.score;
-      if (existing.score >= 90) divineDaysCount++;
-      if (existing.score >= 75) victoriousDaysCount++;
-      else failedDaysCount++;
-
-      dayAudits.push({
-        day: d,
-        date: existing.date || `Día ${d}`,
-        score: existing.score,
-        status: existing.status,
-        pillars: p,
-        passedPillarsCount: passedCount,
-        steps: existing.steps || 0,
-        stepGoal: existing.stepGoal || 10000,
-        sleepHours: existing.sleepHours || 7.0,
-        cals: existing.totalCalories || 0,
-        verdict: existing.verdict,
-      });
-    } else {
-      // Día no registrado aún / omitido
-      failedDaysCount++;
-      dayAudits.push({
-        day: d,
-        date: `Día ${d}`,
-        score: 0,
-        status: 'failed',
-        pillars: {
-          training: false,
-          steps: false,
-          nutrition: false,
-          sleep: false,
-          stoicChallenge: false,
-          heartRate: false,
-          coachCheckIn: false,
-        },
-        passedPillarsCount: 0,
-        steps: 0,
-        stepGoal: 10000,
-        sleepHours: 0,
-        cals: 0,
-        verdict: 'Día Omitido / Indigno: Sin registro de actividad en el Santuario.',
-      });
-    }
+function normalizeDayAudit(d: number, existing?: DailyGrade): DayAudit {
+  if (!existing) {
+    return {
+      day: d,
+      date: `Día ${d}`,
+      score: 0,
+      status: 'failed',
+      pillars: { ...EMPTY_PILLARS },
+      passedPillarsCount: 0,
+      steps: 0,
+      stepGoal: 10000,
+      sleepHours: 0,
+      cals: 0,
+      verdict: 'Día Omitido / Indigno: Sin registro de actividad en el Santuario.',
+    };
   }
 
-  const totalScoreAverage = Math.round(sumScore / totalDays);
-  const adherencePct = Math.round((victoriousDaysCount / totalDays) * 100);
-  const isPromoted = adherencePct >= 80 || totalScoreAverage >= 75;
-
-  let tierAwarded = 'Novicio de Esparta';
-  if (totalScoreAverage >= 90 && adherencePct >= 90) {
-    tierAwarded = 'Semidiós del Olimpo';
-  } else if (isPromoted) {
-    tierAwarded = 'Guerrero de Élite';
-  } else if (totalScoreAverage >= 60) {
-    tierAwarded = 'Hoplita Probado';
-  }
-
-  const pillarAdherence = {
-    trainingPct: Math.round((countTraining / totalDays) * 100),
-    stepsPct: Math.round((countSteps / totalDays) * 100),
-    nutritionPct: Math.round((countNutrition / totalDays) * 100),
-    sleepPct: Math.round((countSleep / totalDays) * 100),
-    stoicReadingPct: Math.round((countStoic / totalDays) * 100),
-    heartRatePct: Math.round((countHeartRate / totalDays) * 100),
-    coachCheckInPct: Math.round((countCoach / totalDays) * 100),
+  const p: DailyPillars = existing.pillars || {
+    training: existing.trainingDone,
+    steps: existing.stepsRatio >= 0.85,
+    nutrition: existing.caloriesLogged,
+    sleep: (existing.sleepHours || 0) >= 6.5,
+    stoicChallenge: false,
+    heartRate: (existing.heartRateBpm || 0) > 0,
+    coachCheckIn: false,
   };
 
-  // 2. Generación de Felicitaciones & Elogios Detallados
+  return {
+    day: d,
+    date: existing.date || `Día ${d}`,
+    score: existing.score,
+    status: existing.status,
+    pillars: p,
+    passedPillarsCount: Object.values(p).filter(Boolean).length,
+    steps: existing.steps || 0,
+    stepGoal: existing.stepGoal || 10000,
+    sleepHours: existing.sleepHours || 7.0,
+    cals: existing.totalCalories || 0,
+    verdict: existing.verdict,
+  };
+}
+
+function resolveTierAwarded(totalScoreAverage: number, adherencePct: number, isPromoted: boolean): string {
+  if (totalScoreAverage >= 90 && adherencePct >= 90) return 'Semidiós del Olimpo';
+  if (isPromoted) return 'Guerrero de Élite';
+  if (totalScoreAverage >= 60) return 'Hoplita Probado';
+  return 'Novicio de Esparta';
+}
+
+function buildPraises(
+  divineDaysCount: number,
+  pillarAdherence: MonthlyResolution['pillarAdherence'],
+  countSleep: number,
+  pathName: string
+): string[] {
   const praises: string[] = [];
   if (divineDaysCount > 0) {
     praises.push(`🏆 **${divineDaysCount} Días de Semidiós (100% Impecables)**: Conquistaste los 7 pilares sagrados sin ninguna concesión a la debilidad.`);
@@ -178,10 +124,15 @@ export function generate30DayResolution(params: {
     praises.push(`👟 **Motor NeAT Incansable**: Cumpliste la meta de movilidad y pasos en el ${pillarAdherence.stepsPct}% del programa.`);
   }
   if (praises.length === 0) {
-    praises.push(`🏛️ **Persistencia en el Comienzo**: Diste el paso al aceptar el pacto de 30 días en la ${pathInfo.name}. El fuego sagrado ha sido encendido.`);
+    praises.push(`🏛️ **Persistencia en el Comienzo**: Diste el paso al aceptar el pacto de 30 días en la ${pathName}. El fuego sagrado ha sido encendido.`);
   }
+  return praises;
+}
 
-  // 3. Generación de Llamadas de Atención & Reprensión Estoica
+function buildScoldings(
+  failedDaysCount: number,
+  pillarAdherence: MonthlyResolution['pillarAdherence']
+): string[] {
   const scoldings: string[] = [];
   if (failedDaysCount > 6) {
     scoldings.push(`💀 **${failedDaysCount} Días Indignos Acumulados**: Dejaste ${failedDaysCount} días en deuda con el templo. La holgazanería y la dispersión mental dañaron tu promedio.`);
@@ -198,8 +149,82 @@ export function generate30DayResolution(params: {
   if (scoldings.length === 0) {
     scoldings.push(`⚖️ **Rigor Permanente**: Mantuviste la guardia alta durante todo el ciclo sin fallos graves. No bajes el escudo.`);
   }
+  return scoldings;
+}
 
-  // 4. Conclusiones y Patrones Clave
+const DIRECTIVES_BY_PATH: Record<LegendaryPath, string[]> = {
+  spartan: [
+    '1. **Sobrecarga Progresiva RIR 1-2**: Incrementa un 2.5% a 5% la carga en sentadilla trasera y press olímpico.',
+    '2. **Densidad Proteica**: Asegura 2.2g de proteína por kg de peso en cada uno de los 30 días.',
+    '3. **Descanso Neurovegetativo**: No negocies las 7.5h de sueño para permitir la hipertrofia miofibrilar.',
+  ],
+  apollo: [
+    '1. **Déficit Limpio & V-Taper**: Mantén el déficit moderado de -350 kcal con énfasis en deltoides laterales y dorsal ancho.',
+    '2. **Cadencia 3-1-1**: Controla la fase excéntrica en cada repetición para maximizar la tensión mecánica.',
+    '3. **Caminata Zona 2**: 10,000 pasos innegociables para quemar grasa visceral sin elevar el cortisol.',
+  ],
+  hoplite: [
+    '1. **Capacidad Mitocondrial**: Realiza 3 sesiones de cardio Zona 2 de 40 minutos semanales.',
+    '2. **Movilidad Articular**: Dedica 10 minutos de movilidad de cadera y tobillo antes de cada circuito.',
+    '3. **Hidratación Electrolítica**: Mantén un mínimo de 3.0L de agua con sal marina no refinada.',
+  ],
+  philosopher: [
+    '1. **Dominio del Peso Propio**: Perfecciona la postura en anillas y dominadas sin ningún impulso tramposo.',
+    '2. **Ventana de Ayuno 16/8**: Consolida la claridad mental entrenando en ayunas cuando el horario lo permita.',
+    '3. **Examen de Conciencia**: 5 minutos de diario estoico nocturno para vaciar el juicio de toda queja.',
+  ],
+};
+
+export function generate30DayResolution(params: {
+  dailyGrades: DailyGrade[];
+  path: LegendaryPath;
+  userName: string;
+  startDate: string;
+  archetype?: CoachArchetype;
+}): MonthlyResolution {
+  const { dailyGrades, path, userName, startDate, archetype = 'stoic_mentor' } = params;
+  const pathInfo = getLegendaryPathInfo(path);
+  const coachInfo = COACH_ARCHETYPES[archetype] || COACH_ARCHETYPES.stoic_mentor;
+  const totalDays = 30;
+
+  const dayAudits: DayAudit[] = [];
+  for (let d = 1; d <= totalDays; d++) {
+    const existing = dailyGrades.find((g) => g.day === d) || dailyGrades[d - 1];
+    dayAudits.push(normalizeDayAudit(d, existing));
+  }
+
+  const sumScore = dayAudits.reduce((acc, a) => acc + a.score, 0);
+  const divineDaysCount = dayAudits.filter((a) => a.score >= 90).length;
+  const victoriousDaysCount = dayAudits.filter((a) => a.score >= 75).length;
+  const failedDaysCount = totalDays - victoriousDaysCount;
+
+  const countTraining = dayAudits.filter((a) => a.pillars.training).length;
+  const countSteps = dayAudits.filter((a) => a.pillars.steps).length;
+  const countNutrition = dayAudits.filter((a) => a.pillars.nutrition).length;
+  const countSleep = dayAudits.filter((a) => a.pillars.sleep).length;
+  const countStoic = dayAudits.filter((a) => a.pillars.stoicChallenge).length;
+  const countHeartRate = dayAudits.filter((a) => a.pillars.heartRate).length;
+  const countCoach = dayAudits.filter((a) => a.pillars.coachCheckIn).length;
+
+  const totalScoreAverage = Math.round(sumScore / totalDays);
+  const adherencePct = Math.round((victoriousDaysCount / totalDays) * 100);
+  const isPromoted = adherencePct >= 80 || totalScoreAverage >= 75;
+  const tierAwarded = resolveTierAwarded(totalScoreAverage, adherencePct, isPromoted);
+
+  const pillarAdherence = {
+    trainingPct: Math.round((countTraining / totalDays) * 100),
+    stepsPct: Math.round((countSteps / totalDays) * 100),
+    nutritionPct: Math.round((countNutrition / totalDays) * 100),
+    sleepPct: Math.round((countSleep / totalDays) * 100),
+    stoicReadingPct: Math.round((countStoic / totalDays) * 100),
+    heartRatePct: Math.round((countHeartRate / totalDays) * 100),
+    coachCheckInPct: Math.round((countCoach / totalDays) * 100),
+  };
+
+  const praises = buildPraises(divineDaysCount, pillarAdherence, countSleep, pathInfo.name);
+  const scoldings = buildScoldings(failedDaysCount, pillarAdherence);
+  const nextCycleDirectives = DIRECTIVES_BY_PATH[path] || DIRECTIVES_BY_PATH.philosopher;
+
   const keyInsights: string[] = [
     `📊 Adherencia Total al Juicio: **${adherencePct}%** (${victoriousDaysCount} días dignos de 30).`,
     `⚡ Promedio General de Disciplina: **${totalScoreAverage}/100 pts**.`,
@@ -207,32 +232,15 @@ export function generate30DayResolution(params: {
     `⚠️ Pilar a Fortalecer: ${getPillarLeader(pillarAdherence, false)}.`,
   ];
 
-  // 5. Prescripción Táctica para el Próximo Ciclo (según la Senda)
-  const nextCycleDirectives: string[] = [];
-  if (path === 'spartan') {
-    nextCycleDirectives.push('1. **Sobrecarga Progresiva RIR 1-2**: Incrementa un 2.5% a 5% la carga en sentadilla trasera y press olímpico.');
-    nextCycleDirectives.push('2. **Densidad Proteica**: Asegura 2.2g de proteína por kg de peso en cada uno de los 30 días.');
-    nextCycleDirectives.push('3. **Descanso Neurovegetativo**: No negocies las 7.5h de sueño para permitir la hipertrofia miofibrilar.');
-  } else if (path === 'apollo') {
-    nextCycleDirectives.push('1. **Déficit Limpio & V-Taper**: Mantén el déficit moderado de -350 kcal con énfasis en deltoides laterales y dorsal ancho.');
-    nextCycleDirectives.push('2. **Cadencia 3-1-1**: Controla la fase excéntrica en cada repetición para maximizar la tensión mecánica.');
-    nextCycleDirectives.push('3. **Caminata Zona 2**: 10,000 pasos innegociables para quemar grasa visceral sin elevar el cortisol.');
-  } else if (path === 'hoplite') {
-    nextCycleDirectives.push('1. **Capacidad Mitocondrial**: Realiza 3 sesiones de cardio Zona 2 de 40 minutos semanales.');
-    nextCycleDirectives.push('2. **Movilidad Articular**: Dedica 10 minutos de movilidad de cadera y tobillo antes de cada circuito.');
-    nextCycleDirectives.push('3. **Hidratación Electrolítica**: Mantén un mínimo de 3.0L de agua con sal marina no refinada.');
-  } else {
-    nextCycleDirectives.push('1. **Dominio del Peso Propio**: Perfecciona la postura en anillas y dominadas sin ningún impulso tramposo.');
-    nextCycleDirectives.push('2. **Ventana de Ayuno 16/8**: Consolida la claridad mental entrenando en ayunas cuando el horario lo permita.');
-    nextCycleDirectives.push('3. **Examen de Conciencia**: 5 minutos de diario estoico nocturno para vaciar el juicio de toda queja.');
-  }
-
-  // 6. Redacción del Gran Decreto Magistral en Markdown
   const nowFormatted = new Date().toLocaleDateString('es-ES', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
+
+  const verdictLine = isPromoted
+    ? '⚔️ **APROBADO CON HONOR MILITAR**'
+    : '💀 **REPRENSIÓN POR MEDIOCRIDAD (REINICIO OBLIGATORIO)**';
 
   const masterDecreeMarkdown = `
 # 🏛️ RESOLUCIÓN OFICIAL DEL JUICIO DE LOS 30 DÍAS
@@ -244,7 +252,7 @@ export function generate30DayResolution(params: {
 
 ### 👑 VEREDICTO SAGRADO & ASCENSO
 * **Rango Otorgado:** **${tierAwarded.toUpperCase()}**
-* **Veredicto Final:** ${isPromoted ? '⚔️ **APROBADO CON HONOR MILITAR**' : '💀 **REPRENSIÓN POR MEDIOCRIDAD (REINICIO OBLIGATORIO)**'}
+* **Veredicto Final:** ${verdictLine}
 * **Puntuación Promedio:** **${totalScoreAverage}/100 Puntos**
 * **Adherencia Total:** **${adherencePct}%** (${victoriousDaysCount} días dignos / ${failedDaysCount} días en deuda)
 
@@ -274,7 +282,7 @@ ${scoldings.map((s) => `- ${s}`).join('\n')}
 ---
 
 ### 🔮 DIRECTIVA DEL ${coachInfo.name.toUpperCase()} PARA EL PRÓXIMO CICLO
-${nextCycleDirectives.map((d) => `${d}`).join('\n\n')}
+${nextCycleDirectives.join('\n\n')}
 
 ---
 *«${coachInfo.tagline} — No expliques tu filosofía; encárnala en tus actos cada uno de los 30 días venideros.»* — **${coachInfo.name}**

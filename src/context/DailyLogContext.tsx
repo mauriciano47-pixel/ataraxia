@@ -11,7 +11,6 @@ import {
   CustomExercise,
   CoachArchetype,
   LegendaryPath,
-  LEGENDARY_PATHS,
   getLegendaryPathInfo,
   MonthlyCycleState,
   DailyGrade,
@@ -47,30 +46,82 @@ import {
 import { buildGuardianKeyPayload } from '@/lib/guardianProfileHelper';
 import { executeCycleJudgment } from '@/lib/pactResolutionHelper';
 
-// Re-export types for backward compatibility
 export type { UserMetrics, SmartDeviceState, DailyLog, DailyLogContextType, UserProfile };
 export { DEFAULT_USER_METRICS, DEFAULT_MONTHLY_CYCLE, DEFAULT_LOG };
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
 
-export function DailyLogProvider({ children }: { children: React.ReactNode }) {
-  const [currentDateString, setCurrentDateString] = useState<string>(() => getLocalTodayDateString());
-  const today = currentDateString;
-  const [user, setUser] = useState<User | null>(null);
-  const [log, setLog] = useState<DailyLog>(() => {
-    const raw = loadLocalDailyLog(today);
-    return consolidateCycleHistory(raw);
-  });
-  const loading = false;
-  const [isLocalMode, setIsLocalMode] = useState(() => !auth);
-  const [bodySnapshots, setBodySnapshots] = useState<BodySnapshot[]>(() => loadLocalBodySnapshots());
+function mergeCloudProfileIntoLog(current: DailyLog, cloudProfile: UserProfile): DailyLog {
+  const hasCloudRoutine = Boolean(cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0);
+  return {
+    ...current,
+    userName: cloudProfile.userName || current.userName,
+    userMetrics: { ...DEFAULT_USER_METRICS, ...(cloudProfile.userMetrics || {}) },
+    targetCalories: cloudProfile.targetCalories || current.targetCalories,
+    stepGoal: cloudProfile.stepGoal || current.stepGoal,
+    stoicAvatarUri: cloudProfile.stoicAvatarUri || current.stoicAvatarUri,
+    hasCompletedOnboarding: cloudProfile.hasCompletedOnboarding ?? current.hasCompletedOnboarding ?? false,
+    prokoptonProfile: cloudProfile.prokoptonProfile || current.prokoptonProfile,
+    customRoutine: hasCloudRoutine ? cloudProfile.customRoutine : current.customRoutine,
+    coachArchetype: cloudProfile.coachArchetype || current.coachArchetype || 'stoic_mentor',
+    smartDevice: cloudProfile.smartDevice
+      ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
+      : current.smartDevice,
+  };
+}
 
-  const logRef = useRef<DailyLog>(log);
-  const prevTodayRef = useRef(today);
-  const firestoreDebounceTimer = useRef<any>(null);
-  const localSaveDebounceTimer = useRef<any>(null);
+function smartMergeDailyLogs(local: DailyLog, remote: DailyLog): DailyLog {
+  const keepLocalName = Boolean(local.userName && local.userName !== DEFAULT_LOG.userName);
+  const keepLocalRoutine = Boolean(local.customRoutine && local.customRoutine.length > 0);
+  return {
+    ...DEFAULT_LOG,
+    ...remote,
+    ...local,
+    waterLitres: Math.max(local.waterLitres || 0, remote.waterLitres || 0),
+    totalCalories: Math.max(local.totalCalories || 0, remote.totalCalories || 0),
+    mealsLogged: Math.max(local.mealsLogged || 0, remote.mealsLogged || 0),
+    steps: Math.max(local.steps || 0, remote.steps || 0),
+    stepGoal: local.stepGoal || remote.stepGoal || 10000,
+    targetCalories: local.targetCalories || remote.targetCalories || 2200,
+    trainingCompleted: Boolean(local.trainingCompleted || remote.trainingCompleted),
+    checkInDone: Boolean(local.checkInDone || remote.checkInDone),
+    effectiveSets: Math.max(local.effectiveSets || 0, remote.effectiveSets || 0),
+    userName: keepLocalName ? local.userName : remote.userName || DEFAULT_LOG.userName,
+    stoicAvatarUri: local.stoicAvatarUri || remote.stoicAvatarUri || '',
+    hasCompletedOnboarding: Boolean(local.hasCompletedOnboarding || remote.hasCompletedOnboarding),
+    prokoptonProfile: local.prokoptonProfile || remote.prokoptonProfile,
+    customRoutine: keepLocalRoutine ? local.customRoutine : remote.customRoutine || undefined,
+    coachArchetype: local.coachArchetype || remote.coachArchetype || 'stoic_mentor',
+    userMetrics: { ...DEFAULT_USER_METRICS, ...(remote.userMetrics || {}), ...(local.userMetrics || {}) },
+    macros: {
+      protein: Math.max(local.macros?.protein || 0, remote.macros?.protein || 0),
+      carbs: Math.max(local.macros?.carbs || 0, remote.macros?.carbs || 0),
+      fats: Math.max(local.macros?.fats || 0, remote.macros?.fats || 0),
+    },
+    smartDevice: { ...(remote.smartDevice || DEFAULT_LOG.smartDevice!), ...(local.smartDevice || {}) },
+  };
+}
 
-  // Flush garantizado en cambio de foco o cierre de app
+function createInitialCycleForPath(path: LegendaryPath): MonthlyCycleState {
+  return {
+    currentDay: 1,
+    startDate: new Date().toISOString(),
+    path,
+    tier: 'Novicio de Esparta',
+    dailyGrades: [],
+    passedDaysCount: 0,
+    failedDaysCount: 0,
+    averageScore: 100,
+    isJudgmentReady: false,
+    isPactActive: true,
+  };
+}
+
+function useFlushDailyLogOnUnload(
+  today: string,
+  logRef: React.MutableRefObject<DailyLog>,
+  localSaveDebounceTimer: React.MutableRefObject<any>
+) {
   useEffect(() => {
     const flushSave = () => {
       if (localSaveDebounceTimer.current) {
@@ -100,9 +151,67 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
         window.removeEventListener('beforeunload', flushSave);
       }
     };
-  }, [today]);
+  }, [today, logRef, localSaveDebounceTimer]);
+}
 
-  // Monitor continuo de medianoche local (00:00:00 exacto)
+function useFirebaseAuthSync(
+  today: string,
+  logRef: React.MutableRefObject<DailyLog>,
+  setUser: (u: User | null) => void,
+  setLog: (l: DailyLog) => void,
+  setIsLocalMode: (v: boolean) => void
+) {
+  useEffect(() => {
+    if (!auth) return;
+
+    const handleUserSignedIn = async (currentUser: User) => {
+      setUser(currentUser);
+      if (!db) return;
+      try {
+        const profileSnap = await getDoc(doc(db, `users/${currentUser.uid}/meta/profile`));
+        if (!profileSnap.exists()) return;
+        const merged = mergeCloudProfileIntoLog(logRef.current, profileSnap.data() as UserProfile);
+        logRef.current = merged;
+        setLog(merged);
+        saveLocalDailyLog(today, merged);
+      } catch (e) {
+        logger.warn('[DailyLogContext] No se pudo cargar el perfil de Firestore:', e);
+      }
+    };
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        await handleUserSignedIn(currentUser);
+        return;
+      }
+      try {
+        if (auth) await signInAnonymously(auth);
+      } catch (error) {
+        logger.warn('Firebase Auth fallback local:', error);
+        setIsLocalMode(true);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, [today, logRef, setUser, setLog, setIsLocalMode]);
+}
+
+export function DailyLogProvider({ children }: { children: React.ReactNode }) {
+  const [currentDateString, setCurrentDateString] = useState<string>(() => getLocalTodayDateString());
+  const today = currentDateString;
+  const [user, setUser] = useState<User | null>(null);
+  const [log, setLog] = useState<DailyLog>(() => consolidateCycleHistory(loadLocalDailyLog(today)));
+  const loading = false;
+  const [isLocalMode, setIsLocalMode] = useState(() => !auth);
+  const [bodySnapshots, setBodySnapshots] = useState<BodySnapshot[]>(() => loadLocalBodySnapshots());
+
+  const logRef = useRef<DailyLog>(log);
+  const prevTodayRef = useRef(today);
+  const firestoreDebounceTimer = useRef<any>(null);
+  const localSaveDebounceTimer = useRef<any>(null);
+
+  useFlushDailyLogOnUnload(today, logRef, localSaveDebounceTimer);
+
   useEffect(() => {
     const midnightInterval = setInterval(() => {
       const liveToday = getLocalTodayDateString();
@@ -119,90 +228,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     return () => { clearInterval(midnightInterval); };
   }, []);
 
-  useEffect(() => {
-    if (!auth) return;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        if (db) {
-          try {
-            const profileSnap = await getDoc(doc(db, `users/${currentUser.uid}/meta/profile`));
-            if (profileSnap.exists()) {
-              const cloudProfile = profileSnap.data() as UserProfile;
-              const current = logRef.current;
-              const merged: DailyLog = {
-                ...current,
-                userName: cloudProfile.userName || current.userName,
-                userMetrics: { ...DEFAULT_USER_METRICS, ...(cloudProfile.userMetrics || {}) },
-                targetCalories: cloudProfile.targetCalories || current.targetCalories,
-                stepGoal: cloudProfile.stepGoal || current.stepGoal,
-                stoicAvatarUri: cloudProfile.stoicAvatarUri || current.stoicAvatarUri,
-                hasCompletedOnboarding: cloudProfile.hasCompletedOnboarding ?? current.hasCompletedOnboarding ?? false,
-                prokoptonProfile: cloudProfile.prokoptonProfile || current.prokoptonProfile,
-                customRoutine:
-                  cloudProfile.customRoutine && cloudProfile.customRoutine.length > 0
-                    ? cloudProfile.customRoutine
-                    : current.customRoutine,
-                coachArchetype: cloudProfile.coachArchetype || current.coachArchetype || 'stoic_mentor',
-                smartDevice: cloudProfile.smartDevice
-                  ? { ...(current.smartDevice || DEFAULT_LOG.smartDevice!), ...cloudProfile.smartDevice }
-                  : current.smartDevice,
-              };
-              logRef.current = merged;
-              setLog(merged);
-              saveLocalDailyLog(today, merged);
-            }
-          } catch (e) {
-            logger.warn('[DailyLogContext] No se pudo cargar el perfil de Firestore:', e);
-          }
-        }
-      } else {
-        try {
-          if (auth) await signInAnonymously(auth);
-        } catch (error) {
-          logger.warn('Firebase Auth fallback local:', error);
-          setIsLocalMode(true);
-        }
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, [today]);
-
-  const smartMerge = (local: DailyLog, remote: DailyLog): DailyLog => ({
-    ...DEFAULT_LOG,
-    ...remote,
-    ...local,
-    waterLitres: Math.max(local.waterLitres || 0, remote.waterLitres || 0),
-    totalCalories: Math.max(local.totalCalories || 0, remote.totalCalories || 0),
-    mealsLogged: Math.max(local.mealsLogged || 0, remote.mealsLogged || 0),
-    steps: Math.max(local.steps || 0, remote.steps || 0),
-    stepGoal: local.stepGoal || remote.stepGoal || 10000,
-    targetCalories: local.targetCalories || remote.targetCalories || 2200,
-    trainingCompleted: Boolean(local.trainingCompleted || remote.trainingCompleted),
-    checkInDone: Boolean(local.checkInDone || remote.checkInDone),
-    effectiveSets: Math.max(local.effectiveSets || 0, remote.effectiveSets || 0),
-    userName:
-      local.userName && local.userName !== DEFAULT_LOG.userName
-        ? local.userName
-        : remote.userName || DEFAULT_LOG.userName,
-    stoicAvatarUri: local.stoicAvatarUri || remote.stoicAvatarUri || '',
-    hasCompletedOnboarding: Boolean(local.hasCompletedOnboarding || remote.hasCompletedOnboarding),
-    prokoptonProfile: local.prokoptonProfile || remote.prokoptonProfile,
-    customRoutine:
-      local.customRoutine && local.customRoutine.length > 0
-        ? local.customRoutine
-        : remote.customRoutine || undefined,
-    coachArchetype: local.coachArchetype || remote.coachArchetype || 'stoic_mentor',
-    userMetrics: { ...DEFAULT_USER_METRICS, ...(remote.userMetrics || {}), ...(local.userMetrics || {}) },
-    macros: {
-      protein: Math.max(local.macros?.protein || 0, remote.macros?.protein || 0),
-      carbs: Math.max(local.macros?.carbs || 0, remote.macros?.carbs || 0),
-      fats: Math.max(local.macros?.fats || 0, remote.macros?.fats || 0),
-    },
-    smartDevice: { ...(remote.smartDevice || DEFAULT_LOG.smartDevice!), ...(local.smartDevice || {}) },
-  });
+  useFirebaseAuthSync(today, logRef, setUser, setLog, setIsLocalMode);
 
   useEffect(() => {
     if (!user || isLocalMode || !db) return;
@@ -213,16 +239,15 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       (docSnap) => {
         if (docSnap.metadata?.hasPendingWrites) return;
         const currentLocal = logRef.current;
-        if (docSnap.exists()) {
-          const remoteData = docSnap.data() as DailyLog;
-          const merged = smartMerge(currentLocal, remoteData);
-          logRef.current = merged;
-          setLog(merged);
-          saveLocalDailyLog(today, merged);
-        } else {
+        if (!docSnap.exists()) {
           setDoc(docRef, currentLocal, { merge: true }).catch(console.error);
           saveLocalDailyLog(today, currentLocal);
+          return;
         }
+        const merged = smartMergeDailyLogs(currentLocal, docSnap.data() as DailyLog);
+        logRef.current = merged;
+        setLog(merged);
+        saveLocalDailyLog(today, merged);
       },
       (error) => {
         logger.warn('Firestore listener fallback local:', error);
@@ -451,7 +476,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       } : {}),
     });
 
-    saveProfileToFirestore({ smartDevice: newDevice });
+    void saveProfileToFirestore({ smartDevice: newDevice });
 
     try {
       SafeStorage.setItem('ataraxia_pedometer_session_steps_v1', String(payload.steps));
@@ -460,24 +485,26 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, [updateLog, saveProfileToFirestore]);
 
   const saveOnboardingProfile = useCallback((profile: ProkoptonProfile, routine: CustomExercise[], targetCals: number) => {
+    const activityMap: Record<number, UserMetrics['activityLevel']> = { 5: 'active', 6: 'active', 7: 'active', 4: 'moderate' };
+    const goalMap: Record<string, UserMetrics['goal']> = { deficit: 'deficit', surplus: 'surplus' };
     const updatedMetrics: UserMetrics = {
       weightKg: profile.weightKg,
       heightCm: profile.heightCm,
       age: profile.age,
       gender: 'male',
-      activityLevel: profile.daysPerWeek >= 5 ? 'active' : profile.daysPerWeek >= 4 ? 'moderate' : 'light',
-      goal: profile.dietPreference === 'deficit' ? 'deficit' : profile.dietPreference === 'surplus' ? 'surplus' : 'maintenance',
+      activityLevel: activityMap[profile.daysPerWeek] || 'light',
+      goal: goalMap[profile.dietPreference] || 'maintenance',
     };
     const updates = { userName: profile.userName, userMetrics: updatedMetrics, targetCalories: targetCals, prokoptonProfile: profile, customRoutine: routine, hasCompletedOnboarding: true };
     updateLog(updates);
-    saveProfileToFirestore(updates);
+    void saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const resetOnboarding = useCallback(() => {
     SafeStorage.removeItem(ONBOARDING_KEY);
     const updates = { hasCompletedOnboarding: false, prokoptonProfile: undefined, customRoutine: undefined };
     updateLog(updates);
-    saveProfileToFirestore(updates);
+    void saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const saveReadinessScore = useCallback((sleep: number, stress: number, soreness: number) => {
@@ -517,21 +544,10 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
 
   const start30DayPact = useCallback((path?: LegendaryPath) => {
     const activePath = path || logRef.current.legendaryPath || 'spartan';
-    const newCycle: MonthlyCycleState = {
-      currentDay: 1,
-      startDate: new Date().toISOString(),
-      path: activePath,
-      tier: 'Novicio de Esparta',
-      dailyGrades: [],
-      passedDaysCount: 0,
-      failedDaysCount: 0,
-      averageScore: 100,
-      isJudgmentReady: false,
-      isPactActive: true,
-    };
+    const newCycle = createInitialCycleForPath(activePath);
     const updates = { monthlyCycle: newCycle, legendaryPath: activePath };
     updateLog(updates);
-    saveProfileToFirestore(updates);
+    void saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const selectLegendaryPath = useCallback((path: LegendaryPath) => {
@@ -540,18 +556,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
     const bmr = 10 * currentMetrics.weightKg + 6.25 * currentMetrics.heightCm - 5 * currentMetrics.age + 5;
     const targetCals = Math.max(1400, Math.round(bmr * 1.4) + pathInfo.recommendedCalsDelta);
     const routine = getLegendaryPathRoutine(path);
-    const newCycle: MonthlyCycleState = {
-      currentDay: 1,
-      startDate: new Date().toISOString(),
-      path,
-      tier: 'Novicio de Esparta',
-      dailyGrades: [],
-      passedDaysCount: 0,
-      failedDaysCount: 0,
-      averageScore: 100,
-      isJudgmentReady: false,
-      isPactActive: true,
-    };
+    const newCycle = createInitialCycleForPath(path);
     const updates = {
       legendaryPath: path,
       coachArchetype: pathInfo.archetype,
@@ -562,7 +567,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
       monthlyCycle: newCycle,
     };
     updateLog(updates);
-    saveProfileToFirestore(updates);
+    void saveProfileToFirestore(updates);
   }, [updateLog, saveProfileToFirestore]);
 
   const executeJudgment = useCallback(() => {
@@ -573,18 +578,7 @@ export function DailyLogProvider({ children }: { children: React.ReactNode }) {
   }, [updateLog, saveProfileToFirestore]);
 
   const resetMonthlyCycle = useCallback(() => {
-    const newCycle: MonthlyCycleState = {
-      currentDay: 1,
-      startDate: new Date().toISOString(),
-      path: logRef.current.legendaryPath || 'spartan',
-      tier: 'Novicio de Esparta',
-      dailyGrades: [],
-      passedDaysCount: 0,
-      failedDaysCount: 0,
-      averageScore: 100,
-      isJudgmentReady: false,
-      isPactActive: true,
-    };
+    const newCycle = createInitialCycleForPath(logRef.current.legendaryPath || 'spartan');
     updateLog({ monthlyCycle: newCycle });
     void saveProfileToFirestore({ monthlyCycle: newCycle });
   }, [updateLog, saveProfileToFirestore]);
