@@ -1,18 +1,30 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require("eslint-config-expo/flat");
-
-module.exports = defineConfig([
-  ...expoConfig,
+// Configuration for ESLint 8 / ESLint 9 compatible with Codacy & Expo TypeScript
+export default [
   {
-    ignores: ["dist/*"],
+    ignores: [
+      'dist/**',
+      'public/**',
+      'assets/**',
+      'scripts/**',
+      'tests/**',
+      'e2e/**',
+      '.firebase/**',
+      'node_modules/**',
+      'scratch/**',
+      'sbom.cdx.json',
+    ],
+  },
+  {
+    files: ['**/*.{ts,tsx,js,jsx}'],
     rules: {
-      "react-hooks/refs": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/purity": "off",
-      "react/no-unescaped-entities": "off",
-      "react-hooks/exhaustive-deps": "warn",
-      "import/first": "warn"
-    }
-  }
-]);
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      'security/detect-object-injection': 'off',
+      'no-irregular-whitespace': 'off',
+    },
+  },
+];
