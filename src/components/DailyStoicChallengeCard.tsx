@@ -59,7 +59,7 @@ const STOIC_CHALLENGES = [
 export const DailyStoicChallengeCard = React.memo(function DailyStoicChallengeCard({ onChallengeToggle }: DailyStoicChallengeCardProps) {
   const todayStr = getLocalTodayDateString();
   const dayOfWeek = new Date().getDay(); // 0-6
-  const currentChallenge = STOIC_CHALLENGES[dayOfWeek] || STOIC_CHALLENGES[0];
+  const currentChallenge = STOIC_CHALLENGES.at(dayOfWeek) ?? STOIC_CHALLENGES[0];
 
   const storageKey = `ataraxia_stoic_challenge_${todayStr}`;
   const [isCompleted, setIsCompleted] = useState<boolean>(false);

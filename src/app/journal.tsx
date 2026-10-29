@@ -64,7 +64,7 @@ export default function JournalScreen() {
   } = useJournalHistory();
 
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = Colors[scheme];
+  const colors = scheme === 'dark' ? Colors.dark : Colors.light;
 
   const currentArchetype: CoachArchetype = today.coachArchetype || 'stoic_mentor';
   const archetypeInfo = COACH_ARCHETYPES[currentArchetype] || COACH_ARCHETYPES.stoic_mentor;
@@ -486,8 +486,7 @@ export default function JournalScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.archetypesList}>
-              {(Object.keys(COACH_ARCHETYPES) as CoachArchetype[]).map((key) => {
-                const item = COACH_ARCHETYPES[key];
+              {Object.values(COACH_ARCHETYPES).map((item) => {
                 const isSelected = item.id === currentArchetype;
 
                 return (

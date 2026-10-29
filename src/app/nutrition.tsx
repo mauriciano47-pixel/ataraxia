@@ -47,7 +47,7 @@ export interface AnalysisResult {
 export default function NutritionScreen() {
   const { log, logMealWithMacros, logMealWithEnrichedMacros, updateUserMetrics } = useDailyLog();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = Colors[scheme];
+  const colors = scheme === 'dark' ? Colors.dark : Colors.light;
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
