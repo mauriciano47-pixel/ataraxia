@@ -207,3 +207,75 @@ export async function openStripeCheckout(planId: string): Promise<boolean> {
 
   return false;
 }
+
+
+/* ============================================================================
+   SaaS Entitlements, Cuotas & Límite de Uso para Plan Gratuito (Paywall Guard)
+   ============================================================================ */
+export const SAAS_LIMITS = {
+  MAX_FREE_AI_WORKOUTS: 3,
+  MAX_FREE_PPG_SCANS: 5,
+};
+
+const STORAGE_KEY_AI_USAGE = 'ataraxia_saas_ai_workout_usage_v1';
+
+export interface QuotaCheckResult {
+  allowed: boolean;
+  remaining: number;
+  totalUsed: number;
+  isPro: boolean;
+}
+
+export function checkAiWorkoutQuota(): QuotaCheckResult {
+  const sub = getSubscriptionStatus();
+  if (sub.active) {
+    return {
+      allowed: true,
+      remaining: 999999,
+      totalUsed: 0,
+      isPro: true,
+    };
+  }
+
+  try {
+    const raw = SafeStorage.getItem(STORAGE_KEY_AI_USAGE);
+    const used = raw ? parseInt(raw, 10) : 0;
+    const remaining = Math.max(0, SAAS_LIMITS.MAX_FREE_AI_WORKOUTS - used);
+    return {
+      allowed: used < SAAS_LIMITS.MAX_FREE_AI_WORKOUTS,
+      remaining,
+      totalUsed: used,
+      isPro: false,
+    };
+  } catch {
+    return {
+      allowed: true,
+      remaining: SAAS_LIMITS.MAX_FREE_AI_WORKOUTS,
+      totalUsed: 0,
+      isPro: false,
+    };
+  }
+}
+
+export function incrementAiWorkoutUsage(): number {
+  const sub = getSubscriptionStatus();
+  if (sub.active) return 0; // Pro users have unlimited quota
+
+  try {
+    const raw = SafeStorage.getItem(STORAGE_KEY_AI_USAGE);
+    const used = raw ? parseInt(raw, 10) : 0;
+    const next = used + 1;
+    SafeStorage.setItem(STORAGE_KEY_AI_USAGE, String(next));
+    return next;
+  } catch {
+    return 1;
+  }
+}
+
+export function resetUsageQuota(): void {
+  try {
+    SafeStorage.removeItem(STORAGE_KEY_AI_USAGE);
+  } catch (err) {
+    logger.warn('[stripeService] Error reseteando cuotas:', err);
+  }
+}

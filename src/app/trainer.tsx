@@ -26,6 +26,8 @@ import { CustomExercise } from '@/types/onboarding';
 import { RUTINA_MOCK, CALISTENIA_MOCK, PRESET_ROUTINES, SUGGESTED_EXERCISES, SUGGESTED_SETS, MUSCLE_GROUPS } from '@/constants/trainerPresets';
 import { ExerciseEditorModal, PresetsModal, GeneratorModal } from '@/components/TrainerModals';
 import { buildFallbackAIRoutine } from '@/lib/workoutGenerator';
+import { MembershipModal } from '@/components/MembershipModal';
+import { checkAiWorkoutQuota, incrementAiWorkoutUsage, getSubscriptionStatus, SubscriptionStatus } from '@/utils/stripeService';
 import { ReadinessCard } from '@/components/ReadinessCard';
 import { TrainerExerciseCard } from '@/components/TrainerExerciseCard';
 import { styles } from '@/styles/trainer.styles';
@@ -69,6 +71,8 @@ export default function TrainerScreen() {
   // AI Workout Generator State
   const [showGeneratorModal, setShowGeneratorModal] = useState(false);
   const [selectedTime, setSelectedTime] = useState<number>(log.prokoptonProfile?.sessionDurationMinutes || 45);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus>(() => getSubscriptionStatus());
   const [selectedFocus, setSelectedFocus] = useState<string>(
     log.prokoptonProfile?.focus === 'fat_loss' ? 'Recomposición / Grasa' :
     log.prokoptonProfile?.focus === 'longevity' ? 'Longevidad / Resistencia' :
@@ -335,6 +339,17 @@ export default function TrainerScreen() {
 
   // AI GENERATOR LOGIC
   const handleGenerateAI = async () => {
+    const quota = checkAiWorkoutQuota();
+    if (!quota.allowed) {
+      const msg = "Has alcanzado el límite de 3 rutinas gratuitas generadas con Gemini IA. Desbloquea rutinas ilimitadas activando tu Membresía Legionario Pro o tus 7 días de prueba sin costo.";
+      if (Platform.OS === 'web') {
+        window.alert(`🏛️ LÍMITE DE PRUEBA ALCANZADO (3/3)\n\n${msg}`);
+      } else {
+        Alert.alert("🏛️ LÍMITE DE PRUEBA ALCANZADO (3/3)", msg);
+      }
+      setShowMembershipModal(true);
+      return;
+    }
     setIsGenerating(true);
     setGeneratedRoutine(null);
 
@@ -343,6 +358,7 @@ export default function TrainerScreen() {
         setTimeout(() => {
           const fallbackData = buildFallbackAIRoutine(selectedTime, selectedFocus, selectedEquip);
           setGeneratedRoutine(fallbackData);
+          incrementAiWorkoutUsage();
           setIsGenerating(false);
         }, 1200);
         return;
@@ -710,6 +726,13 @@ Responde SOLAMENTE con un JSON válido sin texto adicional con esta estructura e
           onClose={() => { setShowGeneratorModal(false); }}
           triggerHaptic={triggerHaptic}
           styles={styles}
+        />
+
+        {/* MODAL DE MEMBRESÍA SAAS & STRIPE */}
+        <MembershipModal
+          visible={showMembershipModal}
+          onClose={() => setShowMembershipModal(false)}
+          onSubscriptionChanged={(newStatus) => { setSubStatus(newStatus); }}
         />
 
         {/* MODAL DE GUÍA TÉCNICA Y BIOMECÁNICA */}

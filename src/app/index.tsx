@@ -26,6 +26,8 @@ import { getDailyStoicPrinciple } from '@/constants/stoicPrinciples';
 import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
+import { MembershipModal } from '@/components/MembershipModal';
+import { getSubscriptionStatus, SubscriptionStatus } from '@/utils/stripeService';
 
 export default function HoyScreen() {
   const {
@@ -222,8 +224,17 @@ export default function HoyScreen() {
                 )}
               </View>
 
-              {/* Espacio de balance simétrico */}
-              <View style={{ width: 44, height: 44 }} />
+              {/* Botón de Membresía SaaS (Corona / Diamante) */}
+              <TouchableOpacity
+                onPress={() => setShowMembershipModal(true)}
+                activeOpacity={0.8}
+                style={styles.laurelLogoBtn}
+                accessibilityLabel="Abrir Membresía y Suscripción SaaS"
+              >
+                <View style={[styles.laurelRing, subStatus.active && { borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.2)' }]}>
+                  <ThemedText style={styles.laurelLetter}>{subStatus.active ? '👑' : '💎'}</ThemedText>
+                </View>
+              </TouchableOpacity>
             </View>
 
             {/* Insignia con el nombre del usuario */}
