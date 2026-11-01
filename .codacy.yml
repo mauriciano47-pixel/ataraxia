@@ -27,6 +27,20 @@ engines:
       - "src/components/*.styles.ts"
       - "src/components/ModuleSvgIcons.tsx"
       - "src/components/TabSvgIcons.tsx"
+  eslint-8:
+    exclude_paths:
+      - "dist/**"
+      - "public/**"
+      - "assets/**"
+      - "scripts/**"
+      - "tests/**"
+      - "e2e/**"
+      - ".firebase/**"
+      - "src/constants/**"
+      - "src/styles/**"
+      - "src/components/*.styles.ts"
+      - "src/components/ModuleSvgIcons.tsx"
+      - "src/components/TabSvgIcons.tsx"
 exclude_paths:
   - "dist/**"
   - "public/**"

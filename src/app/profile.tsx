@@ -166,7 +166,7 @@ export default function ProfileScreen() {
 
       // 3. Redirigir al inicio del Templo (Papiro Sagrado)
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.location.href = '/';
+        window.location.assign('/'); router.replace('/');
       } else {
         router.replace('/');
       }

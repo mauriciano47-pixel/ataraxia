@@ -5,7 +5,7 @@ import { StyleSheet, View, Text, Image, Platform } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 // Duración exacta de la pantalla de bienvenida
-const DURATION = 3000; // 3 000 ms
+const DURATION = 3000; // 3 000 ms
 
 export function AnimatedSplashOverlay() {
   // Estado de visibilidad del overlay
@@ -15,7 +15,7 @@ export function AnimatedSplashOverlay() {
   const progress = useSharedValue(0);
 
   // Duración del retardo antes de ocultar el splash nativo de Expo
-  const SPLASH_NATIVE_DELAY = 500; // 0.5 s
+  const SPLASH_NATIVE_DELAY = 500; // 0.5 s
 
   // Estilo animado de la barra de progreso
   const progressStyle = useAnimatedStyle(() => ({
@@ -31,7 +31,7 @@ export function AnimatedSplashOverlay() {
       setTimeout(() => {
         SplashScreen.hideAsync().catch(() => {});
       }, SPLASH_NATIVE_DELAY);
-      // Iniciamos la barra de progreso con duración exacta de 3 s
+      // Iniciamos la barra de progreso con duración exacta de 3 s
       progress.value = withTiming(100, { duration: DURATION, easing: Easing.linear });
       // Después de DURATION ms, removemos el overlay
       setTimeout(() => { setVisible(false); }, DURATION);

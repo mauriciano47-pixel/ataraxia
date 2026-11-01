@@ -69,7 +69,7 @@ async function compressImageToWebBase64(file: File): Promise<string> {
       img.onerror = () => { resolve(event.target?.result as string); };
       img.src = event.target?.result as string;
     };
-    reader.onerror = (err) => { reject(err); };
+    reader.onerror = (err) => { reject(err instanceof Error ? err : new Error(String(err))); };
     reader.readAsDataURL(file);
   });
 }

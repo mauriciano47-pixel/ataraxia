@@ -116,6 +116,8 @@ export default function HoyScreen() {
   const [showStepCalibration, setShowStepCalibration] = useState<boolean>(false);
   const [showBoxBreathing, setShowBoxBreathing] = useState<boolean>(false);
   const [quoteOffset, setQuoteOffset] = useState<number>(0);
+  const [showMembershipModal, setShowMembershipModal] = useState<boolean>(false);
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus>(() => getSubscriptionStatus());
 
   const todayStr = getLocalTodayDateString();
   const currentPrinciple = getDailyStoicPrinciple(todayStr, quoteOffset);
@@ -643,6 +645,7 @@ export default function HoyScreen() {
             onClose={() => { setShowBoxBreathing(false); }}
           />
         )}
+              <MembershipModal visible={showMembershipModal} onClose={() => { setShowMembershipModal(false); }} onSubscriptionChanged={(newStatus) => { setSubStatus(newStatus); }} />
       </SafeAreaView>
     </PearlElectricBackground>
   );
