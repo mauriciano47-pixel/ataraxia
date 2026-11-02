@@ -1,5 +1,6 @@
 # Ataraxia - El Oráculo Estoico 🏛️
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/998ec3ebda294583b9e24ed2ceef570d)](https://app.codacy.com/gh/mauriciano47-pixel/ataraxia/dashboard)
 [![Codacy Security & Quality](https://img.shields.io/badge/Codacy_SAST-Audited_Grade_A-10b981?style=for-the-badge&logo=codacy&logoColor=white)](https://app.codacy.com/gh/mauriciano47-pixel/ataraxia/dashboard)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict_Zero_Warning-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://github.com/mauriciano47-pixel/ataraxia)
 [![Android APK](https://img.shields.io/badge/Android_APK-60_FPS_Hermes-D4AF37?style=for-the-badge&logo=android&logoColor=black)](https://ataraxia-stoic.vercel.app/download.html)
