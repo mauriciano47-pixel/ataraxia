@@ -106,7 +106,7 @@ export default function AboutScreen() {
 
             <View style={styles.heroTextGroup}>
               <View style={styles.versionBadge}>
-                <ThemedText style={styles.versionBadgeText}>EDICIÓN OFICIAL • v2.4.0 (2026)</ThemedText>
+                <ThemedText style={styles.versionBadgeText}>EDICIÓN OFICIAL • v3.0.0 (2026)</ThemedText>
               </View>
               <View style={{ marginVertical: 6, alignItems: 'center' }}>
                 {Platform.OS === 'web' ? (

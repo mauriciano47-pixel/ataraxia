@@ -27,6 +27,7 @@ import { getLocalTodayDateString } from '@/utils/dateUtils';
 import { SafeStorage } from '@/utils/safeStorage';
 import { usePedometerSensor } from '@/hooks/usePedometerSensor';
 import { MembershipModal } from '@/components/MembershipModal';
+import { UpdateNotificationBanner } from '@/components/UpdateNotificationBanner';
 import { getSubscriptionStatus, SubscriptionStatus } from '@/utils/stripeService';
 
 export default function HoyScreen() {
@@ -275,6 +276,9 @@ export default function HoyScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Banner Resiliente de Actualización In-App */}
+          <UpdateNotificationBanner />
 
           {/* 1. HERO SECTION: 3D LUXURY GOLD & THUNDER DIAL (DAILY POWER BURN) */}
           <View style={styles.heroGaugeSection}>
