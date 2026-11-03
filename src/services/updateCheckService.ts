@@ -68,8 +68,14 @@ export async function fetchRemoteVersion(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(timeoutMs, 8000));
 
+  // Anti-SSRF Guard: Validación estricta de destino inmutable
+  if (remoteUrl !== REMOTE_VERSION_URL && remoteUrl !== '/version.json') {
+    return null;
+  }
+
   try {
-    const response = await fetch(remoteUrl, {
+    const targetUrl = remoteUrl === '/version.json' ? '/version.json' : REMOTE_VERSION_URL;
+    const response = await fetch(targetUrl, {
       method: 'GET',
       headers: {
         'Cache-Control': 'no-cache, no-store, max-age=0',
